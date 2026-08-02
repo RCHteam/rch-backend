@@ -1,0 +1,62 @@
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const FROM = process.env.CLUB_FROM_EMAIL;
+const NOTIFY = process.env.CLUB_NOTIFY_EMAIL;
+
+async function sendEmail({ to, subject, html }) {
+  if (!RESEND_API_KEY) {
+    console.log(`[email skipped — no RESEND_API_KEY set] would send "${subject}" to ${to}`);
+    return { skipped: true };
+  }
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: FROM, to, subject, html }),
+    });
+    if (!res.ok) {
+      console.error('Email send failed:', await res.text());
+      return { skipped: false, ok: false };
+    }
+    return { skipped: false, ok: true };
+  } catch (err) {
+    console.error('Email send error:', err);
+    return { skipped: false, ok: false };
+  }
+}
+
+async function sendSkillsRegistrationEmails(entry) {
+  const firstName = entry.full_name.split(' ')[0];
+  await sendEmail({
+    to: entry.email,
+    subject: `You're registered — RCH Elite Training`,
+    html: `<p>Hi ${firstName},</p><p>You're registered! A coordinator will reach out to you at ${entry.email} with your placement and first session date.</p><p>Jersey #${entry.jersey_number}</p>`,
+  });
+  if (NOTIFY) {
+    await sendEmail({
+      to: NOTIFY,
+      subject: `New Skills Training registration: ${entry.full_name}`,
+      html: `<p>${entry.full_name} (${entry.dob}) just registered.</p><p>Email: ${entry.email}<br/>Phone: ${entry.phone}<br/>Team: ${entry.team}<br/>Experience: ${entry.experience}</p><p>Notes: ${entry.notes}</p>`,
+    });
+  }
+}
+
+async function sendJoinRegistrationEmails(entry) {
+  const firstName = entry.parent_name.split(' ')[0];
+  await sendEmail({
+    to: entry.email,
+    subject: `You're on the team — Join Sultans FC (${entry.age_group})`,
+    html: `<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will email ${entry.email} with placement information and try-out details if selected.</p><p>Jersey #${entry.jersey_number}</p>`,
+  });
+  if (NOTIFY) {
+    await sendEmail({
+      to: NOTIFY,
+      subject: `New Join Sultans FC registration: ${entry.child_name} (${entry.age_group})`,
+      html: `<p>${entry.child_name} (${entry.dob}), age group ${entry.age_group}.</p><p>Parent: ${entry.parent_name}<br/>Email: ${entry.email}<br/>Phone: ${entry.phone}</p><p>Experience: ${entry.experience}</p><p>Medical: ${entry.medical}</p>`,
+    });
+  }
+}
+
+module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails };
