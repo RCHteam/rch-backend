@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS skills_registrations (
 
 CREATE TABLE IF NOT EXISTS join_registrations (
   id               SERIAL PRIMARY KEY,
-  age_group        TEXT NOT NULL CHECK (age_group IN ('4-5', '6-7', '8-9', '10-11')),
+  age_group        TEXT NOT NULL CHECK (age_group IN ('pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade')),
   child_name       TEXT NOT NULL,
   dob              DATE NOT NULL,
   motivation       TEXT NOT NULL,
@@ -32,3 +32,13 @@ CREATE TABLE IF NOT EXISTS join_registrations (
 CREATE INDEX IF NOT EXISTS idx_join_age_group ON join_registrations(age_group);
 CREATE INDEX IF NOT EXISTS idx_skills_submitted_at ON skills_registrations(submitted_at);
 CREATE INDEX IF NOT EXISTS idx_join_submitted_at ON join_registrations(submitted_at);
+
+-- Simple key/value store for site-wide toggles (e.g. turning Skills Training
+-- registration on/off from the admin dashboard).
+CREATE TABLE IF NOT EXISTS site_settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+INSERT INTO site_settings (key, value) VALUES ('skills_training_open', 'true')
+ON CONFLICT (key) DO NOTHING;

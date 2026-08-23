@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
+const { getSetting, setSetting } = require('./settings');
 
 const router = express.Router();
 
@@ -10,6 +11,32 @@ router.post('/admin/login', (req, res) => {
     return res.json({ ok: true });
   }
   res.status(401).json({ ok: false, error: 'Incorrect password.' });
+});
+
+// Admin: read current site toggles (currently just Skills Training open/closed).
+router.get('/admin/settings', requireAdmin, async (req, res) => {
+  try {
+    const value = await getSetting('skills_training_open', 'true');
+    res.json({ skillsTrainingOpen: value === 'true' });
+  } catch (err) {
+    console.error('Admin settings read error:', err);
+    res.status(500).json({ error: 'Could not load settings.' });
+  }
+});
+
+// Admin: flip Skills Training registration on/off.
+router.post('/admin/settings/skills-training', requireAdmin, async (req, res) => {
+  const { open } = req.body || {};
+  if (typeof open !== 'boolean') {
+    return res.status(400).json({ error: '"open" must be true or false.' });
+  }
+  try {
+    await setSetting('skills_training_open', open ? 'true' : 'false');
+    res.json({ ok: true, skillsTrainingOpen: open });
+  } catch (err) {
+    console.error('Admin settings toggle error:', err);
+    res.status(500).json({ error: 'Could not update settings.' });
+  }
 });
 
 router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
@@ -28,6 +55,43 @@ router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
       )
     : await pool.query('SELECT * FROM join_registrations ORDER BY submitted_at DESC');
   res.json(result.rows);
+});
+
+// Deleting a registration frees up its slot automatically — the "Full"
+// status on the site is computed live from the row count, so as soon as a
+// row is removed here the grade reopens as "Available" on its own.
+router.delete('/admin/join-registrations/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM join_registrations WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: 'Registration not found.' });
+    }
+    res.json({ ok: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Delete join registration error:', err);
+    res.status(500).json({ error: 'Could not delete registration.' });
+  }
+});
+
+router.delete('/admin/skills-registrations/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM skills_registrations WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: 'Registration not found.' });
+    }
+    res.json({ ok: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Delete skills registration error:', err);
+    res.status(500).json({ error: 'Could not delete registration.' });
+  }
 });
 
 router.get('/admin/summary', requireAdmin, async (req, res) => {

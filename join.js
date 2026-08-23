@@ -6,7 +6,42 @@ const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
-const VALID_GROUPS = new Set(['4-5', '6-7', '8-9', '10-11']);
+const VALID_GROUPS = new Set(['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade']);
+
+// Pre-K through 3rd grade cap at 15; 4th–6th grade cap at 20.
+const CAPACITY = {
+  'pre-k': 15,
+  'kindergarten': 15,
+  '1st-grade': 15,
+  '2nd-grade': 15,
+  '3rd-grade': 15,
+  '4th-grade': 20,
+  '5th-grade': 20,
+  '6th-grade': 20,
+};
+
+// Public: current registration counts + full/available status for every grade.
+// The frontend polls this to show "Available" / "Full" on the join cards.
+router.get('/join/status', async (req, res) => {
+  try {
+    const countRes = await pool.query(
+      'SELECT age_group, COUNT(*)::int AS n FROM join_registrations GROUP BY age_group'
+    );
+    const counts = {};
+    countRes.rows.forEach((r) => { counts[r.age_group] = r.n; });
+
+    const status = {};
+    for (const group of VALID_GROUPS) {
+      const count = counts[group] || 0;
+      const capacity = CAPACITY[group];
+      status[group] = { count, capacity, full: count >= capacity };
+    }
+    res.json(status);
+  } catch (err) {
+    console.error('Join status error:', err);
+    res.status(500).json({ error: 'Could not load registration status.' });
+  }
+});
 
 router.post('/join/:ageGroup', async (req, res) => {
   const { ageGroup } = req.params;
@@ -39,17 +74,32 @@ router.post('/join/:ageGroup', async (req, res) => {
       'SELECT COUNT(*)::int AS n FROM join_registrations WHERE age_group = $1',
       [ageGroup]
     );
-    const jersey = String(((countRes.rows[0].n || 0) + 1) % 99 || 1).padStart(2, '0');
+    const currentCount = countRes.rows[0].n || 0;
+    const capacity = CAPACITY[ageGroup];
 
+    if (currentCount >= capacity) {
+      return res.status(409).json({ error: `This grade is full (${capacity}/${capacity} spots filled).`, full: true });
+    }
+
+    const jersey = String((currentCount + 1) % 99 || 1).padStart(2, '0');
+
+    // Re-check capacity atomically inside the INSERT itself, so two
+    // simultaneous submissions can't both squeeze past the limit.
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
          parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+       WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $14
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
-       parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey]
+       parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey,
+       capacity]
     );
+
+    if (!insertRes.rows[0]) {
+      return res.status(409).json({ error: `This grade is full (${capacity}/${capacity} spots filled).`, full: true });
+    }
 
     const entry = insertRes.rows[0];
     sendJoinRegistrationEmails(entry).catch((e) => console.error('email error', e));

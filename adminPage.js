@@ -30,6 +30,17 @@ module.exports = `<!doctype html>
   a.btn-export{ background:var(--pitch); color:#fff; padding:7px 14px; border-radius:6px; text-decoration:none; }
   .hidden{ display:none; }
   .empty{ padding:20px; color:#888; font-style:italic; }
+  .btn-delete-row{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
+  .btn-delete-row:hover{ background:#b5482f; color:#fff; }
+  .btn-delete-row:disabled{ opacity:0.6; cursor:default; }
+  td:last-child, th:last-child{ white-space:nowrap; }
+  .switch-row{ display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:#333; user-select:none; }
+  .switch-row input{ position:absolute; opacity:0; width:0; height:0; }
+  .switch-track{ position:relative; width:38px; height:22px; background:#c9c2ab; border-radius:20px; transition:background .18s ease; flex-shrink:0; }
+  .switch-thumb{ position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .18s ease; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+  .switch-row input:checked + .switch-track{ background:#2f8f57; }
+  .switch-row input:checked + .switch-track .switch-thumb{ transform:translateX(16px); }
+  .switch-row input:disabled + .switch-track{ opacity:0.5; cursor:default; }
 </style>
 </head>
 <body>
@@ -51,7 +62,14 @@ module.exports = `<!doctype html>
 
     <div class="section-head">
       <h2>Skills Training</h2>
-      <a class="btn-export" id="exportSkills" href="#">Export CSV</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <label class="switch-row">
+          <input type="checkbox" id="skillsOpenToggle">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span id="skillsOpenLabel">Registration open</span>
+        </label>
+        <a class="btn-export" id="exportSkills" href="#">Export CSV</a>
+      </div>
     </div>
     <div id="skillsTableWrap"></div>
 
@@ -59,11 +77,15 @@ module.exports = `<!doctype html>
       <h2>Join Sultans FC</h2>
       <div>
         <select id="ageGroupFilter">
-          <option value="">All age groups</option>
-          <option value="4-5">4–5</option>
-          <option value="6-7">6–7</option>
-          <option value="8-9">8–9</option>
-          <option value="10-11">10–11</option>
+          <option value="">All grades</option>
+          <option value="pre-k">Pre-K</option>
+          <option value="kindergarten">Kindergarten</option>
+          <option value="1st-grade">1st Grade</option>
+          <option value="2nd-grade">2nd Grade</option>
+          <option value="3rd-grade">3rd Grade</option>
+          <option value="4th-grade">4th Grade</option>
+          <option value="5th-grade">5th Grade</option>
+          <option value="6th-grade">6th Grade</option>
         </select>
         <a class="btn-export" id="exportJoin" href="#">Export CSV</a>
       </div>
@@ -128,24 +150,52 @@ module.exports = `<!doctype html>
 
   document.getElementById('logoutBtn').addEventListener('click', () => { clearToken(); showLogin(); });
 
-  function renderTable(rows, columns){
+  function renderTable(rows, columns, opts = {}){
     if (!rows.length) return '<div class="empty">No entries yet.</div>';
-    let html = '<table><thead><tr>' + columns.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
+    const cols = opts.onDelete ? [...columns, { key:'__actions', label:'' }] : columns;
+    let html = '<table><thead><tr>' + cols.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
     for (const row of rows) {
-      html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('') + '</tr>';
+      html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
+      if (opts.onDelete) {
+        html += \`<td><button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button></td>\`;
+      }
+      html += '</tr>';
     }
     html += '</tbody></table>';
     return html;
   }
 
+  function wireDeleteButtons(wrapId, onDelete){
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm('Delete this registration? This cannot be undone, and will free up the slot immediately.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+        try {
+          await onDelete(id);
+        } catch (e) {
+          alert('Could not delete this registration. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Delete';
+        }
+      });
+    });
+  }
+
   async function loadSummary(){
     const s = await api('/api/admin/summary');
-    const groups = ['4-5','6-7','8-9','10-11'];
+    const groups = ['pre-k','kindergarten','1st-grade','2nd-grade','3rd-grade','4th-grade','5th-grade','6th-grade'];
+    const groupLabels = {
+      'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade',
+      '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
+    };
     const counts = Object.fromEntries(groups.map(g => [g, 0]));
     (s.joinCountsByAgeGroup || []).forEach(r => { counts[r.age_group] = r.n; });
     document.getElementById('summary').innerHTML = \`
       <div class="card"><div class="n">\${s.skillsTrainingCount}</div><div class="l">Skills Training</div></div>
-      \${groups.map(g => \`<div class="card"><div class="n">\${counts[g]}</div><div class="l">Join FC \${g}</div></div>\`).join('')}
+      \${groups.map(g => \`<div class="card"><div class="n">\${counts[g]}</div><div class="l">Join FC \${groupLabels[g]}</div></div>\`).join('')}
     \`;
   }
 
@@ -160,15 +210,25 @@ module.exports = `<!doctype html>
       { key:'team', label:'Team' },
       { key:'experience', label:'Experience' },
       { key:'submitted_at', label:'Submitted' },
-    ]);
+    ], { onDelete: true });
+    wireDeleteButtons('skillsTableWrap', async (id) => {
+      await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
+      await Promise.all([loadSummary(), loadSkills()]);
+    });
   }
+
+  const GRADE_LABELS = {
+    'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade',
+    '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
+  };
 
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
-    document.getElementById('joinTableWrap').innerHTML = renderTable(rows, [
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group }));
+    document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
-      { key:'age_group', label:'Group' },
+      { key:'age_group', label:'Grade' },
       { key:'child_name', label:'Player' },
       { key:'dob', label:'DOB' },
       { key:'parent_name', label:'Parent' },
@@ -176,7 +236,11 @@ module.exports = `<!doctype html>
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
       { key:'submitted_at', label:'Submitted' },
-    ]);
+    ], { onDelete: true });
+    wireDeleteButtons('joinTableWrap', async (id) => {
+      await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
+      await Promise.all([loadSummary(), loadJoin()]);
+    });
   }
 
   function wireExportLinks(){
@@ -194,8 +258,36 @@ module.exports = `<!doctype html>
     document.getElementById('ageGroupFilter').addEventListener('change', loadJoin);
   }
 
+  async function loadSkillsToggle(){
+    const s = await api('/api/admin/settings');
+    const toggle = document.getElementById('skillsOpenToggle');
+    const label = document.getElementById('skillsOpenLabel');
+    toggle.checked = !!s.skillsTrainingOpen;
+    label.textContent = s.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
+  }
+
+  document.getElementById('skillsOpenToggle').addEventListener('change', async (e) => {
+    const toggle = e.target;
+    const label = document.getElementById('skillsOpenLabel');
+    const desiredState = toggle.checked;
+    toggle.disabled = true;
+    try {
+      const result = await api('/api/admin/settings/skills-training', {
+        method: 'POST',
+        body: JSON.stringify({ open: desiredState }),
+      });
+      toggle.checked = !!result.skillsTrainingOpen;
+      label.textContent = result.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
+    } catch (err) {
+      toggle.checked = !desiredState;
+      alert('Could not update the Skills Training toggle. Please try again.');
+    } finally {
+      toggle.disabled = false;
+    }
+  });
+
   async function loadAll(){
-    await Promise.all([loadSummary(), loadSkills(), loadJoin()]);
+    await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle()]);
   }
 
   wireExportLinks();

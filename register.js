@@ -1,13 +1,36 @@
 const express = require('express');
 const pool = require('./pool');
 const { sendSkillsRegistrationEmails } = require('./email');
+const { getSetting } = require('./settings');
 
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
 
+// Public: is Skills Training registration currently open?
+// The frontend checks this before showing the registration form.
+router.get('/register/status', async (req, res) => {
+  try {
+    const value = await getSetting('skills_training_open', 'true');
+    res.json({ open: value === 'true' });
+  } catch (err) {
+    console.error('Register status error:', err);
+    res.status(500).json({ error: 'Could not load registration status.' });
+  }
+});
+
 router.post('/register', async (req, res) => {
+  try {
+    const openValue = await getSetting('skills_training_open', 'true');
+    if (openValue !== 'true') {
+      return res.status(403).json({ error: 'Skills Training registration is currently closed.', closed: true });
+    }
+  } catch (err) {
+    console.error('Register status check error:', err);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+
   const { fullName, dob, email, phone, team, experience, notes } = req.body || {};
 
   const errors = {};
