@@ -10,6 +10,9 @@ module.exports = `<!doctype html>
   body{ margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:#f4f1e8; color:#1c2a20; }
   header{ background:var(--pitch-deep); color:var(--chalk); padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
   header h1{ font-size:1.15rem; margin:0; }
+  header .header-brand{ display:flex; align-items:center; gap:12px; }
+  header .header-brand img{ height:36px; width:auto; display:block; }
+  #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
   header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }
   main{ max-width:1100px; margin:0 auto; padding:28px; }
   #login-view{ max-width:360px; margin:80px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.08); }
@@ -75,6 +78,7 @@ module.exports = `<!doctype html>
 <body>
 
 <div id="login-view">
+  <img class="login-logo" src="/assets/logo.png" alt="RCH Elite Training">
   <h2>Admin login</h2>
   <input type="password" id="pw" placeholder="Password" autofocus>
   <button id="loginBtn">Log in</button>
@@ -83,7 +87,10 @@ module.exports = `<!doctype html>
 
 <div id="app-view" class="hidden">
   <header>
-    <h1>RCH Elite Training — Registrations</h1>
+    <div class="header-brand">
+      <img src="/assets/logo.png" alt="RCH Elite Training">
+      <h1>RCH Elite Training — Registrations</h1>
+    </div>
     <button id="logoutBtn">Log out</button>
   </header>
   <main>
