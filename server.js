@@ -12,6 +12,7 @@ const joinRoutes = require('./join');
 const adminRoutes = require('./admin');
 const { router: paymentRoutes, handleStripeWebhook } = require('./payments');
 const paymentPageHtml = require('./paymentPage');
+const playersRoutes = require('./players');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api', registerRoutes);
 app.use('/api', joinRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', playersRoutes);
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
@@ -53,6 +55,12 @@ app.get('/pay/:token', (req, res) => {
 });
 app.get('/pay/:token/success', (req, res) => {
   res.type('html').send(paymentPageHtml);
+});
+
+// Logo, served as a real file (not a data: URI) — email clients like Gmail
+// don't reliably render inline base64 images, only hosted image URLs.
+app.get('/assets/logo.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'assets', 'logo.png'));
 });
 
 app.get('/health', (req, res) => res.json({ ok: true }));

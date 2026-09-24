@@ -1,5 +1,3 @@
-const logo = require('./logo');
-
 module.exports = `<!doctype html>
 <html lang="en">
 <head>
@@ -37,7 +35,7 @@ module.exports = `<!doctype html>
 <body>
 
 <div class="card">
-  <img class="logo" src="${logo}" alt="RCH Elite Training">
+  <img class="logo" src="/assets/logo.png" alt="RCH Elite Training">
   <div id="loading">Loading…</div>
 
   <div id="pay-view" class="hidden">

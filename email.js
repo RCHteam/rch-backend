@@ -1,15 +1,17 @@
-const logo = require('./logo');
-
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.CLUB_FROM_EMAIL;
 const NOTIFY = process.env.CLUB_NOTIFY_EMAIL;
+
+// A real hosted URL, not a data: URI — Gmail and most email clients don't
+// reliably render inline base64 images in emails, only linked images.
+const LOGO_URL = (process.env.PUBLIC_BASE_URL || 'https://rch-backend-1.onrender.com') + '/assets/logo.png';
 
 // Wraps an email's inner content with a consistent branded header/footer.
 function brandedEmail(innerHtml) {
   return `
     <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif; max-width:520px; margin:0 auto;">
       <div style="background:#0c2a1c; padding:24px; text-align:center;">
-        <img src="${logo}" alt="RCH Elite Training" style="max-width:200px; width:100%; height:auto;">
+        <img src="${LOGO_URL}" alt="RCH Elite Training" width="200" style="max-width:200px; width:100%; height:auto; display:block; margin:0 auto;">
       </div>
       <div style="background:#ffffff; padding:28px 24px; color:#1c2a20; font-size:0.95rem; line-height:1.6;">
         ${innerHtml}

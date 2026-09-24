@@ -10,7 +10,10 @@ function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
   const Stripe = require('stripe');
-  return new Stripe(key);
+  // Pinned explicitly (rather than relying on the account's dashboard-configured
+  // default) because billing_cycle_anchor_config below requires 2026-06-24.dahlia
+  // or later.
+  return new Stripe(key, { apiVersion: '2026-08-26.dahlia' });
 }
 
 function siteUrl(req) {
@@ -145,6 +148,13 @@ router.post('/pay/:token/checkout', async (req, res) => {
           quantity: 1,
         },
       ],
+      subscription_data: {
+        // All families are billed on the same day of the month regardless of
+        // when they actually check out — Stripe prorates the first invoice
+        // for the partial period up to that date, then bills in full from
+        // then on.
+        billing_cycle_anchor_config: { day_of_month: 3 },
+      },
       success_url: `${base}/pay/${entry.token}/success`,
       cancel_url: `${base}/pay/${entry.token}`,
       metadata: { payment_link_token: entry.token },

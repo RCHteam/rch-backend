@@ -67,3 +67,31 @@ CREATE TABLE IF NOT EXISTS payment_links (
 );
 
 CREATE INDEX IF NOT EXISTS idx_payment_links_token ON payment_links(token);
+
+-- Confirmed/active players roster — separate from the registrations tables
+-- above (which are the public signup intake). This is the day-to-day
+-- managed list of enrolled players, mirroring the club's per-grade roster
+-- spreadsheet (name, DOB, parent contact, program enrollment, sessions,
+-- discount).
+CREATE TABLE IF NOT EXISTS players (
+  id             SERIAL PRIMARY KEY,
+  grade          TEXT NOT NULL CHECK (grade IN ('pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade')),
+  player_name    TEXT NOT NULL,
+  dob            DATE,
+  parent_name    TEXT,
+  parent_phone   TEXT,
+  parent_email   TEXT,
+  session_type   TEXT NOT NULL DEFAULT 'one' CHECK (session_type IN ('one', 'two')),
+  rch            BOOLEAN NOT NULL DEFAULT false,
+  sultans        BOOLEAN NOT NULL DEFAULT false,
+  discount_cents INTEGER NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_players_grade ON players(grade);
+
+-- Per-session prices used to compute the revenue table from roster counts
+-- (admin-editable from the dashboard, same pattern as the Skills Training
+-- toggle above).
+INSERT INTO site_settings (key, value) VALUES ('price_one_session_cents', '15000') ON CONFLICT (key) DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('price_two_session_cents', '25000') ON CONFLICT (key) DO NOTHING;

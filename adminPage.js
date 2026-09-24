@@ -62,6 +62,14 @@ module.exports = `<!doctype html>
   .modal .modal-error{ color:#b5482f; font-size:0.85rem; margin-top:10px; min-height:1.1em; }
   .modal .two-col{ display:flex; gap:10px; }
   .modal .two-col > div{ flex:1; }
+  .checkbox-row{ display:flex; align-items:center; gap:6px; margin-top:14px; }
+  .checkbox-row input[type="checkbox"]{ width:auto; }
+  .checkbox-row label{ margin:0; font-weight:400; }
+  .pricing-box{ background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px; display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; }
+  .pricing-box label{ display:block; font-size:0.8rem; font-weight:600; color:#444; }
+  .pricing-box input{ margin-top:5px; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; width:140px; }
+  .pricing-saved{ color:#2f8f57; font-size:0.85rem; font-weight:600; }
+  table tfoot td, table tr.grand-total td{ font-weight:700; background:#f0ece0; }
 </style>
 </head>
 <body>
@@ -114,7 +122,90 @@ module.exports = `<!doctype html>
       </div>
     </div>
     <div id="joinTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Players Roster</h2>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <select id="rosterGradeFilter">
+          <option value="pre-k">Pre-K</option>
+          <option value="kindergarten">Kindergarten</option>
+          <option value="1st-grade">1st Grade</option>
+          <option value="2nd-grade">2nd Grade</option>
+          <option value="3rd-grade">3rd Grade</option>
+          <option value="4th-grade">4th Grade</option>
+          <option value="5th-grade">5th Grade</option>
+          <option value="6th-grade">6th Grade</option>
+        </select>
+        <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
+      </div>
+    </div>
+    <div id="rosterTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Season Overview — All Grades</h2>
+    </div>
+    <div id="overviewTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Pricing &amp; Revenue</h2>
+    </div>
+    <div class="pricing-box">
+      <div>
+        <label for="priceOneInput">Price per Player — One Session</label>
+        <input type="number" id="priceOneInput" min="0" step="0.01">
+      </div>
+      <div>
+        <label for="priceTwoInput">Price per Player — Two Sessions</label>
+        <input type="number" id="priceTwoInput" min="0" step="0.01">
+      </div>
+      <button type="button" class="btn-add" id="savePricingBtn">Save Prices</button>
+      <span class="pricing-saved" id="pricingSaved"></span>
+    </div>
+    <div id="revenueTableWrap"></div>
   </main>
+</div>
+
+<div class="modal-overlay hidden" id="addPlayerModal">
+  <div class="modal">
+    <h3>Add Player</h3>
+    <label for="apGrade">Grade</label>
+    <select id="apGrade">
+      <option value="pre-k">Pre-K</option>
+      <option value="kindergarten">Kindergarten</option>
+      <option value="1st-grade">1st Grade</option>
+      <option value="2nd-grade">2nd Grade</option>
+      <option value="3rd-grade">3rd Grade</option>
+      <option value="4th-grade">4th Grade</option>
+      <option value="5th-grade">5th Grade</option>
+      <option value="6th-grade">6th Grade</option>
+    </select>
+    <label for="apName">Player name</label>
+    <input type="text" id="apName">
+    <label for="apDob">Date of birth</label>
+    <input type="date" id="apDob">
+    <div class="two-col">
+      <div><label for="apParentName">Parent name</label><input type="text" id="apParentName"></div>
+      <div><label for="apParentPhone">Parent phone</label><input type="text" id="apParentPhone"></div>
+    </div>
+    <label for="apParentEmail">Parent email</label>
+    <input type="email" id="apParentEmail">
+    <label for="apSessions">Sessions</label>
+    <select id="apSessions">
+      <option value="one">One</option>
+      <option value="two">Two</option>
+    </select>
+    <div class="two-col">
+      <div class="checkbox-row"><input type="checkbox" id="apRch"><label for="apRch">RCH</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="apSultans"><label for="apSultans">Sultans</label></div>
+    </div>
+    <label for="apDiscount">Discount ($)</label>
+    <input type="number" id="apDiscount" min="0" step="0.01" value="0">
+    <p class="modal-error" id="addPlayerError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="addPlayerCancel">Cancel</button>
+      <button type="button" class="btn-send" id="addPlayerSubmit">Add</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay hidden" id="paymentModal">
@@ -587,6 +678,192 @@ module.exports = `<!doctype html>
     wirePaymentLinkButtons('joinTableWrap', 'join', loadJoin);
   }
 
+  // ---- Players Roster, Season Overview, Pricing & Revenue ----
+
+  const GRADES = ['pre-k','kindergarten','1st-grade','2nd-grade','3rd-grade','4th-grade','5th-grade','6th-grade'];
+  let currentPricing = { priceOneCents: 15000, priceTwoCents: 25000 };
+  let lastOverview = null;
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderRosterTable(rows){
+    if (!rows.length) return '<div class="empty">No players yet.</div>';
+    let html = '<table><thead><tr>' +
+      '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
+      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th></th>' +
+      '</tr></thead><tbody>';
+    rows.forEach((r) => {
+      html += '<tr>' +
+        '<td>' + escapeHtml(r.player_name) + '</td>' +
+        '<td>' + escapeHtml(r.dob || '') + '</td>' +
+        '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
+        '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
+        '<td>' + escapeHtml(r.parent_email || '') + '</td>' +
+        '<td>' + (r.session_type === 'two' ? 'Two' : 'One') + '</td>' +
+        '<td>' + (r.rch ? '✓' : '—') + '</td>' +
+        '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
+        '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
+        '<td><button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadRoster(){
+    const grade = document.getElementById('rosterGradeFilter').value;
+    const rows = await api('/api/admin/players?grade=' + encodeURIComponent(grade));
+    const wrap = document.getElementById('rosterTableWrap');
+    wrap.innerHTML = renderRosterTable(rows);
+    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
+        btn.disabled = true;
+        try {
+          await api('/api/admin/players/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+          await Promise.all([loadRoster(), loadOverviewAndRevenue()]);
+        } catch (e) {
+          alert('Could not delete this player. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+  document.getElementById('rosterGradeFilter').addEventListener('change', loadRoster);
+
+  function renderOverviewTable(overview){
+    let html = '<table><thead><tr><th>Grade</th><th>Total Players</th><th>Total RCH</th>' +
+      '<th>Total Sultans</th><th>Total Both</th><th>Total One Session</th><th>Total Two Session</th></tr></thead><tbody>';
+    const grand = { players:0, rch:0, sultans:0, both:0, one:0, two:0 };
+    GRADES.forEach((g) => {
+      const o = overview[g] || { totalPlayers:0, totalRch:0, totalSultans:0, totalBoth:0, totalOne:0, totalTwo:0 };
+      grand.players += o.totalPlayers; grand.rch += o.totalRch; grand.sultans += o.totalSultans;
+      grand.both += o.totalBoth; grand.one += o.totalOne; grand.two += o.totalTwo;
+      html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalPlayers + '</td><td>' + o.totalRch + '</td>' +
+        '<td>' + o.totalSultans + '</td><td>' + o.totalBoth + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td></tr>';
+    });
+    html += '<tr class="grand-total"><td>GRAND TOTAL</td><td>' + grand.players + '</td><td>' + grand.rch + '</td>' +
+      '<td>' + grand.sultans + '</td><td>' + grand.both + '</td><td>' + grand.one + '</td><td>' + grand.two + '</td></tr>';
+    html += '</tbody></table>';
+    return html;
+  }
+
+  function renderRevenueTable(overview, pricing){
+    let html = '<table><thead><tr><th>Grade</th><th>One-Session Players</th><th>Two-Session Players</th>' +
+      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Discounts</th><th>Total Revenue</th></tr></thead><tbody>';
+    const totals = { one:0, two:0, revOne:0, revTwo:0, disc:0, total:0 };
+    GRADES.forEach((g) => {
+      const o = overview[g] || { totalOne:0, totalTwo:0, totalDiscountCents:0 };
+      const revOne = o.totalOne * pricing.priceOneCents;
+      const revTwo = o.totalTwo * pricing.priceTwoCents;
+      const disc = o.totalDiscountCents || 0;
+      const total = revOne + revTwo - disc;
+      totals.one += o.totalOne; totals.two += o.totalTwo;
+      totals.revOne += revOne; totals.revTwo += revTwo; totals.disc += disc; totals.total += total;
+      html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td>' +
+        '<td>$' + (revOne/100).toFixed(2) + '</td><td>$' + (revTwo/100).toFixed(2) + '</td>' +
+        '<td>$' + (disc/100).toFixed(2) + '</td><td>$' + (total/100).toFixed(2) + '</td></tr>';
+    });
+    html += '<tr class="grand-total"><td>TOTAL WON (Revenue)</td><td>' + totals.one + '</td><td>' + totals.two + '</td>' +
+      '<td>$' + (totals.revOne/100).toFixed(2) + '</td><td>$' + (totals.revTwo/100).toFixed(2) + '</td>' +
+      '<td>$' + (totals.disc/100).toFixed(2) + '</td><td>$' + (totals.total/100).toFixed(2) + '</td></tr>';
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadOverviewAndRevenue(){
+    const overview = await api('/api/admin/players-overview');
+    lastOverview = overview;
+    document.getElementById('overviewTableWrap').innerHTML = renderOverviewTable(overview);
+    document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(overview, currentPricing);
+  }
+
+  async function loadPricing(){
+    const p = await api('/api/admin/pricing');
+    currentPricing = p;
+    document.getElementById('priceOneInput').value = (p.priceOneCents / 100).toFixed(2);
+    document.getElementById('priceTwoInput').value = (p.priceTwoCents / 100).toFixed(2);
+  }
+
+  document.getElementById('savePricingBtn').addEventListener('click', async () => {
+    const priceOneCents = Math.round(parseFloat(document.getElementById('priceOneInput').value || '0') * 100);
+    const priceTwoCents = Math.round(parseFloat(document.getElementById('priceTwoInput').value || '0') * 100);
+    const btn = document.getElementById('savePricingBtn');
+    btn.disabled = true;
+    try {
+      currentPricing = await api('/api/admin/pricing', {
+        method: 'POST',
+        body: JSON.stringify({ priceOneCents, priceTwoCents }),
+      });
+      const savedMsg = document.getElementById('pricingSaved');
+      savedMsg.textContent = 'Saved.';
+      setTimeout(() => { savedMsg.textContent = ''; }, 2000);
+      if (lastOverview) {
+        document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(lastOverview, currentPricing);
+      }
+    } catch (e) {
+      alert('Could not save pricing. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('addPlayerBtn').addEventListener('click', () => {
+    document.getElementById('apGrade').value = document.getElementById('rosterGradeFilter').value;
+    ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('apSessions').value = 'one';
+    document.getElementById('apRch').checked = false;
+    document.getElementById('apSultans').checked = false;
+    document.getElementById('apDiscount').value = '0';
+    document.getElementById('addPlayerError').textContent = '';
+    document.getElementById('addPlayerModal').classList.remove('hidden');
+  });
+  document.getElementById('addPlayerCancel').addEventListener('click', () => {
+    document.getElementById('addPlayerModal').classList.add('hidden');
+  });
+  document.getElementById('addPlayerSubmit').addEventListener('click', async () => {
+    const errEl = document.getElementById('addPlayerError');
+    errEl.textContent = '';
+    const grade = document.getElementById('apGrade').value;
+    const payload = {
+      grade: grade,
+      playerName: document.getElementById('apName').value.trim(),
+      dob: document.getElementById('apDob').value,
+      parentName: document.getElementById('apParentName').value.trim(),
+      parentPhone: document.getElementById('apParentPhone').value.trim(),
+      parentEmail: document.getElementById('apParentEmail').value.trim(),
+      sessionType: document.getElementById('apSessions').value,
+      rch: document.getElementById('apRch').checked,
+      sultans: document.getElementById('apSultans').checked,
+      discountCents: Math.round(parseFloat(document.getElementById('apDiscount').value || '0') * 100),
+    };
+    if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
+    const btn = document.getElementById('addPlayerSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+    try {
+      const result = await api('/api/admin/players', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        document.getElementById('addPlayerModal').classList.add('hidden');
+        if (document.getElementById('rosterGradeFilter').value === grade) {
+          await loadRoster();
+        }
+        await loadOverviewAndRevenue();
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not add this player. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add';
+    }
+  });
+
   function wireExportLinks(){
     document.getElementById('exportSkills').addEventListener('click', (e) => {
       e.preventDefault();
@@ -631,7 +908,9 @@ module.exports = `<!doctype html>
   });
 
   async function loadAll(){
-    await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle()]);
+    await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster()]);
+    await loadPricing();
+    await loadOverviewAndRevenue();
   }
 
   wireExportLinks();
