@@ -22,9 +22,9 @@ function siteUrl(req) {
 // Admin: after you've approved a family, generate their unique payment link
 // and email it to them immediately.
 router.post('/admin/payment-links', requireAdmin, async (req, res) => {
-  const { registrationType, registrationId, seasonEndDate } = req.body || {};
-  const oneTimeAmount = Number(req.body?.oneTimeAmount) || 17000; // cents — $170 default
-  const monthlyAmount = Number(req.body?.monthlyAmount) || 11000; // cents — $110 default
+  const { registrationType, registrationId, seasonEndDate, tierLabel } = req.body || {};
+  const oneTimeAmount = Number(req.body?.oneTimeAmount) || 5000; // cents — $50 kit fee default
+  const monthlyAmount = Number(req.body?.monthlyAmount) || 6210; // cents — $62.10/mo (1x/week) default
 
   if (!['skills', 'join'].includes(registrationType)) {
     return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
@@ -52,6 +52,8 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
       email = r.rows[0].email;
       programLabel = `Sultans FC — ${r.rows[0].age_group}`;
     }
+
+    if (tierLabel) programLabel = `${programLabel} (${tierLabel})`;
 
     const token = crypto.randomBytes(24).toString('hex');
 
@@ -114,9 +116,13 @@ router.post('/pay/:token/checkout', async (req, res) => {
       return res.status(409).json({ error: 'This payment link has already been used.' });
     }
 
-    const cancelAt = Math.floor(new Date(`${entry.season_end_date}T23:59:59Z`).getTime() / 1000);
     const base = siteUrl(req);
 
+    // NOTE: Stripe's Checkout Session API does not accept subscription_data.cancel_at
+    // at session-creation time (it's a Subscription-only field, not a Checkout Session
+    // field) — setting it here fails with a "parameter_unknown" error. Instead, the
+    // subscription's cancel_at is set right after checkout completes, in the
+    // checkout.session.completed webhook handler below.
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer_email: entry.email,
@@ -139,9 +145,6 @@ router.post('/pay/:token/checkout', async (req, res) => {
           quantity: 1,
         },
       ],
-      subscription_data: {
-        cancel_at: cancelAt,
-      },
       success_url: `${base}/pay/${entry.token}/success`,
       cancel_url: `${base}/pay/${entry.token}`,
       metadata: { payment_link_token: entry.token },
@@ -183,6 +186,22 @@ async function handleStripeWebhook(req, res) {
            WHERE token = $3`,
           [session.customer, session.subscription, token]
         );
+
+        // Now that the subscription actually exists, set it to auto-cancel at
+        // the season end date (this can't be done at Checkout Session creation
+        // time — see the note in the /pay/:token/checkout route above).
+        if (session.subscription) {
+          const r = await pool.query('SELECT season_end_date FROM payment_links WHERE token = $1', [token]);
+          const seasonEndDate = r.rows[0] && r.rows[0].season_end_date;
+          if (seasonEndDate) {
+            const cancelAt = Math.floor(new Date(seasonEndDate).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
+            try {
+              await stripe.subscriptions.update(session.subscription, { cancel_at: cancelAt });
+            } catch (cancelErr) {
+              console.error('Failed to set subscription cancel_at:', cancelErr.message);
+            }
+          }
+        }
       }
     }
     if (event.type === 'customer.subscription.deleted') {

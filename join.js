@@ -116,3 +116,5 @@ router.post('/join/:ageGroup', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.CAPACITY = CAPACITY;
+module.exports.VALID_GROUPS = VALID_GROUPS;

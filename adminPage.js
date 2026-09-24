@@ -44,6 +44,24 @@ module.exports = `<!doctype html>
   .switch-row input:checked + .switch-track{ background:#2f8f57; }
   .switch-row input:checked + .switch-track .switch-thumb{ transform:translateX(16px); }
   .switch-row input:disabled + .switch-track{ opacity:0.5; cursor:default; }
+  .btn-add{ background:var(--gold); color:#1c2a20; border:none; padding:7px 14px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.85rem; }
+  .modal-overlay{ position:fixed; inset:0; background:rgba(12,42,28,0.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
+  .modal-overlay.hidden{ display:none; }
+  .modal{ background:#fff; border-radius:10px; padding:26px 28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  .modal h3{ margin:0 0 4px; font-size:1.1rem; }
+  .modal .modal-sub{ color:#666; font-size:0.85rem; margin-bottom:6px; }
+  .modal label{ display:block; font-size:0.8rem; font-weight:600; color:#444; margin:14px 0 5px; }
+  .modal select, .modal input, .modal textarea{ width:100%; padding:9px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; font-family:inherit; }
+  .modal textarea{ resize:vertical; min-height:56px; }
+  .modal .modal-amounts{ background:#f4f1e8; border-radius:6px; padding:10px 12px; margin-top:16px; font-size:0.85rem; color:#333; line-height:1.5; }
+  .modal .modal-actions{ display:flex; gap:10px; margin-top:22px; }
+  .modal .modal-actions button{ flex:1; padding:10px; border-radius:6px; font-weight:700; cursor:pointer; border:none; font-size:0.92rem; }
+  .modal .btn-cancel{ background:#eee; color:#333; }
+  .modal .btn-send{ background:var(--pitch); color:#fff; }
+  .modal .btn-send:disabled{ opacity:0.6; cursor:default; }
+  .modal .modal-error{ color:#b5482f; font-size:0.85rem; margin-top:10px; min-height:1.1em; }
+  .modal .two-col{ display:flex; gap:10px; }
+  .modal .two-col > div{ flex:1; }
 </style>
 </head>
 <body>
@@ -71,6 +89,7 @@ module.exports = `<!doctype html>
           <span class="switch-track"><span class="switch-thumb"></span></span>
           <span id="skillsOpenLabel">Registration open</span>
         </label>
+        <button type="button" class="btn-add" id="addSkillsBtn">+ Add Registration</button>
         <a class="btn-export" id="exportSkills" href="#">Export CSV</a>
       </div>
     </div>
@@ -90,11 +109,110 @@ module.exports = `<!doctype html>
           <option value="5th-grade">5th Grade</option>
           <option value="6th-grade">6th Grade</option>
         </select>
+        <button type="button" class="btn-add" id="addJoinBtn">+ Add Registration</button>
         <a class="btn-export" id="exportJoin" href="#">Export CSV</a>
       </div>
     </div>
     <div id="joinTableWrap"></div>
   </main>
+</div>
+
+<div class="modal-overlay hidden" id="paymentModal">
+  <div class="modal">
+    <h3>Send Payment Link</h3>
+    <p class="modal-sub" id="paymentModalSub"></p>
+    <label for="tierSelect">Service</label>
+    <select id="tierSelect">
+      <option value="one">1x per week — $62.10/mo</option>
+      <option value="two">2x per week — $123.89/mo</option>
+    </select>
+    <label for="seasonSelect">Season</label>
+    <select id="seasonSelect">
+      <option value="fall">Fall</option>
+      <option value="winterbreak">Winter Break</option>
+      <option value="spring">Spring</option>
+      <option value="summer">Summer</option>
+    </select>
+    <label for="seasonEndInput">Billing ends on</label>
+    <input type="date" id="seasonEndInput">
+    <div class="modal-amounts" id="modalAmounts"></div>
+    <p class="modal-error" id="paymentModalError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="paymentModalCancel">Cancel</button>
+      <button type="button" class="btn-send" id="paymentModalSend">Send Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="addSkillsModal">
+  <div class="modal">
+    <h3>Add Skills Training Registration</h3>
+    <p class="modal-sub">For a family you know personally who didn't register on the website.</p>
+    <label for="asFullName">Full name</label>
+    <input type="text" id="asFullName">
+    <label for="asDob">Date of birth</label>
+    <input type="date" id="asDob">
+    <label for="asEmail">Email</label>
+    <input type="email" id="asEmail">
+    <label for="asPhone">Phone (+1 followed by 10 digits)</label>
+    <input type="text" id="asPhone" placeholder="+12145551234">
+    <label for="asTeam">Team</label>
+    <input type="text" id="asTeam">
+    <label for="asExperience">Experience</label>
+    <input type="text" id="asExperience">
+    <label for="asNotes">Notes</label>
+    <textarea id="asNotes"></textarea>
+    <p class="modal-error" id="addSkillsError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="addSkillsCancel">Cancel</button>
+      <button type="button" class="btn-send" id="addSkillsSubmit">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="addJoinModal">
+  <div class="modal">
+    <h3>Add Join Sultans FC Registration</h3>
+    <p class="modal-sub">For a family you know personally who didn't register on the website.</p>
+    <label for="ajAgeGroup">Grade</label>
+    <select id="ajAgeGroup">
+      <option value="pre-k">Pre-K</option>
+      <option value="kindergarten">Kindergarten</option>
+      <option value="1st-grade">1st Grade</option>
+      <option value="2nd-grade">2nd Grade</option>
+      <option value="3rd-grade">3rd Grade</option>
+      <option value="4th-grade">4th Grade</option>
+      <option value="5th-grade">5th Grade</option>
+      <option value="6th-grade">6th Grade</option>
+    </select>
+    <div class="two-col">
+      <div><label for="ajChildName">Player name</label><input type="text" id="ajChildName"></div>
+      <div><label for="ajDob">DOB</label><input type="date" id="ajDob"></div>
+    </div>
+    <label for="ajMotivation">Why they want to join</label>
+    <textarea id="ajMotivation"></textarea>
+    <div class="two-col">
+      <div><label for="ajExperience">Experience</label><input type="text" id="ajExperience"></div>
+      <div><label for="ajAvailability">Availability</label><input type="text" id="ajAvailability"></div>
+    </div>
+    <div class="two-col">
+      <div><label for="ajParentName">Parent name</label><input type="text" id="ajParentName"></div>
+      <div><label for="ajEmail">Email</label><input type="email" id="ajEmail"></div>
+    </div>
+    <label for="ajPhone">Phone (+1 followed by 10 digits)</label>
+    <input type="text" id="ajPhone" placeholder="+12145551234">
+    <div class="two-col">
+      <div><label for="ajEmName">Emergency contact name</label><input type="text" id="ajEmName"></div>
+      <div><label for="ajEmPhone">Emergency contact phone</label><input type="text" id="ajEmPhone" placeholder="+12145551234"></div>
+    </div>
+    <label for="ajMedical">Medical / allergies</label>
+    <textarea id="ajMedical"></textarea>
+    <p class="modal-error" id="addJoinError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="addJoinCancel">Cancel</button>
+      <button type="button" class="btn-send" id="addJoinSubmit">Add</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -163,7 +281,8 @@ module.exports = `<!doctype html>
       if (hasActions) {
         html += '<td style="display:flex; gap:6px;">';
         if (opts.onPaymentLink) {
-          html += \`<button type="button" class="btn-payment-link" data-id="\${row[opts.idKey || 'id']}">Send Payment Link</button>\`;
+          const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
+          html += \`<button type="button" class="btn-payment-link" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Send Payment Link</button>\`;
         }
         if (opts.onDelete) {
           html += \`<button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button>\`;
@@ -179,32 +298,204 @@ module.exports = `<!doctype html>
   function wirePaymentLinkButtons(wrapId, registrationType, onSent){
     const wrap = document.getElementById(wrapId);
     wrap.querySelectorAll('.btn-payment-link').forEach((btn) => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        const seasonEndDate = prompt('Season end date (YYYY-MM-DD) — monthly billing stops automatically on this date:');
-        if (!seasonEndDate) return;
-        if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(seasonEndDate)) {
-          alert('Please enter the date as YYYY-MM-DD, e.g. 2026-12-15.');
-          return;
-        }
-        btn.disabled = true;
-        btn.textContent = 'Sending…';
-        try {
-          const result = await api('/api/admin/payment-links', {
-            method: 'POST',
-            body: JSON.stringify({ registrationType, registrationId: id, seasonEndDate }),
-          });
-          alert('Payment link sent to ' + result.entry.email + '.\\n\\nLink (in case you want to copy it too):\\n' + result.link);
-          await onSent();
-        } catch (e) {
-          alert('Could not send the payment link. Please try again.');
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Send Payment Link';
-        }
+        const label = btn.getAttribute('data-label') || '';
+        openPaymentModal(registrationType, id, label, onSent);
       });
     });
   }
+
+  // ---- Send Payment Link modal (service tier + season picker) ----
+
+  const TIERS = {
+    one: { label: '1x/week', monthly: 6210, priceText: '$62.10/mo' },
+    two: { label: '2x/week', monthly: 12389, priceText: '$123.89/mo' },
+  };
+  const KIT_FEE = 5000;
+  const SEASON_LABELS = { fall: 'Fall', winterbreak: 'Winter Break', spring: 'Spring', summer: 'Summer' };
+  // Approximate Texas youth soccer season windows (PSA Plano/Murphy doesn't
+  // publish exact dates, so these are sensible defaults — always editable
+  // before sending).
+  const SEASON_END_DEFAULTS = { fall: [11, 15], winterbreak: [12, 31], spring: [5, 15], summer: [7, 31] };
+
+  function pad2(n){ return String(n).padStart(2, '0'); }
+
+  function computeSeasonEndDate(seasonKey){
+    const parts = SEASON_END_DEFAULTS[seasonKey];
+    const month = parts[0];
+    const day = parts[1];
+    const now = new Date();
+    let year = now.getFullYear();
+    const candidate = new Date(Date.UTC(year, month - 1, day));
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    if (candidate.getTime() <= today.getTime()) year += 1;
+    return year + '-' + pad2(month) + '-' + pad2(day);
+  }
+
+  let paymentModalCtx = null;
+
+  function updateModalAmounts(){
+    const tier = TIERS[document.getElementById('tierSelect').value];
+    document.getElementById('modalAmounts').innerHTML = 'Kit fee (one-time): $50.00<br>Monthly: ' + tier.priceText;
+  }
+
+  function openPaymentModal(registrationType, id, label, onSent){
+    paymentModalCtx = { registrationType, id, onSent };
+    document.getElementById('paymentModalSub').textContent = label;
+    document.getElementById('tierSelect').value = 'one';
+    document.getElementById('seasonSelect').value = 'fall';
+    document.getElementById('seasonEndInput').value = computeSeasonEndDate('fall');
+    document.getElementById('paymentModalError').textContent = '';
+    updateModalAmounts();
+    document.getElementById('paymentModal').classList.remove('hidden');
+  }
+
+  function closePaymentModal(){
+    document.getElementById('paymentModal').classList.add('hidden');
+    paymentModalCtx = null;
+  }
+
+  document.getElementById('tierSelect').addEventListener('change', updateModalAmounts);
+  document.getElementById('seasonSelect').addEventListener('change', (e) => {
+    document.getElementById('seasonEndInput').value = computeSeasonEndDate(e.target.value);
+  });
+  document.getElementById('paymentModalCancel').addEventListener('click', closePaymentModal);
+
+  document.getElementById('paymentModalSend').addEventListener('click', async () => {
+    if (!paymentModalCtx) return;
+    const seasonEndDate = document.getElementById('seasonEndInput').value;
+    const errEl = document.getElementById('paymentModalError');
+    errEl.textContent = '';
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(seasonEndDate)) {
+      errEl.textContent = 'Please pick a valid billing end date.';
+      return;
+    }
+    const tierKey = document.getElementById('tierSelect').value;
+    const tier = TIERS[tierKey];
+    const seasonKey = document.getElementById('seasonSelect').value;
+    const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey];
+    const ctx = paymentModalCtx;
+
+    const btn = document.getElementById('paymentModalSend');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const result = await api('/api/admin/payment-links', {
+        method: 'POST',
+        body: JSON.stringify({
+          registrationType: ctx.registrationType,
+          registrationId: ctx.id,
+          seasonEndDate,
+          oneTimeAmount: KIT_FEE,
+          monthlyAmount: tier.monthly,
+          tierLabel,
+        }),
+      });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        closePaymentModal();
+        alert('Payment link sent to ' + result.entry.email + '.');
+        await ctx.onSent();
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not send the payment link. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Link';
+    }
+  });
+
+  // ---- Manually add a registration (for families you know personally) ----
+
+  document.getElementById('addSkillsBtn').addEventListener('click', () => {
+    ['asFullName','asDob','asEmail','asPhone','asTeam','asExperience','asNotes'].forEach((id) => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('addSkillsError').textContent = '';
+    document.getElementById('addSkillsModal').classList.remove('hidden');
+  });
+  document.getElementById('addSkillsCancel').addEventListener('click', () => {
+    document.getElementById('addSkillsModal').classList.add('hidden');
+  });
+  document.getElementById('addSkillsSubmit').addEventListener('click', async () => {
+    const errEl = document.getElementById('addSkillsError');
+    errEl.textContent = '';
+    const payload = {
+      fullName: document.getElementById('asFullName').value.trim(),
+      dob: document.getElementById('asDob').value,
+      email: document.getElementById('asEmail').value.trim(),
+      phone: document.getElementById('asPhone').value.trim(),
+      team: document.getElementById('asTeam').value.trim(),
+      experience: document.getElementById('asExperience').value.trim(),
+      notes: document.getElementById('asNotes').value.trim(),
+    };
+    const btn = document.getElementById('addSkillsSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+    try {
+      const result = await api('/api/admin/skills-registrations', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error + (result.fields ? ' (' + Object.values(result.fields).join(' ') + ')' : '');
+      } else {
+        document.getElementById('addSkillsModal').classList.add('hidden');
+        await Promise.all([loadSummary(), loadSkills()]);
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not add this registration. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add';
+    }
+  });
+
+  document.getElementById('addJoinBtn').addEventListener('click', () => {
+    ['ajChildName','ajDob','ajMotivation','ajExperience','ajAvailability','ajParentName','ajEmail','ajPhone','ajEmName','ajEmPhone','ajMedical'].forEach((id) => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ajAgeGroup').value = 'pre-k';
+    document.getElementById('addJoinError').textContent = '';
+    document.getElementById('addJoinModal').classList.remove('hidden');
+  });
+  document.getElementById('addJoinCancel').addEventListener('click', () => {
+    document.getElementById('addJoinModal').classList.add('hidden');
+  });
+  document.getElementById('addJoinSubmit').addEventListener('click', async () => {
+    const errEl = document.getElementById('addJoinError');
+    errEl.textContent = '';
+    const payload = {
+      ageGroup: document.getElementById('ajAgeGroup').value,
+      childName: document.getElementById('ajChildName').value.trim(),
+      dob: document.getElementById('ajDob').value,
+      motivation: document.getElementById('ajMotivation').value.trim(),
+      experience: document.getElementById('ajExperience').value.trim(),
+      availability: document.getElementById('ajAvailability').value.trim(),
+      parentName: document.getElementById('ajParentName').value.trim(),
+      email: document.getElementById('ajEmail').value.trim(),
+      phone: document.getElementById('ajPhone').value.trim(),
+      emName: document.getElementById('ajEmName').value.trim(),
+      emPhone: document.getElementById('ajEmPhone').value.trim(),
+      medical: document.getElementById('ajMedical').value.trim(),
+    };
+    const btn = document.getElementById('addJoinSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+    try {
+      const result = await api('/api/admin/join-registrations', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error + (result.fields ? ' (' + Object.values(result.fields).join(' ') + ')' : '');
+      } else {
+        document.getElementById('addJoinModal').classList.add('hidden');
+        await Promise.all([loadSummary(), loadJoin()]);
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not add this registration. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add';
+    }
+  });
 
   function wireDeleteButtons(wrapId, onDelete){
     const wrap = document.getElementById(wrapId);
@@ -260,7 +551,7 @@ module.exports = `<!doctype html>
       { key:'experience', label:'Experience' },
       { key:'payment_status', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true });
+    ], { onDelete: true, onPaymentLink: true, labelKey: 'full_name' });
     wireDeleteButtons('skillsTableWrap', async (id) => {
       await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadSkills()]);
@@ -288,7 +579,7 @@ module.exports = `<!doctype html>
       { key:'availability', label:'Availability' },
       { key:'payment_status', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true });
+    ], { onDelete: true, onPaymentLink: true, labelKey: 'child_name' });
     wireDeleteButtons('joinTableWrap', async (id) => {
       await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadJoin()]);

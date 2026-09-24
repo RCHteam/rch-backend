@@ -1,3 +1,5 @@
+const logo = require('./logo');
+
 module.exports = `<!doctype html>
 <html lang="en">
 <head>
@@ -5,6 +7,7 @@ module.exports = `<!doctype html>
 <title>RCH Elite Training — Payment</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+  .logo{ display:block; max-width:220px; width:100%; height:auto; margin:0 auto 20px; }
   :root{ --pitch-deep:#0c2a1c; --pitch:#164a30; --gold:#d9a441; --turf:#3fcf7a; --chalk:#f6f2e7; }
   *{ box-sizing:border-box; }
   body{
@@ -34,6 +37,7 @@ module.exports = `<!doctype html>
 <body>
 
 <div class="card">
+  <img class="logo" src="${logo}" alt="RCH Elite Training">
   <div id="loading">Loading…</div>
 
   <div id="pay-view" class="hidden">
@@ -84,10 +88,12 @@ module.exports = `<!doctype html>
       const data = await res.json();
       if (data.status === 'completed') { show('used-view'); return; }
 
+      const prettyDate = new Date(data.seasonEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
       document.getElementById('child-sub').textContent = data.programLabel + ' — ' + data.childName;
       document.getElementById('one-time-amt').textContent = centsToStr(data.oneTimeAmount);
       document.getElementById('monthly-amt').textContent = centsToStr(data.monthlyAmount) + '/mo';
-      document.getElementById('season-note').textContent = 'Monthly payments run automatically through ' + data.seasonEndDate + ', then stop — no need to cancel anything.';
+      document.getElementById('season-note').textContent = 'Your monthly payment will be charged automatically each month and will end on ' + prettyDate + ' — no action needed on your part.';
       show('pay-view');
     } catch (e) {
       show('invalid-view');
