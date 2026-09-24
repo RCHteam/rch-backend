@@ -41,19 +41,31 @@ router.post('/admin/settings/skills-training', requireAdmin, async (req, res) =>
 
 router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
   const result = await pool.query(
-    'SELECT * FROM skills_registrations ORDER BY submitted_at DESC'
+    `SELECT s.*, pl.status AS payment_status
+     FROM skills_registrations s
+     LEFT JOIN LATERAL (
+       SELECT status FROM payment_links
+       WHERE registration_type = 'skills' AND registration_id = s.id
+       ORDER BY created_at DESC LIMIT 1
+     ) pl ON true
+     ORDER BY s.submitted_at DESC`
   );
   res.json(result.rows);
 });
 
 router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
   const { ageGroup } = req.query;
+  const base = `
+    SELECT j.*, pl.status AS payment_status
+    FROM join_registrations j
+    LEFT JOIN LATERAL (
+      SELECT status FROM payment_links
+      WHERE registration_type = 'join' AND registration_id = j.id
+      ORDER BY created_at DESC LIMIT 1
+    ) pl ON true`;
   const result = ageGroup
-    ? await pool.query(
-        'SELECT * FROM join_registrations WHERE age_group = $1 ORDER BY submitted_at DESC',
-        [ageGroup]
-      )
-    : await pool.query('SELECT * FROM join_registrations ORDER BY submitted_at DESC');
+    ? await pool.query(`${base} WHERE j.age_group = $1 ORDER BY j.submitted_at DESC`, [ageGroup])
+    : await pool.query(`${base} ORDER BY j.submitted_at DESC`);
   res.json(result.rows);
 });
 

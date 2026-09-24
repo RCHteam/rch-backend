@@ -1,0 +1,202 @@
+const express = require('express');
+const crypto = require('crypto');
+const pool = require('./pool');
+const { requireAdmin } = require('./auth');
+const { sendPaymentLinkEmail } = require('./email');
+
+const router = express.Router();
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  const Stripe = require('stripe');
+  return new Stripe(key);
+}
+
+function siteUrl(req) {
+  // Build the payment link from the request itself, so no extra env var is
+  // needed — it just points back at whatever domain this backend is running on.
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+// Admin: after you've approved a family, generate their unique payment link
+// and email it to them immediately.
+router.post('/admin/payment-links', requireAdmin, async (req, res) => {
+  const { registrationType, registrationId, seasonEndDate } = req.body || {};
+  const oneTimeAmount = Number(req.body?.oneTimeAmount) || 17000; // cents — $170 default
+  const monthlyAmount = Number(req.body?.monthlyAmount) || 11000; // cents — $110 default
+
+  if (!['skills', 'join'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  }
+  if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
+  if (!seasonEndDate || !/^\d{4}-\d{2}-\d{2}$/.test(seasonEndDate)) {
+    return res.status(400).json({ error: 'seasonEndDate is required, format YYYY-MM-DD.' });
+  }
+
+  try {
+    let childName, parentName, email, programLabel;
+
+    if (registrationType === 'skills') {
+      const r = await pool.query('SELECT * FROM skills_registrations WHERE id = $1', [registrationId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
+      childName = r.rows[0].full_name;
+      parentName = r.rows[0].full_name;
+      email = r.rows[0].email;
+      programLabel = 'Skills Training';
+    } else {
+      const r = await pool.query('SELECT * FROM join_registrations WHERE id = $1', [registrationId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
+      childName = r.rows[0].child_name;
+      parentName = r.rows[0].parent_name;
+      email = r.rows[0].email;
+      programLabel = `Sultans FC — ${r.rows[0].age_group}`;
+    }
+
+    const token = crypto.randomBytes(24).toString('hex');
+
+    const insertRes = await pool.query(
+      `INSERT INTO payment_links
+        (token, registration_type, registration_id, child_name, parent_name, email, program_label,
+         one_time_amount_cents, monthly_amount_cents, season_end_date)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING *`,
+      [token, registrationType, registrationId, childName, parentName, email, programLabel,
+       oneTimeAmount, monthlyAmount, seasonEndDate]
+    );
+
+    const link = `${siteUrl(req)}/pay/${token}`;
+
+    await sendPaymentLinkEmail({
+      to: email, parentName, childName, programLabel, link,
+      oneTime: oneTimeAmount, monthly: monthlyAmount, seasonEndDate,
+    });
+
+    res.json({ ok: true, token, link, entry: insertRes.rows[0] });
+  } catch (err) {
+    console.error('Create payment link error:', err);
+    res.status(500).json({ error: 'Could not create payment link.' });
+  }
+});
+
+// Public: the /pay/:token page calls this to display the right family + amounts.
+router.get('/pay/:token', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM payment_links WHERE token = $1', [req.params.token]);
+    const entry = r.rows[0];
+    if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
+    res.json({
+      childName: entry.child_name,
+      parentName: entry.parent_name,
+      programLabel: entry.program_label,
+      oneTimeAmount: entry.one_time_amount_cents,
+      monthlyAmount: entry.monthly_amount_cents,
+      seasonEndDate: entry.season_end_date,
+      status: entry.status,
+    });
+  } catch (err) {
+    console.error('Lookup payment link error:', err);
+    res.status(500).json({ error: 'Could not load this payment link.' });
+  }
+});
+
+// Public: starts a Stripe Checkout session — one-time kit/registration fee
+// plus a recurring monthly fee that auto-stops at season end.
+router.post('/pay/:token/checkout', async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet. Please contact RCH Elite Training.' });
+
+  try {
+    const r = await pool.query('SELECT * FROM payment_links WHERE token = $1', [req.params.token]);
+    const entry = r.rows[0];
+    if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
+    if (entry.status !== 'pending') {
+      return res.status(409).json({ error: 'This payment link has already been used.' });
+    }
+
+    const cancelAt = Math.floor(new Date(`${entry.season_end_date}T23:59:59Z`).getTime() / 1000);
+    const base = siteUrl(req);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer_email: entry.email,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: `${entry.program_label} — Registration & Kit Fee` },
+            unit_amount: entry.one_time_amount_cents,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: `${entry.program_label} — Monthly Season Fee` },
+            unit_amount: entry.monthly_amount_cents,
+            recurring: { interval: 'month' },
+          },
+          quantity: 1,
+        },
+      ],
+      subscription_data: {
+        cancel_at: cancelAt,
+      },
+      success_url: `${base}/pay/${entry.token}/success`,
+      cancel_url: `${base}/pay/${entry.token}`,
+      metadata: { payment_link_token: entry.token },
+    });
+
+    await pool.query('UPDATE payment_links SET stripe_checkout_session_id = $1 WHERE token = $2', [session.id, entry.token]);
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Create checkout session error:', err);
+    res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+
+// Stripe webhook — mounted in server.js BEFORE express.json(), since Stripe
+// requires the raw request body to verify the signature.
+async function handleStripeWebhook(req, res) {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).send('Stripe not configured.');
+
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Stripe webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const token = session.metadata && session.metadata.payment_link_token;
+      if (token) {
+        await pool.query(
+          `UPDATE payment_links
+           SET status = 'completed', completed_at = now(),
+               stripe_customer_id = $1, stripe_subscription_id = $2
+           WHERE token = $3`,
+          [session.customer, session.subscription, token]
+        );
+      }
+    }
+    if (event.type === 'customer.subscription.deleted') {
+      const sub = event.data.object;
+      await pool.query(
+        `UPDATE payment_links SET status = 'canceled' WHERE stripe_subscription_id = $1`,
+        [sub.id]
+      );
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook handling error:', err);
+    res.status(500).send('Webhook handler error.');
+  }
+}
+
+module.exports = { router, handleStripeWebhook };

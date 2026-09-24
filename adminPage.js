@@ -33,6 +33,9 @@ module.exports = `<!doctype html>
   .btn-delete-row{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
   .btn-delete-row:hover{ background:#b5482f; color:#fff; }
   .btn-delete-row:disabled{ opacity:0.6; cursor:default; }
+  .btn-payment-link{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-payment-link:hover{ background:var(--pitch); color:#fff; }
+  .btn-payment-link:disabled{ opacity:0.6; cursor:default; }
   td:last-child, th:last-child{ white-space:nowrap; }
   .switch-row{ display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:#333; user-select:none; }
   .switch-row input{ position:absolute; opacity:0; width:0; height:0; }
@@ -152,17 +155,55 @@ module.exports = `<!doctype html>
 
   function renderTable(rows, columns, opts = {}){
     if (!rows.length) return '<div class="empty">No entries yet.</div>';
-    const cols = opts.onDelete ? [...columns, { key:'__actions', label:'' }] : columns;
+    const hasActions = opts.onDelete || opts.onPaymentLink;
+    const cols = hasActions ? [...columns, { key:'__actions', label:'' }] : columns;
     let html = '<table><thead><tr>' + cols.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
     for (const row of rows) {
       html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
-      if (opts.onDelete) {
-        html += \`<td><button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button></td>\`;
+      if (hasActions) {
+        html += '<td style="display:flex; gap:6px;">';
+        if (opts.onPaymentLink) {
+          html += \`<button type="button" class="btn-payment-link" data-id="\${row[opts.idKey || 'id']}">Send Payment Link</button>\`;
+        }
+        if (opts.onDelete) {
+          html += \`<button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button>\`;
+        }
+        html += '</td>';
       }
       html += '</tr>';
     }
     html += '</tbody></table>';
     return html;
+  }
+
+  function wirePaymentLinkButtons(wrapId, registrationType, onSent){
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-payment-link').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const seasonEndDate = prompt('Season end date (YYYY-MM-DD) — monthly billing stops automatically on this date:');
+        if (!seasonEndDate) return;
+        if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(seasonEndDate)) {
+          alert('Please enter the date as YYYY-MM-DD, e.g. 2026-12-15.');
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        try {
+          const result = await api('/api/admin/payment-links', {
+            method: 'POST',
+            body: JSON.stringify({ registrationType, registrationId: id, seasonEndDate }),
+          });
+          alert('Payment link sent to ' + result.entry.email + '.\\n\\nLink (in case you want to copy it too):\\n' + result.link);
+          await onSent();
+        } catch (e) {
+          alert('Could not send the payment link. Please try again.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Send Payment Link';
+        }
+      });
+    });
   }
 
   function wireDeleteButtons(wrapId, onDelete){
@@ -199,9 +240,17 @@ module.exports = `<!doctype html>
     \`;
   }
 
+  function paymentLabel(status){
+    if (status === 'completed') return 'Paid';
+    if (status === 'canceled') return 'Canceled';
+    if (status === 'pending') return 'Link sent';
+    return 'Not sent';
+  }
+
   async function loadSkills(){
     const rows = await api('/api/admin/skills-registrations');
-    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows, [
+    const displayRows = rows.map(r => ({ ...r, payment_status: paymentLabel(r.payment_status) }));
+    document.getElementById('skillsTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
       { key:'dob', label:'DOB' },
@@ -209,12 +258,14 @@ module.exports = `<!doctype html>
       { key:'phone', label:'Phone' },
       { key:'team', label:'Team' },
       { key:'experience', label:'Experience' },
+      { key:'payment_status', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true });
+    ], { onDelete: true, onPaymentLink: true });
     wireDeleteButtons('skillsTableWrap', async (id) => {
       await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadSkills()]);
     });
+    wirePaymentLinkButtons('skillsTableWrap', 'skills', loadSkills);
   }
 
   const GRADE_LABELS = {
@@ -225,7 +276,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group }));
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status: paymentLabel(r.payment_status) }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },
@@ -235,12 +286,14 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
+      { key:'payment_status', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true });
+    ], { onDelete: true, onPaymentLink: true });
     wireDeleteButtons('joinTableWrap', async (id) => {
       await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadJoin()]);
     });
+    wirePaymentLinkButtons('joinTableWrap', 'join', loadJoin);
   }
 
   function wireExportLinks(){

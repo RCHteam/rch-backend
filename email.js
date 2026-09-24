@@ -59,4 +59,17 @@ async function sendJoinRegistrationEmails(entry) {
   }
 }
 
-module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails };
+async function sendPaymentLinkEmail({ to, parentName, childName, programLabel, link, oneTime, monthly, seasonEndDate }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  await sendEmail({
+    to,
+    subject: `Complete ${childName}'s registration — payment link inside`,
+    html: `<p>Hi ${firstName},</p>
+      <p>Great news — ${childName} has been approved for ${programLabel}! To finish registering, please complete payment using the secure link below:</p>
+      <p><a href="${link}">${link}</a></p>
+      <p>This covers a one-time $${(oneTime / 100).toFixed(2)} registration &amp; kit fee, followed by $${(monthly / 100).toFixed(2)}/month through ${seasonEndDate}, after which billing stops automatically.</p>
+      <p>This link is unique to your family — please don't share it. If you have any questions, just reply to this email.</p>`,
+  });
+}
+
+module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails, sendPaymentLinkEmail };
