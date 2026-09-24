@@ -169,6 +169,80 @@ router.post('/pay/:token/checkout', async (req, res) => {
   }
 });
 
+// Admin: pause a family's monthly billing until a resume date (e.g. winter
+// break travel) — Stripe skips charges during the pause and resumes
+// automatically on the given date, no manual follow-up needed.
+router.post('/admin/payment-links/pause', requireAdmin, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
+
+  const { registrationType, registrationId, resumesAt } = req.body || {};
+  if (!['skills', 'join'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  }
+  if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
+  if (!resumesAt || !/^\d{4}-\d{2}-\d{2}$/.test(resumesAt)) {
+    return res.status(400).json({ error: 'resumesAt is required, format YYYY-MM-DD.' });
+  }
+
+  try {
+    const r = await pool.query(
+      `SELECT * FROM payment_links
+       WHERE registration_type = $1 AND registration_id = $2 AND status = 'completed'
+       ORDER BY created_at DESC LIMIT 1`,
+      [registrationType, registrationId]
+    );
+    const entry = r.rows[0];
+    if (!entry || !entry.stripe_subscription_id) {
+      return res.status(404).json({ error: 'No active paid subscription found for this family.' });
+    }
+
+    const resumeTimestamp = Math.floor(new Date(`${resumesAt}T00:00:00Z`).getTime() / 1000);
+    await stripe.subscriptions.update(entry.stripe_subscription_id, {
+      pause_collection: { behavior: 'void', resumes_at: resumeTimestamp },
+    });
+    await pool.query('UPDATE payment_links SET paused_until = $1 WHERE id = $2', [resumesAt, entry.id]);
+
+    res.json({ ok: true, pausedUntil: resumesAt });
+  } catch (err) {
+    console.error('Pause billing error:', err);
+    res.status(500).json({ error: 'Could not pause billing. Please try again.' });
+  }
+});
+
+// Admin: resume billing immediately (undoes a pause early, if needed).
+router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
+
+  const { registrationType, registrationId } = req.body || {};
+  if (!['skills', 'join'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  }
+  if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
+
+  try {
+    const r = await pool.query(
+      `SELECT * FROM payment_links
+       WHERE registration_type = $1 AND registration_id = $2 AND status = 'completed'
+       ORDER BY created_at DESC LIMIT 1`,
+      [registrationType, registrationId]
+    );
+    const entry = r.rows[0];
+    if (!entry || !entry.stripe_subscription_id) {
+      return res.status(404).json({ error: 'No active paid subscription found for this family.' });
+    }
+
+    await stripe.subscriptions.update(entry.stripe_subscription_id, { pause_collection: '' });
+    await pool.query('UPDATE payment_links SET paused_until = NULL WHERE id = $1', [entry.id]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Resume billing error:', err);
+    res.status(500).json({ error: 'Could not resume billing. Please try again.' });
+  }
+});
+
 // Stripe webhook — mounted in server.js BEFORE express.json(), since Stripe
 // requires the raw request body to verify the signature.
 async function handleStripeWebhook(req, res) {

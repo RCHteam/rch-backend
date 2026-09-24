@@ -74,6 +74,11 @@ CREATE INDEX IF NOT EXISTS idx_payment_links_token ON payment_links(token);
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS last_payment_status TEXT;
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS last_payment_at TIMESTAMPTZ;
 
+-- Set while an admin has paused a family's monthly billing (e.g. winter
+-- break travel) — Stripe skips charges until this date, then resumes
+-- automatically.
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS paused_until DATE;
+
 -- Confirmed/active players roster — separate from the registrations tables
 -- above (which are the public signup intake). This is the day-to-day
 -- managed list of enrolled players, mirroring the club's per-grade roster

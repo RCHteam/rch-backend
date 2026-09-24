@@ -39,6 +39,9 @@ module.exports = `<!doctype html>
   .btn-payment-link{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-payment-link:hover{ background:var(--pitch); color:#fff; }
   .btn-payment-link:disabled{ opacity:0.6; cursor:default; }
+  .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
+  .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
   td:last-child, th:last-child{ white-space:nowrap; }
   .switch-row{ display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:#333; user-select:none; }
   .switch-row input{ position:absolute; opacity:0; width:0; height:0; }
@@ -226,10 +229,8 @@ module.exports = `<!doctype html>
     </select>
     <label for="seasonSelect">Season</label>
     <select id="seasonSelect">
-      <option value="fall">Fall</option>
-      <option value="winterbreak">Winter Break</option>
-      <option value="spring">Spring</option>
-      <option value="summer">Summer</option>
+      <option value="regular">Regular Season (Aug 3 – May 3)</option>
+      <option value="summer">Summer (Jun 3 – Jul 3)</option>
     </select>
     <label for="seasonEndInput">Billing ends on</label>
     <input type="date" id="seasonEndInput">
@@ -238,6 +239,20 @@ module.exports = `<!doctype html>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="paymentModalCancel">Cancel</button>
       <button type="button" class="btn-send" id="paymentModalSend">Send Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="pauseModal">
+  <div class="modal">
+    <h3>Pause Billing</h3>
+    <p class="modal-sub" id="pauseModalSub"></p>
+    <label for="resumeDateInput">Resume billing on</label>
+    <input type="date" id="resumeDateInput">
+    <p class="modal-error" id="pauseModalError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="pauseModalCancel">Cancel</button>
+      <button type="button" class="btn-send" id="pauseModalSend">Pause</button>
     </div>
   </div>
 </div>
@@ -371,7 +386,7 @@ module.exports = `<!doctype html>
 
   function renderTable(rows, columns, opts = {}){
     if (!rows.length) return '<div class="empty">No entries yet.</div>';
-    const hasActions = opts.onDelete || opts.onPaymentLink;
+    const hasActions = opts.onDelete || opts.onPaymentLink || opts.onPauseToggle;
     const cols = hasActions ? [...columns, { key:'__actions', label:'' }] : columns;
     let html = '<table><thead><tr>' + cols.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
     for (const row of rows) {
@@ -381,6 +396,11 @@ module.exports = `<!doctype html>
         if (opts.onPaymentLink) {
           const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
           html += \`<button type="button" class="btn-payment-link" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Send Payment Link</button>\`;
+        }
+        if (opts.onPauseToggle && row.payment_status === 'completed') {
+          const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
+          const isPaused = !!row.paused_until && new Date(row.paused_until) > new Date();
+          html += \`<button type="button" class="btn-pause-toggle" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}" data-paused="\${isPaused}">\${isPaused ? 'Resume Billing' : 'Pause Billing'}</button>\`;
         }
         if (opts.onDelete) {
           html += \`<button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button>\`;
@@ -411,11 +431,11 @@ module.exports = `<!doctype html>
     two: { label: '2x/week', monthly: 12389, priceText: '$123.89/mo' },
   };
   const KIT_FEE = 5000;
-  const SEASON_LABELS = { fall: 'Fall', winterbreak: 'Winter Break', spring: 'Spring', summer: 'Summer' };
-  // Approximate Texas youth soccer season windows (PSA Plano/Murphy doesn't
-  // publish exact dates, so these are sensible defaults — always editable
-  // before sending).
-  const SEASON_END_DEFAULTS = { fall: [11, 15], winterbreak: [12, 31], spring: [5, 15], summer: [7, 31] };
+  const SEASON_LABELS = { regular: 'Regular Season', summer: 'Summer' };
+  // Regular season runs Aug 3 – May 3; Summer runs Jun 3 – Jul 3. Winter
+  // break within the regular season is handled per-family with the Pause
+  // Billing button instead of being a separate season here.
+  const SEASON_END_DEFAULTS = { regular: [5, 3], summer: [7, 3] };
 
   function pad2(n){ return String(n).padStart(2, '0'); }
 
@@ -442,8 +462,8 @@ module.exports = `<!doctype html>
     paymentModalCtx = { registrationType, id, onSent };
     document.getElementById('paymentModalSub').textContent = label;
     document.getElementById('tierSelect').value = 'one';
-    document.getElementById('seasonSelect').value = 'fall';
-    document.getElementById('seasonEndInput').value = computeSeasonEndDate('fall');
+    document.getElementById('seasonSelect').value = 'regular';
+    document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
     document.getElementById('paymentModalError').textContent = '';
     updateModalAmounts();
     document.getElementById('paymentModal').classList.remove('hidden');
@@ -504,6 +524,84 @@ module.exports = `<!doctype html>
       btn.textContent = 'Send Link';
     }
   });
+
+  // ---- Pause / Resume Billing (e.g. winter break travel) ----
+
+  let pauseModalCtx = null;
+
+  function openPauseModal(registrationType, id, label, onSent){
+    pauseModalCtx = { registrationType, id, onSent };
+    document.getElementById('pauseModalSub').textContent = label;
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    document.getElementById('resumeDateInput').value = d.toISOString().slice(0, 10);
+    document.getElementById('pauseModalError').textContent = '';
+    document.getElementById('pauseModal').classList.remove('hidden');
+  }
+  function closePauseModal(){
+    document.getElementById('pauseModal').classList.add('hidden');
+    pauseModalCtx = null;
+  }
+  document.getElementById('pauseModalCancel').addEventListener('click', closePauseModal);
+
+  document.getElementById('pauseModalSend').addEventListener('click', async () => {
+    if (!pauseModalCtx) return;
+    const resumesAt = document.getElementById('resumeDateInput').value;
+    const errEl = document.getElementById('pauseModalError');
+    errEl.textContent = '';
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(resumesAt)) {
+      errEl.textContent = 'Please pick a valid resume date.';
+      return;
+    }
+    const ctx = pauseModalCtx;
+    const btn = document.getElementById('pauseModalSend');
+    btn.disabled = true;
+    btn.textContent = 'Pausing…';
+    try {
+      const result = await api('/api/admin/payment-links/pause', {
+        method: 'POST',
+        body: JSON.stringify({ registrationType: ctx.registrationType, registrationId: ctx.id, resumesAt }),
+      });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        closePauseModal();
+        await ctx.onSent();
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not pause billing. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Pause';
+    }
+  });
+
+  function wirePauseButtons(wrapId, registrationType, onSent){
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-pause-toggle').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const label = btn.getAttribute('data-label') || '';
+        const isPaused = btn.getAttribute('data-paused') === 'true';
+        if (isPaused) {
+          if (!confirm('Resume billing for ' + label + ' now?')) return;
+          btn.disabled = true;
+          try {
+            await api('/api/admin/payment-links/resume', {
+              method: 'POST',
+              body: JSON.stringify({ registrationType, registrationId: id }),
+            });
+            await onSent();
+          } catch (e) {
+            alert('Could not resume billing. Please try again.');
+            btn.disabled = false;
+          }
+        } else {
+          openPauseModal(registrationType, id, label, onSent);
+        }
+      });
+    });
+  }
 
   // ---- Manually add a registration (for families you know personally) ----
 
@@ -631,6 +729,9 @@ module.exports = `<!doctype html>
 
   function paymentLabel(row){
     if (row.payment_status === 'completed') {
+      if (row.paused_until && new Date(row.paused_until) > new Date()) {
+        return 'Paused until ' + String(row.paused_until).slice(0, 10);
+      }
       if (row.last_payment_status === 'failed') return 'Payment Issue';
       return 'Paid';
     }
@@ -641,7 +742,7 @@ module.exports = `<!doctype html>
 
   async function loadSkills(){
     const rows = await api('/api/admin/skills-registrations');
-    const displayRows = rows.map(r => ({ ...r, payment_status: paymentLabel(r) }));
+    const displayRows = rows.map(r => ({ ...r, payment_status_label: paymentLabel(r) }));
     document.getElementById('skillsTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
@@ -650,14 +751,15 @@ module.exports = `<!doctype html>
       { key:'phone', label:'Phone' },
       { key:'team', label:'Team' },
       { key:'experience', label:'Experience' },
-      { key:'payment_status', label:'Payment' },
+      { key:'payment_status_label', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true, labelKey: 'full_name' });
+    ], { onDelete: true, onPaymentLink: true, onPauseToggle: true, labelKey: 'full_name' });
     wireDeleteButtons('skillsTableWrap', async (id) => {
       await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadSkills()]);
     });
     wirePaymentLinkButtons('skillsTableWrap', 'skills', loadSkills);
+    wirePauseButtons('skillsTableWrap', 'skills', loadSkills);
   }
 
   const GRADE_LABELS = {
@@ -668,7 +770,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status: paymentLabel(r) }));
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status_label: paymentLabel(r) }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },
@@ -678,14 +780,15 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
-      { key:'payment_status', label:'Payment' },
+      { key:'payment_status_label', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true, labelKey: 'child_name' });
+    ], { onDelete: true, onPaymentLink: true, onPauseToggle: true, labelKey: 'child_name' });
     wireDeleteButtons('joinTableWrap', async (id) => {
       await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadJoin()]);
     });
     wirePaymentLinkButtons('joinTableWrap', 'join', loadJoin);
+    wirePauseButtons('joinTableWrap', 'join', loadJoin);
   }
 
   // ---- Players Roster, Season Overview, Pricing & Revenue ----
