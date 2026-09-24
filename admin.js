@@ -45,10 +45,10 @@ router.post('/admin/settings/skills-training', requireAdmin, async (req, res) =>
 
 router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
   const result = await pool.query(
-    `SELECT s.*, pl.status AS payment_status
+    `SELECT s.*, pl.status AS payment_status, pl.last_payment_status
      FROM skills_registrations s
      LEFT JOIN LATERAL (
-       SELECT status FROM payment_links
+       SELECT status, last_payment_status FROM payment_links
        WHERE registration_type = 'skills' AND registration_id = s.id
        ORDER BY created_at DESC LIMIT 1
      ) pl ON true
@@ -60,10 +60,10 @@ router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
 router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
   const { ageGroup } = req.query;
   const base = `
-    SELECT j.*, pl.status AS payment_status
+    SELECT j.*, pl.status AS payment_status, pl.last_payment_status
     FROM join_registrations j
     LEFT JOIN LATERAL (
-      SELECT status FROM payment_links
+      SELECT status, last_payment_status FROM payment_links
       WHERE registration_type = 'join' AND registration_id = j.id
       ORDER BY created_at DESC LIMIT 1
     ) pl ON true`;

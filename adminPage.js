@@ -622,16 +622,19 @@ module.exports = `<!doctype html>
     \`;
   }
 
-  function paymentLabel(status){
-    if (status === 'completed') return 'Paid';
-    if (status === 'canceled') return 'Canceled';
-    if (status === 'pending') return 'Link sent';
+  function paymentLabel(row){
+    if (row.payment_status === 'completed') {
+      if (row.last_payment_status === 'failed') return 'Payment Issue';
+      return 'Paid';
+    }
+    if (row.payment_status === 'canceled') return 'Canceled';
+    if (row.payment_status === 'pending') return 'Link sent';
     return 'Not sent';
   }
 
   async function loadSkills(){
     const rows = await api('/api/admin/skills-registrations');
-    const displayRows = rows.map(r => ({ ...r, payment_status: paymentLabel(r.payment_status) }));
+    const displayRows = rows.map(r => ({ ...r, payment_status: paymentLabel(r) }));
     document.getElementById('skillsTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
@@ -658,7 +661,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status: paymentLabel(r.payment_status) }));
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status: paymentLabel(r) }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },

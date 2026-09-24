@@ -68,6 +68,12 @@ CREATE TABLE IF NOT EXISTS payment_links (
 
 CREATE INDEX IF NOT EXISTS idx_payment_links_token ON payment_links(token);
 
+-- Tracks whether the family's most recent MONTHLY charge (after the initial
+-- checkout) succeeded or failed, so /admin can flag a lapsed payment instead
+-- of showing "Paid" forever once the first charge goes through.
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS last_payment_status TEXT;
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS last_payment_at TIMESTAMPTZ;
+
 -- Confirmed/active players roster — separate from the registrations tables
 -- above (which are the public signup intake). This is the day-to-day
 -- managed list of enrolled players, mirroring the club's per-grade roster

@@ -221,6 +221,31 @@ async function handleStripeWebhook(req, res) {
         [sub.id]
       );
     }
+
+    // Tracks the health of each MONTHLY charge after the initial checkout —
+    // lets /admin flag a family whose card got declined on a later month,
+    // instead of showing "Paid" forever after the very first successful charge.
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object;
+      if (invoice.subscription) {
+        await pool.query(
+          `UPDATE payment_links SET last_payment_status = 'failed', last_payment_at = now()
+           WHERE stripe_subscription_id = $1`,
+          [invoice.subscription]
+        );
+      }
+    }
+    if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object;
+      if (invoice.subscription) {
+        await pool.query(
+          `UPDATE payment_links SET last_payment_status = 'succeeded', last_payment_at = now()
+           WHERE stripe_subscription_id = $1`,
+          [invoice.subscription]
+        );
+      }
+    }
+
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook handling error:', err);
