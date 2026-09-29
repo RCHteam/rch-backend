@@ -42,6 +42,9 @@ module.exports = `<!doctype html>
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
   .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
+  .btn-edit-row{ background:#fff; border:1px solid #8a8a8a; color:#444; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-edit-row:hover{ background:#444; color:#fff; }
+  .btn-edit-row:disabled{ opacity:0.6; cursor:default; }
   td:last-child, th:last-child{ white-space:nowrap; }
   .switch-row{ display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:#333; user-select:none; }
   .switch-row input{ position:absolute; opacity:0; width:0; height:0; }
@@ -115,7 +118,12 @@ module.exports = `<!doctype html>
 
     <div class="section-head">
       <h2>Join Sultans FC</h2>
-      <div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <label class="switch-row">
+          <input type="checkbox" id="joinOpenToggle">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span id="joinOpenLabel">Registration open</span>
+        </label>
         <select id="ageGroupFilter">
           <option value="">All grades</option>
           <option value="pre-k">Pre-K</option>
@@ -214,6 +222,49 @@ module.exports = `<!doctype html>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="addPlayerCancel">Cancel</button>
       <button type="button" class="btn-send" id="addPlayerSubmit">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="editPlayerModal">
+  <div class="modal">
+    <h3>Edit Player</h3>
+    <label for="epGrade">Grade</label>
+    <select id="epGrade">
+      <option value="pre-k">Pre-K</option>
+      <option value="kindergarten">Kindergarten</option>
+      <option value="1st-grade">1st Grade</option>
+      <option value="2nd-grade">2nd Grade</option>
+      <option value="3rd-grade">3rd Grade</option>
+      <option value="4th-grade">4th Grade</option>
+      <option value="5th-grade">5th Grade</option>
+      <option value="6th-grade">6th Grade</option>
+    </select>
+    <label for="epName">Player name</label>
+    <input type="text" id="epName">
+    <label for="epDob">Date of birth</label>
+    <input type="date" id="epDob">
+    <div class="two-col">
+      <div><label for="epParentName">Parent name</label><input type="text" id="epParentName"></div>
+      <div><label for="epParentPhone">Parent phone</label><input type="text" id="epParentPhone"></div>
+    </div>
+    <label for="epParentEmail">Parent email</label>
+    <input type="email" id="epParentEmail">
+    <label for="epSessions">Sessions</label>
+    <select id="epSessions">
+      <option value="one">One</option>
+      <option value="two">Two</option>
+    </select>
+    <div class="two-col">
+      <div class="checkbox-row"><input type="checkbox" id="epRch"><label for="epRch">RCH</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="epSultans"><label for="epSultans">Sultans</label></div>
+    </div>
+    <label for="epDiscount">Discount ($)</label>
+    <input type="number" id="epDiscount" min="0" step="0.01" value="0">
+    <p class="modal-error" id="editPlayerError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="editPlayerCancel">Cancel</button>
+      <button type="button" class="btn-send" id="editPlayerSubmit">Save</button>
     </div>
   </div>
 </div>
@@ -808,6 +859,7 @@ module.exports = `<!doctype html>
       '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
+      const label = escapeHtml(r.player_name);
       html += '<tr>' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
         '<td>' + escapeHtml(r.dob || '') + '</td>' +
@@ -818,12 +870,74 @@ module.exports = `<!doctype html>
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
-        '<td><button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button></td>' +
+        '<td style="display:flex; gap:6px;">' +
+          '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '">Send Payment Link</button>' +
+          '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
+          '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
+        '</td>' +
         '</tr>';
     });
     html += '</tbody></table>';
     return html;
   }
+
+  let editPlayerId = null;
+
+  function openEditPlayerModal(player){
+    editPlayerId = player.id;
+    document.getElementById('epGrade').value = player.grade;
+    document.getElementById('epName').value = player.player_name || '';
+    document.getElementById('epDob').value = player.dob || '';
+    document.getElementById('epParentName').value = player.parent_name || '';
+    document.getElementById('epParentPhone').value = player.parent_phone || '';
+    document.getElementById('epParentEmail').value = player.parent_email || '';
+    document.getElementById('epSessions').value = player.session_type === 'two' ? 'two' : 'one';
+    document.getElementById('epRch').checked = !!player.rch;
+    document.getElementById('epSultans').checked = !!player.sultans;
+    document.getElementById('epDiscount').value = (player.discount_cents / 100).toFixed(2);
+    document.getElementById('editPlayerError').textContent = '';
+    document.getElementById('editPlayerModal').classList.remove('hidden');
+  }
+  document.getElementById('editPlayerCancel').addEventListener('click', () => {
+    document.getElementById('editPlayerModal').classList.add('hidden');
+    editPlayerId = null;
+  });
+  document.getElementById('editPlayerSubmit').addEventListener('click', async () => {
+    if (!editPlayerId) return;
+    const errEl = document.getElementById('editPlayerError');
+    errEl.textContent = '';
+    const payload = {
+      grade: document.getElementById('epGrade').value,
+      playerName: document.getElementById('epName').value.trim(),
+      dob: document.getElementById('epDob').value,
+      parentName: document.getElementById('epParentName').value.trim(),
+      parentPhone: document.getElementById('epParentPhone').value.trim(),
+      parentEmail: document.getElementById('epParentEmail').value.trim(),
+      sessionType: document.getElementById('epSessions').value,
+      rch: document.getElementById('epRch').checked,
+      sultans: document.getElementById('epSultans').checked,
+      discountCents: Math.round(parseFloat(document.getElementById('epDiscount').value || '0') * 100),
+    };
+    if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
+    const btn = document.getElementById('editPlayerSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const result = await api('/api/admin/players/' + editPlayerId, { method: 'PUT', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        document.getElementById('editPlayerModal').classList.add('hidden');
+        editPlayerId = null;
+        await Promise.all([loadRoster(), loadOverviewAndRevenue()]);
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not save changes. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+    }
+  });
 
   async function loadRoster(){
     const grade = document.getElementById('rosterGradeFilter').value;
@@ -843,6 +957,13 @@ module.exports = `<!doctype html>
         }
       });
     });
+    wrap.querySelectorAll('.btn-edit-row').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const player = rows.find((r) => String(r.id) === btn.getAttribute('data-id'));
+        if (player) openEditPlayerModal(player);
+      });
+    });
+    wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
   }
   document.getElementById('rosterGradeFilter').addEventListener('change', loadRoster);
 
@@ -998,6 +1119,11 @@ module.exports = `<!doctype html>
     const label = document.getElementById('skillsOpenLabel');
     toggle.checked = !!s.skillsTrainingOpen;
     label.textContent = s.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
+
+    const joinToggle = document.getElementById('joinOpenToggle');
+    const joinLabel = document.getElementById('joinOpenLabel');
+    joinToggle.checked = !!s.joinRegistrationOpen;
+    joinLabel.textContent = s.joinRegistrationOpen ? 'Registration open' : 'Registration closed';
   }
 
   document.getElementById('skillsOpenToggle').addEventListener('change', async (e) => {
@@ -1015,6 +1141,26 @@ module.exports = `<!doctype html>
     } catch (err) {
       toggle.checked = !desiredState;
       alert('Could not update the Skills Training toggle. Please try again.');
+    } finally {
+      toggle.disabled = false;
+    }
+  });
+
+  document.getElementById('joinOpenToggle').addEventListener('change', async (e) => {
+    const toggle = e.target;
+    const label = document.getElementById('joinOpenLabel');
+    const desiredState = toggle.checked;
+    toggle.disabled = true;
+    try {
+      const result = await api('/api/admin/settings/join-registration', {
+        method: 'POST',
+        body: JSON.stringify({ open: desiredState }),
+      });
+      toggle.checked = !!result.joinRegistrationOpen;
+      label.textContent = result.joinRegistrationOpen ? 'Registration open' : 'Registration closed';
+    } catch (err) {
+      toggle.checked = !desiredState;
+      alert('Could not update the Join Sultans FC toggle. Please try again.');
     } finally {
       toggle.disabled = false;
     }

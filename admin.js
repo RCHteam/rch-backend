@@ -17,11 +17,17 @@ router.post('/admin/login', (req, res) => {
   res.status(401).json({ ok: false, error: 'Incorrect password.' });
 });
 
-// Admin: read current site toggles (currently just Skills Training open/closed).
+// Admin: read current site toggles (Skills Training + Join Sultans FC open/closed).
 router.get('/admin/settings', requireAdmin, async (req, res) => {
   try {
-    const value = await getSetting('skills_training_open', 'true');
-    res.json({ skillsTrainingOpen: value === 'true' });
+    const [skillsValue, joinValue] = await Promise.all([
+      getSetting('skills_training_open', 'true'),
+      getSetting('join_registration_open', 'true'),
+    ]);
+    res.json({
+      skillsTrainingOpen: skillsValue === 'true',
+      joinRegistrationOpen: joinValue === 'true',
+    });
   } catch (err) {
     console.error('Admin settings read error:', err);
     res.status(500).json({ error: 'Could not load settings.' });
@@ -37,6 +43,22 @@ router.post('/admin/settings/skills-training', requireAdmin, async (req, res) =>
   try {
     await setSetting('skills_training_open', open ? 'true' : 'false');
     res.json({ ok: true, skillsTrainingOpen: open });
+  } catch (err) {
+    console.error('Admin settings toggle error:', err);
+    res.status(500).json({ error: 'Could not update settings.' });
+  }
+});
+
+// Admin: flip Join Sultans FC registration on/off — same pattern as Skills
+// Training above.
+router.post('/admin/settings/join-registration', requireAdmin, async (req, res) => {
+  const { open } = req.body || {};
+  if (typeof open !== 'boolean') {
+    return res.status(400).json({ error: '"open" must be true or false.' });
+  }
+  try {
+    await setSetting('join_registration_open', open ? 'true' : 'false');
+    res.json({ ok: true, joinRegistrationOpen: open });
   } catch (err) {
     console.error('Admin settings toggle error:', err);
     res.status(500).json({ error: 'Could not update settings.' });

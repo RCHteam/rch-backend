@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('./pool');
 const { sendJoinRegistrationEmails } = require('./email');
+const { getSetting } = require('./settings');
 
 const router = express.Router();
 
@@ -20,17 +21,24 @@ const CAPACITY = {
   '6th-grade': 20,
 };
 
-// Public: current registration counts + full/available status for every grade.
-// The frontend polls this to show "Available" / "Full" on the join cards.
+// Public: current registration counts + full/available status for every grade,
+// plus whether Sultans FC registration is open at all. The frontend polls this
+// to show "Available" / "Full" on the join cards and to hide/disable the form
+// entirely when an admin has switched registration off.
 router.get('/join/status', async (req, res) => {
   try {
+    const openValue = await getSetting('join_registration_open', 'true');
+
     const countRes = await pool.query(
       'SELECT age_group, COUNT(*)::int AS n FROM join_registrations GROUP BY age_group'
     );
     const counts = {};
     countRes.rows.forEach((r) => { counts[r.age_group] = r.n; });
 
-    const status = {};
+    // Kept as a flat map (not nested) so the existing frontend, which reads
+    // status['pre-k'] etc. directly by grade key, keeps working unchanged.
+    // "open" is just an extra top-level key alongside the grade keys.
+    const status = { open: openValue === 'true' };
     for (const group of VALID_GROUPS) {
       const count = counts[group] || 0;
       const capacity = CAPACITY[group];
@@ -47,6 +55,16 @@ router.post('/join/:ageGroup', async (req, res) => {
   const { ageGroup } = req.params;
   if (!VALID_GROUPS.has(ageGroup)) {
     return res.status(404).json({ error: `Unknown age group "${ageGroup}".` });
+  }
+
+  try {
+    const openValue = await getSetting('join_registration_open', 'true');
+    if (openValue !== 'true') {
+      return res.status(403).json({ error: 'Join Sultans FC registration is currently closed.', closed: true });
+    }
+  } catch (err) {
+    console.error('Join status check error:', err);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 
   const {

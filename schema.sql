@@ -43,13 +43,17 @@ CREATE TABLE IF NOT EXISTS site_settings (
 INSERT INTO site_settings (key, value) VALUES ('skills_training_open', 'true')
 ON CONFLICT (key) DO NOTHING;
 
+-- Same pattern, for the Join Sultans FC registration form.
+INSERT INTO site_settings (key, value) VALUES ('join_registration_open', 'true')
+ON CONFLICT (key) DO NOTHING;
+
 -- One unique link per approved family, leading to a Stripe Checkout session.
 -- registration_type + registration_id point back at the original signup row
 -- so the payment page can show the right family/program details.
 CREATE TABLE IF NOT EXISTS payment_links (
   id                     SERIAL PRIMARY KEY,
   token                  TEXT UNIQUE NOT NULL,
-  registration_type      TEXT NOT NULL CHECK (registration_type IN ('skills', 'join')),
+  registration_type      TEXT NOT NULL CHECK (registration_type IN ('skills', 'join', 'player')),
   registration_id        INTEGER NOT NULL,
   child_name             TEXT NOT NULL,
   parent_name            TEXT,
@@ -106,3 +110,11 @@ CREATE INDEX IF NOT EXISTS idx_players_grade ON players(grade);
 -- toggle above).
 INSERT INTO site_settings (key, value) VALUES ('price_one_session_cents', '15000') ON CONFLICT (key) DO NOTHING;
 INSERT INTO site_settings (key, value) VALUES ('price_two_session_cents', '25000') ON CONFLICT (key) DO NOTHING;
+
+-- Migration: the payment_links table already existed on the live database
+-- with registration_type limited to ('skills', 'join'), so CREATE TABLE IF
+-- NOT EXISTS above won't widen it. Drop and re-add the check constraint to
+-- also allow 'player' (payment links sent straight from the Players Roster).
+ALTER TABLE payment_links DROP CONSTRAINT IF EXISTS payment_links_registration_type_check;
+ALTER TABLE payment_links ADD CONSTRAINT payment_links_registration_type_check
+  CHECK (registration_type IN ('skills', 'join', 'player'));

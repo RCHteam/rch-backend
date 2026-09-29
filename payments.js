@@ -29,8 +29,8 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
   const oneTimeAmount = Number(req.body?.oneTimeAmount) || 5000; // cents — $50 kit fee default
   const monthlyAmount = Number(req.body?.monthlyAmount) || 6210; // cents — $62.10/mo (1x/week) default
 
-  if (!['skills', 'join'].includes(registrationType)) {
-    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  if (!['skills', 'join', 'player'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
   }
   if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
   if (!seasonEndDate || !/^\d{4}-\d{2}-\d{2}$/.test(seasonEndDate)) {
@@ -47,13 +47,27 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
       parentName = r.rows[0].full_name;
       email = r.rows[0].email;
       programLabel = 'Skills Training';
-    } else {
+    } else if (registrationType === 'join') {
       const r = await pool.query('SELECT * FROM join_registrations WHERE id = $1', [registrationId]);
       if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
       childName = r.rows[0].child_name;
       parentName = r.rows[0].parent_name;
       email = r.rows[0].email;
       programLabel = `Sultans FC — ${r.rows[0].age_group}`;
+    } else {
+      // registrationType === 'player' — a roster entry managed directly from
+      // the Players Roster table, rather than one of the public signup forms.
+      const r = await pool.query('SELECT * FROM players WHERE id = $1', [registrationId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+      const player = r.rows[0];
+      if (!player.parent_email) {
+        return res.status(400).json({ error: 'This player has no parent email on file — add one on the roster first.' });
+      }
+      childName = player.player_name;
+      parentName = player.parent_name || player.player_name;
+      email = player.parent_email;
+      const programs = [player.rch && 'RCH Elite Training', player.sultans && 'Sultans FC'].filter(Boolean);
+      programLabel = `${programs.length ? programs.join(' + ') : 'RCH Elite Training'} — ${player.grade}`;
     }
 
     if (tierLabel) programLabel = `${programLabel} (${tierLabel})`;
@@ -177,8 +191,8 @@ router.post('/admin/payment-links/pause', requireAdmin, async (req, res) => {
   if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
 
   const { registrationType, registrationId, resumesAt } = req.body || {};
-  if (!['skills', 'join'].includes(registrationType)) {
-    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  if (!['skills', 'join', 'player'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
   }
   if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
   if (!resumesAt || !/^\d{4}-\d{2}-\d{2}$/.test(resumesAt)) {
@@ -216,8 +230,8 @@ router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
   if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
 
   const { registrationType, registrationId } = req.body || {};
-  if (!['skills', 'join'].includes(registrationType)) {
-    return res.status(400).json({ error: 'registrationType must be "skills" or "join".' });
+  if (!['skills', 'join', 'player'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
   }
   if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
 

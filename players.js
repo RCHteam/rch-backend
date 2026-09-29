@@ -54,6 +54,57 @@ router.post('/admin/players', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: edit an existing player's roster info. Same fields as adding a
+// player; whatever is provided in the body replaces that field, so a partial
+// body only touches the fields it names.
+router.put('/admin/players/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existingRes = await pool.query('SELECT * FROM players WHERE id = $1', [id]);
+    const existing = existingRes.rows[0];
+    if (!existing) return res.status(404).json({ error: 'Player not found.' });
+
+    const {
+      grade, playerName, dob, parentName, parentPhone, parentEmail,
+      sessionType, rch, sultans, discountCents,
+    } = req.body || {};
+
+    if (grade !== undefined && !VALID_GRADES.has(grade)) {
+      return res.status(400).json({ error: `grade must be one of: ${GRADES.join(', ')}` });
+    }
+    if (playerName !== undefined && !String(playerName).trim()) {
+      return res.status(400).json({ error: "Player name can't be empty." });
+    }
+
+    const merged = {
+      grade: grade !== undefined ? grade : existing.grade,
+      playerName: playerName !== undefined ? playerName.trim() : existing.player_name,
+      dob: dob !== undefined ? (dob || null) : existing.dob,
+      parentName: parentName !== undefined ? parentName : existing.parent_name,
+      parentPhone: parentPhone !== undefined ? parentPhone : existing.parent_phone,
+      parentEmail: parentEmail !== undefined ? parentEmail : existing.parent_email,
+      sessionType: sessionType !== undefined ? (sessionType === 'two' ? 'two' : 'one') : existing.session_type,
+      rch: rch !== undefined ? !!rch : existing.rch,
+      sultans: sultans !== undefined ? !!sultans : existing.sultans,
+      discountCents: discountCents !== undefined ? (Number(discountCents) || 0) : existing.discount_cents,
+    };
+
+    const updateRes = await pool.query(
+      `UPDATE players SET
+         grade = $1, player_name = $2, dob = $3, parent_name = $4, parent_phone = $5,
+         parent_email = $6, session_type = $7, rch = $8, sultans = $9, discount_cents = $10
+       WHERE id = $11
+       RETURNING *`,
+      [merged.grade, merged.playerName, merged.dob, merged.parentName, merged.parentPhone,
+       merged.parentEmail, merged.sessionType, merged.rch, merged.sultans, merged.discountCents, id]
+    );
+    res.json({ ok: true, entry: updateRes.rows[0] });
+  } catch (err) {
+    console.error('Edit player error:', err);
+    res.status(500).json({ error: 'Could not save changes to this player.' });
+  }
+});
+
 // Admin: remove a player from the roster.
 router.delete('/admin/players/:id', requireAdmin, async (req, res) => {
   try {
