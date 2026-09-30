@@ -89,7 +89,7 @@ async function sendPaymentLinkEmail({ to, parentName, childName, programLabel, l
     to,
     subject: `Complete ${childName}'s registration — payment link inside`,
     html: brandedEmail(`<p>Hi ${firstName},</p>
-      <p>Great news — ${childName} has been approved for ${programLabel}! To finish registering, please complete payment using the secure link below:</p>
+      <p>Great news — ${childName} is ready to start ${programLabel}! To finish registering, please complete payment using the secure link below:</p>
       <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Complete Payment</a></p>
       <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
       <p>This covers a one-time $${(oneTime / 100).toFixed(2)} registration &amp; kit fee, followed by $${(monthly / 100).toFixed(2)}/month, charged automatically each month and ending on ${prettyDate} — no action needed on your part.</p>
