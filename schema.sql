@@ -140,3 +140,17 @@ INSERT INTO site_settings (key, value) VALUES ('payment_online_course_monthly_ce
 -- for admin visibility.
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS next_billing_anchor DATE;
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS prorated_amount_cents INTEGER;
+
+-- Proration lock mode ("Option B"): while 'locked', the this-month amount
+-- (and its anchor date) is calculated once, at the moment the admin
+-- generates the payment link, and stored below — so a family that delays
+-- paying for a few days still owes what was shown to them, instead of a
+-- smaller number recalculated at checkout time. Switch back to 'live' once
+-- initial enrollment settles, so new signups go back to paying exactly for
+-- whatever practices are left as of the moment they actually pay.
+INSERT INTO site_settings (key, value) VALUES ('proration_lock_mode', 'locked') ON CONFLICT (key) DO NOTHING;
+
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_amount_cents INTEGER;
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_practices_remaining INTEGER;
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_practices_total INTEGER;
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_anchor_date DATE;

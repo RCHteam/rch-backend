@@ -84,6 +84,58 @@ function nextAnchorTimestamp() {
   return Math.floor(Date.UTC(nextYear, nextMonth - 1, 3) / 1000);
 }
 
+// Proration lock mode ("Option B" vs "Option A" — see schema.sql). 'locked'
+// means the amount a family owes was fixed the moment the admin generated
+// their payment link, so a late payer still owes what was shown to them.
+// 'live' (the original behavior) recalculates at the moment they actually
+// pay, so a late payer owes less (fewer practices left).
+async function getProrationMode() {
+  return await getSetting('proration_lock_mode', 'locked');
+}
+
+// Resolves what a given payment_links row should actually charge/display
+// right now: the value locked in at link creation (if lock mode is on and
+// this link has one), or a fresh live calculation otherwise.
+async function resolveProration(entry) {
+  const mode = await getProrationMode();
+  if (mode === 'locked' && entry.locked_amount_cents != null) {
+    return {
+      amountCents: entry.locked_amount_cents,
+      remaining: entry.locked_practices_remaining,
+      totalCount: entry.locked_practices_total,
+      anchorTs: entry.locked_anchor_date
+        ? Math.floor(new Date(entry.locked_anchor_date).getTime() / 1000)
+        : nextAnchorTimestamp(),
+      locked: true,
+    };
+  }
+  const live = proratedMonthlyAmount(entry.monthly_amount_cents);
+  return { ...live, anchorTs: nextAnchorTimestamp(), locked: false };
+}
+
+router.get('/admin/proration-mode', requireAdmin, async (req, res) => {
+  try {
+    res.json({ mode: await getProrationMode() });
+  } catch (err) {
+    console.error('Get proration mode error:', err);
+    res.status(500).json({ error: 'Could not load proration mode.' });
+  }
+});
+
+router.post('/admin/proration-mode', requireAdmin, async (req, res) => {
+  const { mode } = req.body || {};
+  if (!['locked', 'live'].includes(mode)) {
+    return res.status(400).json({ error: 'mode must be "locked" or "live".' });
+  }
+  try {
+    await setSetting('proration_lock_mode', mode);
+    res.json({ mode });
+  } catch (err) {
+    console.error('Save proration mode error:', err);
+    res.status(500).json({ error: 'Could not save proration mode.' });
+  }
+});
+
 // Admin: after you've approved a family, generate their unique payment link
 // and email it to them immediately.
 router.post('/admin/payment-links', requireAdmin, async (req, res) => {
@@ -139,14 +191,23 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
 
     const token = crypto.randomBytes(24).toString('hex');
 
+    // Always compute and store what proration looks like right now, as of
+    // link creation — used as the charged/displayed amount when proration
+    // lock mode is 'locked' (see resolveProration above). Harmless to store
+    // even in 'live' mode; it's simply ignored in that mode.
+    const lockedProration = proratedMonthlyAmount(monthlyAmount);
+    const lockedAnchorTs = nextAnchorTimestamp();
+
     const insertRes = await pool.query(
       `INSERT INTO payment_links
         (token, registration_type, registration_id, child_name, parent_name, email, program_label,
-         one_time_amount_cents, monthly_amount_cents, season_end_date)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         one_time_amount_cents, monthly_amount_cents, season_end_date,
+         locked_amount_cents, locked_practices_remaining, locked_practices_total, locked_anchor_date)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,to_timestamp($14)::date)
        RETURNING *`,
       [token, registrationType, registrationId, childName, parentName, email, programLabel,
-       oneTimeAmount, monthlyAmount, seasonEndDate]
+       oneTimeAmount, monthlyAmount, seasonEndDate,
+       lockedProration.amountCents, lockedProration.remaining, lockedProration.totalCount, lockedAnchorTs]
     );
 
     const link = `${siteUrl(req)}/pay/${token}`;
@@ -216,7 +277,7 @@ router.get('/pay/:token', async (req, res) => {
     const r = await pool.query('SELECT * FROM payment_links WHERE token = $1', [req.params.token]);
     const entry = r.rows[0];
     if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
-    const proration = proratedMonthlyAmount(entry.monthly_amount_cents);
+    const proration = await resolveProration(entry);
     res.json({
       childName: entry.child_name,
       parentName: entry.parent_name,
@@ -254,8 +315,8 @@ router.post('/pay/:token/checkout', async (req, res) => {
     }
 
     const base = siteUrl(req);
-    const proration = proratedMonthlyAmount(entry.monthly_amount_cents);
-    const anchorTs = nextAnchorTimestamp();
+    const proration = await resolveProration(entry);
+    const anchorTs = proration.anchorTs;
 
     const lineItems = [];
     if (entry.one_time_amount_cents > 0) {

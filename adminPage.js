@@ -205,6 +205,19 @@ module.exports = `<!doctype html>
       <button type="button" class="btn-add" id="savePaymentPricingBtn">Save Amounts</button>
       <span class="pricing-saved" id="paymentPricingSaved"></span>
     </div>
+
+    <div class="section-head">
+      <h2>Proration Mode</h2>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">While locked, the "this month" amount is fixed the moment you click Send Link — so a family that pays a few days late still owes what was shown to them, instead of a smaller amount recalculated at payment time. Turn this off once initial enrollment settles, so new signups pay live based on practices left as of the moment they actually pay.</p>
+    <div class="pricing-box">
+      <div class="checkbox-row">
+        <input type="checkbox" id="lockProrationCheckbox">
+        <label for="lockProrationCheckbox">Lock amount at link creation</label>
+      </div>
+      <button type="button" class="btn-add" id="saveProrationModeBtn">Save</button>
+      <span class="pricing-saved" id="prorationModeSaved"></span>
+    </div>
   </main>
 </div>
 
@@ -1122,6 +1135,32 @@ module.exports = `<!doctype html>
     }
   });
 
+  // ---- Proration Mode (lock at link creation vs. calculate live) ----
+
+  async function loadProrationMode(){
+    const { mode } = await api('/api/admin/proration-mode');
+    document.getElementById('lockProrationCheckbox').checked = (mode === 'locked');
+  }
+
+  document.getElementById('saveProrationModeBtn').addEventListener('click', async () => {
+    const mode = document.getElementById('lockProrationCheckbox').checked ? 'locked' : 'live';
+    const btn = document.getElementById('saveProrationModeBtn');
+    btn.disabled = true;
+    try {
+      await api('/api/admin/proration-mode', {
+        method: 'POST',
+        body: JSON.stringify({ mode }),
+      });
+      const savedMsg = document.getElementById('prorationModeSaved');
+      savedMsg.textContent = 'Saved.';
+      setTimeout(() => { savedMsg.textContent = ''; }, 2000);
+    } catch (e) {
+      alert('Could not save proration mode. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('addPlayerBtn').addEventListener('click', () => {
     document.getElementById('apGrade').value = document.getElementById('rosterGradeFilter').value;
     ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
@@ -1248,6 +1287,7 @@ module.exports = `<!doctype html>
     await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster()]);
     await loadPricing();
     await loadPaymentPricing();
+    await loadProrationMode();
     await loadOverviewAndRevenue();
   }
 
