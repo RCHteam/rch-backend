@@ -8,9 +8,9 @@ module.exports = `<!doctype html>
   :root{ --pitch-deep:#0c2a1c; --pitch:#164a30; --gold:#d9a441; --chalk:#f6f2e7; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:#f4f1e8; color:#1c2a20; }
-  header{ background:var(--pitch-deep); color:var(--chalk); padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
+  header{ background:var(--pitch-deep); color:var(--chalk); padding:12px 28px; display:flex; align-items:center; justify-content:space-between; }
   header .header-brand{ flex:1; display:flex; align-items:center; justify-content:center; }
-  header .header-brand img{ height:40px; width:auto; display:block; }
+  header .header-brand img{ height:76px; width:auto; display:block; }
   #sectionNav{ background:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:0.85rem; font-weight:600; color:var(--pitch-deep); cursor:pointer; }
   #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
   header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }

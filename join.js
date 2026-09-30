@@ -134,7 +134,7 @@ router.post('/join/:ageGroup', async (req, res) => {
     res.status(201).json({
       ok: true,
       jerseyNumber: jersey,
-      message: `Thanks for registering — a coordinator will email you with placement information and try-out details if selected.`,
+      message: `Thanks for registering — a coordinator will reach out to you to start your first session.`,
     });
   } catch (err) {
     console.error('Join registration error:', err);

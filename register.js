@@ -68,7 +68,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       ok: true,
       jerseyNumber: jersey,
-      message: `Thanks, ${fullName.split(' ')[0]} — you're registered! A coordinator will reach out to you at ${email} with your placement and first training date.`,
+      message: `Thanks, ${fullName.split(' ')[0]} — you're registered! A coordinator will reach out to you at ${email} to start your first session.`,
     });
   } catch (err) {
     console.error('Skills registration error:', err);

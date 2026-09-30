@@ -53,7 +53,7 @@ async function sendSkillsRegistrationEmails(entry) {
   await sendEmail({
     to: entry.email,
     subject: `You're registered — RCH Elite Training`,
-    html: brandedEmail(`<p>Hi ${firstName},</p><p>You're registered! A coordinator will reach out to you at ${entry.email} with your placement and first session date.</p><p>Jersey #${entry.jersey_number}</p>`),
+    html: brandedEmail(`<p>Hi ${firstName},</p><p>You're registered! A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
   });
   if (NOTIFY) {
     await sendEmail({
@@ -69,7 +69,7 @@ async function sendJoinRegistrationEmails(entry) {
   await sendEmail({
     to: entry.email,
     subject: `You're on the team — Join Sultans FC (${entry.age_group})`,
-    html: brandedEmail(`<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will email ${entry.email} with placement information and try-out details if selected.</p><p>Jersey #${entry.jersey_number}</p>`),
+    html: brandedEmail(`<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
   });
   if (NOTIFY) {
     await sendEmail({
