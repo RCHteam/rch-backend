@@ -7,6 +7,8 @@ const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+const VALID_GRADES = new Set(['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade']);
+const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
 
 // Public: is Skills Training registration currently open?
 // The frontend checks this before showing the registration form.
@@ -31,15 +33,18 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 
-  const { fullName, dob, email, phone, team, experience, notes } = req.body || {};
+  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType } = req.body || {};
 
   const errors = {};
-  if (!fullName || !String(fullName).trim()) errors.fullName = 'Please enter a name.';
+  if (!fullName || !String(fullName).trim()) errors.fullName = "Please enter the player's name.";
+  if (!parentName || !String(parentName).trim()) errors.parentName = "Please enter the parent's/guardian's name.";
   if (!dob) errors.dob = 'Please enter a date of birth.';
   if (!email || !EMAIL_RE.test(email)) errors.email = 'Please enter a valid email.';
   if (!phone || !PHONE_RE.test(String(phone).trim())) errors.phone = 'Please enter a valid US phone number as +1 followed by 10 digits.';
   if (!team || !String(team).trim()) errors.team = 'Please answer this field.';
   if (!notes || !String(notes).trim()) errors.notes = 'Please share a note.';
+  if (!grade || !VALID_GRADES.has(grade)) errors.grade = "Please select the player's grade.";
+  if (!sessionType || !VALID_SESSION_TYPES.has(sessionType)) errors.sessionType = 'Please select a sessions-per-week option.';
 
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
@@ -51,10 +56,10 @@ router.post('/register', async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO skills_registrations
-        (full_name, dob, email, phone, team, experience, notes, jersey_number)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [fullName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey]
+      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType]
     );
 
     const entry = insertRes.rows[0];

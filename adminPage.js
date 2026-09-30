@@ -9,9 +9,9 @@ module.exports = `<!doctype html>
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:#f4f1e8; color:#1c2a20; }
   header{ background:var(--pitch-deep); color:var(--chalk); padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
-  header h1{ font-size:1.15rem; margin:0; }
-  header .header-brand{ display:flex; align-items:center; gap:12px; }
-  header .header-brand img{ height:36px; width:auto; display:block; }
+  header .header-brand{ flex:1; display:flex; align-items:center; justify-content:center; }
+  header .header-brand img{ height:40px; width:auto; display:block; }
+  #sectionNav{ background:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:0.85rem; font-weight:600; color:var(--pitch-deep); cursor:pointer; }
   #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
   header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }
   main{ max-width:1100px; margin:0 auto; padding:28px; }
@@ -39,9 +39,18 @@ module.exports = `<!doctype html>
   .btn-payment-link{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-payment-link:hover{ background:var(--pitch); color:#fff; }
   .btn-payment-link:disabled{ opacity:0.6; cursor:default; }
+  .btn-move-to-roster{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-move-to-roster:hover{ background:var(--pitch); color:#fff; }
+  .btn-move-to-roster:disabled{ opacity:0.6; cursor:default; }
+  .btn-unsubscribe{ background:#fff; border:1px solid #6a6a6a; color:#444; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-unsubscribe:hover{ background:#444; color:#fff; }
+  .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
   .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
+  .btn-cancel-billing{ background:#fff; border:1px solid #b5482f; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-cancel-billing:hover{ background:#b5482f; color:#fff; }
+  .btn-cancel-billing:disabled{ opacity:0.6; cursor:default; }
   .btn-edit-row{ background:#fff; border:1px solid #8a8a8a; color:#444; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-edit-row:hover{ background:#444; color:#fff; }
   .btn-edit-row:disabled{ opacity:0.6; cursor:default; }
@@ -95,12 +104,22 @@ module.exports = `<!doctype html>
   <header>
     <div class="header-brand">
       <img src="/assets/logo.png" alt="RCH Elite Training">
-      <h1>RCH Elite Training — Registrations</h1>
     </div>
-    <button id="logoutBtn">Log out</button>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <select id="sectionNav">
+        <option value="registrations">Registrations</option>
+        <option value="finances">Finances</option>
+        <option value="charges">Charges</option>
+        <option value="coaches">Coaches</option>
+        <option value="data">Data</option>
+      </select>
+      <button id="logoutBtn">Log out</button>
+    </div>
   </header>
   <main>
     <div class="summary" id="summary"></div>
+
+    <div id="section-registrations">
 
     <div class="section-head">
       <h2>Skills Training</h2>
@@ -164,6 +183,10 @@ module.exports = `<!doctype html>
     </div>
     <div id="overviewTableWrap"></div>
 
+    </div><!-- /section-registrations -->
+
+    <div id="section-finances" class="hidden">
+
     <div class="section-head">
       <h2>Pricing &amp; Revenue</h2>
     </div>
@@ -218,6 +241,69 @@ module.exports = `<!doctype html>
       <button type="button" class="btn-add" id="saveProrationModeBtn">Save</button>
       <span class="pricing-saved" id="prorationModeSaved"></span>
     </div>
+
+    </div><!-- /section-finances -->
+
+    <div id="section-charges" class="hidden">
+      <div class="section-head">
+        <h2>Charges</h2>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Recurring charges apply to every month automatically (field rental, insurance, etc.). One-time charges apply only to the month you tag them with (a tournament fee, equipment purchase, etc.). Both are subtracted from estimated roster revenue in each month's snapshot, under Data.</p>
+      <div class="modal-amounts" style="background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <label for="chargeDescInput">Description</label><br>
+          <input type="text" id="chargeDescInput" placeholder="e.g. Field rental">
+        </div>
+        <div>
+          <label for="chargeAmountInput">Amount ($)</label><br>
+          <input type="number" id="chargeAmountInput" min="0" step="0.01">
+        </div>
+        <div>
+          <label for="chargeKindInput">Type</label><br>
+          <select id="chargeKindInput">
+            <option value="recurring">Recurring (every month)</option>
+            <option value="one_time">One-time (specific month)</option>
+          </select>
+        </div>
+        <div id="chargeMonthWrap" class="hidden">
+          <label for="chargeMonthInput">Month</label><br>
+          <input type="date" id="chargeMonthInput">
+        </div>
+        <button type="button" class="btn-add" id="addChargeBtn">+ Add Charge</button>
+      </div>
+      <div id="chargesTableWrap"></div>
+    </div><!-- /section-charges -->
+
+    <div id="section-coaches" class="hidden">
+      <div class="section-head">
+        <h2>Coaches</h2>
+        <button type="button" class="btn-add" id="addCoachBtn">+ Add Coach</button>
+      </div>
+      <div id="coachesTableWrap"></div>
+    </div><!-- /section-coaches -->
+
+    <div id="section-data" class="hidden">
+      <div class="section-head">
+        <h2>Monthly Snapshots</h2>
+        <button type="button" class="btn-add" id="generateSnapshotBtn">Generate This Month's Snapshot</button>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A snapshot of the roster + estimated revenue, charges, and net income is saved automatically on the 1st of each month for the month that just ended. Revenue is estimated from each active player's current monthly rate minus their discount — it's a projection from the roster, not a reconciliation against actual settled Stripe payments, which Stripe's own dashboard remains the source of truth for.</p>
+      <div id="snapshotsTableWrap"></div>
+
+      <div class="section-head" style="margin-top:32px;">
+        <h2>Unsubscribed Players</h2>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Players who quit. Cancel their billing first (from the Players Roster), then Unsubscribe them here to archive them off the active roster.</p>
+      <div id="archivedTableWrap"></div>
+
+      <div class="section-head" style="margin-top:32px;">
+        <h2>Exports</h2>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn-export" href="#" id="exportRosterLink">Download Roster CSV</a>
+      </div>
+    </div><!-- /section-data -->
+
   </main>
 </div>
 
@@ -249,6 +335,7 @@ module.exports = `<!doctype html>
     <select id="apSessions">
       <option value="one">One</option>
       <option value="two">Two</option>
+      <option value="online">Online Course</option>
     </select>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="apRch"><label for="apRch">RCH</label></div>
@@ -292,6 +379,7 @@ module.exports = `<!doctype html>
     <select id="epSessions">
       <option value="one">One</option>
       <option value="two">Two</option>
+      <option value="online">Online Course</option>
     </select>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="epRch"><label for="epRch">RCH</label></div>
@@ -303,6 +391,79 @@ module.exports = `<!doctype html>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="editPlayerCancel">Cancel</button>
       <button type="button" class="btn-send" id="editPlayerSubmit">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="coachModal">
+  <div class="modal">
+    <h3 id="coachModalTitle">Add Coach</h3>
+    <label for="coachName">Name</label>
+    <input type="text" id="coachName">
+    <div class="two-col">
+      <div><label for="coachEmail">Email</label><input type="email" id="coachEmail"></div>
+      <div><label for="coachPhone">Phone</label><input type="text" id="coachPhone"></div>
+    </div>
+    <label>Grades coached</label>
+    <div class="two-col" style="flex-wrap:wrap;">
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_pre-k"><label for="coachGrade_pre-k">Pre-K</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_kindergarten"><label for="coachGrade_kindergarten">Kindergarten</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_1st-grade"><label for="coachGrade_1st-grade">1st Grade</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_2nd-grade"><label for="coachGrade_2nd-grade">2nd Grade</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_3rd-grade"><label for="coachGrade_3rd-grade">3rd Grade</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_4th-grade"><label for="coachGrade_4th-grade">4th Grade</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_5th-grade"><label for="coachGrade_5th-grade">5th Grade</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachGrade_6th-grade"><label for="coachGrade_6th-grade">6th Grade</label></div>
+    </div>
+    <div class="two-col">
+      <div class="checkbox-row"><input type="checkbox" id="coachRch"><label for="coachRch">Coaches RCH</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="coachSultans"><label for="coachSultans">Coaches Sultans FC</label></div>
+    </div>
+    <label for="coachNotes">Notes</label>
+    <textarea id="coachNotes" rows="3" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:1rem;"></textarea>
+    <p class="modal-error" id="coachModalError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="coachModalCancel">Cancel</button>
+      <button type="button" class="btn-send" id="coachModalSubmit">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="moveToRosterModal">
+  <div class="modal">
+    <h3>Move to Roster</h3>
+    <p class="modal-sub" id="moveModalSub"></p>
+    <label for="moveGrade">Grade</label>
+    <select id="moveGrade">
+      <option value="pre-k">Pre-K</option>
+      <option value="kindergarten">Kindergarten</option>
+      <option value="1st-grade">1st Grade</option>
+      <option value="2nd-grade">2nd Grade</option>
+      <option value="3rd-grade">3rd Grade</option>
+      <option value="4th-grade">4th Grade</option>
+      <option value="5th-grade">5th Grade</option>
+      <option value="6th-grade">6th Grade</option>
+    </select>
+    <label for="moveSessionType">Sessions</label>
+    <select id="moveSessionType">
+      <option value="one">One</option>
+      <option value="two">Two</option>
+      <option value="online">Online Course</option>
+    </select>
+    <div class="two-col">
+      <div class="checkbox-row"><input type="checkbox" id="moveRch"><label for="moveRch">RCH</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="moveSultans"><label for="moveSultans">Sultans (implies RCH)</label></div>
+    </div>
+    <div class="two-col">
+      <div><label for="moveParentName">Parent name</label><input type="text" id="moveParentName"></div>
+      <div><label for="moveParentPhone">Parent phone</label><input type="text" id="moveParentPhone"></div>
+    </div>
+    <label for="moveParentEmail">Parent email</label>
+    <input type="email" id="moveParentEmail">
+    <p class="modal-error" id="moveModalError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="moveModalCancel">Cancel</button>
+      <button type="button" class="btn-send" id="moveModalSubmit">Move to Roster</button>
     </div>
   </div>
 </div>
@@ -355,14 +516,41 @@ module.exports = `<!doctype html>
   <div class="modal">
     <h3>Add Skills Training Registration</h3>
     <p class="modal-sub">For a family you know personally who didn't register on the website.</p>
-    <label for="asFullName">Full name</label>
-    <input type="text" id="asFullName">
+    <div class="two-col">
+      <div><label for="asFullName">Player's full name</label><input type="text" id="asFullName"></div>
+      <div><label for="asParentName">Parent / guardian name</label><input type="text" id="asParentName"></div>
+    </div>
     <label for="asDob">Date of birth</label>
     <input type="date" id="asDob">
-    <label for="asEmail">Email</label>
-    <input type="email" id="asEmail">
-    <label for="asPhone">Phone (+1 followed by 10 digits)</label>
-    <input type="text" id="asPhone" placeholder="+12145551234">
+    <div class="two-col">
+      <div><label for="asEmail">Email</label><input type="email" id="asEmail"></div>
+      <div><label for="asPhone">Phone (+1 followed by 10 digits)</label><input type="text" id="asPhone" placeholder="+12145551234"></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <label for="asGrade">Grade</label>
+        <select id="asGrade">
+          <option value="">Select grade</option>
+          <option value="pre-k">Pre-K</option>
+          <option value="kindergarten">Kindergarten</option>
+          <option value="1st-grade">1st Grade</option>
+          <option value="2nd-grade">2nd Grade</option>
+          <option value="3rd-grade">3rd Grade</option>
+          <option value="4th-grade">4th Grade</option>
+          <option value="5th-grade">5th Grade</option>
+          <option value="6th-grade">6th Grade</option>
+        </select>
+      </div>
+      <div>
+        <label for="asSessionType">Sessions per week</label>
+        <select id="asSessionType">
+          <option value="">Select an option</option>
+          <option value="one">One</option>
+          <option value="two">Two</option>
+          <option value="online">Online Course</option>
+        </select>
+      </div>
+    </div>
     <label for="asTeam">Team</label>
     <input type="text" id="asTeam">
     <label for="asExperience">Experience</label>
@@ -402,6 +590,13 @@ module.exports = `<!doctype html>
       <div><label for="ajExperience">Experience</label><input type="text" id="ajExperience"></div>
       <div><label for="ajAvailability">Availability</label><input type="text" id="ajAvailability"></div>
     </div>
+    <label for="ajSessionType">Sessions per week</label>
+    <select id="ajSessionType">
+      <option value="">Select an option</option>
+      <option value="one">One</option>
+      <option value="two">Two</option>
+      <option value="online">Online Course</option>
+    </select>
     <div class="two-col">
       <div><label for="ajParentName">Parent name</label><input type="text" id="ajParentName"></div>
       <div><label for="ajEmail">Email</label><input type="email" id="ajEmail"></div>
@@ -457,6 +652,8 @@ module.exports = `<!doctype html>
   function showApp(){
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
+    document.getElementById('sectionNav').value = 'registrations';
+    showSection('registrations');
     loadAll();
   }
 
@@ -480,13 +677,17 @@ module.exports = `<!doctype html>
 
   function renderTable(rows, columns, opts = {}){
     if (!rows.length) return '<div class="empty">No entries yet.</div>';
-    const hasActions = opts.onDelete || opts.onPaymentLink || opts.onPauseToggle;
+    const hasActions = opts.onDelete || opts.onPaymentLink || opts.onPauseToggle || opts.onCancelBilling || opts.onMoveToRoster;
     const cols = hasActions ? [...columns, { key:'__actions', label:'' }] : columns;
     let html = '<table><thead><tr>' + cols.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
     for (const row of rows) {
       html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
       if (hasActions) {
         html += '<td style="display:flex; gap:6px;">';
+        if (opts.onMoveToRoster) {
+          const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
+          html += \`<button type="button" class="btn-move-to-roster" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Move to Roster</button>\`;
+        }
         if (opts.onPaymentLink) {
           const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
           html += \`<button type="button" class="btn-payment-link" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Send Payment Link</button>\`;
@@ -495,6 +696,10 @@ module.exports = `<!doctype html>
           const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
           const isPaused = !!row.paused_until && new Date(row.paused_until) > new Date();
           html += \`<button type="button" class="btn-pause-toggle" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}" data-paused="\${isPaused}">\${isPaused ? 'Resume Billing' : 'Pause Billing'}</button>\`;
+        }
+        if (opts.onCancelBilling && row.payment_status === 'completed') {
+          const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
+          html += \`<button type="button" class="btn-cancel-billing" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Cancel Billing</button>\`;
         }
         if (opts.onDelete) {
           html += \`<button type="button" class="btn-delete-row" data-id="\${row[opts.idKey || 'id']}">Delete</button>\`;
@@ -505,6 +710,99 @@ module.exports = `<!doctype html>
     }
     html += '</tbody></table>';
     return html;
+  }
+
+  // ---- Move to Roster (Skills Training / Join Sultans FC → Players Roster) ----
+
+  let moveModalCtx = null;
+
+  function openMoveModal(sourceType, id, row, onSent){
+    moveModalCtx = { sourceType, id, onSent };
+    const label = sourceType === 'skills' ? row.full_name : row.child_name;
+    document.getElementById('moveModalSub').textContent = label;
+    // Prefill whatever the source registration already has — both forms now
+    // collect grade (skills: row.grade; join: row.age_group) and session_type
+    // directly from parents at signup, so this is usually already correct.
+    document.getElementById('moveGrade').value = row.grade || row.age_group || 'pre-k';
+    document.getElementById('moveSessionType').value = row.session_type || 'one';
+    document.getElementById('moveRch').checked = true;
+    // Skills Training is always RCH-only — no Sultans option there at all.
+    // Join Sultans FC registration means RCH too, so Sultans defaults on.
+    const isSkills = sourceType === 'skills';
+    document.getElementById('moveSultans').checked = !isSkills && sourceType === 'join';
+    document.getElementById('moveSultans').disabled = isSkills;
+    document.getElementById('moveSultans').closest('.checkbox-row').style.display = isSkills ? 'none' : '';
+    document.getElementById('moveRch').disabled = sourceType === 'join';
+    document.getElementById('moveParentName').value = row.parent_name || row.full_name || '';
+    document.getElementById('moveParentPhone').value = row.phone || '';
+    document.getElementById('moveParentEmail').value = row.email || '';
+    document.getElementById('moveModalError').textContent = '';
+    document.getElementById('moveToRosterModal').classList.remove('hidden');
+  }
+
+  document.getElementById('moveSultans').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      document.getElementById('moveRch').checked = true;
+      document.getElementById('moveRch').disabled = true;
+    } else {
+      document.getElementById('moveRch').disabled = false;
+    }
+  });
+
+  document.getElementById('moveModalCancel').addEventListener('click', () => {
+    document.getElementById('moveToRosterModal').classList.add('hidden');
+    document.getElementById('moveRch').disabled = false;
+    document.getElementById('moveSultans').disabled = false;
+    moveModalCtx = null;
+  });
+
+  document.getElementById('moveModalSubmit').addEventListener('click', async () => {
+    if (!moveModalCtx) return;
+    const errEl = document.getElementById('moveModalError');
+    errEl.textContent = '';
+    const payload = {
+      sourceType: moveModalCtx.sourceType,
+      sourceId: moveModalCtx.id,
+      grade: document.getElementById('moveGrade').value,
+      sessionType: document.getElementById('moveSessionType').value,
+      rch: document.getElementById('moveRch').checked,
+      sultans: moveModalCtx.sourceType === 'skills' ? false : document.getElementById('moveSultans').checked,
+      parentName: document.getElementById('moveParentName').value.trim(),
+      parentPhone: document.getElementById('moveParentPhone').value.trim(),
+      parentEmail: document.getElementById('moveParentEmail').value.trim(),
+    };
+    const btn = document.getElementById('moveModalSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Moving…';
+    try {
+      const result = await api('/api/admin/move-to-roster', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        document.getElementById('moveToRosterModal').classList.add('hidden');
+        document.getElementById('moveRch').disabled = false;
+        const ctx = moveModalCtx;
+        moveModalCtx = null;
+        await ctx.onSent();
+        await Promise.all([loadSummary(), loadRoster()]);
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not move this registration. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Move to Roster';
+    }
+  });
+
+  function wireMoveToRosterButtons(wrapId, sourceType, rows, onSent){
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-move-to-roster').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const row = rows.find((r) => String(r.id) === id);
+        if (row) openMoveModal(sourceType, id, row, onSent);
+      });
+    });
   }
 
   function wirePaymentLinkButtons(wrapId, registrationType, onSent){
@@ -712,12 +1010,311 @@ module.exports = `<!doctype html>
     });
   }
 
+  // Ends a family's subscription outright (e.g. to stop an old rate before a
+  // price change takes effect, rather than letting it auto-charge). Works
+  // whether the subscription is still in its initial trial period (nothing
+  // has been charged yet) or already active — either way it just stops.
+  function wireCancelButtons(wrapId, registrationType, onSent){
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-cancel-billing').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const label = btn.getAttribute('data-label') || '';
+        if (!confirm('Cancel billing for ' + label + '? This stops their subscription immediately and cannot be undone — you\\'d need to send a new payment link to restart it.')) return;
+        btn.disabled = true;
+        try {
+          const result = await api('/api/admin/payment-links/cancel', {
+            method: 'POST',
+            body: JSON.stringify({ registrationType, registrationId: id }),
+          });
+          if (result && result.error) {
+            alert(result.error);
+            btn.disabled = false;
+          } else {
+            await onSent();
+          }
+        } catch (e) {
+          alert('Could not cancel billing. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ---- Charges (Finances) ----
+
+  function renderChargesTable(rows){
+    if (!rows.length) return '<div class="empty">No charges yet.</div>';
+    let html = '<table><thead><tr><th>Description</th><th>Amount</th><th>Type</th><th>Month</th><th></th></tr></thead><tbody>';
+    rows.forEach((c) => {
+      html += '<tr>' +
+        '<td>' + escapeHtml(c.description) + '</td>' +
+        '<td>$' + (c.amount_cents / 100).toFixed(2) + '</td>' +
+        '<td>' + (c.kind === 'recurring' ? 'Recurring' : 'One-time') + '</td>' +
+        '<td>' + (c.charge_month ? String(c.charge_month).slice(0, 10) : '—') + '</td>' +
+        '<td><button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadCharges(){
+    const rows = await api('/api/admin/charges');
+    const wrap = document.getElementById('chargesTableWrap');
+    wrap.innerHTML = renderChargesTable(rows);
+    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this charge?')) return;
+        btn.disabled = true;
+        try {
+          await api('/api/admin/charges/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+          await loadCharges();
+        } catch (e) {
+          alert('Could not delete this charge. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.getElementById('chargeKindInput').addEventListener('change', (e) => {
+    document.getElementById('chargeMonthWrap').classList.toggle('hidden', e.target.value !== 'one_time');
+  });
+
+  document.getElementById('addChargeBtn').addEventListener('click', async () => {
+    const description = document.getElementById('chargeDescInput').value.trim();
+    const amountCents = Math.round(parseFloat(document.getElementById('chargeAmountInput').value || '0') * 100);
+    const kind = document.getElementById('chargeKindInput').value;
+    const chargeMonth = document.getElementById('chargeMonthInput').value;
+    if (!description) { alert('Please enter a description.'); return; }
+    if (kind === 'one_time' && !chargeMonth) { alert('Please pick a month for this one-time charge.'); return; }
+    const btn = document.getElementById('addChargeBtn');
+    btn.disabled = true;
+    try {
+      const result = await api('/api/admin/charges', {
+        method: 'POST',
+        body: JSON.stringify({ description, amountCents, kind, chargeMonth: kind === 'one_time' ? chargeMonth : undefined }),
+      });
+      if (result.error) {
+        alert(result.error);
+      } else {
+        document.getElementById('chargeDescInput').value = '';
+        document.getElementById('chargeAmountInput').value = '';
+        document.getElementById('chargeMonthInput').value = '';
+        await loadCharges();
+      }
+    } catch (e) {
+      alert('Could not add this charge. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---- Coaches ----
+
+  const ALL_GRADE_LABELS = {
+    'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade',
+    '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
+  };
+
+  function renderCoachesTable(rows){
+    if (!rows.length) return '<div class="empty">No coaches yet.</div>';
+    let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Grades</th><th>RCH</th><th>Sultans</th><th>Notes</th><th></th></tr></thead><tbody>';
+    rows.forEach((c) => {
+      const gradeLabels = (c.grades || []).map((g) => ALL_GRADE_LABELS[g] || g).join(', ') || '—';
+      html += '<tr>' +
+        '<td>' + escapeHtml(c.name) + '</td>' +
+        '<td>' + escapeHtml(c.email || '') + '</td>' +
+        '<td>' + escapeHtml(c.phone || '') + '</td>' +
+        '<td>' + gradeLabels + '</td>' +
+        '<td>' + (c.rch ? '✓' : '—') + '</td>' +
+        '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
+        '<td>' + escapeHtml(c.notes || '') + '</td>' +
+        '<td style="display:flex; gap:6px;">' +
+          '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
+          '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
+        '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  let coachRows = [];
+  let editCoachId = null;
+
+  async function loadCoaches(){
+    coachRows = await api('/api/admin/coaches');
+    const wrap = document.getElementById('coachesTableWrap');
+    wrap.innerHTML = renderCoachesTable(coachRows);
+    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this coach?')) return;
+        btn.disabled = true;
+        try {
+          await api('/api/admin/coaches/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+          await loadCoaches();
+        } catch (e) {
+          alert('Could not delete this coach. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+    wrap.querySelectorAll('.btn-edit-row').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const coach = coachRows.find((c) => String(c.id) === btn.getAttribute('data-id'));
+        if (coach) openCoachModal(coach);
+      });
+    });
+  }
+
+  function openCoachModal(coach){
+    editCoachId = coach ? coach.id : null;
+    document.getElementById('coachModalTitle').textContent = coach ? 'Edit Coach' : 'Add Coach';
+    document.getElementById('coachName').value = coach ? coach.name : '';
+    document.getElementById('coachEmail').value = coach ? (coach.email || '') : '';
+    document.getElementById('coachPhone').value = coach ? (coach.phone || '') : '';
+    document.getElementById('coachRch').checked = coach ? !!coach.rch : false;
+    document.getElementById('coachSultans').checked = coach ? !!coach.sultans : false;
+    document.getElementById('coachNotes').value = coach ? (coach.notes || '') : '';
+    const grades = coach ? (coach.grades || []) : [];
+    GRADES.forEach((g) => {
+      const cb = document.getElementById('coachGrade_' + g);
+      if (cb) cb.checked = grades.includes(g);
+    });
+    document.getElementById('coachModalError').textContent = '';
+    document.getElementById('coachModal').classList.remove('hidden');
+  }
+
+  document.getElementById('addCoachBtn').addEventListener('click', () => openCoachModal(null));
+  document.getElementById('coachModalCancel').addEventListener('click', () => {
+    document.getElementById('coachModal').classList.add('hidden');
+    editCoachId = null;
+  });
+  document.getElementById('coachModalSubmit').addEventListener('click', async () => {
+    const errEl = document.getElementById('coachModalError');
+    errEl.textContent = '';
+    const name = document.getElementById('coachName').value.trim();
+    if (!name) { errEl.textContent = "Please enter the coach's name."; return; }
+    const grades = GRADES.filter((g) => document.getElementById('coachGrade_' + g) && document.getElementById('coachGrade_' + g).checked);
+    const payload = {
+      name,
+      email: document.getElementById('coachEmail').value.trim(),
+      phone: document.getElementById('coachPhone').value.trim(),
+      grades,
+      rch: document.getElementById('coachRch').checked,
+      sultans: document.getElementById('coachSultans').checked,
+      notes: document.getElementById('coachNotes').value.trim(),
+    };
+    const btn = document.getElementById('coachModalSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const result = editCoachId
+        ? await api('/api/admin/coaches/' + editCoachId, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/api/admin/coaches', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) {
+        errEl.textContent = result.error;
+      } else {
+        document.getElementById('coachModal').classList.add('hidden');
+        editCoachId = null;
+        await loadCoaches();
+      }
+    } catch (e) {
+      errEl.textContent = 'Could not save this coach. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+    }
+  });
+
+  // ---- Data: monthly snapshots + archived (unsubscribed) players ----
+
+  function renderSnapshotsTable(rows){
+    if (!rows.length) return '<div class="empty">No snapshots yet.</div>';
+    let html = '<table><thead><tr><th>Month</th><th>Revenue</th><th>Charges</th><th>Net</th><th></th></tr></thead><tbody>';
+    rows.forEach((s) => {
+      html += '<tr>' +
+        '<td>' + String(s.month).slice(0, 7) + '</td>' +
+        '<td>$' + (s.total_revenue_cents / 100).toFixed(2) + '</td>' +
+        '<td>$' + (s.total_charges_cents / 100).toFixed(2) + '</td>' +
+        '<td>$' + (s.net_cents / 100).toFixed(2) + '</td>' +
+        '<td><a class="btn-export" href="#" data-month="' + String(s.month).slice(0, 10) + '">Download CSV</a></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadSnapshots(){
+    const rows = await api('/api/admin/monthly-snapshots');
+    const wrap = document.getElementById('snapshotsTableWrap');
+    wrap.innerHTML = renderSnapshotsTable(rows);
+    wrap.querySelectorAll('a[data-month]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const month = a.getAttribute('data-month');
+        window.open(API_BASE + '/api/admin/monthly-snapshots/' + month + '/csv?token=' + encodeURIComponent(getToken()));
+      });
+    });
+  }
+
+  document.getElementById('generateSnapshotBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('generateSnapshotBtn');
+    btn.disabled = true;
+    try {
+      const result = await api('/api/admin/monthly-snapshots/generate', { method: 'POST', body: JSON.stringify({}) });
+      if (result.error) alert(result.error);
+      else await loadSnapshots();
+    } catch (e) {
+      alert('Could not generate this snapshot. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderArchivedTable(rows){
+    if (!rows.length) return '<div class="empty">No unsubscribed players.</div>';
+    let html = '<table><thead><tr><th>Name</th><th>Grade</th><th>Parent</th><th></th></tr></thead><tbody>';
+    rows.forEach((r) => {
+      html += '<tr>' +
+        '<td>' + escapeHtml(r.player_name) + '</td>' +
+        '<td>' + (ALL_GRADE_LABELS[r.grade] || r.grade) + '</td>' +
+        '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
+        '<td><button type="button" class="btn-payment-link" data-id="' + r.id + '">Restore to Roster</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadArchivedPlayers(){
+    const rows = await api('/api/admin/players?archived=true');
+    const wrap = document.getElementById('archivedTableWrap');
+    wrap.innerHTML = renderArchivedTable(rows);
+    wrap.querySelectorAll('.btn-payment-link').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await api('/api/admin/players/' + btn.getAttribute('data-id') + '/unarchive', { method: 'PUT' });
+          await loadArchivedPlayers();
+        } catch (e) {
+          alert('Could not restore this player. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
   // ---- Manually add a registration (for families you know personally) ----
 
   document.getElementById('addSkillsBtn').addEventListener('click', () => {
-    ['asFullName','asDob','asEmail','asPhone','asTeam','asExperience','asNotes'].forEach((id) => {
+    ['asFullName','asParentName','asDob','asEmail','asPhone','asTeam','asExperience','asNotes'].forEach((id) => {
       document.getElementById(id).value = '';
     });
+    document.getElementById('asGrade').value = '';
+    document.getElementById('asSessionType').value = '';
     document.getElementById('addSkillsError').textContent = '';
     document.getElementById('addSkillsModal').classList.remove('hidden');
   });
@@ -729,12 +1326,15 @@ module.exports = `<!doctype html>
     errEl.textContent = '';
     const payload = {
       fullName: document.getElementById('asFullName').value.trim(),
+      parentName: document.getElementById('asParentName').value.trim(),
       dob: document.getElementById('asDob').value,
       email: document.getElementById('asEmail').value.trim(),
       phone: document.getElementById('asPhone').value.trim(),
       team: document.getElementById('asTeam').value.trim(),
       experience: document.getElementById('asExperience').value.trim(),
       notes: document.getElementById('asNotes').value.trim(),
+      grade: document.getElementById('asGrade').value,
+      sessionType: document.getElementById('asSessionType').value,
     };
     const btn = document.getElementById('addSkillsSubmit');
     btn.disabled = true;
@@ -760,6 +1360,7 @@ module.exports = `<!doctype html>
       document.getElementById(id).value = '';
     });
     document.getElementById('ajAgeGroup').value = 'pre-k';
+    document.getElementById('ajSessionType').value = '';
     document.getElementById('addJoinError').textContent = '';
     document.getElementById('addJoinModal').classList.remove('hidden');
   });
@@ -776,6 +1377,7 @@ module.exports = `<!doctype html>
       motivation: document.getElementById('ajMotivation').value.trim(),
       experience: document.getElementById('ajExperience').value.trim(),
       availability: document.getElementById('ajAvailability').value.trim(),
+      sessionType: document.getElementById('ajSessionType').value,
       parentName: document.getElementById('ajParentName').value.trim(),
       email: document.getElementById('ajEmail').value.trim(),
       phone: document.getElementById('ajPhone').value.trim(),
@@ -831,6 +1433,8 @@ module.exports = `<!doctype html>
     const counts = Object.fromEntries(groups.map(g => [g, 0]));
     (s.joinCountsByAgeGroup || []).forEach(r => { counts[r.age_group] = r.n; });
     document.getElementById('summary').innerHTML = \`
+      <div class="card"><div class="n">\${s.potentialRchCount ?? 0}</div><div class="l">Potential RCH</div></div>
+      <div class="card"><div class="n">\${s.potentialSultansCount ?? 0}</div><div class="l">Potential Sultans</div></div>
       <div class="card"><div class="n">\${s.skillsTrainingCount}</div><div class="l">Skills Training</div></div>
       \${groups.map(g => \`<div class="card"><div class="n">\${counts[g]}</div><div class="l">Join FC \${groupLabels[g]}</div></div>\`).join('')}
     \`;
@@ -851,8 +1455,7 @@ module.exports = `<!doctype html>
 
   async function loadSkills(){
     const rows = await api('/api/admin/skills-registrations');
-    const displayRows = rows.map(r => ({ ...r, payment_status_label: paymentLabel(r) }));
-    document.getElementById('skillsTableWrap').innerHTML = renderTable(displayRows, [
+    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows, [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
       { key:'dob', label:'DOB' },
@@ -860,15 +1463,13 @@ module.exports = `<!doctype html>
       { key:'phone', label:'Phone' },
       { key:'team', label:'Team' },
       { key:'experience', label:'Experience' },
-      { key:'payment_status_label', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true, onPauseToggle: true, labelKey: 'full_name' });
+    ], { onDelete: true, onMoveToRoster: true, labelKey: 'full_name' });
     wireDeleteButtons('skillsTableWrap', async (id) => {
       await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadSkills()]);
     });
-    wirePaymentLinkButtons('skillsTableWrap', 'skills', loadSkills);
-    wirePauseButtons('skillsTableWrap', 'skills', loadSkills);
+    wireMoveToRosterButtons('skillsTableWrap', 'skills', rows, async () => { await Promise.all([loadSummary(), loadSkills()]); });
   }
 
   const GRADE_LABELS = {
@@ -879,7 +1480,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, payment_status_label: paymentLabel(r) }));
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },
@@ -889,15 +1490,13 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
-      { key:'payment_status_label', label:'Payment' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onPaymentLink: true, onPauseToggle: true, labelKey: 'child_name' });
+    ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name' });
     wireDeleteButtons('joinTableWrap', async (id) => {
       await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadJoin()]);
     });
-    wirePaymentLinkButtons('joinTableWrap', 'join', loadJoin);
-    wirePauseButtons('joinTableWrap', 'join', loadJoin);
+    wireMoveToRosterButtons('joinTableWrap', 'join', rows, async () => { await Promise.all([loadSummary(), loadJoin()]); });
   }
 
   // ---- Players Roster, Season Overview, Pricing & Revenue ----
@@ -924,12 +1523,14 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_email || '') + '</td>' +
-        '<td>' + (r.session_type === 'two' ? 'Two' : 'One') + '</td>' +
+        '<td>' + (r.session_type === 'two' ? 'Two' : r.session_type === 'online' ? 'Online' : 'One') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
-        '<td style="display:flex; gap:6px;">' +
+        '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '">Send Payment Link</button>' +
+          '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
+          '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
           '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
           '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
         '</td>' +
@@ -1022,6 +1623,21 @@ module.exports = `<!doctype html>
       });
     });
     wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
+    wireCancelButtons('rosterTableWrap', 'player', loadRoster);
+    wrap.querySelectorAll('.btn-unsubscribe').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const label = btn.getAttribute('data-label') || 'this player';
+        if (!confirm('Unsubscribe ' + label + '? Make sure you\\'ve already clicked Cancel Billing first if they have an active subscription — this just moves them off the active roster into Data → Unsubscribed Players, it does not touch Stripe.')) return;
+        btn.disabled = true;
+        try {
+          await api('/api/admin/players/' + btn.getAttribute('data-id') + '/archive', { method: 'PUT' });
+          await Promise.all([loadRoster(), loadOverviewAndRevenue(), loadSummary()]);
+        } catch (e) {
+          alert('Could not unsubscribe this player. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
   }
   document.getElementById('rosterGradeFilter').addEventListener('change', loadRoster);
 
@@ -1228,7 +1844,29 @@ module.exports = `<!doctype html>
       window.open(API_BASE + '/api/admin/export/join.csv?' + params.toString());
     });
     document.getElementById('ageGroupFilter').addEventListener('change', loadJoin);
+    document.getElementById('exportRosterLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.open(API_BASE + '/api/admin/export/roster.csv?token=' + encodeURIComponent(getToken()));
+    });
   }
+
+  // ---- Section navigation (Registrations / Finances / Charges / Coaches / Data) ----
+
+  const SECTION_IDS = ['registrations', 'finances', 'charges', 'coaches', 'data'];
+  function showSection(name){
+    SECTION_IDS.forEach((id) => {
+      document.getElementById('section-' + id).classList.toggle('hidden', id !== name);
+    });
+  }
+  document.getElementById('sectionNav').addEventListener('change', async (e) => {
+    const name = e.target.value;
+    showSection(name);
+    if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
+    if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
+    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers()]); }
+  });
+  let chargesLoaded = false;
+  let coachesLoaded = false;
 
   async function loadSkillsToggle(){
     const s = await api('/api/admin/settings');

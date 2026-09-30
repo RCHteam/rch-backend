@@ -154,3 +154,93 @@ ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_amount_cents INTEGER;
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_practices_remaining INTEGER;
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_practices_total INTEGER;
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS locked_anchor_date DATE;
+
+-- "Move to Roster" workflow: Skills Training / Join Sultans FC registrations
+-- are just applicants until an admin approves and moves them onto the actual
+-- Players Roster. moved_at marks that move — the admin dashboard lists (and
+-- the summary's "Potential" counts) only show rows where this is still NULL,
+-- so a moved applicant disappears from the pending list without losing its
+-- original submission data.
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS moved_at TIMESTAMPTZ;
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS moved_at TIMESTAMPTZ;
+
+-- Unsubscribed / quit players: archived instead of deleted, so history and
+-- past revenue attribution isn't lost. Archived players are hidden from the
+-- main roster and shown instead in the "Data" section.
+ALTER TABLE players ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;
+
+-- Widen session_type to also allow 'online' (the Online Course option), same
+-- migration pattern as the payment_links.registration_type widening above.
+ALTER TABLE players DROP CONSTRAINT IF EXISTS players_session_type_check;
+ALTER TABLE players ADD CONSTRAINT players_session_type_check
+  CHECK (session_type IN ('one', 'two', 'online'));
+
+-- Coaches directory (dashboard "Coaches" section).
+CREATE TABLE IF NOT EXISTS coaches (
+  id         SERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  email      TEXT,
+  phone      TEXT,
+  grades     TEXT[] NOT NULL DEFAULT '{}',
+  rch        BOOLEAN NOT NULL DEFAULT false,
+  sultans    BOOLEAN NOT NULL DEFAULT false,
+  notes      TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Monthly charges (dashboard "Charges" section, under Finances) — mirrors the
+-- recurring-vs-one-time expense spreadsheet. A 'recurring' charge applies to
+-- every month from its creation onward; a 'one_time' charge applies only to
+-- the specific charge_month it's tagged with. These are subtracted from
+-- estimated roster revenue to get net income for a given month.
+CREATE TABLE IF NOT EXISTS charges (
+  id            SERIAL PRIMARY KEY,
+  description   TEXT NOT NULL,
+  amount_cents  INTEGER NOT NULL,
+  kind          TEXT NOT NULL CHECK (kind IN ('recurring', 'one_time')),
+  charge_month  DATE, -- required for one_time, ignored for recurring
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Monthly snapshots — an archived record of the roster + estimated revenue/
+-- charges/net for a given month, generated automatically at month-end (or
+-- manually via "Generate this month's snapshot now" in the Data section) so
+-- there's a permanent month-by-month history even as the live roster changes.
+CREATE TABLE IF NOT EXISTS monthly_snapshots (
+  id                  SERIAL PRIMARY KEY,
+  month               DATE NOT NULL UNIQUE, -- first-of-month marker
+  roster_json         JSONB NOT NULL,
+  total_revenue_cents INTEGER NOT NULL,
+  total_charges_cents INTEGER NOT NULL,
+  net_cents           INTEGER NOT NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Collect grade + sessions-per-week directly from parents at signup time,
+-- instead of the admin having to ask for it later when moving an applicant
+-- onto the Players Roster. Skills Training has no grade column at all yet;
+-- Join Sultans FC already has age_group (its grade), so it only needs
+-- session_type added. Both are nullable at the DB level (existing rows have
+-- neither) — the public forms require them going forward at the app layer.
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS grade TEXT;
+ALTER TABLE skills_registrations DROP CONSTRAINT IF EXISTS skills_registrations_grade_check;
+ALTER TABLE skills_registrations ADD CONSTRAINT skills_registrations_grade_check
+  CHECK (grade IS NULL OR grade IN ('pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'));
+
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS session_type TEXT;
+ALTER TABLE skills_registrations DROP CONSTRAINT IF EXISTS skills_registrations_session_type_check;
+ALTER TABLE skills_registrations ADD CONSTRAINT skills_registrations_session_type_check
+  CHECK (session_type IS NULL OR session_type IN ('one', 'two', 'online'));
+
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS session_type TEXT;
+ALTER TABLE join_registrations DROP CONSTRAINT IF EXISTS join_registrations_session_type_check;
+ALTER TABLE join_registrations ADD CONSTRAINT join_registrations_session_type_check
+  CHECK (session_type IS NULL OR session_type IN ('one', 'two', 'online'));
+
+-- Skills Training never had a separate parent/guardian name field (unlike
+-- Join Sultans FC, which already has parent_name) — full_name has always
+-- been the PLAYER's name. Add parent_name so Move to Roster gets both
+-- names directly from the parent at signup instead of the admin having to
+-- type the parent's name in by hand. Nullable for existing rows; required
+-- at the app layer going forward.
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS parent_name TEXT;

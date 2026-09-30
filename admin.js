@@ -8,6 +8,8 @@ const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+const VALID_GRADES = new Set(['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade']);
+const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
 
 router.post('/admin/login', (req, res) => {
   const { password } = req.body || {};
@@ -65,7 +67,11 @@ router.post('/admin/settings/join-registration', requireAdmin, async (req, res) 
   }
 });
 
+// Only the still-pending applicants (not yet moved to the Players Roster) —
+// once moved, moved_at is set and they drop off this list, since the roster
+// is now their record. Pass ?includeMoved=true to see everyone regardless.
 router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
+  const includeMoved = req.query.includeMoved === 'true';
   const result = await pool.query(
     `SELECT s.*, pl.status AS payment_status, pl.last_payment_status, pl.paused_until
      FROM skills_registrations s
@@ -74,6 +80,7 @@ router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
        WHERE registration_type = 'skills' AND registration_id = s.id
        ORDER BY created_at DESC LIMIT 1
      ) pl ON true
+     ${includeMoved ? '' : 'WHERE s.moved_at IS NULL'}
      ORDER BY s.submitted_at DESC`
   );
   res.json(result.rows);
@@ -81,6 +88,7 @@ router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
 
 router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
   const { ageGroup } = req.query;
+  const includeMoved = req.query.includeMoved === 'true';
   const base = `
     SELECT j.*, pl.status AS payment_status, pl.last_payment_status, pl.paused_until
     FROM join_registrations j
@@ -89,9 +97,12 @@ router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
       WHERE registration_type = 'join' AND registration_id = j.id
       ORDER BY created_at DESC LIMIT 1
     ) pl ON true`;
-  const result = ageGroup
-    ? await pool.query(`${base} WHERE j.age_group = $1 ORDER BY j.submitted_at DESC`, [ageGroup])
-    : await pool.query(`${base} ORDER BY j.submitted_at DESC`);
+  const conditions = [];
+  const params = [];
+  if (ageGroup) { params.push(ageGroup); conditions.push(`j.age_group = $${params.length}`); }
+  if (!includeMoved) conditions.push('j.moved_at IS NULL');
+  const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+  const result = await pool.query(`${base}${where} ORDER BY j.submitted_at DESC`, params);
   res.json(result.rows);
 });
 
@@ -135,7 +146,7 @@ router.delete('/admin/skills-registrations/:id', requireAdmin, async (req, res) 
 // Admin: manually add a Skills Training registration — for a family you know
 // personally who didn't go through the public website form.
 router.post('/admin/skills-registrations', requireAdmin, async (req, res) => {
-  const { fullName, dob, email, phone, team, experience, notes } = req.body || {};
+  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType } = req.body || {};
 
   const errors = {};
   if (!fullName || !String(fullName).trim()) errors.fullName = 'Please enter a name.';
@@ -143,6 +154,12 @@ router.post('/admin/skills-registrations', requireAdmin, async (req, res) => {
   if (!email || !EMAIL_RE.test(email)) errors.email = 'Please enter a valid email.';
   if (!phone || !PHONE_RE.test(String(phone).trim())) errors.phone = 'Please enter a valid US phone number as +1 followed by 10 digits.';
   if (!team || !String(team).trim()) errors.team = 'Please answer this field.';
+  if (grade !== undefined && grade !== null && grade !== '' && !VALID_GRADES.has(grade)) {
+    errors.grade = `grade must be one of: ${[...VALID_GRADES].join(', ')}`;
+  }
+  if (sessionType !== undefined && sessionType !== null && sessionType !== '' && !VALID_SESSION_TYPES.has(sessionType)) {
+    errors.sessionType = `sessionType must be one of: ${[...VALID_SESSION_TYPES].join(', ')}`;
+  }
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
   }
@@ -153,10 +170,10 @@ router.post('/admin/skills-registrations', requireAdmin, async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO skills_registrations
-        (full_name, dob, email, phone, team, experience, notes, jersey_number)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [fullName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes || '', jersey]
+      [fullName.trim(), parentName || '', dob, email.trim(), phone.trim(), team.trim(), experience || '', notes || '', jersey, grade || null, sessionType || null]
     );
     res.status(201).json({ ok: true, entry: insertRes.rows[0] });
   } catch (err) {
@@ -170,7 +187,7 @@ router.post('/admin/skills-registrations', requireAdmin, async (req, res) => {
 router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
   const {
     ageGroup, childName, dob, motivation, experience, availability,
-    parentName, email, phone, emName, emPhone, medical,
+    parentName, email, phone, emName, emPhone, medical, sessionType,
   } = req.body || {};
 
   if (!VALID_GROUPS.has(ageGroup)) {
@@ -183,6 +200,9 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
   if (!parentName || !String(parentName).trim()) errors.parentName = 'Please enter a name.';
   if (!email || !EMAIL_RE.test(email)) errors.email = 'Please enter a valid email.';
   if (!phone || !PHONE_RE.test(String(phone).trim())) errors.phone = 'Please enter a valid US phone number as +1 followed by 10 digits.';
+  if (sessionType !== undefined && sessionType !== null && sessionType !== '' && !VALID_SESSION_TYPES.has(sessionType)) {
+    errors.sessionType = `sessionType must be one of: ${[...VALID_SESSION_TYPES].join(', ')}`;
+  }
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
   }
@@ -198,13 +218,13 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
-         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
-       WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $14
+         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation || '', experience || '', availability || '',
        parentName.trim(), email.trim(), phone.trim(), emName || '', emPhone || '', medical || '', jersey,
-       capacity]
+       sessionType || null, capacity]
     );
     if (!insertRes.rows[0]) {
       return res.status(409).json({ error: `This grade is full (${capacity}/${capacity} spots filled).`, full: true });
@@ -216,14 +236,31 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
   }
 });
 
+// "Potential RCH" / "Potential Sultans" count applicants not yet moved to the
+// roster (registering for Sultans FC implies RCH too, so every Join Sultans
+// FC signup counts as a potential Sultans player). Once an admin moves them,
+// they stop being "potential" and instead count in the roster-based
+// breakdown below (Skills Training = total RCH players on the roster, across
+// all grades; Join FC <grade> = Sultans players on the roster, per grade).
 router.get('/admin/summary', requireAdmin, async (req, res) => {
-  const skills = await pool.query('SELECT COUNT(*)::int AS n FROM skills_registrations');
-  const join = await pool.query(
-    'SELECT age_group, COUNT(*)::int AS n FROM join_registrations GROUP BY age_group'
+  const potentialRch = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`
+  );
+  const potentialSultans = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`
+  );
+  const rosterRch = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`
+  );
+  const rosterSultansByGrade = await pool.query(
+    `SELECT grade AS age_group, COUNT(*)::int AS n FROM players
+     WHERE sultans AND archived_at IS NULL GROUP BY grade`
   );
   res.json({
-    skillsTrainingCount: skills.rows[0].n,
-    joinCountsByAgeGroup: join.rows,
+    potentialRchCount: potentialRch.rows[0].n,
+    potentialSultansCount: potentialSultans.rows[0].n,
+    skillsTrainingCount: rosterRch.rows[0].n,
+    joinCountsByAgeGroup: rosterSultansByGrade.rows,
   });
 });
 
