@@ -14,7 +14,7 @@ module.exports = `<!doctype html>
   #sectionNav{ background:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:0.85rem; font-weight:600; color:var(--pitch-deep); cursor:pointer; }
   #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
   header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }
-  main{ max-width:1100px; margin:0 auto; padding:28px; }
+  main{ max-width:1500px; margin:0 auto 0 0; padding:28px; }
   #login-view{ max-width:360px; margin:80px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.08); }
   #login-view h2{ margin-top:0; }
   #login-view input{ width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; margin:10px 0; font-size:1rem; }
@@ -142,6 +142,7 @@ module.exports = `<!doctype html>
           <input type="checkbox" id="joinOpenToggle">
           <span class="switch-track"><span class="switch-thumb"></span></span>
           <span id="joinOpenLabel">Registration open</span>
+          <span id="joinOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
         </label>
         <select id="ageGroupFilter">
           <option value="">All grades</option>
@@ -683,7 +684,7 @@ module.exports = `<!doctype html>
     for (const row of rows) {
       html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
       if (hasActions) {
-        html += '<td style="display:flex; gap:6px;">';
+        html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">';
         if (opts.onMoveToRoster) {
           const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
           html += \`<button type="button" class="btn-move-to-roster" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Move to Roster</button>\`;
@@ -726,12 +727,13 @@ module.exports = `<!doctype html>
     document.getElementById('moveGrade').value = row.grade || row.age_group || 'pre-k';
     document.getElementById('moveSessionType').value = row.session_type || 'one';
     document.getElementById('moveRch').checked = true;
-    // Skills Training is always RCH-only — no Sultans option there at all.
-    // Join Sultans FC registration means RCH too, so Sultans defaults on.
-    const isSkills = sourceType === 'skills';
-    document.getElementById('moveSultans').checked = !isSkills && sourceType === 'join';
-    document.getElementById('moveSultans').disabled = isSkills;
-    document.getElementById('moveSultans').closest('.checkbox-row').style.display = isSkills ? 'none' : '';
+    // Skills Training applicants default to RCH-only, but the admin can still
+    // check Sultans too if this player is also joining that squad. Join
+    // Sultans FC registrations default with Sultans already checked (which
+    // implies RCH).
+    document.getElementById('moveSultans').checked = sourceType === 'join';
+    document.getElementById('moveSultans').disabled = false;
+    document.getElementById('moveSultans').closest('.checkbox-row').style.display = '';
     document.getElementById('moveRch').disabled = sourceType === 'join';
     document.getElementById('moveParentName').value = row.parent_name || row.full_name || '';
     document.getElementById('moveParentPhone').value = row.phone || '';
@@ -766,7 +768,7 @@ module.exports = `<!doctype html>
       grade: document.getElementById('moveGrade').value,
       sessionType: document.getElementById('moveSessionType').value,
       rch: document.getElementById('moveRch').checked,
-      sultans: moveModalCtx.sourceType === 'skills' ? false : document.getElementById('moveSultans').checked,
+      sultans: document.getElementById('moveSultans').checked,
       parentName: document.getElementById('moveParentName').value.trim(),
       parentPhone: document.getElementById('moveParentPhone').value.trim(),
       parentEmail: document.getElementById('moveParentEmail').value.trim(),
@@ -787,7 +789,9 @@ module.exports = `<!doctype html>
         await Promise.all([loadSummary(), loadRoster()]);
       }
     } catch (e) {
-      errEl.textContent = 'Could not move this registration. Please try again.';
+      errEl.textContent = (e && e.message === 'Unauthorized')
+        ? 'Your admin session expired — please log back in and try again.'
+        : 'Could not reach the server. Please check your connection and try again.';
     } finally {
       btn.disabled = false;
       btn.textContent = 'Move to Roster';
@@ -1131,7 +1135,7 @@ module.exports = `<!doctype html>
         '<td>' + (c.rch ? '✓' : '—') + '</td>' +
         '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
         '<td>' + escapeHtml(c.notes || '') + '</td>' +
-        '<td style="display:flex; gap:6px;">' +
+        '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
           '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
         '</td>' +
@@ -1868,6 +1872,11 @@ module.exports = `<!doctype html>
   let chargesLoaded = false;
   let coachesLoaded = false;
 
+  // Join Sultans FC registration can be open/closed per grade, so the toggle
+  // tracks whichever grade is currently selected in the ageGroupFilter
+  // dropdown — switching grades re-reads that grade's own on/off state.
+  let joinOpenByGrade = {};
+
   async function loadSkillsToggle(){
     const s = await api('/api/admin/settings');
     const toggle = document.getElementById('skillsOpenToggle');
@@ -1875,10 +1884,29 @@ module.exports = `<!doctype html>
     toggle.checked = !!s.skillsTrainingOpen;
     label.textContent = s.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
 
+    joinOpenByGrade = s.joinRegistrationOpenByGrade || {};
+    applyJoinToggleForSelectedGrade();
+  }
+
+  function applyJoinToggleForSelectedGrade(){
+    const grade = document.getElementById('ageGroupFilter').value;
     const joinToggle = document.getElementById('joinOpenToggle');
     const joinLabel = document.getElementById('joinOpenLabel');
-    joinToggle.checked = !!s.joinRegistrationOpen;
-    joinLabel.textContent = s.joinRegistrationOpen ? 'Registration open' : 'Registration closed';
+    const joinGradeLabel = document.getElementById('joinOpenGradeLabel');
+    if (!grade) {
+      // "All grades" selected — toggling doesn't map to one grade, so disable
+      // it and prompt picking a specific grade instead.
+      joinToggle.checked = false;
+      joinToggle.disabled = true;
+      joinLabel.textContent = 'Select a grade to toggle';
+      if (joinGradeLabel) joinGradeLabel.textContent = '';
+      return;
+    }
+    joinToggle.disabled = false;
+    const isOpen = joinOpenByGrade[grade] !== false;
+    joinToggle.checked = isOpen;
+    joinLabel.textContent = isOpen ? 'Registration open' : 'Registration closed';
+    if (joinGradeLabel) joinGradeLabel.textContent = '(' + (GRADE_LABELS[grade] || grade) + ')';
   }
 
   document.getElementById('skillsOpenToggle').addEventListener('change', async (e) => {
@@ -1904,22 +1932,27 @@ module.exports = `<!doctype html>
   document.getElementById('joinOpenToggle').addEventListener('change', async (e) => {
     const toggle = e.target;
     const label = document.getElementById('joinOpenLabel');
+    const grade = document.getElementById('ageGroupFilter').value;
+    if (!grade) return; // toggle is disabled in this state, but guard anyway
     const desiredState = toggle.checked;
     toggle.disabled = true;
     try {
       const result = await api('/api/admin/settings/join-registration', {
         method: 'POST',
-        body: JSON.stringify({ open: desiredState }),
+        body: JSON.stringify({ open: desiredState, ageGroup: grade }),
       });
-      toggle.checked = !!result.joinRegistrationOpen;
-      label.textContent = result.joinRegistrationOpen ? 'Registration open' : 'Registration closed';
+      joinOpenByGrade[grade] = !!result.open;
+      toggle.checked = !!result.open;
+      label.textContent = result.open ? 'Registration open' : 'Registration closed';
     } catch (err) {
       toggle.checked = !desiredState;
-      alert('Could not update the Join Sultans FC toggle. Please try again.');
+      alert('Could not update the Join Sultans FC toggle for this grade. Please try again.');
     } finally {
       toggle.disabled = false;
     }
   });
+
+  document.getElementById('ageGroupFilter').addEventListener('change', applyJoinToggleForSelectedGrade);
 
   async function loadAll(){
     await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster()]);

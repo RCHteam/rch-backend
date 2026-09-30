@@ -8,6 +8,7 @@ const router = express.Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+1[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
 const VALID_GROUPS = new Set(['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade']);
+const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
 
 // Pre-K through 3rd grade cap at 15; 4th–6th grade cap at 20.
 const CAPACITY = {
@@ -21,29 +22,36 @@ const CAPACITY = {
   '6th-grade': 20,
 };
 
-// Public: current registration counts + full/available status for every grade,
-// plus whether Sultans FC registration is open at all. The frontend polls this
-// to show "Available" / "Full" on the join cards and to hide/disable the form
-// entirely when an admin has switched registration off.
+// Registration for Join Sultans FC can be switched on/off per grade (e.g.
+// close Pre-K once its squad is set, while 3rd Grade stays open) — each
+// grade has its own site_settings key, defaulting to open.
+function joinOpenKey(ageGroup) {
+  return `join_open_${ageGroup}`;
+}
+
+// Public: current registration counts + full/available/open status for every
+// grade. The frontend polls this to show "Available"/"Full"/"Closed" on the
+// join cards and to hide/disable each grade's form when an admin has
+// switched that grade off.
 router.get('/join/status', async (req, res) => {
   try {
-    const openValue = await getSetting('join_registration_open', 'true');
-
     const countRes = await pool.query(
       'SELECT age_group, COUNT(*)::int AS n FROM join_registrations GROUP BY age_group'
     );
     const counts = {};
     countRes.rows.forEach((r) => { counts[r.age_group] = r.n; });
 
+    const groups = [...VALID_GROUPS];
+    const openValues = await Promise.all(groups.map((g) => getSetting(joinOpenKey(g), 'true')));
+
     // Kept as a flat map (not nested) so the existing frontend, which reads
     // status['pre-k'] etc. directly by grade key, keeps working unchanged.
-    // "open" is just an extra top-level key alongside the grade keys.
-    const status = { open: openValue === 'true' };
-    for (const group of VALID_GROUPS) {
+    const status = {};
+    groups.forEach((group, i) => {
       const count = counts[group] || 0;
       const capacity = CAPACITY[group];
-      status[group] = { count, capacity, full: count >= capacity };
-    }
+      status[group] = { count, capacity, full: count >= capacity, open: openValues[i] === 'true' };
+    });
     res.json(status);
   } catch (err) {
     console.error('Join status error:', err);
@@ -58,9 +66,9 @@ router.post('/join/:ageGroup', async (req, res) => {
   }
 
   try {
-    const openValue = await getSetting('join_registration_open', 'true');
+    const openValue = await getSetting(joinOpenKey(ageGroup), 'true');
     if (openValue !== 'true') {
-      return res.status(403).json({ error: 'Join Sultans FC registration is currently closed.', closed: true });
+      return res.status(403).json({ error: 'Registration for this grade is currently closed.', closed: true });
     }
   } catch (err) {
     console.error('Join status check error:', err);
@@ -69,7 +77,7 @@ router.post('/join/:ageGroup', async (req, res) => {
 
   const {
     childName, dob, motivation, experience, availability,
-    parentName, email, phone, emName, emPhone, medical,
+    parentName, email, phone, emName, emPhone, medical, sessionType,
   } = req.body || {};
 
   const errors = {};
@@ -82,6 +90,7 @@ router.post('/join/:ageGroup', async (req, res) => {
   if (!emName || !String(emName).trim()) errors.emName = 'Please enter an emergency contact name.';
   if (!emPhone || !PHONE_RE.test(String(emPhone).trim())) errors.emPhone = 'Please enter a valid emergency contact number as +1 followed by 10 digits.';
   if (!medical || !String(medical).trim()) errors.medical = 'Please answer this field.';
+  if (!sessionType || !VALID_SESSION_TYPES.has(sessionType)) errors.sessionType = 'Please select a sessions-per-week option.';
 
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
@@ -106,13 +115,13 @@ router.post('/join/:ageGroup', async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
-         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
-       WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $14
+         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
        parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey,
-       capacity]
+       sessionType, capacity]
     );
 
     if (!insertRes.rows[0]) {

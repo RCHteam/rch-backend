@@ -7,15 +7,25 @@ const router = express.Router();
 
 const GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
 const VALID_GRADES = new Set(GRADES);
+const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
+function normalizeSessionType(sessionType, fallback) {
+  return VALID_SESSION_TYPES.has(sessionType) ? sessionType : (fallback || 'one');
+}
 
 // Admin: list players, optionally filtered to one grade — feeds the roster
-// table on the dashboard.
+// table on the dashboard. Archived (unsubscribed/quit) players are excluded
+// by default; pass ?archived=true to see the archive instead (the "Data"
+// section), or ?archived=all for both.
 router.get('/admin/players', requireAdmin, async (req, res) => {
-  const { grade } = req.query;
+  const { grade, archived } = req.query;
   try {
-    const result = grade
-      ? await pool.query('SELECT * FROM players WHERE grade = $1 ORDER BY player_name', [grade])
-      : await pool.query('SELECT * FROM players ORDER BY grade, player_name');
+    const conditions = [];
+    const params = [];
+    if (grade) { params.push(grade); conditions.push(`grade = $${params.length}`); }
+    if (archived === 'true') conditions.push('archived_at IS NOT NULL');
+    else if (archived !== 'all') conditions.push('archived_at IS NULL');
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const result = await pool.query(`SELECT * FROM players ${where} ORDER BY grade, player_name`, params);
     res.json(result.rows);
   } catch (err) {
     console.error('List players error:', err);
@@ -36,7 +46,7 @@ router.post('/admin/players', requireAdmin, async (req, res) => {
   if (!playerName || !String(playerName).trim()) {
     return res.status(400).json({ error: "Please enter the player's name." });
   }
-  const session = sessionType === 'two' ? 'two' : 'one';
+  const session = normalizeSessionType(sessionType);
 
   try {
     const insertRes = await pool.query(
@@ -83,7 +93,7 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
       parentName: parentName !== undefined ? parentName : existing.parent_name,
       parentPhone: parentPhone !== undefined ? parentPhone : existing.parent_phone,
       parentEmail: parentEmail !== undefined ? parentEmail : existing.parent_email,
-      sessionType: sessionType !== undefined ? (sessionType === 'two' ? 'two' : 'one') : existing.session_type,
+      sessionType: sessionType !== undefined ? normalizeSessionType(sessionType) : existing.session_type,
       rch: rch !== undefined ? !!rch : existing.rch,
       sultans: sultans !== undefined ? !!sultans : existing.sultans,
       discountCents: discountCents !== undefined ? (Number(discountCents) || 0) : existing.discount_cents,
@@ -117,6 +127,105 @@ router.delete('/admin/players/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: unsubscribe a player who quit — archives them (moves them to the
+// "Data" section) rather than deleting, so their history stays around. This
+// is intentionally separate from Cancel Billing: cancel their Stripe
+// subscription first (if they have one), then archive them here as a second,
+// explicit step, so a player is never silently dropped from billing records
+// without you having made the call to actually end their enrollment.
+router.put('/admin/players/:id/archive', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE players SET archived_at = now() WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    res.json({ ok: true, entry: result.rows[0] });
+  } catch (err) {
+    console.error('Archive player error:', err);
+    res.status(500).json({ error: 'Could not unsubscribe this player.' });
+  }
+});
+
+// Admin: undo an archive (bring a player back onto the active roster).
+router.put('/admin/players/:id/unarchive', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE players SET archived_at = NULL WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    res.json({ ok: true, entry: result.rows[0] });
+  } catch (err) {
+    console.error('Unarchive player error:', err);
+    res.status(500).json({ error: 'Could not restore this player.' });
+  }
+});
+
+// Admin: "Move to Roster" — promotes an approved Skills Training or Join
+// Sultans FC applicant onto the actual Players Roster. Pulls whatever it can
+// from the original registration (name, email, phone, and for Join Sultans
+// FC also grade + parent name) and takes the rest (grade if not already
+// known, session type, RCH/Sultans flags, and any missing contact fields)
+// from the admin via this request. Registering for Sultans FC always implies
+// RCH too, enforced here regardless of what was submitted.
+router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
+  const {
+    sourceType, sourceId, grade, sessionType,
+    rch, sultans, parentName, parentPhone, parentEmail, discountCents,
+  } = req.body || {};
+
+  if (!['skills', 'join'].includes(sourceType)) {
+    return res.status(400).json({ error: 'sourceType must be "skills" or "join".' });
+  }
+  if (!sourceId) return res.status(400).json({ error: 'sourceId is required.' });
+  if (!VALID_GRADES.has(grade)) {
+    return res.status(400).json({ error: `grade must be one of: ${GRADES.join(', ')}` });
+  }
+
+  // Skills Training applicants default to RCH-only, but the admin can still
+  // opt one into Sultans too at move time (e.g. a Skills Training player who
+  // decides to also join the Sultans FC squad) — so sultans is whatever was
+  // submitted, for either source type.
+  const isSultans = !!sultans;
+  const isRch = isSultans ? true : !!rch; // Sultans always implies RCH
+
+  try {
+    let sourceTable, playerName, dob;
+    if (sourceType === 'skills') {
+      const r = await pool.query('SELECT * FROM skills_registrations WHERE id = $1', [sourceId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
+      if (r.rows[0].moved_at) return res.status(409).json({ error: 'This registration has already been moved to the roster.' });
+      sourceTable = 'skills_registrations';
+      playerName = r.rows[0].full_name;
+      dob = r.rows[0].dob;
+    } else {
+      const r = await pool.query('SELECT * FROM join_registrations WHERE id = $1', [sourceId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
+      if (r.rows[0].moved_at) return res.status(409).json({ error: 'This registration has already been moved to the roster.' });
+      sourceTable = 'join_registrations';
+      playerName = r.rows[0].child_name;
+      dob = r.rows[0].dob;
+    }
+
+    const insertRes = await pool.query(
+      `INSERT INTO players
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING *`,
+      [grade, playerName, dob || null, parentName || '', parentPhone || '', parentEmail || '',
+       normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0]
+    );
+
+    await pool.query(`UPDATE ${sourceTable} SET moved_at = now() WHERE id = $1`, [sourceId]);
+
+    res.status(201).json({ ok: true, entry: insertRes.rows[0] });
+  } catch (err) {
+    console.error('Move to roster error:', err);
+    res.status(500).json({ error: 'Could not move this registration to the roster.' });
+  }
+});
+
 // Admin: per-grade totals for the Overview section — combined with pricing
 // on the frontend to also build the Revenue table. Always returns all 8
 // grades (zero-filled) so the Overview table matches the spreadsheet layout
@@ -133,6 +242,7 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
         COALESCE(SUM(discount_cents), 0)::int AS total_discount_cents
       FROM players
+      WHERE archived_at IS NULL
       GROUP BY grade
     `);
     const byGrade = {};

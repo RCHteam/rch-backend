@@ -19,16 +19,25 @@ router.post('/admin/login', (req, res) => {
   res.status(401).json({ ok: false, error: 'Incorrect password.' });
 });
 
-// Admin: read current site toggles (Skills Training + Join Sultans FC open/closed).
+function joinOpenKey(ageGroup) {
+  return `join_open_${ageGroup}`;
+}
+
+// Admin: read current site toggles — Skills Training open/closed, plus Join
+// Sultans FC open/closed PER GRADE (e.g. Pre-K can be closed once its squad
+// is set while 3rd Grade stays open).
 router.get('/admin/settings', requireAdmin, async (req, res) => {
   try {
-    const [skillsValue, joinValue] = await Promise.all([
+    const groups = [...VALID_GROUPS];
+    const [skillsValue, joinValues] = await Promise.all([
       getSetting('skills_training_open', 'true'),
-      getSetting('join_registration_open', 'true'),
+      Promise.all(groups.map((g) => getSetting(joinOpenKey(g), 'true'))),
     ]);
+    const joinRegistrationOpenByGrade = {};
+    groups.forEach((g, i) => { joinRegistrationOpenByGrade[g] = joinValues[i] === 'true'; });
     res.json({
       skillsTrainingOpen: skillsValue === 'true',
-      joinRegistrationOpen: joinValue === 'true',
+      joinRegistrationOpenByGrade,
     });
   } catch (err) {
     console.error('Admin settings read error:', err);
@@ -51,16 +60,19 @@ router.post('/admin/settings/skills-training', requireAdmin, async (req, res) =>
   }
 });
 
-// Admin: flip Join Sultans FC registration on/off — same pattern as Skills
-// Training above.
+// Admin: flip Join Sultans FC registration on/off for ONE grade at a time —
+// pass which grade in the body.
 router.post('/admin/settings/join-registration', requireAdmin, async (req, res) => {
-  const { open } = req.body || {};
+  const { open, ageGroup } = req.body || {};
   if (typeof open !== 'boolean') {
     return res.status(400).json({ error: '"open" must be true or false.' });
   }
+  if (!VALID_GROUPS.has(ageGroup)) {
+    return res.status(400).json({ error: `ageGroup must be one of: ${[...VALID_GROUPS].join(', ')}` });
+  }
   try {
-    await setSetting('join_registration_open', open ? 'true' : 'false');
-    res.json({ ok: true, joinRegistrationOpen: open });
+    await setSetting(joinOpenKey(ageGroup), open ? 'true' : 'false');
+    res.json({ ok: true, ageGroup, open });
   } catch (err) {
     console.error('Admin settings toggle error:', err);
     res.status(500).json({ error: 'Could not update settings.' });
