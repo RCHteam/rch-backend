@@ -14,7 +14,7 @@ module.exports = `<!doctype html>
   #sectionNav{ background:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:0.85rem; font-weight:600; color:var(--pitch-deep); cursor:pointer; }
   #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
   header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }
-  main{ max-width:1500px; margin:0 auto 0 0; padding:28px; }
+  main{ max-width:1500px; margin:0 auto; padding:28px; }
   #login-view{ max-width:360px; margin:80px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.08); }
   #login-view h2{ margin-top:0; }
   #login-view input{ width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; margin:10px 0; font-size:1rem; }
