@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { sendPaymentLinkEmail } = require('./email');
+const { getSetting, setSetting } = require('./settings');
 
 const router = express.Router();
 
@@ -22,12 +23,76 @@ function siteUrl(req) {
   return `${req.protocol}://${req.get('host')}`;
 }
 
+/* ------------------------------------------------------------------------
+ * Session-based proration
+ *
+ * Practices run Tuesdays and Thursdays. When a family signs up partway
+ * through a month, they should only be charged for the practices remaining
+ * this month — not for a fraction of the calendar days remaining (a family
+ * signing up on the 30th with 3 practices still ahead of them shouldn't be
+ * charged as if almost the whole month has already passed).
+ *
+ * The club runs on Central time, so "today" is always computed there —
+ * Render's server clock is UTC, and a naive `new Date()` comparison could
+ * put "today" on the wrong side of midnight for a game near the day boundary.
+ * ---------------------------------------------------------------------- */
+
+function centralToday() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date()).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+  return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day) };
+}
+
+function daysInMonth(year, month) { // month is 1-12
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+// Counts this month's Tuesday/Thursday practice days in total, and how many
+// remain from (and including) `fromDay` through the end of the month.
+function countPracticeDays(year, month, fromDay) {
+  const total = daysInMonth(year, month);
+  let totalCount = 0;
+  let remaining = 0;
+  for (let d = 1; d <= total; d++) {
+    const weekday = new Date(Date.UTC(year, month - 1, d)).getUTCDay(); // 0=Sun .. 6=Sat
+    if (weekday === 2 || weekday === 4) { // Tuesday or Thursday
+      totalCount++;
+      if (d >= fromDay) remaining++;
+    }
+  }
+  return { totalCount, remaining };
+}
+
+// Prorates a monthly amount by the fraction of this month's practices still
+// ahead of the family, based on today's date in Central time.
+function proratedMonthlyAmount(monthlyAmountCents) {
+  const { year, month, day } = centralToday();
+  const { totalCount, remaining } = countPracticeDays(year, month, day);
+  const fraction = totalCount > 0 ? Math.min(1, remaining / totalCount) : 1;
+  return { amountCents: Math.round(monthlyAmountCents * fraction), remaining, totalCount, fraction };
+}
+
+// The 3rd of the month AFTER the one being prorated — full, un-prorated
+// monthly billing starts here. Returned as a Unix timestamp (midnight UTC),
+// which is also how it's read back after being round-tripped through the
+// next_billing_anchor DATE column.
+function nextAnchorTimestamp() {
+  const { year, month } = centralToday();
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  return Math.floor(Date.UTC(nextYear, nextMonth - 1, 3) / 1000);
+}
+
 // Admin: after you've approved a family, generate their unique payment link
 // and email it to them immediately.
 router.post('/admin/payment-links', requireAdmin, async (req, res) => {
   const { registrationType, registrationId, seasonEndDate, tierLabel } = req.body || {};
-  const oneTimeAmount = Number(req.body?.oneTimeAmount) || 5000; // cents — $50 kit fee default
-  const monthlyAmount = Number(req.body?.monthlyAmount) || 6210; // cents — $62.10/mo (1x/week) default
+  // NOTE: these use `!= null` rather than `||` so that an explicit 0 (e.g. no
+  // kit fee this month) is respected instead of silently falling back to the
+  // default — `Number(0) || 5000` would otherwise incorrectly yield 5000.
+  const oneTimeAmount = req.body?.oneTimeAmount != null ? Number(req.body.oneTimeAmount) : 5000;
+  const monthlyAmount = req.body?.monthlyAmount != null ? Number(req.body.monthlyAmount) : 6000;
 
   if (!['skills', 'join', 'player'].includes(registrationType)) {
     return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
@@ -98,18 +163,65 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: read/update the live amounts used when generating a payment link
+// (the two monthly tiers + the kit fee) — editable from the dashboard so a
+// price change (e.g. a new season's rate) never needs a code deploy.
+router.get('/admin/payment-pricing', requireAdmin, async (req, res) => {
+  try {
+    const [oneCents, twoCents, kitCents] = await Promise.all([
+      getSetting('payment_one_session_monthly_cents', '6000'),
+      getSetting('payment_two_session_monthly_cents', '10000'),
+      getSetting('kit_fee_cents', '5000'),
+    ]);
+    res.json({
+      oneSessionMonthlyCents: parseInt(oneCents, 10),
+      twoSessionMonthlyCents: parseInt(twoCents, 10),
+      kitFeeCents: parseInt(kitCents, 10),
+    });
+  } catch (err) {
+    console.error('Get payment pricing error:', err);
+    res.status(500).json({ error: 'Could not load payment pricing.' });
+  }
+});
+
+router.post('/admin/payment-pricing', requireAdmin, async (req, res) => {
+  const { oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents } = req.body || {};
+  const vals = [oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents];
+  if (vals.some((v) => !Number.isFinite(Number(v)) || Number(v) < 0)) {
+    return res.status(400).json({ error: 'All three amounts must be non-negative numbers.' });
+  }
+  try {
+    const one = Math.round(Number(oneSessionMonthlyCents));
+    const two = Math.round(Number(twoSessionMonthlyCents));
+    const kit = Math.round(Number(kitFeeCents));
+    await Promise.all([
+      setSetting('payment_one_session_monthly_cents', String(one)),
+      setSetting('payment_two_session_monthly_cents', String(two)),
+      setSetting('kit_fee_cents', String(kit)),
+    ]);
+    res.json({ oneSessionMonthlyCents: one, twoSessionMonthlyCents: two, kitFeeCents: kit });
+  } catch (err) {
+    console.error('Save payment pricing error:', err);
+    res.status(500).json({ error: 'Could not save payment pricing.' });
+  }
+});
+
 // Public: the /pay/:token page calls this to display the right family + amounts.
 router.get('/pay/:token', async (req, res) => {
   try {
     const r = await pool.query('SELECT * FROM payment_links WHERE token = $1', [req.params.token]);
     const entry = r.rows[0];
     if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
+    const proration = proratedMonthlyAmount(entry.monthly_amount_cents);
     res.json({
       childName: entry.child_name,
       parentName: entry.parent_name,
       programLabel: entry.program_label,
       oneTimeAmount: entry.one_time_amount_cents,
       monthlyAmount: entry.monthly_amount_cents,
+      proratedAmount: proration.amountCents,
+      practicesRemaining: proration.remaining,
+      practicesTotal: proration.totalCount,
       seasonEndDate: entry.season_end_date,
       status: entry.status,
     });
@@ -119,8 +231,12 @@ router.get('/pay/:token', async (req, res) => {
   }
 });
 
-// Public: starts a Stripe Checkout session — one-time kit/registration fee
-// plus a recurring monthly fee that auto-stops at season end.
+// Public: charges the family today for (a) the kit fee, if this link
+// includes one, and (b) this month's practices only — prorated by how many
+// Tuesday/Thursday practices are left, not by calendar days. The ongoing
+// monthly subscription (at the full rate) is started separately, once this
+// payment succeeds, so it doesn't charge anything extra today — see the
+// checkout.session.completed handler below.
 router.post('/pay/:token/checkout', async (req, res) => {
   const stripe = getStripe();
   if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet. Please contact RCH Elite Training.' });
@@ -134,47 +250,52 @@ router.post('/pay/:token/checkout', async (req, res) => {
     }
 
     const base = siteUrl(req);
+    const proration = proratedMonthlyAmount(entry.monthly_amount_cents);
+    const anchorTs = nextAnchorTimestamp();
 
-    // NOTE: Stripe's Checkout Session API does not accept subscription_data.cancel_at
-    // at session-creation time (it's a Subscription-only field, not a Checkout Session
-    // field) — setting it here fails with a "parameter_unknown" error. Instead, the
-    // subscription's cancel_at is set right after checkout completes, in the
-    // checkout.session.completed webhook handler below.
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer_email: entry.email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: { name: `${entry.program_label} — Registration & Kit Fee` },
-            unit_amount: entry.one_time_amount_cents,
-          },
-          quantity: 1,
+    const lineItems = [];
+    if (entry.one_time_amount_cents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `${entry.program_label} — Registration & Kit Fee` },
+          unit_amount: entry.one_time_amount_cents,
         },
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: { name: `${entry.program_label} — Monthly Season Fee` },
-            unit_amount: entry.monthly_amount_cents,
-            recurring: { interval: 'month' },
-          },
-          quantity: 1,
+        quantity: 1,
+      });
+    }
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: `${entry.program_label} — This month (${proration.remaining} of ${proration.totalCount} practices remaining)`,
         },
-      ],
-      subscription_data: {
-        // All families are billed on the same day of the month regardless of
-        // when they actually check out — Stripe prorates the first invoice
-        // for the partial period up to that date, then bills in full from
-        // then on.
-        billing_cycle_anchor_config: { day_of_month: 3 },
+        unit_amount: Math.max(proration.amountCents, 0),
       },
+      quantity: 1,
+    });
+
+    // mode: 'payment' (not 'subscription') — this charge is a one-off for
+    // the kit fee + the prorated partial month. setup_future_usage saves the
+    // card so the real subscription (created in the webhook once this
+    // succeeds) can charge it automatically starting next month.
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: entry.email,
+      customer_creation: 'always',
+      payment_intent_data: { setup_future_usage: 'off_session' },
+      line_items: lineItems,
       success_url: `${base}/pay/${entry.token}/success`,
       cancel_url: `${base}/pay/${entry.token}`,
       metadata: { payment_link_token: entry.token },
     });
 
-    await pool.query('UPDATE payment_links SET stripe_checkout_session_id = $1 WHERE token = $2', [session.id, entry.token]);
+    await pool.query(
+      `UPDATE payment_links
+       SET stripe_checkout_session_id = $1, next_billing_anchor = to_timestamp($2)::date, prorated_amount_cents = $3
+       WHERE token = $4`,
+      [session.id, anchorTs, proration.amountCents, entry.token]
+    );
 
     res.json({ url: session.url });
   } catch (err) {
@@ -277,27 +398,59 @@ async function handleStripeWebhook(req, res) {
       const session = event.data.object;
       const token = session.metadata && session.metadata.payment_link_token;
       if (token) {
+        const linkRes = await pool.query('SELECT * FROM payment_links WHERE token = $1', [token]);
+        const entry = linkRes.rows[0];
+
         await pool.query(
           `UPDATE payment_links
-           SET status = 'completed', completed_at = now(),
-               stripe_customer_id = $1, stripe_subscription_id = $2
-           WHERE token = $3`,
-          [session.customer, session.subscription, token]
+           SET status = 'completed', completed_at = now(), stripe_customer_id = $1
+           WHERE token = $2`,
+          [session.customer, token]
         );
 
-        // Now that the subscription actually exists, set it to auto-cancel at
-        // the season end date (this can't be done at Checkout Session creation
-        // time — see the note in the /pay/:token/checkout route above).
-        if (session.subscription) {
-          const r = await pool.query('SELECT season_end_date FROM payment_links WHERE token = $1', [token]);
-          const seasonEndDate = r.rows[0] && r.rows[0].season_end_date;
-          if (seasonEndDate) {
-            const cancelAt = Math.floor(new Date(seasonEndDate).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
-            try {
-              await stripe.subscriptions.update(session.subscription, { cancel_at: cancelAt });
-            } catch (cancelErr) {
-              console.error('Failed to set subscription cancel_at:', cancelErr.message);
+        // The checkout the family just completed was a one-off charge (kit
+        // fee + this month's prorated amount) — now start the real ongoing
+        // subscription at the full monthly rate. trial_end defers its first
+        // charge to next_billing_anchor (computed when the checkout session
+        // was created), so nothing is charged twice for this month.
+        if (entry && session.customer) {
+          try {
+            let paymentMethodId;
+            if (session.payment_intent) {
+              const pi = await stripe.paymentIntents.retrieve(session.payment_intent);
+              paymentMethodId = pi.payment_method;
             }
+            if (paymentMethodId) {
+              await stripe.paymentMethods.attach(paymentMethodId, { customer: session.customer });
+              await stripe.customers.update(session.customer, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+              });
+            }
+
+            const anchorTs = entry.next_billing_anchor
+              ? Math.floor(new Date(entry.next_billing_anchor).getTime() / 1000)
+              : nextAnchorTimestamp();
+            const cancelAt = Math.floor(new Date(entry.season_end_date).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
+
+            const subscription = await stripe.subscriptions.create({
+              customer: session.customer,
+              items: [{
+                price_data: {
+                  currency: 'usd',
+                  product_data: { name: `${entry.program_label} — Monthly Season Fee` },
+                  unit_amount: entry.monthly_amount_cents,
+                  recurring: { interval: 'month' },
+                },
+              }],
+              proration_behavior: 'none',
+              trial_end: anchorTs,
+              cancel_at: cancelAt,
+              metadata: { payment_link_token: token },
+            });
+
+            await pool.query('UPDATE payment_links SET stripe_subscription_id = $1 WHERE token = $2', [subscription.id, token]);
+          } catch (subErr) {
+            console.error('Failed to start follow-on subscription:', subErr.message);
           }
         }
       }

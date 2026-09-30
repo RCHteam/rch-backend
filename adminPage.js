@@ -180,6 +180,27 @@ module.exports = `<!doctype html>
       <span class="pricing-saved" id="pricingSaved"></span>
     </div>
     <div id="revenueTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Payment Link Amounts</h2>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">What "Send Payment Link" actually charges. Change these here whenever the season's rate changes — no code update needed. The first payment is automatically prorated for however many Tuesday/Thursday practices are left in the current month; the kit fee (if included) is a one-time add-on on top of that.</p>
+    <div class="pricing-box">
+      <div>
+        <label for="paymentOneInput">Monthly — One Session/Week</label>
+        <input type="number" id="paymentOneInput" min="0" step="0.01">
+      </div>
+      <div>
+        <label for="paymentTwoInput">Monthly — Two Sessions/Week</label>
+        <input type="number" id="paymentTwoInput" min="0" step="0.01">
+      </div>
+      <div>
+        <label for="kitFeeInput">Kit Fee (one-time)</label>
+        <input type="number" id="kitFeeInput" min="0" step="0.01">
+      </div>
+      <button type="button" class="btn-add" id="savePaymentPricingBtn">Save Amounts</button>
+      <span class="pricing-saved" id="paymentPricingSaved"></span>
+    </div>
   </main>
 </div>
 
@@ -275,8 +296,8 @@ module.exports = `<!doctype html>
     <p class="modal-sub" id="paymentModalSub"></p>
     <label for="tierSelect">Service</label>
     <select id="tierSelect">
-      <option value="one">1x per week — $62.10/mo</option>
-      <option value="two">2x per week — $123.89/mo</option>
+      <option value="one">1x per week</option>
+      <option value="two">2x per week</option>
     </select>
     <label for="seasonSelect">Season</label>
     <select id="seasonSelect">
@@ -285,6 +306,10 @@ module.exports = `<!doctype html>
     </select>
     <label for="seasonEndInput">Billing ends on</label>
     <input type="date" id="seasonEndInput">
+    <div class="checkbox-row">
+      <input type="checkbox" id="includeKitFee">
+      <label for="includeKitFee" id="includeKitFeeLabel">Include kit fee</label>
+    </div>
     <div class="modal-amounts" id="modalAmounts"></div>
     <p class="modal-error" id="paymentModalError"></p>
     <div class="modal-actions">
@@ -477,11 +502,16 @@ module.exports = `<!doctype html>
 
   // ---- Send Payment Link modal (service tier + season picker) ----
 
-  const TIERS = {
-    one: { label: '1x/week', monthly: 6210, priceText: '$62.10/mo' },
-    two: { label: '2x/week', monthly: 12389, priceText: '$123.89/mo' },
-  };
-  const KIT_FEE = 5000;
+  // Populated from /api/admin/payment-pricing by loadPaymentPricing() — kept
+  // live here (rather than hardcoded) so a price change in the "Payment Link
+  // Amounts" box takes effect immediately without a code deploy.
+  let PAYMENT_PRICING = { oneSessionMonthlyCents: 6000, twoSessionMonthlyCents: 10000, kitFeeCents: 5000 };
+  function currentTiers(){
+    return {
+      one: { label: '1x/week', monthly: PAYMENT_PRICING.oneSessionMonthlyCents },
+      two: { label: '2x/week', monthly: PAYMENT_PRICING.twoSessionMonthlyCents },
+    };
+  }
   const SEASON_LABELS = { regular: 'Regular Season', summer: 'Summer' };
   // Regular season runs Aug 3 – May 3; Summer runs Jun 3 – Jul 3. Winter
   // break within the regular season is handled per-family with the Pause
@@ -505,8 +535,13 @@ module.exports = `<!doctype html>
   let paymentModalCtx = null;
 
   function updateModalAmounts(){
-    const tier = TIERS[document.getElementById('tierSelect').value];
-    document.getElementById('modalAmounts').innerHTML = 'Kit fee (one-time): $50.00<br>Monthly: ' + tier.priceText;
+    const tier = currentTiers()[document.getElementById('tierSelect').value];
+    const monthlyText = '$' + (tier.monthly / 100).toFixed(2) + '/mo';
+    const includeKit = document.getElementById('includeKitFee').checked;
+    const kitText = includeKit ? 'Kit fee (one-time): $' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + '<br>' : '';
+    document.getElementById('modalAmounts').innerHTML =
+      kitText + 'Full monthly rate: ' + monthlyText +
+      '<br><span style="color:#888;">First charge is prorated automatically for the Tue/Thu practices left this month.</span>';
   }
 
   function openPaymentModal(registrationType, id, label, onSent){
@@ -515,6 +550,8 @@ module.exports = `<!doctype html>
     document.getElementById('tierSelect').value = 'one';
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
+    document.getElementById('includeKitFee').checked = false;
+    document.getElementById('includeKitFeeLabel').textContent = 'Include kit fee ($' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + ')';
     document.getElementById('paymentModalError').textContent = '';
     updateModalAmounts();
     document.getElementById('paymentModal').classList.remove('hidden');
@@ -526,6 +563,7 @@ module.exports = `<!doctype html>
   }
 
   document.getElementById('tierSelect').addEventListener('change', updateModalAmounts);
+  document.getElementById('includeKitFee').addEventListener('change', updateModalAmounts);
   document.getElementById('seasonSelect').addEventListener('change', (e) => {
     document.getElementById('seasonEndInput').value = computeSeasonEndDate(e.target.value);
   });
@@ -541,9 +579,10 @@ module.exports = `<!doctype html>
       return;
     }
     const tierKey = document.getElementById('tierSelect').value;
-    const tier = TIERS[tierKey];
+    const tier = currentTiers()[tierKey];
     const seasonKey = document.getElementById('seasonSelect').value;
     const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey];
+    const includeKit = document.getElementById('includeKitFee').checked;
     const ctx = paymentModalCtx;
 
     const btn = document.getElementById('paymentModalSend');
@@ -556,7 +595,7 @@ module.exports = `<!doctype html>
           registrationType: ctx.registrationType,
           registrationId: ctx.id,
           seasonEndDate,
-          oneTimeAmount: KIT_FEE,
+          oneTimeAmount: includeKit ? PAYMENT_PRICING.kitFeeCents : 0,
           monthlyAmount: tier.monthly,
           tierLabel,
         }),
@@ -1044,6 +1083,37 @@ module.exports = `<!doctype html>
     }
   });
 
+  // ---- Payment Link Amounts (what "Send Payment Link" actually charges) ----
+
+  async function loadPaymentPricing(){
+    const p = await api('/api/admin/payment-pricing');
+    PAYMENT_PRICING = p;
+    document.getElementById('paymentOneInput').value = (p.oneSessionMonthlyCents / 100).toFixed(2);
+    document.getElementById('paymentTwoInput').value = (p.twoSessionMonthlyCents / 100).toFixed(2);
+    document.getElementById('kitFeeInput').value = (p.kitFeeCents / 100).toFixed(2);
+  }
+
+  document.getElementById('savePaymentPricingBtn').addEventListener('click', async () => {
+    const oneSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentOneInput').value || '0') * 100);
+    const twoSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentTwoInput').value || '0') * 100);
+    const kitFeeCents = Math.round(parseFloat(document.getElementById('kitFeeInput').value || '0') * 100);
+    const btn = document.getElementById('savePaymentPricingBtn');
+    btn.disabled = true;
+    try {
+      PAYMENT_PRICING = await api('/api/admin/payment-pricing', {
+        method: 'POST',
+        body: JSON.stringify({ oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents }),
+      });
+      const savedMsg = document.getElementById('paymentPricingSaved');
+      savedMsg.textContent = 'Saved.';
+      setTimeout(() => { savedMsg.textContent = ''; }, 2000);
+    } catch (e) {
+      alert('Could not save payment amounts. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('addPlayerBtn').addEventListener('click', () => {
     document.getElementById('apGrade').value = document.getElementById('rosterGradeFilter').value;
     ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
@@ -1169,6 +1239,7 @@ module.exports = `<!doctype html>
   async function loadAll(){
     await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster()]);
     await loadPricing();
+    await loadPaymentPricing();
     await loadOverviewAndRevenue();
   }
 

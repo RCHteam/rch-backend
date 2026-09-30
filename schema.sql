@@ -118,3 +118,21 @@ INSERT INTO site_settings (key, value) VALUES ('price_two_session_cents', '25000
 ALTER TABLE payment_links DROP CONSTRAINT IF EXISTS payment_links_registration_type_check;
 ALTER TABLE payment_links ADD CONSTRAINT payment_links_registration_type_check
   CHECK (registration_type IN ('skills', 'join', 'player'));
+
+-- Amounts used when generating a payment link (kit fee + the two monthly
+-- tiers) — separate from price_one/two_session_cents above, which only
+-- drive the Revenue projection table from roster counts. Admin-editable from
+-- the "Payment Link Amounts" box so a price change (e.g. next season's rate)
+-- never needs a code deploy. Starting at October's agreed rate: $60/mo for
+-- one session, $100/mo for two, no kit fee charged until November.
+INSERT INTO site_settings (key, value) VALUES ('payment_one_session_monthly_cents', '6000') ON CONFLICT (key) DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('payment_two_session_monthly_cents', '10000') ON CONFLICT (key) DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('kit_fee_cents', '5000') ON CONFLICT (key) DO NOTHING;
+
+-- Session-based proration: when a family's first payment is completed, the
+-- full-price subscription is deferred to start on next_billing_anchor
+-- (instead of charging a calendar-day-prorated amount immediately) —
+-- prorated_amount_cents records what was actually charged for this month,
+-- for admin visibility.
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS next_billing_anchor DATE;
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS prorated_amount_cents INTEGER;

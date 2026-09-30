@@ -42,8 +42,10 @@ module.exports = `<!doctype html>
     <div class="kicker">RCH Elite Training</div>
     <h1>Complete your registration</h1>
     <p class="sub" id="child-sub"></p>
-    <div class="line"><span class="label">Registration &amp; kit fee (one-time)</span><span class="amt" id="one-time-amt"></span></div>
-    <div class="line"><span class="label">Monthly season fee</span><span class="amt" id="monthly-amt"></span></div>
+    <div class="line hidden" id="one-time-line"><span class="label">Registration &amp; kit fee (one-time)</span><span class="amt" id="one-time-amt"></span></div>
+    <div class="line"><span class="label" id="prorated-label">This month</span><span class="amt" id="prorated-amt"></span></div>
+    <p class="total-note" id="prorated-note"></p>
+    <div class="line"><span class="label">Then, starting next month</span><span class="amt" id="monthly-amt"></span></div>
     <p class="total-note" id="season-note"></p>
     <button id="payBtn">Proceed to Payment</button>
     <p id="err-text"></p>
@@ -89,9 +91,20 @@ module.exports = `<!doctype html>
       const prettyDate = new Date(data.seasonEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
       document.getElementById('child-sub').textContent = data.programLabel + ' — ' + data.childName;
-      document.getElementById('one-time-amt').textContent = centsToStr(data.oneTimeAmount);
+
+      const oneTimeLine = document.getElementById('one-time-line');
+      if (data.oneTimeAmount > 0) {
+        oneTimeLine.classList.remove('hidden');
+        document.getElementById('one-time-amt').textContent = centsToStr(data.oneTimeAmount);
+      } else {
+        oneTimeLine.classList.add('hidden');
+      }
+
+      document.getElementById('prorated-amt').textContent = centsToStr(data.proratedAmount);
+      document.getElementById('prorated-note').textContent =
+        'Prorated for ' + data.practicesRemaining + ' of ' + data.practicesTotal + ' practices left this month.';
       document.getElementById('monthly-amt').textContent = centsToStr(data.monthlyAmount) + '/mo';
-      document.getElementById('season-note').textContent = 'Your monthly payment will be charged automatically each month and will end on ' + prettyDate + ' — no action needed on your part.';
+      document.getElementById('season-note').textContent = 'Starting next month, you\\'ll be charged the full monthly rate automatically, ending on ' + prettyDate + ' — no action needed on your part.';
       show('pay-view');
     } catch (e) {
       show('invalid-view');
