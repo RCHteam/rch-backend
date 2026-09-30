@@ -129,6 +129,10 @@ INSERT INTO site_settings (key, value) VALUES ('payment_one_session_monthly_cent
 INSERT INTO site_settings (key, value) VALUES ('payment_two_session_monthly_cents', '10000') ON CONFLICT (key) DO NOTHING;
 INSERT INTO site_settings (key, value) VALUES ('kit_fee_cents', '5000') ON CONFLICT (key) DO NOTHING;
 
+-- Online-only course option (recurring monthly, no kit fee) — same
+-- session-based proration and admin-editable pricing as the in-person tiers.
+INSERT INTO site_settings (key, value) VALUES ('payment_online_course_monthly_cents', '3120') ON CONFLICT (key) DO NOTHING;
+
 -- Session-based proration: when a family's first payment is completed, the
 -- full-price subscription is deferred to start on next_billing_anchor
 -- (instead of charging a calendar-day-prorated amount immediately) —

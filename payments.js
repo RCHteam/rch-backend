@@ -168,15 +168,17 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
 // price change (e.g. a new season's rate) never needs a code deploy.
 router.get('/admin/payment-pricing', requireAdmin, async (req, res) => {
   try {
-    const [oneCents, twoCents, kitCents] = await Promise.all([
+    const [oneCents, twoCents, kitCents, onlineCents] = await Promise.all([
       getSetting('payment_one_session_monthly_cents', '6000'),
       getSetting('payment_two_session_monthly_cents', '10000'),
       getSetting('kit_fee_cents', '5000'),
+      getSetting('payment_online_course_monthly_cents', '3120'),
     ]);
     res.json({
       oneSessionMonthlyCents: parseInt(oneCents, 10),
       twoSessionMonthlyCents: parseInt(twoCents, 10),
       kitFeeCents: parseInt(kitCents, 10),
+      onlineCourseMonthlyCents: parseInt(onlineCents, 10),
     });
   } catch (err) {
     console.error('Get payment pricing error:', err);
@@ -185,21 +187,23 @@ router.get('/admin/payment-pricing', requireAdmin, async (req, res) => {
 });
 
 router.post('/admin/payment-pricing', requireAdmin, async (req, res) => {
-  const { oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents } = req.body || {};
-  const vals = [oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents];
+  const { oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents } = req.body || {};
+  const vals = [oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents];
   if (vals.some((v) => !Number.isFinite(Number(v)) || Number(v) < 0)) {
-    return res.status(400).json({ error: 'All three amounts must be non-negative numbers.' });
+    return res.status(400).json({ error: 'All four amounts must be non-negative numbers.' });
   }
   try {
     const one = Math.round(Number(oneSessionMonthlyCents));
     const two = Math.round(Number(twoSessionMonthlyCents));
     const kit = Math.round(Number(kitFeeCents));
+    const online = Math.round(Number(onlineCourseMonthlyCents));
     await Promise.all([
       setSetting('payment_one_session_monthly_cents', String(one)),
       setSetting('payment_two_session_monthly_cents', String(two)),
       setSetting('kit_fee_cents', String(kit)),
+      setSetting('payment_online_course_monthly_cents', String(online)),
     ]);
-    res.json({ oneSessionMonthlyCents: one, twoSessionMonthlyCents: two, kitFeeCents: kit });
+    res.json({ oneSessionMonthlyCents: one, twoSessionMonthlyCents: two, kitFeeCents: kit, onlineCourseMonthlyCents: online });
   } catch (err) {
     console.error('Save payment pricing error:', err);
     res.status(500).json({ error: 'Could not save payment pricing.' });

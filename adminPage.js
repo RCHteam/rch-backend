@@ -198,6 +198,10 @@ module.exports = `<!doctype html>
         <label for="kitFeeInput">Kit Fee (one-time)</label>
         <input type="number" id="kitFeeInput" min="0" step="0.01">
       </div>
+      <div>
+        <label for="onlineCourseInput">Monthly — Online Course</label>
+        <input type="number" id="onlineCourseInput" min="0" step="0.01">
+      </div>
       <button type="button" class="btn-add" id="savePaymentPricingBtn">Save Amounts</button>
       <span class="pricing-saved" id="paymentPricingSaved"></span>
     </div>
@@ -298,6 +302,7 @@ module.exports = `<!doctype html>
     <select id="tierSelect">
       <option value="one">1x per week</option>
       <option value="two">2x per week</option>
+      <option value="online">Online Course</option>
     </select>
     <label for="seasonSelect">Season</label>
     <select id="seasonSelect">
@@ -505,11 +510,12 @@ module.exports = `<!doctype html>
   // Populated from /api/admin/payment-pricing by loadPaymentPricing() — kept
   // live here (rather than hardcoded) so a price change in the "Payment Link
   // Amounts" box takes effect immediately without a code deploy.
-  let PAYMENT_PRICING = { oneSessionMonthlyCents: 6000, twoSessionMonthlyCents: 10000, kitFeeCents: 5000 };
+  let PAYMENT_PRICING = { oneSessionMonthlyCents: 6000, twoSessionMonthlyCents: 10000, kitFeeCents: 5000, onlineCourseMonthlyCents: 3120 };
   function currentTiers(){
     return {
       one: { label: '1x/week', monthly: PAYMENT_PRICING.oneSessionMonthlyCents },
       two: { label: '2x/week', monthly: PAYMENT_PRICING.twoSessionMonthlyCents },
+      online: { label: 'Online Course', monthly: PAYMENT_PRICING.onlineCourseMonthlyCents },
     };
   }
   const SEASON_LABELS = { regular: 'Regular Season', summer: 'Summer' };
@@ -1091,18 +1097,20 @@ module.exports = `<!doctype html>
     document.getElementById('paymentOneInput').value = (p.oneSessionMonthlyCents / 100).toFixed(2);
     document.getElementById('paymentTwoInput').value = (p.twoSessionMonthlyCents / 100).toFixed(2);
     document.getElementById('kitFeeInput').value = (p.kitFeeCents / 100).toFixed(2);
+    document.getElementById('onlineCourseInput').value = (p.onlineCourseMonthlyCents / 100).toFixed(2);
   }
 
   document.getElementById('savePaymentPricingBtn').addEventListener('click', async () => {
     const oneSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentOneInput').value || '0') * 100);
     const twoSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentTwoInput').value || '0') * 100);
     const kitFeeCents = Math.round(parseFloat(document.getElementById('kitFeeInput').value || '0') * 100);
+    const onlineCourseMonthlyCents = Math.round(parseFloat(document.getElementById('onlineCourseInput').value || '0') * 100);
     const btn = document.getElementById('savePaymentPricingBtn');
     btn.disabled = true;
     try {
       PAYMENT_PRICING = await api('/api/admin/payment-pricing', {
         method: 'POST',
-        body: JSON.stringify({ oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents }),
+        body: JSON.stringify({ oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents }),
       });
       const savedMsg = document.getElementById('paymentPricingSaved');
       savedMsg.textContent = 'Saved.';
