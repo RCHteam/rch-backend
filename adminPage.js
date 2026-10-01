@@ -24,7 +24,7 @@ module.exports = `<!doctype html>
   .card{ background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); min-width:140px; }
   .card .n{ font-size:1.6rem; font-weight:800; color:var(--pitch); }
   .card .l{ font-size:0.8rem; color:#666; text-transform:uppercase; letter-spacing:0.05em; }
-  table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:32px; font-size:0.88rem; }
+  table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:32px; font-size:0.88rem; }
   th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid #eee; white-space:nowrap; }
   th{ background:#f0ece0; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:#555; }
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 12px; }
@@ -49,6 +49,14 @@ module.exports = `<!doctype html>
   .status-declined{ background:#fbe6e1; color:#b5482f; }
   .status-pending{ background:#fdf3dd; color:#9a6b12; }
   .status-neutral{ background:#eee; color:#777; }
+  /* Row actions: primary action stays visible, the rest collapse behind a
+     "⋯" menu so a row with 5 actions doesn't wrap onto 2–3 lines. */
+  .row-actions{ position:relative; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+  .btn-kebab{ background:#fff; border:1px solid #ccc; color:#555; width:30px; height:30px; line-height:1; border-radius:6px; cursor:pointer; font-size:1.1rem; }
+  .btn-kebab:hover{ background:#f2f2f2; }
+  .row-menu{ position:absolute; top:calc(100% + 4px); right:0; background:#fff; border:1px solid #ddd; border-radius:8px; box-shadow:0 10px 28px rgba(0,0,0,0.18); padding:6px; display:flex; flex-direction:column; gap:4px; z-index:30; min-width:150px; }
+  .row-menu.hidden{ display:none; }
+  .row-menu button{ width:100%; white-space:nowrap; text-align:left; }
   .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
@@ -1562,6 +1570,13 @@ module.exports = `<!doctype html>
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // Closes any open row-action "⋯" menus — called before opening a new one,
+  // and on any click outside a menu, so at most one stays open at a time.
+  function closeAllRowMenus(){
+    document.querySelectorAll('.row-menu').forEach((m) => m.classList.add('hidden'));
+  }
+  document.addEventListener('click', closeAllRowMenus);
+
   function renderRosterTable(rows){
     if (!rows.length) return '<div class="empty">No players yet.</div>';
     let html = '<table><thead><tr>' +
@@ -1581,12 +1596,17 @@ module.exports = `<!doctype html>
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
-        '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
-          '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
-          '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
-          '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
-          '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
-          '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
+        '<td>' +
+          '<div class="row-actions">' +
+            '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
+            '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
+            '<div class="row-menu hidden">' +
+              '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
+              '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
+              '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
+              '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
+            '</div>' +
+          '</div>' +
         '</td>' +
         '</tr>';
     });
@@ -1678,6 +1698,15 @@ module.exports = `<!doctype html>
     });
     wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
     wireCancelButtons('rosterTableWrap', 'player', loadRoster);
+    wrap.querySelectorAll('.btn-kebab').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const wasHidden = menu.classList.contains('hidden');
+        closeAllRowMenus();
+        if (wasHidden) menu.classList.remove('hidden');
+      });
+    });
     wrap.querySelectorAll('.btn-unsubscribe').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const label = btn.getAttribute('data-label') || 'this player';
