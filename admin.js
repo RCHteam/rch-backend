@@ -301,4 +301,30 @@ router.get('/admin/export/join.csv', requireAdmin, async (req, res) => {
   res.send(toCsv(result.rows));
 });
 
+// Players Roster export — the admin page's "Download Roster CSV" link (under
+// Data → Exports) has always pointed at this path, but the route itself was
+// never added, so that button 404'd. Includes each player's latest payment
+// status (same left-join the roster table itself uses) so the CSV can serve
+// as a quick who's-paid audit, not just a contact list.
+router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
+  const result = await pool.query(
+    `SELECT p.id, p.grade, p.player_name, p.dob, p.parent_name, p.parent_phone, p.parent_email,
+            p.session_type, p.rch, p.sultans, p.discount_cents,
+            pl.status AS payment_status, pl.last_payment_status, pl.paused_until
+     FROM players p
+     LEFT JOIN LATERAL (
+       SELECT status, last_payment_status, paused_until
+       FROM payment_links
+       WHERE registration_type = 'player' AND registration_id = p.id
+       ORDER BY created_at DESC
+       LIMIT 1
+     ) pl ON true
+     WHERE p.archived_at IS NULL
+     ORDER BY p.grade, p.player_name`
+  );
+  res.set('Content-Type', 'text/csv');
+  res.set('Content-Disposition', 'attachment; filename="players-roster.csv"');
+  res.send(toCsv(result.rows));
+});
+
 module.exports = router;
