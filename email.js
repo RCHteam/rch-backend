@@ -128,4 +128,27 @@ async function sendPaymentLinkEmail({ to, parentName, childName, programLabel, l
   });
 }
 
-module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails, sendPaymentLinkEmail };
+// A single targeted "Send Link" email — a one-off charge (tournament fee,
+// equipment, etc.) sent to one family's own private link, as opposed to
+// sendPaymentLinkEmail above, which is specifically the registration/
+// recurring-membership flow.
+async function sendOneTimePaymentEmail({ to, parentName, childName, title, description, amountCents, link }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  const amountStr = '$' + (amountCents / 100).toFixed(2);
+  const who = childName ? `for ${childName}` : '';
+  const descHtml = description ? `<p>${description}</p>` : '';
+  const descText = description ? `${description}\n\n` : '';
+  await sendEmail({
+    to,
+    subject: `${title} — payment link inside`,
+    html: brandedEmail(`<p>Hi ${firstName},</p>
+      <p>${title} ${who} — ${amountStr}.</p>
+      ${descHtml}
+      <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Complete Payment</a></p>
+      <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
+      <p>This link is unique to your family — please don't share it. If you have any questions, just reply to this email.</p>`),
+    text: `Hi ${firstName},\n\n${title} ${who} — ${amountStr}.\n\n${descText}Pay using this link:\n${link}\n\nThis link is unique to your family — please don't share it. If you have any questions, just reply to this email.\n\nRCH Elite Training`,
+  });
+}
+
+module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails, sendPaymentLinkEmail, sendOneTimePaymentEmail };

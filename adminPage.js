@@ -274,6 +274,7 @@ module.exports = `<!doctype html>
         <input type="number" id="otpAmountInput" min="0.01" step="0.01">
       </div>
       <button type="button" class="btn-add" id="addOneTimePaymentBtn">+ Create Link</button>
+      <button type="button" class="btn-add" id="openSendLinkBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send Link to Roster…</button>
     </div>
     <div id="oneTimePaymentsTableWrap"></div>
 
@@ -544,6 +545,45 @@ module.exports = `<!doctype html>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="pauseModalCancel">Cancel</button>
       <button type="button" class="btn-send" id="pauseModalSend">Pause</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="sendLinkModal">
+  <div class="modal" style="max-width:520px;">
+    <h3>Send Payment Link</h3>
+
+    <div id="sendLinkStep1">
+      <label for="slTitleInput">Title</label>
+      <input type="text" id="slTitleInput" placeholder="e.g. Tournament fee">
+      <label for="slDescInput">Description (optional)</label>
+      <input type="text" id="slDescInput" placeholder="Shown to the family on the payment page">
+      <label for="slAmountInput">Amount ($)</label>
+      <input type="number" id="slAmountInput" min="0.01" step="0.01">
+
+      <label for="slScopeSelect">Send to</label>
+      <select id="slScopeSelect"></select>
+
+      <div id="slIndividualWrap" class="hidden">
+        <label for="slIndividualSelect">Player</label>
+        <select id="slIndividualSelect"></select>
+      </div>
+
+      <p class="modal-error" id="sendLinkStep1Error"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="sendLinkCancel1">Cancel</button>
+        <button type="button" class="btn-send" id="sendLinkPreviewBtn">Preview Recipients</button>
+      </div>
+    </div>
+
+    <div id="sendLinkStep2" class="hidden">
+      <p class="modal-sub" id="sendLinkSummary"></p>
+      <div id="sendLinkRecipientsList" style="max-height:240px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:10px 12px; margin-bottom:6px; font-size:0.85rem;"></div>
+      <p class="modal-error" id="sendLinkStep2Error"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="sendLinkBackBtn">Back</button>
+        <button type="button" class="btn-send" id="sendLinkConfirmBtn">Send</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1864,11 +1904,15 @@ module.exports = `<!doctype html>
 
   function renderOneTimePaymentsTable(rows){
     if (!rows.length) return '<div class="empty">No one-time payment links yet.</div>';
-    let html = '<table><thead><tr><th>Title</th><th>Description</th><th>Amount</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Title</th><th>Description</th><th>Sent To</th><th>Amount</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>';
     rows.forEach((p) => {
+      const sentTo = p.recipient_name
+        ? escapeHtml(p.recipient_name) + (p.email ? ' <span style="color:#888;">(' + escapeHtml(p.email) + ')</span>' : '')
+        : '<span style="color:#888;">— (ad hoc link)</span>';
       html += '<tr>' +
         '<td>' + escapeHtml(p.title) + '</td>' +
         '<td>' + escapeHtml(p.description || '—') + '</td>' +
+        '<td>' + sentTo + '</td>' +
         '<td>$' + (p.amount_cents / 100).toFixed(2) + '</td>' +
         '<td>' + (p.status === 'completed' ? 'Paid' : 'Pending') + '</td>' +
         '<td><button type="button" class="btn-payment-link btn-copy-link" data-token="' + p.token + '">Copy link</button></td>' +
@@ -1936,6 +1980,182 @@ module.exports = `<!doctype html>
       alert('Could not create this payment link. Please try again.');
     } finally {
       btn.disabled = false;
+    }
+  });
+
+  // ---- Send Link (targeted bulk one-time payment to a roster audience) ----
+  //
+  // Each matching family gets its OWN payment_link row/token (see backend
+  // comment) so their paid/pending status tracks independently — not one
+  // link shared across everyone.
+
+  function populateSendLinkScopeOptions(){
+    const sel = document.getElementById('slScopeSelect');
+    let html = '<option value="all">All Players</option>' +
+      '<option value="all_rch">All RCH Elite Training</option>' +
+      '<option value="all_sultans">All Sultans FC</option>';
+    html += '<optgroup label="A Specific Grade (any program)">';
+    GRADES.forEach((g) => { html += '<option value="grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
+    html += '</optgroup><optgroup label="RCH — Specific Grade">';
+    GRADES.forEach((g) => { html += '<option value="rch_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
+    html += '</optgroup><optgroup label="Sultans — Specific Grade">';
+    GRADES.forEach((g) => { html += '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
+    html += '</optgroup><option value="individual">Individual player…</option>';
+    sel.innerHTML = html;
+  }
+
+  async function populateSendLinkIndividualSelect(){
+    const sel = document.getElementById('slIndividualSelect');
+    sel.innerHTML = '<option value="">Loading…</option>';
+    try {
+      const players = await api('/api/admin/players');
+      if (!players.length) {
+        sel.innerHTML = '<option value="">No active players on the roster</option>';
+        return;
+      }
+      sel.innerHTML = players.map((p) =>
+        '<option value="' + p.id + '">' + escapeHtml(p.player_name) + ' — ' + (GRADE_LABELS[p.grade] || p.grade) +
+        (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</option>'
+      ).join('');
+    } catch (e) {
+      sel.innerHTML = '<option value="">Could not load players</option>';
+    }
+  }
+
+  function parseSendLinkScopeValue(value){
+    if (value.indexOf('grade:') === 0) return { scope: 'grade', grade: value.slice(6) };
+    if (value.indexOf('rch_grade:') === 0) return { scope: 'rch_grade', grade: value.slice(10) };
+    if (value.indexOf('sultans_grade:') === 0) return { scope: 'sultans_grade', grade: value.slice(14) };
+    return { scope: value, grade: null };
+  }
+
+  document.getElementById('slScopeSelect').addEventListener('change', () => {
+    const isIndividual = document.getElementById('slScopeSelect').value === 'individual';
+    document.getElementById('slIndividualWrap').classList.toggle('hidden', !isIndividual);
+  });
+
+  function closeSendLinkModal(){
+    document.getElementById('sendLinkModal').classList.add('hidden');
+  }
+
+  document.getElementById('openSendLinkBtn').addEventListener('click', async () => {
+    document.getElementById('slTitleInput').value = '';
+    document.getElementById('slDescInput').value = '';
+    document.getElementById('slAmountInput').value = '';
+    populateSendLinkScopeOptions();
+    document.getElementById('slScopeSelect').value = 'all';
+    document.getElementById('slIndividualWrap').classList.add('hidden');
+    document.getElementById('sendLinkStep1Error').textContent = '';
+    document.getElementById('sendLinkStep2Error').textContent = '';
+    document.getElementById('sendLinkStep1').classList.remove('hidden');
+    document.getElementById('sendLinkStep2').classList.add('hidden');
+    const confirmBtn = document.getElementById('sendLinkConfirmBtn');
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Send';
+    document.getElementById('sendLinkModal').classList.remove('hidden');
+    await populateSendLinkIndividualSelect();
+  });
+  document.getElementById('sendLinkCancel1').addEventListener('click', closeSendLinkModal);
+
+  let sendLinkCtx = null;
+
+  function renderSendLinkPreview(result){
+    const { recipients, sendableCount, skipped } = result;
+    const summaryEl = document.getElementById('sendLinkSummary');
+    if (!recipients.length) {
+      summaryEl.textContent = 'No players match this selection.';
+    } else {
+      summaryEl.textContent = 'This will email ' + sendableCount + ' ' + (sendableCount === 1 ? 'family' : 'families') +
+        (skipped.length ? ' — ' + skipped.length + ' skipped (no email on file)' : '') + '.';
+    }
+    const listEl = document.getElementById('sendLinkRecipientsList');
+    if (!recipients.length) {
+      listEl.innerHTML = '<div style="color:#888;">Nothing to show.</div>';
+    } else {
+      listEl.innerHTML = recipients.map((r) => {
+        const gradeLabel = GRADE_LABELS[r.grade] || r.grade;
+        if (r.email) {
+          return '<div style="padding:4px 0; border-bottom:1px solid #f2f2f2;">' + escapeHtml(r.playerName) + ' — ' + gradeLabel +
+            ' <span style="color:#888;">(' + escapeHtml(r.email) + ')</span></div>';
+        }
+        return '<div style="padding:4px 0; border-bottom:1px solid #f2f2f2; color:#b5482f;">' + escapeHtml(r.playerName) + ' — ' + gradeLabel +
+          ' — no parent email on file, will be skipped</div>';
+      }).join('');
+    }
+    document.getElementById('sendLinkConfirmBtn').disabled = sendableCount === 0;
+  }
+
+  document.getElementById('sendLinkPreviewBtn').addEventListener('click', async () => {
+    const errEl = document.getElementById('sendLinkStep1Error');
+    errEl.textContent = '';
+    const title = document.getElementById('slTitleInput').value.trim();
+    const description = document.getElementById('slDescInput').value.trim();
+    const amountCents = Math.round(parseFloat(document.getElementById('slAmountInput').value || '0') * 100);
+    const scopeValue = document.getElementById('slScopeSelect').value;
+    const { scope, grade } = parseSendLinkScopeValue(scopeValue);
+    const playerId = scope === 'individual' ? document.getElementById('slIndividualSelect').value : null;
+
+    if (!title) { errEl.textContent = 'Please enter a title.'; return; }
+    if (!amountCents || amountCents <= 0) { errEl.textContent = 'Please enter an amount greater than $0.'; return; }
+    if (scope === 'individual' && !playerId) { errEl.textContent = 'Please choose a player.'; return; }
+
+    const btn = document.getElementById('sendLinkPreviewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+    try {
+      const params = new URLSearchParams({ scope });
+      if (grade) params.set('grade', grade);
+      if (playerId) params.set('playerId', playerId);
+      const result = await api('/api/admin/one-time-payments/recipients?' + params.toString());
+      if (result.error) {
+        errEl.textContent = result.error;
+        return;
+      }
+      sendLinkCtx = { title, description, amountCents, scope, grade, playerId };
+      renderSendLinkPreview(result);
+      document.getElementById('sendLinkStep1').classList.add('hidden');
+      document.getElementById('sendLinkStep2').classList.remove('hidden');
+    } catch (e) {
+      errEl.textContent = 'Could not load recipients. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Preview Recipients';
+    }
+  });
+
+  document.getElementById('sendLinkBackBtn').addEventListener('click', () => {
+    document.getElementById('sendLinkStep2').classList.add('hidden');
+    document.getElementById('sendLinkStep1').classList.remove('hidden');
+  });
+
+  document.getElementById('sendLinkConfirmBtn').addEventListener('click', async () => {
+    if (!sendLinkCtx) return;
+    const errEl = document.getElementById('sendLinkStep2Error');
+    errEl.textContent = '';
+    const btn = document.getElementById('sendLinkConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const result = await api('/api/admin/one-time-payments/send', {
+        method: 'POST',
+        body: JSON.stringify(sendLinkCtx),
+      });
+      if (result.error) {
+        errEl.textContent = result.error;
+        btn.disabled = false;
+        btn.textContent = 'Send';
+        return;
+      }
+      closeSendLinkModal();
+      let msg = 'Sent to ' + result.sentCount + ' ' + (result.sentCount === 1 ? 'family' : 'families') + '.';
+      if (result.skipped && result.skipped.length) msg += '\\n\\nSkipped (no email on file): ' + result.skipped.join(', ');
+      if (result.failed && result.failed.length) msg += '\\n\\nFailed to send (please retry for these): ' + result.failed.join(', ');
+      alert(msg);
+      await loadOneTimePayments();
+    } catch (e) {
+      errEl.textContent = 'Could not send. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Send';
     }
   });
 

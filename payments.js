@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
-const { sendPaymentLinkEmail } = require('./email');
+const { sendPaymentLinkEmail, sendOneTimePaymentEmail } = require('./email');
 const { getSetting, setSetting } = require('./settings');
 
 const router = express.Router();
@@ -487,7 +487,138 @@ router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
  * Not tied to a registration, not recurring — just "collect $X from whoever
  * I send this link to", for things like a tournament fee, a replacement
  * kit, or a quick test charge.
+ *
+ * Two ways to create one:
+ *  - "Create Link": a single untargeted link (admin copies/shares it
+ *    manually) — player_id/email etc. stay NULL on that row.
+ *  - "Send Link": targets a roster audience (all players, all RCH, a grade,
+ *    one individual, ...) and gives EACH matching family its own row/token,
+ *    emailed directly — a shared link would show "already used" for
+ *    everyone else the moment the first family paid.
  * ------------------------------------------------------------------------ */
+
+const AUDIENCE_GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
+
+// Resolves a "Send Link" audience (scope + optional grade/playerId) into the
+// actual, CURRENT list of matching roster players — always recomputed
+// server-side at preview time and again at send time, rather than trusting
+// a list the admin's browser already has, so a roster change in between
+// (or a stale preview) can't send to the wrong people.
+async function resolveOneTimeRecipients({ scope, grade, playerId }) {
+  if (scope === 'individual') {
+    if (!playerId) throw new Error('Please choose a player.');
+    const r = await pool.query('SELECT * FROM players WHERE id = $1 AND archived_at IS NULL', [playerId]);
+    if (!r.rows[0]) throw new Error('That player was not found on the active roster.');
+    return r.rows;
+  }
+
+  const conditions = ['archived_at IS NULL'];
+  const params = [];
+  if (scope === 'all') {
+    // no extra filter
+  } else if (scope === 'all_rch') {
+    conditions.push('rch = true');
+  } else if (scope === 'all_sultans') {
+    conditions.push('sultans = true');
+  } else if (scope === 'grade' || scope === 'rch_grade' || scope === 'sultans_grade') {
+    if (!AUDIENCE_GRADES.includes(grade)) throw new Error('Please choose a valid grade.');
+    params.push(grade);
+    conditions.push(`grade = $${params.length}`);
+    if (scope === 'rch_grade') conditions.push('rch = true');
+    if (scope === 'sultans_grade') conditions.push('sultans = true');
+  } else {
+    throw new Error('Please choose who to send this to.');
+  }
+
+  const where = 'WHERE ' + conditions.join(' AND ');
+  const result = await pool.query(`SELECT * FROM players ${where} ORDER BY grade, player_name`, params);
+  return result.rows;
+}
+
+// Admin: preview who a "Send Link" audience would actually reach, before
+// anything is created or emailed.
+router.get('/admin/one-time-payments/recipients', requireAdmin, async (req, res) => {
+  const { scope, grade, playerId } = req.query;
+  try {
+    const players = await resolveOneTimeRecipients({ scope, grade, playerId });
+    const recipients = players.map((p) => ({
+      id: p.id,
+      playerName: p.player_name,
+      grade: p.grade,
+      parentName: p.parent_name,
+      email: p.parent_email || null,
+    }));
+    res.json({
+      recipients,
+      sendableCount: recipients.filter((r) => r.email).length,
+      skipped: recipients.filter((r) => !r.email).map((r) => r.playerName),
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Could not resolve recipients.' });
+  }
+});
+
+// Admin: "Send Link" — creates one payment link per matching family (with a
+// parent email on file) and emails each their own link immediately. Players
+// without an email on file are skipped and reported back, not an error.
+router.post('/admin/one-time-payments/send', requireAdmin, async (req, res) => {
+  const { title, description, amountCents, scope, grade, playerId } = req.body || {};
+  if (!title || !String(title).trim()) {
+    return res.status(400).json({ error: 'Please enter a title.' });
+  }
+  if (!Number.isFinite(Number(amountCents)) || Number(amountCents) <= 0) {
+    return res.status(400).json({ error: 'Amount must be greater than $0.' });
+  }
+
+  let players;
+  try {
+    players = await resolveOneTimeRecipients({ scope, grade, playerId });
+  } catch (err) {
+    return res.status(400).json({ error: err.message || 'Could not resolve recipients.' });
+  }
+
+  const withEmail = players.filter((p) => p.parent_email);
+  const skipped = players.filter((p) => !p.parent_email).map((p) => p.player_name);
+
+  if (!withEmail.length) {
+    return res.status(400).json({ error: 'No matching player has a parent email on file.', skipped });
+  }
+
+  const trimmedTitle = String(title).trim();
+  const trimmedDescription = String(description || '').trim();
+  const roundedAmount = Math.round(Number(amountCents));
+
+  const sent = [];
+  const failed = [];
+  for (const player of withEmail) {
+    try {
+      const token = crypto.randomBytes(24).toString('hex');
+      await pool.query(
+        `INSERT INTO one_time_payments
+          (token, title, description, amount_cents, player_id, recipient_name, parent_name, email)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [token, trimmedTitle, trimmedDescription, roundedAmount,
+         player.id, player.player_name, player.parent_name || '', player.parent_email]
+      );
+      const link = `${siteUrl(req)}/pay/one-time/${token}`;
+      await sendOneTimePaymentEmail({
+        to: player.parent_email,
+        parentName: player.parent_name,
+        childName: player.player_name,
+        title: trimmedTitle,
+        description: trimmedDescription,
+        amountCents: roundedAmount,
+        link,
+      });
+      sent.push({ playerId: player.id, playerName: player.player_name, email: player.parent_email });
+    } catch (err) {
+      console.error('Send one-time payment to player', player.id, 'failed:', err);
+      failed.push(player.player_name);
+    }
+  }
+
+  res.json({ ok: true, sentCount: sent.length, sent, skipped, failed });
+});
 
 // Admin: create a one-time payment link.
 router.post('/admin/one-time-payments', requireAdmin, async (req, res) => {

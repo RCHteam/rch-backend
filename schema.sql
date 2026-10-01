@@ -264,3 +264,13 @@ CREATE TABLE IF NOT EXISTS one_time_payments (
 );
 
 CREATE INDEX IF NOT EXISTS idx_one_time_payments_token ON one_time_payments(token);
+
+-- "Send Link" (bulk targeted send) extends the same table: each matching
+-- player gets their OWN row/token (own Stripe Checkout, own paid/pending
+-- status) rather than sharing one link — a shared link would show
+-- "already used" for everyone after the first family paid. These columns
+-- stay NULL for a plain "Create Link" (ad hoc/untargeted) entry.
+ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS player_id INTEGER REFERENCES players(id) ON DELETE SET NULL;
+ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS recipient_name TEXT;
+ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS parent_name TEXT;
+ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS email TEXT;
