@@ -26,6 +26,7 @@ module.exports = `<!doctype html>
   .card .l{ font-size:0.8rem; color:#666; text-transform:uppercase; letter-spacing:0.05em; }
   table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:32px; font-size:0.88rem; }
   th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid #eee; white-space:nowrap; }
+  td.cell-wrap{ white-space:normal; max-width:240px; word-wrap:break-word; }
   th{ background:#f0ece0; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:#555; }
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 12px; }
   .section-head h2{ margin:0; font-size:1.05rem; }
@@ -1298,15 +1299,15 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(c.name) + '</td>' +
         '<td>' + escapeHtml(c.email || '') + '</td>' +
         '<td>' + escapeHtml(c.phone || '') + '</td>' +
-        '<td>' + escapeHtml(c.degree || '') + '</td>' +
-        '<td>' + escapeHtml(c.qualifications || '') + '</td>' +
-        '<td>' + escapeHtml(c.certificates || '') + '</td>' +
+        '<td class="cell-wrap">' + escapeHtml(c.degree || '') + '</td>' +
+        '<td class="cell-wrap">' + escapeHtml(c.qualifications || '') + '</td>' +
+        '<td class="cell-wrap">' + escapeHtml(c.certificates || '') + '</td>' +
         '<td>' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</td>' +
         '<td>' + fixedSalary + '</td>' +
         '<td>' + referralLabel + '</td>' +
-        '<td>' + gradeLabels + '</td>' +
+        '<td class="cell-wrap">' + gradeLabels + '</td>' +
         '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
-        '<td>' + escapeHtml(c.notes || '') + '</td>' +
+        '<td class="cell-wrap">' + escapeHtml(c.notes || '') + '</td>' +
         '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
           '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
