@@ -565,6 +565,8 @@ module.exports = `<!doctype html>
       <select id="slScopeSelect"></select>
 
       <div id="slIndividualWrap" class="hidden">
+        <label for="slIndividualSearch">Search player</label>
+        <input type="text" id="slIndividualSearch" placeholder="Type a player or parent name…">
         <label for="slIndividualSelect">Player</label>
         <select id="slIndividualSelect"></select>
       </div>
@@ -2004,23 +2006,45 @@ module.exports = `<!doctype html>
     sel.innerHTML = html;
   }
 
+  let sendLinkAllPlayers = [];
+
+  function renderSendLinkIndividualOptions(filterText){
+    const sel = document.getElementById('slIndividualSelect');
+    const q = (filterText || '').trim().toLowerCase();
+    const matches = !q ? sendLinkAllPlayers : sendLinkAllPlayers.filter((p) =>
+      (p.player_name || '').toLowerCase().indexOf(q) !== -1 ||
+      (p.parent_name || '').toLowerCase().indexOf(q) !== -1
+    );
+    if (!matches.length) {
+      sel.innerHTML = '<option value="">No players match "' + escapeHtml(filterText || '') + '"</option>';
+      return;
+    }
+    sel.innerHTML = matches.map((p) =>
+      '<option value="' + p.id + '">' + escapeHtml(p.player_name) + ' — ' + (GRADE_LABELS[p.grade] || p.grade) +
+      (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</option>'
+    ).join('');
+  }
+
   async function populateSendLinkIndividualSelect(){
     const sel = document.getElementById('slIndividualSelect');
+    document.getElementById('slIndividualSearch').value = '';
     sel.innerHTML = '<option value="">Loading…</option>';
     try {
-      const players = await api('/api/admin/players');
-      if (!players.length) {
+      sendLinkAllPlayers = await api('/api/admin/players');
+      if (!sendLinkAllPlayers.length) {
         sel.innerHTML = '<option value="">No active players on the roster</option>';
         return;
       }
-      sel.innerHTML = players.map((p) =>
-        '<option value="' + p.id + '">' + escapeHtml(p.player_name) + ' — ' + (GRADE_LABELS[p.grade] || p.grade) +
-        (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</option>'
-      ).join('');
+      renderSendLinkIndividualOptions('');
     } catch (e) {
+      sendLinkAllPlayers = [];
       sel.innerHTML = '<option value="">Could not load players</option>';
     }
   }
+
+  document.getElementById('slIndividualSearch').addEventListener('input', (e) => {
+    renderSendLinkIndividualOptions(e.target.value);
+  });
 
   function parseSendLinkScopeValue(value){
     if (value.indexOf('grade:') === 0) return { scope: 'grade', grade: value.slice(6) };
