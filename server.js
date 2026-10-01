@@ -12,7 +12,11 @@ const joinRoutes = require('./join');
 const adminRoutes = require('./admin');
 const { router: paymentRoutes, handleStripeWebhook } = require('./payments');
 const paymentPageHtml = require('./paymentPage');
+const oneTimePaymentPageHtml = require('./oneTimePaymentPage');
 const playersRoutes = require('./players');
+const chargesRoutes = require('./charges');
+const coachesRoutes = require('./coaches');
+const { router: reportsRoutes, runMonthEndCheckIfDue } = require('./reports');
 
 const app = express();
 
@@ -43,6 +47,9 @@ app.use('/api', joinRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', playersRoutes);
+app.use('/api', chargesRoutes);
+app.use('/api', coachesRoutes);
+app.use('/api', reportsRoutes);
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
@@ -55,6 +62,15 @@ app.get('/pay/:token', (req, res) => {
 });
 app.get('/pay/:token/success', (req, res) => {
   res.type('html').send(paymentPageHtml);
+});
+
+// Stand-alone one-time payment page (Finances tab) — separate from the
+// registration/proration flow above, so it's mounted on its own path.
+app.get('/pay/one-time/:token', (req, res) => {
+  res.type('html').send(oneTimePaymentPageHtml);
+});
+app.get('/pay/one-time/:token/success', (req, res) => {
+  res.type('html').send(oneTimePaymentPageHtml);
 });
 
 // Logo, served as a real file (not a data: URI) — email clients like Gmail
@@ -78,6 +94,12 @@ ensureSchema()
     app.listen(PORT, () => {
       console.log(`RCH Elite Training API running on port ${PORT}`);
     });
+    // Checks once a day whether a month just ended, and if so archives a
+    // roster + revenue/charges/net snapshot for it (see reports.js). Also
+    // runs once immediately on boot, in case the server happened to be
+    // asleep/redeploying right at midnight on the 1st.
+    runMonthEndCheckIfDue();
+    setInterval(runMonthEndCheckIfDue, 24 * 60 * 60 * 1000);
   })
   .catch((err) => {
     console.error('❌ Failed to set up the database schema:', err);

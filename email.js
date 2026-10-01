@@ -23,7 +23,19 @@ function brandedEmail(innerHtml) {
   `;
 }
 
-async function sendEmail({ to, subject, html }) {
+// Deliverability notes (why an email lands in spam has almost nothing to do
+// with this code and almost everything to do with domain authentication):
+// 1. SPF + DKIM must show fully "Verified" for CLUB_FROM_EMAIL's domain in
+//    the Resend dashboard (resend.com/domains) — this is the #1 cause of
+//    spam placement, and no amount of content tuning fixes it if missing.
+// 2. A DMARC record (a TXT record at _dmarc.yourdomain.com) should exist
+//    too — many providers (Gmail especially) treat a domain with SPF/DKIM
+//    but NO DMARC as suspicious. Resend's domain setup page shows the exact
+//    record to add if one isn't already there.
+// 3. Every send also sets reply_to to a real, monitored inbox (not a
+//    no-reply address) and includes a plain-text alternative alongside the
+//    HTML — both are smaller but genuine signals mail providers use.
+async function sendEmail({ to, subject, html, text }) {
   if (!RESEND_API_KEY) {
     console.log(`[email skipped — no RESEND_API_KEY set] would send "${subject}" to ${to}`);
     return { skipped: true };
@@ -35,7 +47,14 @@ async function sendEmail({ to, subject, html }) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({
+        from: FROM,
+        to,
+        subject,
+        html,
+        text: text || undefined,
+        reply_to: NOTIFY || FROM,
+      }),
     });
     if (!res.ok) {
       console.error('Email send failed:', await res.text());
@@ -54,6 +73,7 @@ async function sendSkillsRegistrationEmails(entry) {
     to: entry.email,
     subject: `You're registered — RCH Elite Training`,
     html: brandedEmail(`<p>Hi ${firstName},</p><p>You're registered! A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
+    text: `Hi ${firstName},\n\nYou're registered! A coordinator will reach out to you at ${entry.email} to start your first session.\n\nRCH Elite Training`,
   });
   if (NOTIFY) {
     await sendEmail({
@@ -70,6 +90,7 @@ async function sendJoinRegistrationEmails(entry) {
     to: entry.email,
     subject: `You're on the team — Join Sultans FC (${entry.age_group})`,
     html: brandedEmail(`<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
+    text: `Hi ${firstName},\n\n${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will reach out to you at ${entry.email} to start your first session.\n\nRCH Elite Training`,
   });
   if (NOTIFY) {
     await sendEmail({
@@ -85,15 +106,25 @@ async function sendPaymentLinkEmail({ to, parentName, childName, programLabel, l
   const prettyDate = new Date(`${seasonEndDate}T00:00:00Z`).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
   });
+  // Only mention "& kit fee" when a kit fee is actually being charged —
+  // saying "a one-time $0.00 registration & kit fee" when the kit-fee
+  // checkbox wasn't checked would be telling the family something untrue.
+  const coverageHtml = oneTime > 0
+    ? `This covers a one-time $${(oneTime / 100).toFixed(2)} registration &amp; kit fee, followed by $${(monthly / 100).toFixed(2)}/month, charged automatically each month and ending on ${prettyDate} — no action needed on your part.`
+    : `This starts your $${(monthly / 100).toFixed(2)}/month membership, charged automatically each month and ending on ${prettyDate} — no action needed on your part.`;
+  const coverageText = oneTime > 0
+    ? `This covers a one-time $${(oneTime / 100).toFixed(2)} registration & kit fee, followed by $${(monthly / 100).toFixed(2)}/month, charged automatically each month and ending on ${prettyDate} — no action needed on your part.`
+    : `This starts your $${(monthly / 100).toFixed(2)}/month membership, charged automatically each month and ending on ${prettyDate} — no action needed on your part.`;
   await sendEmail({
     to,
     subject: `Complete ${childName}'s registration — payment link inside`,
     html: brandedEmail(`<p>Hi ${firstName},</p>
-      <p>Great news — ${childName} is ready to start ${programLabel}! To finish registering, please complete payment using the secure link below:</p>
+      <p>${childName} is ready to start ${programLabel}. To finish registering, please complete payment using the link below:</p>
       <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Complete Payment</a></p>
       <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
-      <p>This covers a one-time $${(oneTime / 100).toFixed(2)} registration &amp; kit fee, followed by $${(monthly / 100).toFixed(2)}/month, charged automatically each month and ending on ${prettyDate} — no action needed on your part.</p>
+      <p>${coverageHtml}</p>
       <p>This link is unique to your family — please don't share it. If you have any questions, just reply to this email.</p>`),
+    text: `Hi ${firstName},\n\n${childName} is ready to start ${programLabel}. To finish registering, please complete payment using this link:\n${link}\n\n${coverageText}\n\nThis link is unique to your family — please don't share it. If you have any questions, just reply to this email.\n\nRCH Elite Training`,
   });
 }
 

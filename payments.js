@@ -410,6 +410,44 @@ router.post('/admin/payment-links/pause', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: cancel a family's subscription outright — e.g. to end an October
+// enrollment cleanly before November's price change takes effect, instead of
+// letting the old (lower) rate auto-charge on its scheduled date. Cancels
+// immediately; if the subscription is still in its trial period (as October
+// signups are, until their first real charge on next_billing_anchor), this
+// cancels it before it ever charges anything.
+router.post('/admin/payment-links/cancel', requireAdmin, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
+
+  const { registrationType, registrationId } = req.body || {};
+  if (!['skills', 'join', 'player'].includes(registrationType)) {
+    return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
+  }
+  if (!registrationId) return res.status(400).json({ error: 'registrationId is required.' });
+
+  try {
+    const r = await pool.query(
+      `SELECT * FROM payment_links
+       WHERE registration_type = $1 AND registration_id = $2 AND status = 'completed'
+       ORDER BY created_at DESC LIMIT 1`,
+      [registrationType, registrationId]
+    );
+    const entry = r.rows[0];
+    if (!entry || !entry.stripe_subscription_id) {
+      return res.status(404).json({ error: 'No active paid subscription found for this family.' });
+    }
+
+    await stripe.subscriptions.cancel(entry.stripe_subscription_id);
+    await pool.query(`UPDATE payment_links SET status = 'canceled' WHERE id = $1`, [entry.id]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Cancel billing error:', err);
+    res.status(500).json({ error: 'Could not cancel billing. Please try again.' });
+  }
+});
+
 // Admin: resume billing immediately (undoes a pause early, if needed).
 router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
   const stripe = getStripe();
@@ -443,6 +481,132 @@ router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
   }
 });
 
+/* ------------------------------------------------------------------------
+ * Stand-alone one-time payments (Finances tab)
+ *
+ * Not tied to a registration, not recurring — just "collect $X from whoever
+ * I send this link to", for things like a tournament fee, a replacement
+ * kit, or a quick test charge.
+ * ------------------------------------------------------------------------ */
+
+// Admin: create a one-time payment link.
+router.post('/admin/one-time-payments', requireAdmin, async (req, res) => {
+  const { title, description, amountCents } = req.body || {};
+  if (!title || !String(title).trim()) {
+    return res.status(400).json({ error: 'Please enter a title.' });
+  }
+  if (!Number.isFinite(Number(amountCents)) || Number(amountCents) <= 0) {
+    return res.status(400).json({ error: 'Amount must be greater than $0.' });
+  }
+
+  try {
+    const token = crypto.randomBytes(24).toString('hex');
+    const insertRes = await pool.query(
+      `INSERT INTO one_time_payments (token, title, description, amount_cents)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [token, String(title).trim(), String(description || '').trim(), Math.round(Number(amountCents))]
+    );
+    const link = `${siteUrl(req)}/pay/one-time/${token}`;
+    res.status(201).json({ ok: true, token, link, entry: insertRes.rows[0] });
+  } catch (err) {
+    console.error('Create one-time payment error:', err);
+    res.status(500).json({ error: 'Could not create this payment link.' });
+  }
+});
+
+// Admin: list all one-time payment links, newest first.
+router.get('/admin/one-time-payments', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM one_time_payments ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('List one-time payments error:', err);
+    res.status(500).json({ error: 'Could not load one-time payments.' });
+  }
+});
+
+// Admin: delete a one-time payment link (e.g. a test link once you're done with it).
+// Only allowed while still pending — a completed one is a real payment record.
+router.delete('/admin/one-time-payments/:id', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM one_time_payments WHERE id = $1 AND status = 'pending' RETURNING *`,
+      [req.params.id]
+    );
+    if (!result.rows[0]) {
+      return res.status(409).json({ error: 'Only a pending (unpaid) link can be deleted.' });
+    }
+    res.json({ ok: true, deleted: result.rows[0] });
+  } catch (err) {
+    console.error('Delete one-time payment error:', err);
+    res.status(500).json({ error: 'Could not delete this payment link.' });
+  }
+});
+
+// Public: the /pay/one-time/:token page calls this to display title/description/amount.
+router.get('/pay/one-time/:token', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM one_time_payments WHERE token = $1', [req.params.token]);
+    const entry = r.rows[0];
+    if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
+    res.json({
+      title: entry.title,
+      description: entry.description,
+      amountCents: entry.amount_cents,
+      status: entry.status,
+    });
+  } catch (err) {
+    console.error('Lookup one-time payment error:', err);
+    res.status(500).json({ error: 'Could not load this payment link.' });
+  }
+});
+
+// Public: starts a plain, single Stripe Checkout charge — no subscription,
+// no proration, no saved card required afterward.
+router.post('/pay/one-time/:token/checkout', async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet. Please contact RCH Elite Training.' });
+
+  try {
+    const r = await pool.query('SELECT * FROM one_time_payments WHERE token = $1', [req.params.token]);
+    const entry = r.rows[0];
+    if (!entry) return res.status(404).json({ error: 'This payment link is invalid.' });
+    if (entry.status !== 'pending') {
+      return res.status(409).json({ error: 'This payment link has already been used.' });
+    }
+
+    const base = siteUrl(req);
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_creation: 'always',
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: entry.title,
+            ...(entry.description ? { description: entry.description } : {}),
+          },
+          unit_amount: entry.amount_cents,
+        },
+        quantity: 1,
+      }],
+      success_url: `${base}/pay/one-time/${entry.token}/success`,
+      cancel_url: `${base}/pay/one-time/${entry.token}`,
+      metadata: { one_time_payment_token: entry.token },
+    });
+
+    await pool.query(
+      `UPDATE one_time_payments SET stripe_checkout_session_id = $1 WHERE token = $2`,
+      [session.id, entry.token]
+    );
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Create one-time checkout session error:', err);
+    res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+
 // Stripe webhook — mounted in server.js BEFORE express.json(), since Stripe
 // requires the raw request body to verify the signature.
 async function handleStripeWebhook(req, res) {
@@ -461,6 +625,16 @@ async function handleStripeWebhook(req, res) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
+      const oneTimeToken = session.metadata && session.metadata.one_time_payment_token;
+      if (oneTimeToken) {
+        await pool.query(
+          `UPDATE one_time_payments
+           SET status = 'completed', completed_at = now(), stripe_customer_id = $1
+           WHERE token = $2`,
+          [session.customer, oneTimeToken]
+        );
+      }
+
       const token = session.metadata && session.metadata.payment_link_token;
       if (token) {
         const linkRes = await pool.query('SELECT * FROM payment_links WHERE token = $1', [token]);

@@ -44,6 +44,11 @@ module.exports = `<!doctype html>
   .btn-move-to-roster:disabled{ opacity:0.6; cursor:default; }
   .btn-unsubscribe{ background:#fff; border:1px solid #6a6a6a; color:#444; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-unsubscribe:hover{ background:#444; color:#fff; }
+  .status-badge{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.78rem; font-weight:700; white-space:nowrap; }
+  .status-paid{ background:#e3f3e9; color:#1f7a44; }
+  .status-declined{ background:#fbe6e1; color:#b5482f; }
+  .status-pending{ background:#fdf3dd; color:#9a6b12; }
+  .status-neutral{ background:#eee; color:#777; }
   .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
@@ -242,6 +247,27 @@ module.exports = `<!doctype html>
       <button type="button" class="btn-add" id="saveProrationModeBtn">Save</button>
       <span class="pricing-saved" id="prorationModeSaved"></span>
     </div>
+
+    <div class="section-head">
+      <h2>One-Time Payments</h2>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Create a stand-alone payment link for a single charge — a tournament fee, a replacement kit, a test charge, anything that isn't a recurring membership. Not tied to any registration or subscription; the family just pays this one amount once.</p>
+    <div class="modal-amounts" style="background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label for="otpTitleInput">Title</label><br>
+        <input type="text" id="otpTitleInput" placeholder="e.g. Tournament fee">
+      </div>
+      <div>
+        <label for="otpDescInput">Description (optional)</label><br>
+        <input type="text" id="otpDescInput" placeholder="Shown to the family on the payment page">
+      </div>
+      <div>
+        <label for="otpAmountInput">Amount ($)</label><br>
+        <input type="number" id="otpAmountInput" min="0.01" step="0.01">
+      </div>
+      <button type="button" class="btn-add" id="addOneTimePaymentBtn">+ Create Link</button>
+    </div>
+    <div id="oneTimePaymentsTableWrap"></div>
 
     </div><!-- /section-finances -->
 
@@ -479,6 +505,7 @@ module.exports = `<!doctype html>
       <option value="two">2x per week</option>
       <option value="online">Online Course</option>
     </select>
+    <p style="color:#888; font-size:0.78rem; margin:-4px 0 10px;" id="tierSelectNote"></p>
     <label for="seasonSelect">Season</label>
     <select id="seasonSelect">
       <option value="regular">Regular Season (Aug 3 – May 3)</option>
@@ -815,7 +842,8 @@ module.exports = `<!doctype html>
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         const label = btn.getAttribute('data-label') || '';
-        openPaymentModal(registrationType, id, label, onSent);
+        const sessionType = btn.getAttribute('data-session') || null;
+        openPaymentModal(registrationType, id, label, onSent, sessionType);
       });
     });
   }
@@ -865,10 +893,23 @@ module.exports = `<!doctype html>
       '<br><span style="color:#888;">First charge is prorated automatically for the Tue/Thu practices left this month.</span>';
   }
 
-  function openPaymentModal(registrationType, id, label, onSent){
+  function openPaymentModal(registrationType, id, label, onSent, sessionType){
     paymentModalCtx = { registrationType, id, onSent };
     document.getElementById('paymentModalSub').textContent = label;
-    document.getElementById('tierSelect').value = 'one';
+    const tierSelect = document.getElementById('tierSelect');
+    const tierNote = document.getElementById('tierSelectNote');
+    if (sessionType && currentTiers()[sessionType]) {
+      // Follow whatever this player's Sessions setting already says on the
+      // roster, instead of letting the admin pick a different tier here and
+      // risk it drifting out of sync — change it on the roster row instead.
+      tierSelect.value = sessionType;
+      tierSelect.disabled = true;
+      tierNote.textContent = "Matches this player's Sessions setting on the roster. To change it, edit the player first.";
+    } else {
+      tierSelect.value = 'one';
+      tierSelect.disabled = false;
+      tierNote.textContent = '';
+    }
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
     document.getElementById('includeKitFee').checked = false;
@@ -1449,12 +1490,20 @@ module.exports = `<!doctype html>
       if (row.paused_until && new Date(row.paused_until) > new Date()) {
         return 'Paused until ' + String(row.paused_until).slice(0, 10);
       }
-      if (row.last_payment_status === 'failed') return 'Payment Issue';
+      if (row.last_payment_status === 'failed') return 'Declined';
       return 'Paid';
     }
     if (row.payment_status === 'canceled') return 'Canceled';
-    if (row.payment_status === 'pending') return 'Link sent';
+    if (row.payment_status === 'pending') return 'Pending';
     return 'Not sent';
+  }
+
+  function paymentLabelClass(row){
+    const label = paymentLabel(row);
+    if (label === 'Paid') return 'status-paid';
+    if (label === 'Declined') return 'status-declined';
+    if (label === 'Pending') return 'status-pending';
+    return 'status-neutral';
   }
 
   async function loadSkills(){
@@ -1517,7 +1566,7 @@ module.exports = `<!doctype html>
     if (!rows.length) return '<div class="empty">No players yet.</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th></th>' +
+      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Payment Status</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
@@ -1531,8 +1580,9 @@ module.exports = `<!doctype html>
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
+        '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
         '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
-          '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '">Send Payment Link</button>' +
+          '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
           '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
           '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
           '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
@@ -1781,6 +1831,85 @@ module.exports = `<!doctype html>
     }
   });
 
+  // ---- One-Time Payments (stand-alone payment links, not tied to a registration) ----
+
+  function renderOneTimePaymentsTable(rows){
+    if (!rows.length) return '<div class="empty">No one-time payment links yet.</div>';
+    let html = '<table><thead><tr><th>Title</th><th>Description</th><th>Amount</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>';
+    rows.forEach((p) => {
+      html += '<tr>' +
+        '<td>' + escapeHtml(p.title) + '</td>' +
+        '<td>' + escapeHtml(p.description || '—') + '</td>' +
+        '<td>$' + (p.amount_cents / 100).toFixed(2) + '</td>' +
+        '<td>' + (p.status === 'completed' ? 'Paid' : 'Pending') + '</td>' +
+        '<td><button type="button" class="btn-payment-link btn-copy-link" data-token="' + p.token + '">Copy link</button></td>' +
+        '<td>' + (p.status === 'pending' ? '<button type="button" class="btn-delete-row" data-id="' + p.id + '">Delete</button>' : '') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  async function loadOneTimePayments(){
+    const rows = await api('/api/admin/one-time-payments');
+    const wrap = document.getElementById('oneTimePaymentsTableWrap');
+    wrap.innerHTML = renderOneTimePaymentsTable(rows);
+    wrap.querySelectorAll('.btn-copy-link').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const link = location.origin + '/pay/one-time/' + btn.getAttribute('data-token');
+        try {
+          await navigator.clipboard.writeText(link);
+          const original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = original; }, 1500);
+        } catch (e) {
+          prompt('Copy this link:', link);
+        }
+      });
+    });
+    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this payment link?')) return;
+        btn.disabled = true;
+        try {
+          await api('/api/admin/one-time-payments/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+          await loadOneTimePayments();
+        } catch (e) {
+          alert('Could not delete this payment link. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.getElementById('addOneTimePaymentBtn').addEventListener('click', async () => {
+    const title = document.getElementById('otpTitleInput').value.trim();
+    const description = document.getElementById('otpDescInput').value.trim();
+    const amountCents = Math.round(parseFloat(document.getElementById('otpAmountInput').value || '0') * 100);
+    if (!title) { alert('Please enter a title.'); return; }
+    if (!amountCents || amountCents <= 0) { alert('Please enter an amount greater than $0.'); return; }
+    const btn = document.getElementById('addOneTimePaymentBtn');
+    btn.disabled = true;
+    try {
+      const result = await api('/api/admin/one-time-payments', {
+        method: 'POST',
+        body: JSON.stringify({ title, description, amountCents }),
+      });
+      if (result.error) {
+        alert(result.error);
+      } else {
+        document.getElementById('otpTitleInput').value = '';
+        document.getElementById('otpDescInput').value = '';
+        document.getElementById('otpAmountInput').value = '';
+        await loadOneTimePayments();
+      }
+    } catch (e) {
+      alert('Could not create this payment link. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('addPlayerBtn').addEventListener('click', () => {
     document.getElementById('apGrade').value = document.getElementById('rosterGradeFilter').value;
     ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
@@ -1959,6 +2088,7 @@ module.exports = `<!doctype html>
     await loadPricing();
     await loadPaymentPricing();
     await loadProrationMode();
+    await loadOneTimePayments();
     await loadOverviewAndRevenue();
   }
 

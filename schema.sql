@@ -244,3 +244,23 @@ ALTER TABLE join_registrations ADD CONSTRAINT join_registrations_session_type_ch
 -- type the parent's name in by hand. Nullable for existing rows; required
 -- at the app layer going forward.
 ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS parent_name TEXT;
+
+-- Stand-alone one-time payment links (Finances tab) — not tied to a
+-- registration or a recurring subscription at all. Used for one-off charges
+-- (a tournament fee, a replacement kit, a test charge) where the admin just
+-- needs to collect a single payment of a given amount from whoever the link
+-- is sent to.
+CREATE TABLE IF NOT EXISTS one_time_payments (
+  id                          SERIAL PRIMARY KEY,
+  token                       TEXT UNIQUE NOT NULL,
+  title                       TEXT NOT NULL,
+  description                 TEXT NOT NULL DEFAULT '',
+  amount_cents                INTEGER NOT NULL CHECK (amount_cents >= 0),
+  status                      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
+  stripe_checkout_session_id  TEXT,
+  stripe_customer_id          TEXT,
+  created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at                TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_one_time_payments_token ON one_time_payments(token);

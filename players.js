@@ -21,11 +21,30 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
   try {
     const conditions = [];
     const params = [];
-    if (grade) { params.push(grade); conditions.push(`grade = $${params.length}`); }
-    if (archived === 'true') conditions.push('archived_at IS NOT NULL');
-    else if (archived !== 'all') conditions.push('archived_at IS NULL');
+    if (grade) { params.push(grade); conditions.push(`p.grade = $${params.length}`); }
+    if (archived === 'true') conditions.push('p.archived_at IS NOT NULL');
+    else if (archived !== 'all') conditions.push('p.archived_at IS NULL');
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-    const result = await pool.query(`SELECT * FROM players ${where} ORDER BY grade, player_name`, params);
+    // Pulls in each player's most recent payment link (if any) so the roster
+    // can show a live Pending/Paid/Declined status without a separate
+    // lookup per row — status drives paymentLabel() on the dashboard.
+    const result = await pool.query(
+      `SELECT p.*,
+              pl.status AS payment_status,
+              pl.last_payment_status,
+              pl.paused_until
+       FROM players p
+       LEFT JOIN LATERAL (
+         SELECT status, last_payment_status, paused_until
+         FROM payment_links
+         WHERE registration_type = 'player' AND registration_id = p.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) pl ON true
+       ${where}
+       ORDER BY p.grade, p.player_name`,
+      params
+    );
     res.json(result.rows);
   } catch (err) {
     console.error('List players error:', err);
