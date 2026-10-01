@@ -1158,6 +1158,13 @@ module.exports = `<!doctype html>
     const rows = await api('/api/admin/charges');
     const wrap = document.getElementById('chargesTableWrap');
     wrap.innerHTML = renderChargesTable(rows);
+    // Keep the Finances tab's Pricing & Revenue "Final Net Revenue" figure in
+    // sync whenever a charge is added/edited/deleted, even without a full
+    // page reload.
+    lastChargesCents = currentMonthChargesCents(rows);
+    if (lastOverview) {
+      document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(lastOverview, currentPricing, lastChargesCents);
+    }
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this charge?')) return;
@@ -1607,6 +1614,7 @@ module.exports = `<!doctype html>
   const GRADES = ['pre-k','kindergarten','1st-grade','2nd-grade','3rd-grade','4th-grade','5th-grade','6th-grade'];
   let currentPricing = { priceOneCents: 15000, priceTwoCents: 25000 };
   let lastOverview = null;
+  let lastChargesCents = 0;
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1783,34 +1791,85 @@ module.exports = `<!doctype html>
     return html;
   }
 
-  function renderRevenueTable(overview, pricing){
+  // Stripe's standard U.S. online-card rate: 2.9% + $0.30 per successful
+  // charge. This is an ESTIMATE for planning purposes — actual per-charge
+  // fees can differ slightly (international cards, Amex, disputes, etc.);
+  // Stripe's own "Balance" / "Payouts" reports are the source of truth for
+  // what was actually deducted.
+  const STRIPE_PCT = 0.029;
+  const STRIPE_FIXED_CENTS = 30;
+
+  function stripeFeeCents(amountCents, transactionCount){
+    return Math.round(amountCents * STRIPE_PCT) + (transactionCount * STRIPE_FIXED_CENTS);
+  }
+
+  // Sums this calendar month's business charges/expenses (not Stripe fees) —
+  // every "recurring" charge applies every month, plus any "one_time" charge
+  // whose charge_month is this month. Mirrors the WHERE clause the server
+  // uses when building a monthly snapshot (reports.js generateSnapshot), but
+  // computed live here from whatever /api/admin/charges returns right now.
+  function currentMonthChargesCents(charges){
+    const now = new Date();
+    const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    return (charges || []).reduce((sum, c) => {
+      if (c.kind === 'recurring') return sum + c.amount_cents;
+      if (c.kind === 'one_time' && c.charge_month && String(c.charge_month).slice(0, 7) === monthKey) {
+        return sum + c.amount_cents;
+      }
+      return sum;
+    }, 0);
+  }
+
+  function renderRevenueTable(overview, pricing, chargesCents){
     let html = '<table><thead><tr><th>Grade</th><th>One-Session Players</th><th>Two-Session Players</th>' +
-      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Discounts</th><th>Total Revenue</th></tr></thead><tbody>';
-    const totals = { one:0, two:0, revOne:0, revTwo:0, disc:0, total:0 };
+      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Discounts</th><th>Total Revenue</th>' +
+      '<th>Est. Stripe Fees</th><th>Net After Stripe</th></tr></thead><tbody>';
+    const totals = { one:0, two:0, revOne:0, revTwo:0, disc:0, total:0, fee:0, net:0 };
     GRADES.forEach((g) => {
       const o = overview[g] || { totalOne:0, totalTwo:0, totalDiscountCents:0 };
       const revOne = o.totalOne * pricing.priceOneCents;
       const revTwo = o.totalTwo * pricing.priceTwoCents;
       const disc = o.totalDiscountCents || 0;
       const total = revOne + revTwo - disc;
+      // Each player is charged separately (its own subscription), so the
+      // $0.30 fixed fee applies per player, not once per grade.
+      const fee = stripeFeeCents(total, o.totalOne + o.totalTwo);
+      const net = total - fee;
       totals.one += o.totalOne; totals.two += o.totalTwo;
       totals.revOne += revOne; totals.revTwo += revTwo; totals.disc += disc; totals.total += total;
+      totals.fee += fee; totals.net += net;
       html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td>' +
         '<td>$' + (revOne/100).toFixed(2) + '</td><td>$' + (revTwo/100).toFixed(2) + '</td>' +
-        '<td>$' + (disc/100).toFixed(2) + '</td><td>$' + (total/100).toFixed(2) + '</td></tr>';
+        '<td>$' + (disc/100).toFixed(2) + '</td><td>$' + (total/100).toFixed(2) + '</td>' +
+        '<td>$' + (fee/100).toFixed(2) + '</td><td>$' + (net/100).toFixed(2) + '</td></tr>';
     });
     html += '<tr class="grand-total"><td>TOTAL WON (Revenue)</td><td>' + totals.one + '</td><td>' + totals.two + '</td>' +
       '<td>$' + (totals.revOne/100).toFixed(2) + '</td><td>$' + (totals.revTwo/100).toFixed(2) + '</td>' +
-      '<td>$' + (totals.disc/100).toFixed(2) + '</td><td>$' + (totals.total/100).toFixed(2) + '</td></tr>';
+      '<td>$' + (totals.disc/100).toFixed(2) + '</td><td>$' + (totals.total/100).toFixed(2) + '</td>' +
+      '<td>$' + (totals.fee/100).toFixed(2) + '</td><td>$' + (totals.net/100).toFixed(2) + '</td></tr>';
     html += '</tbody></table>';
+
+    const charges = chargesCents || 0;
+    const finalNet = totals.net - charges;
+    html += '<table style="margin-top:14px;"><tbody>' +
+      '<tr><td>Total Revenue (gross)</td><td>$' + (totals.total/100).toFixed(2) + '</td></tr>' +
+      '<tr><td>Est. Stripe Fees</td><td>-$' + (totals.fee/100).toFixed(2) + '</td></tr>' +
+      '<tr><td>Business Charges This Month</td><td>-$' + (charges/100).toFixed(2) + '</td></tr>' +
+      '<tr class="grand-total"><td>Final Net Revenue</td><td>$' + (finalNet/100).toFixed(2) + '</td></tr>' +
+      '</tbody></table>';
+    html += '<p style="color:#666; font-size:0.8rem; margin-top:8px;">Stripe fees are estimated using the standard U.S. online rate of 2.9% + $0.30 per player charge — actual fees may vary slightly. Business Charges This Month pulls live from the Charges list below: every Recurring charge, plus any One-time charge dated this month.</p>';
     return html;
   }
 
   async function loadOverviewAndRevenue(){
-    const overview = await api('/api/admin/players-overview');
+    const [overview, charges] = await Promise.all([
+      api('/api/admin/players-overview'),
+      api('/api/admin/charges'),
+    ]);
     lastOverview = overview;
+    lastChargesCents = currentMonthChargesCents(charges);
     document.getElementById('overviewTableWrap').innerHTML = renderOverviewTable(overview);
-    document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(overview, currentPricing);
+    document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(overview, currentPricing, lastChargesCents);
   }
 
   async function loadPricing(){
@@ -1834,7 +1893,7 @@ module.exports = `<!doctype html>
       savedMsg.textContent = 'Saved.';
       setTimeout(() => { savedMsg.textContent = ''; }, 2000);
       if (lastOverview) {
-        document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(lastOverview, currentPricing);
+        document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(lastOverview, currentPricing, lastChargesCents);
       }
     } catch (e) {
       alert('Could not save pricing. Please try again.');
