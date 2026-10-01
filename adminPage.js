@@ -1791,16 +1791,23 @@ module.exports = `<!doctype html>
     return html;
   }
 
-  // Stripe's standard U.S. online-card rate: 2.9% + $0.30 per successful
-  // charge. This is an ESTIMATE for planning purposes — actual per-charge
-  // fees can differ slightly (international cards, Amex, disputes, etc.);
-  // Stripe's own "Balance" / "Payouts" reports are the source of truth for
-  // what was actually deducted.
+  // This account's actual confirmed rates (checked in Stripe Settings ->
+  // Plans and fees, Oct 2026):
+  //   - Payments (standard domestic card): 2.9% + $0.30 per successful charge
+  //   - Billing (subscriptions/invoices):  0.7% of billing volume, ON TOP of
+  //     the payments fee above
+  // Every charge in this table is the ongoing MONTHLY subscription amount,
+  // which runs through Stripe Billing (stripe.subscriptions.create in
+  // payments.js) — so both fees apply to it. This is still an estimate:
+  // actual per-charge fees can differ slightly (international cards, Amex,
+  // disputes, etc.); Stripe's own "Balance" / "Payouts" reports are the
+  // source of truth for what was actually deducted.
   const STRIPE_PCT = 0.029;
+  const STRIPE_BILLING_PCT = 0.007;
   const STRIPE_FIXED_CENTS = 30;
 
   function stripeFeeCents(amountCents, transactionCount){
-    return Math.round(amountCents * STRIPE_PCT) + (transactionCount * STRIPE_FIXED_CENTS);
+    return Math.round(amountCents * (STRIPE_PCT + STRIPE_BILLING_PCT)) + (transactionCount * STRIPE_FIXED_CENTS);
   }
 
   // Sums this calendar month's business charges/expenses (not Stripe fees) —
@@ -1857,7 +1864,7 @@ module.exports = `<!doctype html>
       '<tr><td>Business Charges This Month</td><td>-$' + (charges/100).toFixed(2) + '</td></tr>' +
       '<tr class="grand-total"><td>Final Net Revenue</td><td>$' + (finalNet/100).toFixed(2) + '</td></tr>' +
       '</tbody></table>';
-    html += '<p style="color:#666; font-size:0.8rem; margin-top:8px;">Stripe fees are estimated using the standard U.S. online rate of 2.9% + $0.30 per player charge — actual fees may vary slightly. Business Charges This Month pulls live from the Charges list below: every Recurring charge, plus any One-time charge dated this month.</p>';
+    html += '<p style="color:#666; font-size:0.8rem; margin-top:8px;">Stripe fees are estimated at 2.9% + $0.30 per player charge (standard payments rate) plus 0.7% billing fee on subscriptions — actual fees may vary slightly. Business Charges This Month pulls live from the Charges list below: every Recurring charge, plus any One-time charge dated this month.</p>';
     return html;
   }
 
