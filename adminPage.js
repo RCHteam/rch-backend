@@ -27,6 +27,11 @@ module.exports = `<!doctype html>
   table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:32px; font-size:0.88rem; }
   th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid #eee; white-space:nowrap; }
   td.cell-wrap{ white-space:normal; max-width:240px; word-wrap:break-word; }
+  td details{ white-space:normal; }
+  td details summary{ cursor:pointer; color:var(--pitch); font-size:0.8rem; list-style:none; }
+  td details summary::-webkit-details-marker{ display:none; }
+  td details summary:before{ content:"▸ "; }
+  td details[open] summary:before{ content:"▾ "; }
   th{ background:#f0ece0; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:#555; }
   .section-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 12px; }
   .section-head h2{ margin:0; font-size:1.05rem; }
@@ -1282,6 +1287,14 @@ module.exports = `<!doctype html>
   };
   const COACH_ROLES = ['general_manager', 'head_coach', 'coach', 'volunteer'];
 
+  // Renders a long text field as a collapsed "Details ▾" dropdown instead of
+  // inline text, so a long qualifications/certificates/notes entry doesn't
+  // blow out the row height — the table stays compact until clicked open.
+  function collapsibleCell(text){
+    if (!text) return '—';
+    return '<details><summary>Details</summary><div class="cell-wrap" style="margin-top:6px;">' + escapeHtml(text) + '</div></details>';
+  }
+
   function renderCoachesTable(rows){
     if (!rows.length) return '<div class="empty">None yet.</div>';
     let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Degree</th><th>Qualifications</th>' +
@@ -1299,15 +1312,15 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(c.name) + '</td>' +
         '<td>' + escapeHtml(c.email || '') + '</td>' +
         '<td>' + escapeHtml(c.phone || '') + '</td>' +
-        '<td class="cell-wrap">' + escapeHtml(c.degree || '') + '</td>' +
-        '<td class="cell-wrap">' + escapeHtml(c.qualifications || '') + '</td>' +
-        '<td class="cell-wrap">' + escapeHtml(c.certificates || '') + '</td>' +
+        '<td>' + escapeHtml(c.degree || '') + '</td>' +
+        '<td>' + collapsibleCell(c.qualifications) + '</td>' +
+        '<td>' + collapsibleCell(c.certificates) + '</td>' +
         '<td>' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</td>' +
         '<td>' + fixedSalary + '</td>' +
         '<td>' + referralLabel + '</td>' +
         '<td class="cell-wrap">' + gradeLabels + '</td>' +
         '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
-        '<td class="cell-wrap">' + escapeHtml(c.notes || '') + '</td>' +
+        '<td>' + collapsibleCell(c.notes) + '</td>' +
         '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
           '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
