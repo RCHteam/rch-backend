@@ -152,11 +152,28 @@ router.get('/admin/monthly-snapshots/:month/csv', requireAdmin, async (req, res)
 });
 
 // Admin: roster CSV export (current, live roster — not a stored snapshot).
+// Includes each player's latest payment status (same left-join the roster
+// table itself uses) so the CSV doubles as a who's-paid audit, not just a
+// contact list.
 router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM players WHERE archived_at IS NULL ORDER BY grade, player_name');
+    const result = await pool.query(
+      `SELECT p.id, p.grade, p.player_name, p.dob, p.parent_name, p.parent_phone, p.parent_email,
+              p.session_type, p.rch, p.sultans, p.discount_cents,
+              pl.status AS payment_status, pl.last_payment_status, pl.paused_until
+       FROM players p
+       LEFT JOIN LATERAL (
+         SELECT status, last_payment_status, paused_until
+         FROM payment_links
+         WHERE registration_type = 'player' AND registration_id = p.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) pl ON true
+       WHERE p.archived_at IS NULL
+       ORDER BY p.grade, p.player_name`
+    );
     res.set('Content-Type', 'text/csv');
-    res.set('Content-Disposition', 'attachment; filename="roster.csv"');
+    res.set('Content-Disposition', 'attachment; filename="players-roster.csv"');
     res.send(toCsv(result.rows));
   } catch (err) {
     console.error('Roster CSV export error:', err);
