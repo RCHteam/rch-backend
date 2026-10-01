@@ -188,6 +188,20 @@ CREATE TABLE IF NOT EXISTS coaches (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Coaches tab sub-categories + extra profile fields. first_name/last_name
+-- are the real fields the form now collects; `name` is kept in sync
+-- (first + last combined) so anything still reading the old single `name`
+-- column — sorting, the monthly report, etc. — keeps working unchanged.
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS first_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS last_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'coach'
+  CHECK (role IN ('general_manager', 'head_coach', 'coach', 'volunteer'));
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS qualifications TEXT NOT NULL DEFAULT '';
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS certificates TEXT NOT NULL DEFAULT '';
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS degree TEXT NOT NULL DEFAULT '';
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS employment_type TEXT NOT NULL DEFAULT 'part_time'
+  CHECK (employment_type IN ('full_time', 'part_time'));
+
 -- Monthly charges (dashboard "Charges" section, under Finances) — mirrors the
 -- recurring-vs-one-time expense spreadsheet. A 'recurring' charge applies to
 -- every month from its creation onward; a 'one_time' charge applies only to

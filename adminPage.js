@@ -315,11 +315,32 @@ module.exports = `<!doctype html>
         <h2>Coaches</h2>
         <button type="button" class="btn-add" id="addCoachBtn">+ Add Coach</button>
       </div>
-      <div id="coachesTableWrap"></div>
+
+      <div class="section-head" style="margin-top:10px;"><h3>General Manager</h3></div>
+      <div id="coachesTableWrap_general_manager"></div>
+
+      <div class="section-head" style="margin-top:24px;"><h3>Head Coaches</h3></div>
+      <div id="coachesTableWrap_head_coach"></div>
+
+      <div class="section-head" style="margin-top:24px;"><h3>Coaches</h3></div>
+      <div id="coachesTableWrap_coach"></div>
+
+      <div class="section-head" style="margin-top:24px;"><h3>Volunteer</h3></div>
+      <div id="coachesTableWrap_volunteer"></div>
     </div><!-- /section-coaches -->
 
     <div id="section-data" class="hidden">
       <div class="section-head">
+        <h2>Monthly Report</h2>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A full PDF dashboard report — roster counts, Season Overview, Final Net Revenue, one-time payments, business charges, and current coaches — is emailed automatically on the 1st of each month for the month that just ended. Use the buttons below to preview the current month any time, or to resend/send early.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <a class="btn-export" href="#" id="downloadMonthlyReportLink">Download This Month's PDF</a>
+        <button type="button" class="btn-add" id="sendMonthlyReportBtn">Email Me This Month's Report Now</button>
+      </div>
+      <span class="pricing-saved" id="monthlyReportStatus"></span>
+
+      <div class="section-head" style="margin-top:32px;">
         <h2>Monthly Snapshots</h2>
         <button type="button" class="btn-add" id="generateSnapshotBtn">Generate This Month's Snapshot</button>
       </div>
@@ -434,12 +455,35 @@ module.exports = `<!doctype html>
 <div class="modal-overlay hidden" id="coachModal">
   <div class="modal">
     <h3 id="coachModalTitle">Add Coach</h3>
-    <label for="coachName">Name</label>
-    <input type="text" id="coachName">
+    <label for="coachCategory">Category</label>
+    <select id="coachCategory">
+      <option value="general_manager">General Manager</option>
+      <option value="head_coach">Head Coach</option>
+      <option value="coach">Coach</option>
+      <option value="volunteer">Volunteer</option>
+    </select>
+    <div class="two-col">
+      <div><label for="coachFirstName">First Name</label><input type="text" id="coachFirstName"></div>
+      <div><label for="coachLastName">Last Name</label><input type="text" id="coachLastName"></div>
+    </div>
     <div class="two-col">
       <div><label for="coachEmail">Email</label><input type="email" id="coachEmail"></div>
       <div><label for="coachPhone">Phone</label><input type="text" id="coachPhone"></div>
     </div>
+    <div class="two-col">
+      <div><label for="coachDegree">Degree</label><input type="text" id="coachDegree" placeholder="e.g. B.S. Kinesiology"></div>
+      <div>
+        <label for="coachEmploymentType">Full-Time / Part-Time</label>
+        <select id="coachEmploymentType">
+          <option value="full_time">Full-Time</option>
+          <option value="part_time">Part-Time</option>
+        </select>
+      </div>
+    </div>
+    <label for="coachQualifications">Qualifications</label>
+    <input type="text" id="coachQualifications" placeholder="e.g. 5 years youth coaching, former college player">
+    <label for="coachCertificates">Certificates</label>
+    <input type="text" id="coachCertificates" placeholder="e.g. USSF D License, CPR/First Aid">
     <label>Grades coached</label>
     <div class="two-col" style="flex-wrap:wrap;">
       <div class="checkbox-row"><input type="checkbox" id="coachGrade_pre-k"><label for="coachGrade_pre-k">Pre-K</label></div>
@@ -1220,17 +1264,26 @@ module.exports = `<!doctype html>
     '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
   };
 
+  const COACH_ROLE_LABELS = {
+    general_manager: 'General Manager', head_coach: 'Head Coach', coach: 'Coach', volunteer: 'Volunteer',
+  };
+  const COACH_ROLES = ['general_manager', 'head_coach', 'coach', 'volunteer'];
+
   function renderCoachesTable(rows){
-    if (!rows.length) return '<div class="empty">No coaches yet.</div>';
-    let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Grades</th><th>RCH</th><th>Sultans</th><th>Notes</th><th></th></tr></thead><tbody>';
+    if (!rows.length) return '<div class="empty">None yet.</div>';
+    let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Degree</th><th>Qualifications</th>' +
+      '<th>Certificates</th><th>Full/Part-Time</th><th>Grades</th><th>Sultans Coach</th><th>Notes</th><th></th></tr></thead><tbody>';
     rows.forEach((c) => {
       const gradeLabels = (c.grades || []).map((g) => ALL_GRADE_LABELS[g] || g).join(', ') || '—';
       html += '<tr>' +
         '<td>' + escapeHtml(c.name) + '</td>' +
         '<td>' + escapeHtml(c.email || '') + '</td>' +
         '<td>' + escapeHtml(c.phone || '') + '</td>' +
+        '<td>' + escapeHtml(c.degree || '') + '</td>' +
+        '<td>' + escapeHtml(c.qualifications || '') + '</td>' +
+        '<td>' + escapeHtml(c.certificates || '') + '</td>' +
+        '<td>' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</td>' +
         '<td>' + gradeLabels + '</td>' +
-        '<td>' + (c.rch ? '✓' : '—') + '</td>' +
         '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
         '<td>' + escapeHtml(c.notes || '') + '</td>' +
         '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
@@ -1248,25 +1301,29 @@ module.exports = `<!doctype html>
 
   async function loadCoaches(){
     coachRows = await api('/api/admin/coaches');
-    const wrap = document.getElementById('coachesTableWrap');
-    wrap.innerHTML = renderCoachesTable(coachRows);
-    wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Delete this coach?')) return;
-        btn.disabled = true;
-        try {
-          await api('/api/admin/coaches/' + btn.getAttribute('data-id'), { method: 'DELETE' });
-          await loadCoaches();
-        } catch (e) {
-          alert('Could not delete this coach. Please try again.');
-          btn.disabled = false;
-        }
+    COACH_ROLES.forEach((role) => {
+      const wrap = document.getElementById('coachesTableWrap_' + role);
+      if (!wrap) return;
+      const rowsForRole = coachRows.filter((c) => (c.role || 'coach') === role);
+      wrap.innerHTML = renderCoachesTable(rowsForRole);
+      wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this coach?')) return;
+          btn.disabled = true;
+          try {
+            await api('/api/admin/coaches/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+            await loadCoaches();
+          } catch (e) {
+            alert('Could not delete this coach. Please try again.');
+            btn.disabled = false;
+          }
+        });
       });
-    });
-    wrap.querySelectorAll('.btn-edit-row').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const coach = coachRows.find((c) => String(c.id) === btn.getAttribute('data-id'));
-        if (coach) openCoachModal(coach);
+      wrap.querySelectorAll('.btn-edit-row').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const coach = coachRows.find((c) => String(c.id) === btn.getAttribute('data-id'));
+          if (coach) openCoachModal(coach);
+        });
       });
     });
   }
@@ -1274,9 +1331,15 @@ module.exports = `<!doctype html>
   function openCoachModal(coach){
     editCoachId = coach ? coach.id : null;
     document.getElementById('coachModalTitle').textContent = coach ? 'Edit Coach' : 'Add Coach';
-    document.getElementById('coachName').value = coach ? coach.name : '';
+    document.getElementById('coachCategory').value = coach ? (coach.role || 'coach') : 'coach';
+    document.getElementById('coachFirstName').value = coach ? (coach.first_name || '') : '';
+    document.getElementById('coachLastName').value = coach ? (coach.last_name || '') : '';
     document.getElementById('coachEmail').value = coach ? (coach.email || '') : '';
     document.getElementById('coachPhone').value = coach ? (coach.phone || '') : '';
+    document.getElementById('coachDegree').value = coach ? (coach.degree || '') : '';
+    document.getElementById('coachEmploymentType').value = coach ? (coach.employment_type || 'part_time') : 'part_time';
+    document.getElementById('coachQualifications').value = coach ? (coach.qualifications || '') : '';
+    document.getElementById('coachCertificates').value = coach ? (coach.certificates || '') : '';
     document.getElementById('coachRch').checked = coach ? !!coach.rch : false;
     document.getElementById('coachSultans').checked = coach ? !!coach.sultans : false;
     document.getElementById('coachNotes').value = coach ? (coach.notes || '') : '';
@@ -1297,13 +1360,20 @@ module.exports = `<!doctype html>
   document.getElementById('coachModalSubmit').addEventListener('click', async () => {
     const errEl = document.getElementById('coachModalError');
     errEl.textContent = '';
-    const name = document.getElementById('coachName').value.trim();
-    if (!name) { errEl.textContent = "Please enter the coach's name."; return; }
+    const firstName = document.getElementById('coachFirstName').value.trim();
+    const lastName = document.getElementById('coachLastName').value.trim();
+    if (!firstName || !lastName) { errEl.textContent = "Please enter the coach's first and last name."; return; }
     const grades = GRADES.filter((g) => document.getElementById('coachGrade_' + g) && document.getElementById('coachGrade_' + g).checked);
     const payload = {
-      name,
+      firstName,
+      lastName,
+      role: document.getElementById('coachCategory').value,
       email: document.getElementById('coachEmail').value.trim(),
       phone: document.getElementById('coachPhone').value.trim(),
+      degree: document.getElementById('coachDegree').value.trim(),
+      employmentType: document.getElementById('coachEmploymentType').value,
+      qualifications: document.getElementById('coachQualifications').value.trim(),
+      certificates: document.getElementById('coachCertificates').value.trim(),
       grades,
       rch: document.getElementById('coachRch').checked,
       sultans: document.getElementById('coachSultans').checked,
@@ -1361,6 +1431,33 @@ module.exports = `<!doctype html>
       });
     });
   }
+
+  document.getElementById('downloadMonthlyReportLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open(API_BASE + '/api/admin/monthly-report/current/pdf?token=' + encodeURIComponent(getToken()));
+  });
+
+  document.getElementById('sendMonthlyReportBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('sendMonthlyReportBtn');
+    const status = document.getElementById('monthlyReportStatus');
+    btn.disabled = true;
+    status.textContent = 'Generating and sending…';
+    try {
+      const result = await api('/api/admin/monthly-report/send', { method: 'POST', body: JSON.stringify({}) });
+      if (result.error) {
+        status.textContent = '';
+        alert(result.error);
+      } else {
+        status.textContent = 'Sent!';
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      }
+    } catch (e) {
+      status.textContent = '';
+      alert('Could not send the report. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   document.getElementById('generateSnapshotBtn').addEventListener('click', async () => {
     const btn = document.getElementById('generateSnapshotBtn');

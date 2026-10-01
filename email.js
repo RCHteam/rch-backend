@@ -35,7 +35,7 @@ function brandedEmail(innerHtml) {
 // 3. Every send also sets reply_to to a real, monitored inbox (not a
 //    no-reply address) and includes a plain-text alternative alongside the
 //    HTML — both are smaller but genuine signals mail providers use.
-async function sendEmail({ to, subject, html, text }) {
+async function sendEmail({ to, subject, html, text, attachments }) {
   if (!RESEND_API_KEY) {
     console.log(`[email skipped — no RESEND_API_KEY set] would send "${subject}" to ${to}`);
     return { skipped: true };
@@ -54,6 +54,7 @@ async function sendEmail({ to, subject, html, text }) {
         html,
         text: text || undefined,
         reply_to: NOTIFY || FROM,
+        attachments: attachments || undefined,
       }),
     });
     if (!res.ok) {
@@ -151,4 +152,28 @@ async function sendOneTimePaymentEmail({ to, parentName, childName, title, descr
   });
 }
 
-module.exports = { sendSkillsRegistrationEmails, sendJoinRegistrationEmails, sendPaymentLinkEmail, sendOneTimePaymentEmail };
+// Monthly dashboard report, emailed to the club's own notification address
+// (CLUB_NOTIFY_EMAIL) with the generated PDF attached — this IS the "bell":
+// there's no separate in-app notification system, so the report landing in
+// the inbox is what alerts the admin each month.
+async function sendMonthlyReportEmail({ monthLabel, pdfBuffer, filename }) {
+  if (!NOTIFY) {
+    console.log('[monthly report email skipped — no CLUB_NOTIFY_EMAIL set]');
+    return { skipped: true };
+  }
+  return sendEmail({
+    to: NOTIFY,
+    subject: `RCH Elite Training — Monthly Report: ${monthLabel}`,
+    html: `<p>Attached is the ${monthLabel} dashboard report — roster counts, season overview, revenue after Stripe fees and business charges, one-time payments, and current coaches.</p>`,
+    text: `Attached is the ${monthLabel} dashboard report.`,
+    attachments: [{ filename, content: pdfBuffer.toString('base64') }],
+  });
+}
+
+module.exports = {
+  sendSkillsRegistrationEmails,
+  sendJoinRegistrationEmails,
+  sendPaymentLinkEmail,
+  sendOneTimePaymentEmail,
+  sendMonthlyReportEmail,
+};

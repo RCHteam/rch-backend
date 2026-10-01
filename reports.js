@@ -1,7 +1,9 @@
 const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
-const { getSetting } = require('./settings');
+const { getSetting, setSetting } = require('./settings');
+const { gatherMonthlyReportData, buildMonthlyReportPdf, monthKeyFromDate, monthLabelFromKey } = require('./monthlyReport');
+const { sendMonthlyReportEmail } = require('./email');
 
 const router = express.Router();
 
@@ -83,14 +85,37 @@ async function runMonthEndCheckIfDue() {
   const now = new Date();
   if (now.getUTCDate() !== 1) return null;
   const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+
+  let snapshot = null;
   try {
-    const snapshot = await generateSnapshot(lastMonth);
+    snapshot = await generateSnapshot(lastMonth);
     console.log(`Month-end snapshot generated for ${snapshot.month}.`);
-    return snapshot;
   } catch (err) {
     console.error('Month-end snapshot error:', err);
-    return null;
   }
+
+  try {
+    await sendMonthlyReportIfNotAlreadySent(monthKeyFromDate(lastMonth));
+  } catch (err) {
+    console.error('Month-end report email error:', err);
+  }
+
+  return snapshot;
+}
+
+// Guarded by a settings flag so a redeploy (which re-runs this check) or a
+// second daily tick on the 1st doesn't email the same month's report twice.
+async function sendMonthlyReportIfNotAlreadySent(monthKey) {
+  const alreadySentFor = await getSetting('monthly_report_sent_for', '');
+  if (alreadySentFor === monthKey) return { skipped: true, reason: 'already sent' };
+  const data = await gatherMonthlyReportData(monthKey);
+  const pdfBuffer = await buildMonthlyReportPdf(data);
+  const filename = `RCH-Monthly-Report-${monthKey.slice(0, 7)}.pdf`;
+  const result = await sendMonthlyReportEmail({ monthLabel: data.monthLabel, pdfBuffer, filename });
+  if (result.ok !== false) {
+    await setSetting('monthly_report_sent_for', monthKey);
+  }
+  return result;
 }
 
 // Admin: list all snapshots (the "Data" section's monthly history), newest first.
@@ -178,6 +203,54 @@ router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Roster CSV export error:', err);
     res.status(500).json({ error: 'Could not export the roster.' });
+  }
+});
+
+// Admin: download the monthly report PDF, generated live from current data.
+// `month` is 'YYYY-MM-01', or the literal string "current" for this month.
+// Note: "Potential RCH/Sultans" and "Coaches" are live counts, not a
+// historical record, so this is most accurate for the current/just-ended
+// month — see monthlyReport.js for details.
+router.get('/admin/monthly-report/:month/pdf', requireAdmin, async (req, res) => {
+  try {
+    const monthKey = req.params.month === 'current' ? monthKeyFromDate(new Date()) : req.params.month;
+    if (!/^\d{4}-\d{2}-01$/.test(monthKey)) {
+      return res.status(400).json({ error: 'Month must be formatted YYYY-MM-01, or "current".' });
+    }
+    const data = await gatherMonthlyReportData(monthKey);
+    const pdfBuffer = await buildMonthlyReportPdf(data);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="RCH-Monthly-Report-${monthKey.slice(0, 7)}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Monthly report PDF error:', err);
+    res.status(500).json({ error: 'Could not generate this report.' });
+  }
+});
+
+// Admin: manually (re)send the monthly report email right now. Bypasses the
+// "already sent" guard the automatic month-end send uses, so this also
+// works as a resend button. Defaults to the current month if none given.
+router.post('/admin/monthly-report/send', requireAdmin, async (req, res) => {
+  try {
+    const monthKey = (req.body && req.body.month) || monthKeyFromDate(new Date());
+    if (!/^\d{4}-\d{2}-01$/.test(monthKey)) {
+      return res.status(400).json({ error: 'Month must be formatted YYYY-MM-01.' });
+    }
+    const data = await gatherMonthlyReportData(monthKey);
+    const pdfBuffer = await buildMonthlyReportPdf(data);
+    const filename = `RCH-Monthly-Report-${monthKey.slice(0, 7)}.pdf`;
+    const result = await sendMonthlyReportEmail({ monthLabel: data.monthLabel, pdfBuffer, filename });
+    if (result.skipped) {
+      return res.status(500).json({ error: 'Email not sent — CLUB_NOTIFY_EMAIL is not configured on the server.' });
+    }
+    if (result.ok === false) {
+      return res.status(500).json({ error: 'Could not send the report email. Please try again.' });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Monthly report send error:', err);
+    res.status(500).json({ error: 'Could not generate or send this report.' });
   }
 });
 
