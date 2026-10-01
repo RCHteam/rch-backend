@@ -484,6 +484,13 @@ module.exports = `<!doctype html>
     <input type="text" id="coachQualifications" placeholder="e.g. 5 years youth coaching, former college player">
     <label for="coachCertificates">Certificates</label>
     <input type="text" id="coachCertificates" placeholder="e.g. USSF D License, CPR/First Aid">
+    <div class="two-col">
+      <div><label for="coachFixedSalary">Fixed Salary ($)</label><input type="number" id="coachFixedSalary" min="0" step="0.01" value="0"></div>
+      <div><label for="coachReferralRate">Referral Salary — $ per player brought</label><input type="number" id="coachReferralRate" min="0" step="0.01" value="0"></div>
+    </div>
+    <label for="coachPlayersReferred">Players Referred</label>
+    <input type="number" id="coachPlayersReferred" min="0" step="1" value="0">
+    <p style="color:#666; font-size:0.8rem; margin:-6px 0 14px;">Fixed Salary and Referral Salary (rate x players referred) are automatically added to the Charges list as recurring charges — no need to enter them there separately.</p>
     <label>Grades coached</label>
     <div class="two-col" style="flex-wrap:wrap;">
       <div class="checkbox-row"><input type="checkbox" id="coachGrade_pre-k"><label for="coachGrade_pre-k">Pre-K</label></div>
@@ -1186,12 +1193,17 @@ module.exports = `<!doctype html>
     if (!rows.length) return '<div class="empty">No charges yet.</div>';
     let html = '<table><thead><tr><th>Description</th><th>Amount</th><th>Type</th><th>Month</th><th></th></tr></thead><tbody>';
     rows.forEach((c) => {
+      // Rows auto-generated from a coach's Fixed/Referral Salary fields
+      // (coachCharges.js) are read-only here — deleting one would just be
+      // recreated (or drift out of sync) the next time that coach is saved,
+      // so they're edited from the Coaches tab instead.
+      const isAuto = !!c.auto_tag;
       html += '<tr>' +
-        '<td>' + escapeHtml(c.description) + '</td>' +
+        '<td>' + escapeHtml(c.description) + (isAuto ? ' <span style="color:#999; font-size:0.8rem;">(auto — edit via Coaches tab)</span>' : '') + '</td>' +
         '<td>$' + (c.amount_cents / 100).toFixed(2) + '</td>' +
         '<td>' + (c.kind === 'recurring' ? 'Recurring' : 'One-time') + '</td>' +
         '<td>' + (c.charge_month ? String(c.charge_month).slice(0, 10) : '—') + '</td>' +
-        '<td><button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button></td>' +
+        '<td>' + (isAuto ? '' : '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>') + '</td>' +
         '</tr>';
     });
     html += '</tbody></table>';
@@ -1272,9 +1284,16 @@ module.exports = `<!doctype html>
   function renderCoachesTable(rows){
     if (!rows.length) return '<div class="empty">None yet.</div>';
     let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Degree</th><th>Qualifications</th>' +
-      '<th>Certificates</th><th>Full/Part-Time</th><th>Grades</th><th>Sultans Coach</th><th>Notes</th><th></th></tr></thead><tbody>';
+      '<th>Certificates</th><th>Full/Part-Time</th><th>Fixed Salary</th><th>Referral Salary</th><th>Grades</th><th>Sultans Coach</th><th>Notes</th><th></th></tr></thead><tbody>';
     rows.forEach((c) => {
       const gradeLabels = (c.grades || []).map((g) => ALL_GRADE_LABELS[g] || g).join(', ') || '—';
+      const fixedSalary = '$' + ((c.fixed_salary_cents || 0) / 100).toFixed(2);
+      const referred = c.players_referred || 0;
+      const referralRate = (c.referral_rate_cents || 0) / 100;
+      const referralTotal = referred * referralRate;
+      const referralLabel = referralRate > 0
+        ? '$' + referralRate.toFixed(2) + ' x ' + referred + ' = $' + referralTotal.toFixed(2)
+        : '—';
       html += '<tr>' +
         '<td>' + escapeHtml(c.name) + '</td>' +
         '<td>' + escapeHtml(c.email || '') + '</td>' +
@@ -1283,6 +1302,8 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(c.qualifications || '') + '</td>' +
         '<td>' + escapeHtml(c.certificates || '') + '</td>' +
         '<td>' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</td>' +
+        '<td>' + fixedSalary + '</td>' +
+        '<td>' + referralLabel + '</td>' +
         '<td>' + gradeLabels + '</td>' +
         '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
         '<td>' + escapeHtml(c.notes || '') + '</td>' +
@@ -1340,6 +1361,9 @@ module.exports = `<!doctype html>
     document.getElementById('coachEmploymentType').value = coach ? (coach.employment_type || 'part_time') : 'part_time';
     document.getElementById('coachQualifications').value = coach ? (coach.qualifications || '') : '';
     document.getElementById('coachCertificates').value = coach ? (coach.certificates || '') : '';
+    document.getElementById('coachFixedSalary').value = coach ? ((coach.fixed_salary_cents || 0) / 100).toFixed(2) : '0';
+    document.getElementById('coachReferralRate').value = coach ? ((coach.referral_rate_cents || 0) / 100).toFixed(2) : '0';
+    document.getElementById('coachPlayersReferred').value = coach ? (coach.players_referred || 0) : '0';
     document.getElementById('coachRch').checked = coach ? !!coach.rch : false;
     document.getElementById('coachSultans').checked = coach ? !!coach.sultans : false;
     document.getElementById('coachNotes').value = coach ? (coach.notes || '') : '';
@@ -1374,6 +1398,9 @@ module.exports = `<!doctype html>
       employmentType: document.getElementById('coachEmploymentType').value,
       qualifications: document.getElementById('coachQualifications').value.trim(),
       certificates: document.getElementById('coachCertificates').value.trim(),
+      fixedSalaryCents: Math.round(parseFloat(document.getElementById('coachFixedSalary').value || '0') * 100),
+      referralRateCents: Math.round(parseFloat(document.getElementById('coachReferralRate').value || '0') * 100),
+      playersReferred: parseInt(document.getElementById('coachPlayersReferred').value || '0', 10),
       grades,
       rch: document.getElementById('coachRch').checked,
       sultans: document.getElementById('coachSultans').checked,
@@ -1392,6 +1419,9 @@ module.exports = `<!doctype html>
         document.getElementById('coachModal').classList.add('hidden');
         editCoachId = null;
         await loadCoaches();
+        // Fixed/Referral Salary auto-sync into Charges server-side — refresh
+        // that tab's table too if it's already been opened this session.
+        if (chargesLoaded) { await loadCharges(); }
       }
     } catch (e) {
       errEl.textContent = 'Could not save this coach. Please try again.';

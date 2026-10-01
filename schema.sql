@@ -202,6 +202,14 @@ ALTER TABLE coaches ADD COLUMN IF NOT EXISTS degree TEXT NOT NULL DEFAULT '';
 ALTER TABLE coaches ADD COLUMN IF NOT EXISTS employment_type TEXT NOT NULL DEFAULT 'part_time'
   CHECK (employment_type IN ('full_time', 'part_time'));
 
+-- Fixed Salary (flat $ amount) and Referral Salary (a $ rate per player
+-- referred, times however many players the admin records as referred) — both
+-- auto-sync into the Charges list (see coachCharges.js) whenever a coach is
+-- saved, rather than requiring a separate manual charge entry.
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS fixed_salary_cents INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS referral_rate_cents INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE coaches ADD COLUMN IF NOT EXISTS players_referred INTEGER NOT NULL DEFAULT 0;
+
 -- Monthly charges (dashboard "Charges" section, under Finances) — mirrors the
 -- recurring-vs-one-time expense spreadsheet. A 'recurring' charge applies to
 -- every month from its creation onward; a 'one_time' charge applies only to
@@ -215,6 +223,15 @@ CREATE TABLE IF NOT EXISTS charges (
   charge_month  DATE, -- required for one_time, ignored for recurring
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Marks a charge as auto-generated FROM a coach's Fixed Salary or Referral
+-- Salary fields (coachCharges.js keeps these in sync on every coach save),
+-- as opposed to a charge the admin typed in by hand on the Charges tab. The
+-- unique index lets that sync use a single upsert per coach per kind instead
+-- of juggling separate insert/update/delete logic.
+ALTER TABLE charges ADD COLUMN IF NOT EXISTS linked_coach_id INTEGER REFERENCES coaches(id) ON DELETE CASCADE;
+ALTER TABLE charges ADD COLUMN IF NOT EXISTS auto_tag TEXT CHECK (auto_tag IN ('salary', 'referral'));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_charges_coach_autotag ON charges(linked_coach_id, auto_tag) WHERE auto_tag IS NOT NULL;
 
 -- Monthly snapshots — an archived record of the roster + estimated revenue/
 -- charges/net for a given month, generated automatically at month-end (or

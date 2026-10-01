@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
+const { syncCoachCharges } = require('./coachCharges');
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.post('/admin/coaches', requireAdmin, async (req, res) => {
   const {
     firstName, lastName, email, phone, grades, rch, sultans, notes,
     role, qualifications, certificates, degree, employmentType,
+    fixedSalaryCents, referralRateCents, playersReferred,
   } = req.body || {};
   const first = (firstName || '').trim();
   const last = (lastName || '').trim();
@@ -42,14 +44,20 @@ router.post('/admin/coaches', requireAdmin, async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO coaches
          (name, first_name, last_name, email, phone, grades, rch, sultans, notes,
-          role, qualifications, certificates, degree, employment_type)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+          role, qualifications, certificates, degree, employment_type,
+          fixed_salary_cents, referral_rate_cents, players_referred)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
       [
         name, first, last, email || '', phone || '', Array.isArray(grades) ? grades : [], !!rch, !!sultans, notes || '',
         role, qualifications || '', certificates || '', degree || '', employmentType,
+        Math.max(0, Math.round(Number(fixedSalaryCents) || 0)),
+        Math.max(0, Math.round(Number(referralRateCents) || 0)),
+        Math.max(0, Math.round(Number(playersReferred) || 0)),
       ]
     );
-    res.status(201).json({ ok: true, entry: insertRes.rows[0] });
+    const coach = insertRes.rows[0];
+    await syncCoachCharges(coach.id);
+    res.status(201).json({ ok: true, entry: coach });
   } catch (err) {
     console.error('Add coach error:', err);
     res.status(500).json({ error: 'Could not add this coach.' });
@@ -66,6 +74,7 @@ router.put('/admin/coaches/:id', requireAdmin, async (req, res) => {
     const {
       firstName, lastName, email, phone, grades, rch, sultans, notes,
       role, qualifications, certificates, degree, employmentType,
+      fixedSalaryCents, referralRateCents, playersReferred,
     } = req.body || {};
     if (email !== undefined && email && !EMAIL_RE.test(email)) {
       return res.status(400).json({ error: 'Please enter a valid email, or leave it blank.' });
@@ -90,6 +99,9 @@ router.put('/admin/coaches/:id', requireAdmin, async (req, res) => {
       certificates: certificates !== undefined ? certificates : existing.certificates,
       degree: degree !== undefined ? degree : existing.degree,
       employmentType: employmentType !== undefined ? employmentType : existing.employment_type,
+      fixedSalaryCents: fixedSalaryCents !== undefined ? Math.max(0, Math.round(Number(fixedSalaryCents) || 0)) : existing.fixed_salary_cents,
+      referralRateCents: referralRateCents !== undefined ? Math.max(0, Math.round(Number(referralRateCents) || 0)) : existing.referral_rate_cents,
+      playersReferred: playersReferred !== undefined ? Math.max(0, Math.round(Number(playersReferred) || 0)) : existing.players_referred,
     };
     if (!merged.firstName || !merged.lastName) {
       return res.status(400).json({ error: "Coach first and last name can't be empty." });
@@ -100,15 +112,19 @@ router.put('/admin/coaches/:id', requireAdmin, async (req, res) => {
       `UPDATE coaches SET
          name = $1, first_name = $2, last_name = $3, email = $4, phone = $5, grades = $6,
          rch = $7, sultans = $8, notes = $9, role = $10, qualifications = $11,
-         certificates = $12, degree = $13, employment_type = $14
-       WHERE id = $15 RETURNING *`,
+         certificates = $12, degree = $13, employment_type = $14,
+         fixed_salary_cents = $15, referral_rate_cents = $16, players_referred = $17
+       WHERE id = $18 RETURNING *`,
       [
         name, merged.firstName, merged.lastName, merged.email, merged.phone, merged.grades,
         merged.rch, merged.sultans, merged.notes, merged.role, merged.qualifications,
-        merged.certificates, merged.degree, merged.employmentType, id,
+        merged.certificates, merged.degree, merged.employmentType,
+        merged.fixedSalaryCents, merged.referralRateCents, merged.playersReferred, id,
       ]
     );
-    res.json({ ok: true, entry: updateRes.rows[0] });
+    const coach = updateRes.rows[0];
+    await syncCoachCharges(coach.id);
+    res.json({ ok: true, entry: coach });
   } catch (err) {
     console.error('Edit coach error:', err);
     res.status(500).json({ error: 'Could not save changes to this coach.' });
