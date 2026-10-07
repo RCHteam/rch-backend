@@ -305,3 +305,7 @@ ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS player_id INTEGER REFEREN
 ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS recipient_name TEXT;
 ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS parent_name TEXT;
 ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS email TEXT;
+
+-- Marks a player as having paid for the current month outside of Stripe
+-- (cash, Zelle, check...). Cleared for everyone by "Reset Payment Status".
+ALTER TABLE players ADD COLUMN IF NOT EXISTS paid_otherwise_at TIMESTAMPTZ;

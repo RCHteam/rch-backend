@@ -84,16 +84,19 @@ router.post('/admin/settings/join-registration', requireAdmin, async (req, res) 
 // is now their record. Pass ?includeMoved=true to see everyone regardless.
 router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
   const includeMoved = req.query.includeMoved === 'true';
+  const resetAt = await getSetting('payment_status_reset_at', null);
   const result = await pool.query(
     `SELECT s.*, pl.status AS payment_status, pl.last_payment_status, pl.paused_until
      FROM skills_registrations s
      LEFT JOIN LATERAL (
        SELECT status, last_payment_status, paused_until FROM payment_links
        WHERE registration_type = 'skills' AND registration_id = s.id
+         AND ($1::timestamptz IS NULL OR created_at > $1::timestamptz)
        ORDER BY created_at DESC LIMIT 1
      ) pl ON true
      ${includeMoved ? '' : 'WHERE s.moved_at IS NULL'}
-     ORDER BY s.submitted_at DESC`
+     ORDER BY s.submitted_at DESC`,
+    [resetAt]
   );
   res.json(result.rows);
 });
@@ -101,16 +104,18 @@ router.get('/admin/skills-registrations', requireAdmin, async (req, res) => {
 router.get('/admin/join-registrations', requireAdmin, async (req, res) => {
   const { ageGroup } = req.query;
   const includeMoved = req.query.includeMoved === 'true';
+  const resetAt = await getSetting('payment_status_reset_at', null);
   const base = `
     SELECT j.*, pl.status AS payment_status, pl.last_payment_status, pl.paused_until
     FROM join_registrations j
     LEFT JOIN LATERAL (
       SELECT status, last_payment_status, paused_until FROM payment_links
       WHERE registration_type = 'join' AND registration_id = j.id
+        AND ($1::timestamptz IS NULL OR created_at > $1::timestamptz)
       ORDER BY created_at DESC LIMIT 1
     ) pl ON true`;
   const conditions = [];
-  const params = [];
+  const params = [resetAt];
   if (ageGroup) { params.push(ageGroup); conditions.push(`j.age_group = $${params.length}`); }
   if (!includeMoved) conditions.push('j.moved_at IS NULL');
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';

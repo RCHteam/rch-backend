@@ -67,6 +67,10 @@ module.exports = `<!doctype html>
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
   .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
+  .btn-paid-other{ background:#fff; border:1px solid #1f7a44; color:#1f7a44; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-paid-other:hover{ background:#1f7a44; color:#fff; }
+  .btn-reset-payments{ background:#fff; border:2px solid #b5482f; color:#b5482f; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:700; }
+  .btn-reset-payments:hover{ background:#b5482f; color:#fff; }
   .btn-cancel-billing{ background:#fff; border:1px solid #b5482f; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-cancel-billing:hover{ background:#b5482f; color:#fff; }
   .btn-cancel-billing:disabled{ opacity:0.6; cursor:default; }
@@ -283,6 +287,15 @@ module.exports = `<!doctype html>
       <button type="button" class="btn-add" id="openSendLinkBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send Link to Roster…</button>
     </div>
     <div id="oneTimePaymentsTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Reset Payment Status</h2>
+    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">For the start of a new billing month (e.g. November 1st, after last month's links have expired). Sets everyone's Payment Status back to "Not sent", cancels any unpaid links that are still open, and clears every "Paid otherwise" mark so you can send fresh links at the new price. Active Stripe subscriptions are not touched. Can only be used once per calendar month.</p>
+    <div class="pricing-box">
+      <button type="button" class="btn-reset-payments" id="resetPaymentStatusBtn">Reset Payment Status…</button>
+      <span class="pricing-saved" id="resetPaymentInfo" style="color:#666;"></span>
+    </div>
 
     </div><!-- /section-finances -->
 
@@ -1691,6 +1704,7 @@ module.exports = `<!doctype html>
       if (row.last_payment_status === 'failed') return 'Declined';
       return 'Paid';
     }
+    if (row.paid_otherwise_at) return 'Paid otherwise';
     if (row.payment_status === 'canceled') return 'Canceled';
     if (row.payment_status === 'pending') return 'Pending';
     return 'Not sent';
@@ -1698,7 +1712,7 @@ module.exports = `<!doctype html>
 
   function paymentLabelClass(row){
     const label = paymentLabel(row);
-    if (label === 'Paid') return 'status-paid';
+    if (label === 'Paid' || label === 'Paid otherwise') return 'status-paid';
     if (label === 'Declined') return 'status-declined';
     if (label === 'Pending') return 'status-pending';
     return 'status-neutral';
@@ -1792,6 +1806,7 @@ module.exports = `<!doctype html>
             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
+              '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? 'Undo Paid Otherwise' : 'Paid Otherwise') + '</button>' +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
               '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
               '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
@@ -1885,6 +1900,22 @@ module.exports = `<!doctype html>
       btn.addEventListener('click', () => {
         const player = rows.find((r) => String(r.id) === btn.getAttribute('data-id'));
         if (player) openEditPlayerModal(player);
+      });
+    });
+    wrap.querySelectorAll('.btn-paid-other').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const undo = btn.getAttribute('data-paid') === '1';
+        btn.disabled = true;
+        try {
+          await api('/api/admin/players/' + btn.getAttribute('data-id') + '/paid-otherwise', {
+            method: 'PUT',
+            body: JSON.stringify({ paid: !undo }),
+          });
+          await loadRoster();
+        } catch (e) {
+          alert('Could not update this player. Please try again.');
+          btn.disabled = false;
+        }
       });
     });
     wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
@@ -2078,6 +2109,41 @@ module.exports = `<!doctype html>
       setTimeout(() => { savedMsg.textContent = ''; }, 2000);
     } catch (e) {
       alert('Could not save payment amounts. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---- Reset Payment Status (start of a new billing month) ----
+
+  async function loadResetInfo(){
+    try {
+      const { lastResetAt } = await api('/api/admin/reset-payment-status');
+      document.getElementById('resetPaymentInfo').textContent = lastResetAt
+        ? 'Last reset: ' + new Date(lastResetAt).toLocaleString()
+        : 'Never reset yet.';
+    } catch (e) { /* non-critical */ }
+  }
+
+  document.getElementById('resetPaymentStatusBtn').addEventListener('click', async () => {
+    if (!confirm('Reset payment status for EVERYONE?\\n\\nEvery player goes back to "Not sent", unpaid links are cancelled, and "Paid otherwise" marks are cleared. Do this only once last month\\'s links have expired and you are ready to send new ones.')) return;
+    const typed = prompt('Second check: type RESET (all capitals) to confirm.');
+    if (typed !== 'RESET') {
+      if (typed !== null) alert('Not reset — the word did not match.');
+      return;
+    }
+    const btn = document.getElementById('resetPaymentStatusBtn');
+    btn.disabled = true;
+    try {
+      const r = await api('/api/admin/reset-payment-status', {
+        method: 'POST',
+        body: JSON.stringify({ confirm: 'RESET' }),
+      });
+      if (r && r.error) { alert(r.error); btn.disabled = false; return; }
+      alert('Done. Everyone is back to "Not sent".\\nUnpaid links cancelled: ' + r.cancelledLinks + '\\nPaid-otherwise marks cleared: ' + r.clearedPaidOtherwise);
+      await Promise.all([loadRoster(), loadResetInfo()]);
+    } catch (e) {
+      alert('Could not reset payment status. Please try again.');
     } finally {
       btn.disabled = false;
     }
@@ -2568,6 +2634,7 @@ module.exports = `<!doctype html>
     await loadPricing();
     await loadPaymentPricing();
     await loadProrationMode();
+    await loadResetInfo();
     await loadOneTimePayments();
     await loadOverviewAndRevenue();
   }

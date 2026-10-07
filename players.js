@@ -28,6 +28,11 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
     // Pulls in each player's most recent payment link (if any) so the roster
     // can show a live Pending/Paid/Declined status without a separate
     // lookup per row — status drives paymentLabel() on the dashboard.
+    // Links created before the last "Reset Payment Status" no longer count,
+    // so everyone reads "Not sent" until a fresh link goes out.
+    const resetAt = await getSetting('payment_status_reset_at', null);
+    params.push(resetAt);
+    const resetParam = `$${params.length}`;
     const result = await pool.query(
       `SELECT p.*,
               pl.status AS payment_status,
@@ -38,6 +43,7 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
          SELECT status, last_payment_status, paused_until
          FROM payment_links
          WHERE registration_type = 'player' AND registration_id = p.id
+           AND (${resetParam}::timestamptz IS NULL OR created_at > ${resetParam}::timestamptz)
          ORDER BY created_at DESC
          LIMIT 1
        ) pl ON true
@@ -163,6 +169,61 @@ router.put('/admin/players/:id/archive', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Archive player error:', err);
     res.status(500).json({ error: 'Could not unsubscribe this player.' });
+  }
+});
+
+// Admin: mark a player as having paid this month by some other means
+// (cash, Zelle, check...). Pass { paid: false } to undo it.
+router.put('/admin/players/:id/paid-otherwise', requireAdmin, async (req, res) => {
+  const paid = !(req.body && req.body.paid === false);
+  try {
+    const result = await pool.query(
+      `UPDATE players SET paid_otherwise_at = ${paid ? 'now()' : 'NULL'} WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    res.json({ ok: true, entry: result.rows[0] });
+  } catch (err) {
+    console.error('Paid otherwise error:', err);
+    res.status(500).json({ error: 'Could not update this player.' });
+  }
+});
+
+// Admin: when the last "Reset Payment Status" happened (for the Finances tab).
+router.get('/admin/reset-payment-status', requireAdmin, async (req, res) => {
+  try {
+    res.json({ lastResetAt: await getSetting('payment_status_reset_at', null) });
+  } catch (err) {
+    console.error('Get reset info error:', err);
+    res.status(500).json({ error: 'Could not load reset info.' });
+  }
+});
+
+// Admin: start-of-month reset. Everyone's payment status goes back to
+// "Not sent": links created before now stop counting on the dashboard, any
+// still-unpaid (pending) links are cancelled so the old-price links can no
+// longer be used, and every "Paid otherwise" mark is cleared. Stripe
+// subscriptions themselves are not touched. Requires { confirm: 'RESET' }
+// and refuses a second reset in the same calendar month (Central time) so a
+// stray click can't wipe the new month's links right after they're sent.
+router.post('/admin/reset-payment-status', requireAdmin, async (req, res) => {
+  if (!req.body || req.body.confirm !== 'RESET') {
+    return res.status(400).json({ error: 'Confirmation word missing.' });
+  }
+  try {
+    const monthOf = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }).slice(0, 7);
+    const last = await getSetting('payment_status_reset_at', null);
+    if (last && monthOf(last) === monthOf(new Date())) {
+      return res.status(409).json({ error: 'Payment status was already reset this month (' + new Date(last).toLocaleString('en-US', { timeZone: 'America/Chicago' }) + ').' });
+    }
+    const cancelled = await pool.query(`UPDATE payment_links SET status = 'canceled' WHERE status = 'pending'`);
+    const cleared = await pool.query(`UPDATE players SET paid_otherwise_at = NULL WHERE paid_otherwise_at IS NOT NULL`);
+    const now = new Date().toISOString();
+    await setSetting('payment_status_reset_at', now);
+    res.json({ ok: true, resetAt: now, cancelledLinks: cancelled.rowCount, clearedPaidOtherwise: cleared.rowCount });
+  } catch (err) {
+    console.error('Reset payment status error:', err);
+    res.status(500).json({ error: 'Could not reset payment status.' });
   }
 });
 
