@@ -135,7 +135,7 @@
       const p = d.prefill;
       ['playerName','dob','grade','school','parentName','phone','email','address','emergencyName','emergencyPhone','emergencyRelation','medical'].forEach((k) => { $(k).value = p[k] || ''; });
       if (/-/.test($('grade').value)) $('grade').value = $('grade').value.replace(/-/g, ' ');
-      $('programs').innerHTML = d.programs.map((x) => '<label><input type="checkbox" value="' + x[0] + '"' + (p.programs.includes(x[0]) ? ' checked' : '') + '> ' + esc(x[1]) + '</label>').join('');
+      $('programs').innerHTML = d.programs.map((x) => '<label><input type="checkbox" value="' + x[0] + '"' + (p.programs.includes(x[0]) ? ' checked' : '') + ((d.lockedPrograms || []).includes(x[0]) ? ' disabled' : '') + '> ' + esc(x[1]) + ((d.lockedPrograms || []).includes(x[0]) ? ' <span style="color:#888;font-size:.78rem;">(assigned by RCH)</span>' : '') + '</label>').join('');
       let h = '';
       d.sections.forEach((s) => {
         h += '<h3>' + esc(s.h) + '</h3>';

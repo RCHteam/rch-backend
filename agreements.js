@@ -70,6 +70,7 @@ const SECTIONS = [
 ];
 const PHOTO_TEXT = 'I grant permission for photos or videos of my child to be used for training, promotional, or social media purposes by RCH Elite Training / Soccer Sultans. I may withdraw this consent at any time in writing.';
 const ACK_TEXT = 'I confirm that I have read and fully understand this agreement and voluntarily agree to all terms.';
+const LOCKED_PROGRAMS = ['skills_one', 'online'];
 const PROGRAMS = [
   ['skills_group', 'Skills Training – Large Group'],
   ['skills_one', 'Skills Training – One-on-One'],
@@ -99,7 +100,7 @@ async function lookupRegistration(type, id) {
     if (r.rch) programs.push(r.session_type === 'online' ? 'online' : 'skills_group');
     if (r.sultans) programs.push('sultans');
     return { playerName: r.player_name, parentName: r.parent_name || '', email: r.parent_email || '', phone: r.parent_phone || '',
-      dob: r.dob, grade: r.grade, programLabel: [r.rch && 'RCH Elite Training', r.sultans && 'Sultans FC'].filter(Boolean).join(' + ') || 'RCH Elite Training', programs };
+      dob: r.dob, grade: r.grade, programLabel: [r.rch && 'Skills Training', r.sultans && 'Sultans FC'].filter(Boolean).join(' + ') || 'Skills Training', programs };
   }
   return null;
 }
@@ -121,7 +122,7 @@ router.post('/admin/agreements/send', requireAdmin, async (req, res) => {
       `SELECT * FROM agreements WHERE registration_type=$1 AND registration_id=$2 AND signed_at IS NULL ORDER BY id DESC LIMIT 1`,
       [registrationType, registrationId])).rows[0];
     if (row) {
-      await pool.query('UPDATE agreements SET sent_at=now(), parent_email=$2 WHERE id=$1', [row.id, info.email]);
+      await pool.query('UPDATE agreements SET sent_at=now(), parent_email=$2, program_label=$3 WHERE id=$1', [row.id, info.email, info.programLabel]);
     } else {
       const token = crypto.randomBytes(24).toString('hex');
       row = (await pool.query(
@@ -184,7 +185,7 @@ router.get('/sign/:token', async (req, res) => {
     const info = (await lookupRegistration(a.registration_type, a.registration_id)) || {};
     res.json({
       status: 'pending',
-      sections: SECTIONS, photoText: PHOTO_TEXT, ackText: ACK_TEXT, programs: PROGRAMS, version: DOC_VERSION,
+      sections: SECTIONS, photoText: PHOTO_TEXT, ackText: ACK_TEXT, programs: PROGRAMS, lockedPrograms: LOCKED_PROGRAMS, version: DOC_VERSION,
       prefill: {
         playerName: a.player_name, dob: isoDate(info.dob), grade: info.grade || '', school: '',
         parentName: a.parent_name || '', phone: info.phone || '', email: a.parent_email, address: '',
@@ -215,6 +216,10 @@ router.post('/sign/:token', async (req, res) => {
       photoConsent: b.photoConsent === 'yes' ? 'yes' : b.photoConsent === 'no' ? 'no' : '',
       typedName: clean(b.typedName),
     };
+    // One-on-One and Online Classes are assigned by RCH, not chosen by the
+    // family: they only count if they were already set on the registration.
+    const info = (await lookupRegistration(a.registration_type, a.registration_id)) || {};
+    f.programs = f.programs.filter((k) => !LOCKED_PROGRAMS.includes(k) || (info.programs || []).includes(k));
     const missing = [];
     if (!f.playerName) missing.push('player name');
     if (!f.dob) missing.push('date of birth');
