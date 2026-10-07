@@ -309,3 +309,24 @@ ALTER TABLE one_time_payments ADD COLUMN IF NOT EXISTS email TEXT;
 -- Marks a player as having paid for the current month outside of Stripe
 -- (cash, Zelle, check...). Cleared for everyone by "Reset Payment Status".
 ALTER TABLE players ADD COLUMN IF NOT EXISTS paid_otherwise_at TIMESTAMPTZ;
+
+-- E-signed Training Agreements: admin sends a private link, the parent fills in
+-- the form + e-signs, and the finished PDF is stored here (Data tab).
+CREATE TABLE IF NOT EXISTS agreements (
+  id                SERIAL PRIMARY KEY,
+  token             TEXT UNIQUE NOT NULL,
+  registration_type TEXT NOT NULL,
+  registration_id   INTEGER NOT NULL,
+  player_name       TEXT NOT NULL,
+  parent_name       TEXT,
+  parent_email      TEXT NOT NULL,
+  program_label     TEXT,
+  sent_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  signed_at         TIMESTAMPTZ,
+  form_data         JSONB,
+  pdf_data          BYTEA,
+  pdf_sha256        TEXT,
+  signer_ip         TEXT,
+  signer_user_agent TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_agreements_reg ON agreements(registration_type, registration_id);

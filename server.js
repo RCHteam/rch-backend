@@ -16,6 +16,8 @@ const oneTimePaymentPageHtml = require('./oneTimePaymentPage');
 const playersRoutes = require('./players');
 const chargesRoutes = require('./charges');
 const coachesRoutes = require('./coaches');
+const { router: agreementsRoutes, assetPath } = require('./agreements');
+const signPageHtml = fs.readFileSync(path.join(__dirname, 'signPage.html'), 'utf8');
 const { router: reportsRoutes, runMonthEndCheckIfDue } = require('./reports');
 
 const app = express();
@@ -50,6 +52,7 @@ app.use('/api', playersRoutes);
 app.use('/api', chargesRoutes);
 app.use('/api', coachesRoutes);
 app.use('/api', reportsRoutes);
+app.use('/api', agreementsRoutes);
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
@@ -77,6 +80,17 @@ app.get('/pay/one-time/:token/success', (req, res) => {
 // don't reliably render inline base64 images, only hosted image URLs.
 app.get('/assets/logo.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'assets', 'logo.png'));
+});
+
+// E-sign page a family lands on from the emailed agreement link
+app.get('/sign/:token', (req, res) => {
+  res.type('html').send(signPageHtml);
+});
+app.get('/assets/agreement-rch.png', (req, res) => {
+  res.sendFile(assetPath('agreement-rch.png'));
+});
+app.get('/assets/agreement-sultans.png', (req, res) => {
+  res.sendFile(assetPath('agreement-sultans.png'));
 });
 
 app.get('/health', (req, res) => res.json({ ok: true }));

@@ -170,7 +170,46 @@ async function sendMonthlyReportEmail({ monthLabel, pdfBuffer, filename }) {
   });
 }
 
+async function sendAgreementEmail({ to, parentName, childName, link }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  await sendEmail({
+    to,
+    subject: `Please sign ${childName}'s Training Agreement — RCH Elite Training`,
+    html: brandedEmail(`<p>Hi ${firstName},</p>
+      <p>Before ${childName} starts, we need you to review and e-sign the RCH Elite Training / Soccer Sultans Training Agreement &amp; Liability Waiver. It takes about two minutes and works on your phone.</p>
+      <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Review &amp; Sign</a></p>
+      <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
+      <p>This link is unique to your family — please don't share it. You'll get a signed copy by email when you're done.</p>`),
+    text: `Hi ${firstName},\n\nBefore ${childName} starts, please review and e-sign the RCH Elite Training / Soccer Sultans Training Agreement & Liability Waiver (about two minutes, works on your phone):\n${link}\n\nThis link is unique to your family — please don't share it. You'll get a signed copy by email when you're done.\n\nRCH Elite Training`,
+  });
+}
+
+// After signing: the family gets their copy, the club gets one too.
+async function sendSignedAgreementEmails({ to, parentName, childName, pdf }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  const safe = (childName || 'Player').replace(/[^a-z0-9]+/gi, '_');
+  const attachments = [{ filename: `RCH_Agreement_${safe}.pdf`, content: pdf.toString('base64') }];
+  await sendEmail({
+    to,
+    subject: `Your signed agreement for ${childName} — RCH Elite Training`,
+    html: brandedEmail(`<p>Hi ${firstName},</p><p>Thank you — your signed Training Agreement for ${childName} is attached for your records.</p>`),
+    text: `Hi ${firstName},\n\nThank you — your signed Training Agreement for ${childName} is attached for your records.\n\nRCH Elite Training`,
+    attachments,
+  });
+  if (NOTIFY) {
+    await sendEmail({
+      to: NOTIFY,
+      subject: `Agreement signed: ${childName}`,
+      html: `<p>${parentName} just e-signed the Training Agreement for ${childName}. The PDF is attached and saved under Data → Signed Agreements.</p>`,
+      text: `${parentName} just e-signed the Training Agreement for ${childName}. The PDF is attached and saved under Data → Signed Agreements.`,
+      attachments,
+    });
+  }
+}
+
 module.exports = {
+  sendAgreementEmail,
+  sendSignedAgreementEmails,
   sendSkillsRegistrationEmails,
   sendJoinRegistrationEmails,
   sendPaymentLinkEmail,
