@@ -37,7 +37,10 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
       `SELECT p.*,
               pl.status AS payment_status,
               pl.last_payment_status,
-              pl.paused_until
+              pl.paused_until,
+              ag.signed_at AS agreement_signed_at,
+              ag.sent_at AS agreement_sent_at,
+              ag.id AS agreement_id
        FROM players p
        LEFT JOIN LATERAL (
          SELECT status, last_payment_status, paused_until
@@ -47,6 +50,14 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
          ORDER BY created_at DESC
          LIMIT 1
        ) pl ON true
+       LEFT JOIN LATERAL (
+         SELECT id, signed_at, sent_at
+         FROM agreements
+         WHERE (registration_type = 'player' AND registration_id = p.id)
+            OR (lower(player_name) = lower(p.player_name) AND lower(parent_email) = lower(COALESCE(p.parent_email, '')))
+         ORDER BY (signed_at IS NOT NULL) DESC, COALESCE(signed_at, sent_at) DESC
+         LIMIT 1
+       ) ag ON true
        ${where}
        ORDER BY p.grade, p.player_name`,
       params

@@ -966,7 +966,7 @@ module.exports = `<!doctype html>
     });
   }
 
-  function wireAgreementButtons(wrapId, registrationType){
+  function wireAgreementButtons(wrapId, registrationType, onSent){
     const wrap = document.getElementById(wrapId);
     wrap.querySelectorAll('.btn-send-agreement').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -977,7 +977,7 @@ module.exports = `<!doctype html>
         try {
           const r = await api('/api/admin/agreements/send', { method: 'POST', body: JSON.stringify({ registrationType, registrationId: Number(btn.getAttribute('data-id')) }) });
           if (r.error) { alert(r.error); }
-          else { alert('Agreement sent. Track it under Data → Signed Agreements.'); if (typeof loadAgreements === 'function') loadAgreements(); }
+          else { alert('Agreement sent. Track it under Data → Signed Agreements.'); if (typeof loadAgreements === 'function') loadAgreements(); if (onSent) await onSent(); }
         } catch (e) {
           alert('Could not send the agreement. Please try again.');
         } finally {
@@ -1865,11 +1865,23 @@ module.exports = `<!doctype html>
   }
   document.addEventListener('click', closeAllRowMenus);
 
+  // Agreement column on the roster: signed ✓, or sent/not sent with a button
+  // to (re)send the e-sign link right from the row.
+  function agreementCell(r, label){
+    if (r.agreement_signed_at) {
+      return '<span class="status-badge status-paid">Signed ✓</span>' +
+        '<div><a class="btn-export btn-dl-agreement" href="#" data-agreement="' + r.agreement_id + '" style="font-size:0.75rem;">PDF</a></div>';
+    }
+    const sent = !!r.agreement_sent_at;
+    return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>' +
+      '<div style="margin-top:4px;"><button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (sent ? 'Resend Agreement' : 'Send Agreement') + '</button></div>';
+  }
+
   function renderRosterTable(rows){
     if (!rows.length) return '<div class="empty">No players yet.</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Payment Status</th><th></th>' +
+      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
@@ -1884,12 +1896,12 @@ module.exports = `<!doctype html>
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
+        '<td>' + agreementCell(r, label) + '</td>' +
         '<td>' +
           '<div class="row-actions">' +
             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
-              '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">Send Agreement</button>' +
               '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? 'Undo Paid Otherwise' : 'Paid Otherwise') + '</button>' +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
               '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
@@ -2002,7 +2014,13 @@ module.exports = `<!doctype html>
         }
       });
     });
-    wireAgreementButtons('rosterTableWrap', 'player');
+    wireAgreementButtons('rosterTableWrap', 'player', loadRoster);
+    wrap.querySelectorAll('.btn-dl-agreement').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.open(API_BASE + '/api/admin/agreements/' + a.getAttribute('data-agreement') + '/pdf?token=' + encodeURIComponent(getToken()));
+      });
+    });
     wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
     wireCancelButtons('rosterTableWrap', 'player', loadRoster);
     wrap.querySelectorAll('.btn-kebab').forEach((btn) => {
