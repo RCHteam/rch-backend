@@ -369,6 +369,87 @@ router.post('/pay/:token/checkout', async (req, res) => {
   }
 });
 
+// Creates the ongoing monthly subscription for a family whose first
+// (one-off) checkout succeeded. Used by the webhook and by the admin
+// "Start Monthly Billing" repair route.
+//
+// NOTE: Stripe's subscriptions API does NOT accept price_data.product_data
+// (that only works in Checkout) — it needs a real Product ID, so a Product
+// is created first. (Using product_data here made every follow-on
+// subscription fail silently.)
+async function startFollowOnSubscription(stripe, entry, customerId, paymentIntentId) {
+  let paymentMethodId;
+  if (paymentIntentId) {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    paymentMethodId = pi.payment_method;
+  }
+  if (paymentMethodId) {
+    try { await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId }); }
+    catch (e) { /* already attached by setup_future_usage — fine */ }
+    await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: paymentMethodId } });
+  } else {
+    // Repair path: use the card already saved on the customer.
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.invoice_settings || !customer.invoice_settings.default_payment_method) {
+      const pms = await stripe.paymentMethods.list({ customer: customerId, type: 'card', limit: 1 });
+      if (!pms.data[0]) throw new Error('No saved card on this customer.');
+      await stripe.customers.update(customerId, { invoice_settings: { default_payment_method: pms.data[0].id } });
+    }
+  }
+
+  let anchorTs = entry.next_billing_anchor
+    ? Math.floor(new Date(entry.next_billing_anchor).getTime() / 1000)
+    : nextAnchorTimestamp();
+  // Stripe needs trial_end in the future; if the stored date has passed, use the next one.
+  if (anchorTs <= Math.floor(Date.now() / 1000) + 3600) anchorTs = nextAnchorTimestamp();
+  const cancelAt = Math.floor(new Date(entry.season_end_date).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
+
+  const product = await stripe.products.create({ name: `${entry.program_label} — Monthly Season Fee` });
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{
+      price_data: {
+        currency: 'usd',
+        product: product.id,
+        unit_amount: entry.monthly_amount_cents,
+        recurring: { interval: 'month' },
+      },
+    }],
+    proration_behavior: 'none',
+    trial_end: anchorTs,
+    cancel_at: cancelAt,
+    metadata: { payment_link_token: entry.token },
+  });
+  await pool.query('UPDATE payment_links SET stripe_subscription_id = $1 WHERE token = $2', [subscription.id, entry.token]);
+  return subscription;
+}
+
+// Admin: start (or restart) monthly billing for a family that already paid
+// but has no subscription attached — the repair for the bug above.
+router.post('/admin/payment-links/start-billing', requireAdmin, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Payments are not configured yet.' });
+  const { registrationType, registrationId } = req.body || {};
+  if (!['skills', 'join', 'player'].includes(registrationType) || !registrationId) {
+    return res.status(400).json({ error: 'registrationType and registrationId are required.' });
+  }
+  try {
+    const r = await pool.query(
+      `SELECT * FROM payment_links
+       WHERE registration_type = $1 AND registration_id = $2 AND status = 'completed'
+       ORDER BY created_at DESC LIMIT 1`, [registrationType, registrationId]);
+    const entry = r.rows[0];
+    if (!entry) return res.status(404).json({ error: 'No completed payment found for this family.' });
+    if (entry.stripe_subscription_id) return res.status(409).json({ error: 'This family already has monthly billing set up.' });
+    if (!entry.stripe_customer_id) return res.status(400).json({ error: 'No Stripe customer on file for this payment.' });
+    await startFollowOnSubscription(stripe, entry, entry.stripe_customer_id, null);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Start billing error:', err);
+    res.status(500).json({ error: 'Could not start billing: ' + err.message });
+  }
+});
+
 // Admin: pause a family's monthly billing until a resume date (e.g. winter
 // break travel) — Stripe skips charges during the pause and resumes
 // automatically on the given date, no manual follow-up needed.
@@ -780,45 +861,10 @@ async function handleStripeWebhook(req, res) {
 
         // The checkout the family just completed was a one-off charge (kit
         // fee + this month's prorated amount) — now start the real ongoing
-        // subscription at the full monthly rate. trial_end defers its first
-        // charge to next_billing_anchor (computed when the checkout session
-        // was created), so nothing is charged twice for this month.
+        // subscription at the full monthly rate (see startFollowOnSubscription).
         if (entry && session.customer) {
           try {
-            let paymentMethodId;
-            if (session.payment_intent) {
-              const pi = await stripe.paymentIntents.retrieve(session.payment_intent);
-              paymentMethodId = pi.payment_method;
-            }
-            if (paymentMethodId) {
-              await stripe.paymentMethods.attach(paymentMethodId, { customer: session.customer });
-              await stripe.customers.update(session.customer, {
-                invoice_settings: { default_payment_method: paymentMethodId },
-              });
-            }
-
-            const anchorTs = entry.next_billing_anchor
-              ? Math.floor(new Date(entry.next_billing_anchor).getTime() / 1000)
-              : nextAnchorTimestamp();
-            const cancelAt = Math.floor(new Date(entry.season_end_date).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
-
-            const subscription = await stripe.subscriptions.create({
-              customer: session.customer,
-              items: [{
-                price_data: {
-                  currency: 'usd',
-                  product_data: { name: `${entry.program_label} — Monthly Season Fee` },
-                  unit_amount: entry.monthly_amount_cents,
-                  recurring: { interval: 'month' },
-                },
-              }],
-              proration_behavior: 'none',
-              trial_end: anchorTs,
-              cancel_at: cancelAt,
-              metadata: { payment_link_token: token },
-            });
-
-            await pool.query('UPDATE payment_links SET stripe_subscription_id = $1 WHERE token = $2', [subscription.id, token]);
+            await startFollowOnSubscription(stripe, entry, session.customer, session.payment_intent);
           } catch (subErr) {
             console.error('Failed to start follow-on subscription:', subErr.message);
           }

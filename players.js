@@ -38,12 +38,13 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
               pl.status AS payment_status,
               pl.last_payment_status,
               pl.paused_until,
+              pl.stripe_subscription_id,
               ag.signed_at AS agreement_signed_at,
               ag.sent_at AS agreement_sent_at,
               ag.id AS agreement_id
        FROM players p
        LEFT JOIN LATERAL (
-         SELECT status, last_payment_status, paused_until
+         SELECT status, last_payment_status, paused_until, stripe_subscription_id
          FROM payment_links
          WHERE registration_type = 'player' AND registration_id = p.id
            AND (${resetParam}::timestamptz IS NULL OR created_at > ${resetParam}::timestamptz)

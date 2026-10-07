@@ -1905,6 +1905,8 @@ module.exports = `<!doctype html>
                 ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
                 : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
               '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? 'Undo Paid Otherwise' : 'Paid Otherwise') + '</button>' +
+              (r.payment_status === 'completed' && !r.stripe_subscription_id
+                ? '<button type="button" class="btn-start-billing" data-id="' + r.id + '" data-label="' + label + '">Start Monthly Billing</button>' : '') +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
               '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
               '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
@@ -2017,6 +2019,18 @@ module.exports = `<!doctype html>
       });
     });
     wireAgreementButtons('rosterTableWrap', 'player', loadRoster);
+    wrap.querySelectorAll('.btn-start-billing').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const label = btn.getAttribute('data-label') || 'this family';
+        if (!confirm('This family paid but has no monthly billing in Stripe. Start their monthly subscription now (charged to their saved card, first charge at the next billing date)? ' + label)) return;
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/payment-links/start-billing', { method: 'POST', body: JSON.stringify({ registrationType: 'player', registrationId: Number(btn.getAttribute('data-id')) }) });
+          if (r.error) { alert(r.error); btn.disabled = false; }
+          else { alert('Monthly billing started.'); await loadRoster(); }
+        } catch (e) { alert('Could not start billing. Please try again.'); btn.disabled = false; }
+      });
+    });
     wrap.querySelectorAll('.btn-dl-agreement').forEach((a) => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
