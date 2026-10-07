@@ -71,6 +71,7 @@ module.exports = `<!doctype html>
   .btn-paid-other:hover{ background:#1f7a44; color:#fff; }
   .btn-send-agreement{ background:#fff; border:1px solid #164a30; color:#164a30; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-send-agreement:hover{ background:#164a30; color:#fff; }
+  .btn-dl-agreement{ background:#fff; border:1px solid #164a30; color:#164a30; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
   .btn-send-agreement:disabled{ opacity:0.6; cursor:default; }
   .btn-reset-payments{ background:#fff; border:2px solid #b5482f; color:#b5482f; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:700; }
   .btn-reset-payments:hover{ background:#b5482f; color:#fff; }
@@ -1869,12 +1870,10 @@ module.exports = `<!doctype html>
   // to (re)send the e-sign link right from the row.
   function agreementCell(r, label){
     if (r.agreement_signed_at) {
-      return '<span class="status-badge status-paid">Signed ✓</span>' +
-        '<div><a class="btn-export btn-dl-agreement" href="#" data-agreement="' + r.agreement_id + '" style="font-size:0.75rem;">PDF</a></div>';
+      return '<span class="status-badge status-paid">Signed ✓</span>';
     }
     const sent = !!r.agreement_sent_at;
-    return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>' +
-      '<div style="margin-top:4px;"><button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (sent ? 'Resend Agreement' : 'Send Agreement') + '</button></div>';
+    return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>';
   }
 
   function renderRosterTable(rows){
@@ -1902,6 +1901,9 @@ module.exports = `<!doctype html>
             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
+              (r.agreement_signed_at
+                ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
+                : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
               '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? 'Undo Paid Otherwise' : 'Paid Otherwise') + '</button>' +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
               '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
