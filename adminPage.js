@@ -433,7 +433,7 @@ module.exports = `<!doctype html>
       <option value="15">15% (3 siblings)</option>
       <option value="20">20% (4 siblings)</option>
     </select>
-    <label for="apDiscount">Discount ($)</label>
+    <label for="apDiscount">Manual discount ($) — leave at 0 to use the sibling % automatically</label>
     <input type="number" id="apDiscount" min="0" step="0.01" value="0">
     <p class="modal-error" id="addPlayerError"></p>
     <div class="modal-actions">
@@ -483,7 +483,7 @@ module.exports = `<!doctype html>
       <option value="15">15% (3 siblings)</option>
       <option value="20">20% (4 siblings)</option>
     </select>
-    <label for="epDiscount">Discount ($)</label>
+    <label for="epDiscount">Manual discount ($) — leave at 0 to use the sibling % automatically</label>
     <input type="number" id="epDiscount" min="0" step="0.01" value="0">
     <p class="modal-error" id="editPlayerError"></p>
     <div class="modal-actions">
@@ -1932,7 +1932,7 @@ module.exports = `<!doctype html>
         '<td>' + (r.session_type === 'two' ? 'Two' : r.session_type === 'online' ? 'Online' : 'One') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
-        '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
+        '<td>$' + ((r.effective_discount_cents != null ? r.effective_discount_cents : r.discount_cents) / 100).toFixed(2) + (r.effective_discount_cents > 0 ? (r.discount_is_manual ? ' <span style="color:#888; font-size:0.72rem;">(manual)</span>' : ' <span style="color:#888; font-size:0.72rem;">(sibling)</span>') : '') + '</td>' +
         '<td>' + (r.sibling_discount ? r.sibling_discount + '%' : '—') + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
         '<td>' + agreementCell(r, label) + '</td>' +

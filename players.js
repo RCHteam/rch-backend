@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
+const { getMonthlyRates, effectiveDiscountCents, effectiveDiscountSql } = require('./discounts');
 
 const router = express.Router();
 
@@ -67,7 +68,12 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
        ORDER BY p.grade, p.player_name`,
       params
     );
-    res.json(result.rows);
+    const rates = await getMonthlyRates();
+    res.json(result.rows.map((r) => ({
+      ...r,
+      effective_discount_cents: effectiveDiscountCents(r, rates),
+      discount_is_manual: (Number(r.discount_cents) || 0) > 0,
+    })));
   } catch (err) {
     console.error('List players error:', err);
     res.status(500).json({ error: 'Could not load players.' });
@@ -332,6 +338,7 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
 // even for grades with no players yet.
 router.get('/admin/players-overview', requireAdmin, async (req, res) => {
   try {
+    const rates = await getMonthlyRates();
     const result = await pool.query(`
       SELECT grade,
         COUNT(*)::int AS total_players,
@@ -340,7 +347,7 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
         COUNT(*) FILTER (WHERE rch AND sultans)::int AS total_both,
         COUNT(*) FILTER (WHERE session_type = 'one')::int AS total_one,
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
-        COALESCE(SUM(discount_cents), 0)::int AS total_discount_cents
+        COALESCE(SUM(${effectiveDiscountSql(rates)}), 0)::int AS total_discount_cents
       FROM players
       WHERE archived_at IS NULL
       GROUP BY grade

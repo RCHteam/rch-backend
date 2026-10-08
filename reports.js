@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
+const { effectiveDiscountCents, getMonthlyRates } = require('./discounts');
 const { gatherMonthlyReportData, buildMonthlyReportPdf, monthKeyFromDate, monthLabelFromKey } = require('./monthlyReport');
 const { sendMonthlyReportEmail } = require('./email');
 
@@ -45,7 +46,7 @@ async function generateSnapshot(monthDate) {
   const rates = { one: parseInt(oneCents, 10), two: parseInt(twoCents, 10), online: parseInt(onlineCents, 10) };
 
   const playersRes = await pool.query('SELECT * FROM players WHERE archived_at IS NULL ORDER BY grade, player_name');
-  const roster = playersRes.rows;
+  const roster = playersRes.rows.map((p) => ({ ...p, discount_cents: effectiveDiscountCents(p, rates) }));
 
   let totalRevenueCents = 0;
   for (const p of roster) {
@@ -184,7 +185,7 @@ router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT p.id, p.grade, p.player_name, p.dob, p.parent_name, p.parent_phone, p.parent_email,
-              p.session_type, p.rch, p.sultans, p.discount_cents,
+              p.session_type, p.rch, p.sultans, p.discount_cents, p.sibling_discount,
               pl.status AS payment_status, pl.last_payment_status, pl.paused_until
        FROM players p
        LEFT JOIN LATERAL (

@@ -1,5 +1,6 @@
 const pool = require('./pool');
 const { getSetting } = require('./settings');
+const { getMonthlyRates, effectiveDiscountSql } = require('./discounts');
 const PDFDocument = require('pdfkit');
 
 const GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
@@ -39,6 +40,7 @@ function money(cents) {
 // a month long past.
 async function gatherMonthlyReportData(monthKey) {
   const monthShort = monthKey.slice(0, 7); // 'YYYY-MM'
+  const discountRates = await getMonthlyRates();
 
   const [
     potentialRch,
@@ -61,7 +63,7 @@ async function gatherMonthlyReportData(monthKey) {
         COUNT(*)::int AS total_players,
         COUNT(*) FILTER (WHERE session_type = 'one')::int AS total_one,
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
-        COALESCE(SUM(discount_cents), 0)::int AS total_discount_cents
+        COALESCE(SUM(${effectiveDiscountSql(discountRates)}), 0)::int AS total_discount_cents
       FROM players WHERE archived_at IS NULL GROUP BY grade
     `),
     getSetting('price_one_session_cents', '15000'),
