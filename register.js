@@ -14,8 +14,14 @@ const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
 // The frontend checks this before showing the registration form.
 router.get('/register/status', async (req, res) => {
   try {
-    const value = await getSetting('skills_training_open', 'true');
-    res.json({ open: value === 'true' });
+    const grades = [...VALID_GRADES];
+    const [value, gradeValues] = await Promise.all([
+      getSetting('skills_training_open', 'true'),
+      Promise.all(grades.map((g) => getSetting(`skills_open_${g}`, 'true'))),
+    ]);
+    const grade = {};
+    grades.forEach((g, i) => { grade[g] = gradeValues[i] === 'true'; });
+    res.json({ open: value === 'true', grades: grade });
   } catch (err) {
     console.error('Register status error:', err);
     res.status(500).json({ error: 'Could not load registration status.' });
@@ -34,6 +40,17 @@ router.post('/register', async (req, res) => {
   }
 
   const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType, siblingDiscount } = req.body || {};
+
+  if (grade && VALID_GRADES.has(grade)) {
+    try {
+      if ((await getSetting(`skills_open_${grade}`, 'true')) !== 'true') {
+        return res.status(403).json({ error: 'Skills Training registration for this grade is currently closed.', closed: true });
+      }
+    } catch (err) {
+      console.error('Register grade check error:', err);
+      return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
+  }
 
   const errors = {};
   if (!fullName || !String(fullName).trim()) errors.fullName = "Please enter the player's name.";

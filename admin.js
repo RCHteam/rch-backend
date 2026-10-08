@@ -23,20 +23,30 @@ function joinOpenKey(ageGroup) {
   return `join_open_${ageGroup}`;
 }
 
+// Skills Training can also be closed one grade at a time (the whole-program
+// switch, skills_training_open, still overrides everything).
+function skillsGradeKey(grade) {
+  return `skills_open_${grade}`;
+}
+
 // Admin: read current site toggles — Skills Training open/closed, plus Join
 // Sultans FC open/closed PER GRADE (e.g. Pre-K can be closed once its squad
 // is set while 3rd Grade stays open).
 router.get('/admin/settings', requireAdmin, async (req, res) => {
   try {
     const groups = [...VALID_GROUPS];
-    const [skillsValue, joinValues] = await Promise.all([
+    const [skillsValue, joinValues, skillsGradeValues] = await Promise.all([
       getSetting('skills_training_open', 'true'),
       Promise.all(groups.map((g) => getSetting(joinOpenKey(g), 'true'))),
+      Promise.all(groups.map((g) => getSetting(skillsGradeKey(g), 'true'))),
     ]);
+    const skillsOpenByGrade = {};
+    groups.forEach((g, i) => { skillsOpenByGrade[g] = skillsGradeValues[i] === 'true'; });
     const joinRegistrationOpenByGrade = {};
     groups.forEach((g, i) => { joinRegistrationOpenByGrade[g] = joinValues[i] === 'true'; });
     res.json({
       skillsTrainingOpen: skillsValue === 'true',
+      skillsOpenByGrade,
       joinRegistrationOpenByGrade,
     });
   } catch (err) {
@@ -54,6 +64,24 @@ router.post('/admin/settings/skills-training', requireAdmin, async (req, res) =>
   try {
     await setSetting('skills_training_open', open ? 'true' : 'false');
     res.json({ ok: true, skillsTrainingOpen: open });
+  } catch (err) {
+    console.error('Admin settings toggle error:', err);
+    res.status(500).json({ error: 'Could not update settings.' });
+  }
+});
+
+// Admin: flip Skills Training on/off for ONE grade.
+router.post('/admin/settings/skills-grade', requireAdmin, async (req, res) => {
+  const { open, grade } = req.body || {};
+  if (typeof open !== 'boolean') {
+    return res.status(400).json({ error: '"open" must be true or false.' });
+  }
+  if (!VALID_GROUPS.has(grade)) {
+    return res.status(400).json({ error: `grade must be one of: ${[...VALID_GROUPS].join(', ')}` });
+  }
+  try {
+    await setSetting(skillsGradeKey(grade), open ? 'true' : 'false');
+    res.json({ ok: true, grade, open });
   } catch (err) {
     console.error('Admin settings toggle error:', err);
     res.status(500).json({ error: 'Could not update settings.' });

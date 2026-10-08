@@ -294,12 +294,24 @@ module.exports = `<!doctype html>
 
     <div class="section-head">
       <h2>Skills Training</h2>
-      <div style="display:flex; align-items:center; gap:14px;">
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
         <label class="switch-row">
           <input type="checkbox" id="skillsOpenToggle">
           <span class="switch-track"><span class="switch-thumb"></span></span>
           <span id="skillsOpenLabel">Registration open</span>
+          <span id="skillsOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
         </label>
+        <select id="skillsGradeFilter" title="Pick a grade to open/close just that grade; All grades = the whole Skills Training page">
+          <option value="">All grades</option>
+          <option value="pre-k">Pre-K</option>
+          <option value="kindergarten">Kindergarten</option>
+          <option value="1st-grade">1st Grade</option>
+          <option value="2nd-grade">2nd Grade</option>
+          <option value="3rd-grade">3rd Grade</option>
+          <option value="4th-grade">4th Grade</option>
+          <option value="5th-grade">5th Grade</option>
+          <option value="6th-grade">6th Grade</option>
+        </select>
         <button type="button" class="btn-add" id="addSkillsBtn">+ Add Registration</button>
         <a class="btn-export" id="exportSkills" href="#">Export CSV</a>
       </div>
@@ -2947,12 +2959,28 @@ module.exports = `<!doctype html>
   // dropdown — switching grades re-reads that grade's own on/off state.
   let joinOpenByGrade = {};
 
+  // Skills Training: "All grades" controls the whole page; picking a grade
+  // controls only that grade's option on the public form.
+  let skillsWholeOpen = true;
+  let skillsOpenByGrade = {};
+  function applySkillsToggle(){
+    const grade = document.getElementById('skillsGradeFilter').value;
+    const toggle = document.getElementById('skillsOpenToggle');
+    const label = document.getElementById('skillsOpenLabel');
+    const gl = document.getElementById('skillsOpenGradeLabel');
+    const open = grade ? skillsOpenByGrade[grade] !== false : skillsWholeOpen;
+    toggle.checked = open;
+    label.textContent = open ? 'Registration open' : 'Registration closed';
+    if (gl) gl.textContent = grade ? '(' + (GRADE_LABELS[grade] || grade) + ')' : '(whole page)';
+  }
+
   async function loadSkillsToggle(){
     const s = await api('/api/admin/settings');
     const toggle = document.getElementById('skillsOpenToggle');
     const label = document.getElementById('skillsOpenLabel');
-    toggle.checked = !!s.skillsTrainingOpen;
-    label.textContent = s.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
+    skillsWholeOpen = !!s.skillsTrainingOpen;
+    skillsOpenByGrade = s.skillsOpenByGrade || {};
+    applySkillsToggle();
 
     joinOpenByGrade = s.joinRegistrationOpenByGrade || {};
     applyJoinToggleForSelectedGrade();
@@ -2979,23 +3007,31 @@ module.exports = `<!doctype html>
     if (joinGradeLabel) joinGradeLabel.textContent = '(' + (GRADE_LABELS[grade] || grade) + ')';
   }
 
+  document.getElementById('skillsGradeFilter').addEventListener('change', applySkillsToggle);
   document.getElementById('skillsOpenToggle').addEventListener('change', async (e) => {
     const toggle = e.target;
-    const label = document.getElementById('skillsOpenLabel');
+    const grade = document.getElementById('skillsGradeFilter').value;
     const desiredState = toggle.checked;
     toggle.disabled = true;
     try {
-      const result = await api('/api/admin/settings/skills-training', {
-        method: 'POST',
-        body: JSON.stringify({ open: desiredState }),
-      });
-      toggle.checked = !!result.skillsTrainingOpen;
-      label.textContent = result.skillsTrainingOpen ? 'Registration open' : 'Registration closed';
+      if (grade) {
+        const result = await api('/api/admin/settings/skills-grade', {
+          method: 'POST',
+          body: JSON.stringify({ open: desiredState, grade }),
+        });
+        skillsOpenByGrade[grade] = !!result.open;
+      } else {
+        const result = await api('/api/admin/settings/skills-training', {
+          method: 'POST',
+          body: JSON.stringify({ open: desiredState }),
+        });
+        skillsWholeOpen = !!result.skillsTrainingOpen;
+      }
     } catch (err) {
-      toggle.checked = !desiredState;
       alert('Could not update the Skills Training toggle. Please try again.');
     } finally {
       toggle.disabled = false;
+      applySkillsToggle();
     }
   });
 
