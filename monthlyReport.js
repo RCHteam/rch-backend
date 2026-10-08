@@ -66,8 +66,8 @@ async function gatherMonthlyReportData(monthKey) {
         COALESCE(SUM(${effectiveDiscountSql(discountRates)}), 0)::int AS total_discount_cents
       FROM players WHERE archived_at IS NULL GROUP BY grade
     `),
-    getSetting('price_one_session_cents', '15000'),
-    getSetting('price_two_session_cents', '25000'),
+    getSetting('payment_one_session_monthly_cents', '6000'),
+    getSetting('payment_two_session_monthly_cents', '10000'),
     pool.query(`SELECT * FROM charges WHERE kind = 'recurring' OR charge_month = $1::date ORDER BY kind, description`, [monthKey]),
     pool.query(
       `SELECT * FROM one_time_payments

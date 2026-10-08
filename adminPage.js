@@ -218,18 +218,7 @@ module.exports = `<!doctype html>
     <div class="section-head">
       <h2>Pricing &amp; Revenue</h2>
     </div>
-    <div class="pricing-box">
-      <div>
-        <label for="priceOneInput">Price per Player — One Session</label>
-        <input type="number" id="priceOneInput" min="0" step="0.01">
-      </div>
-      <div>
-        <label for="priceTwoInput">Price per Player — Two Sessions</label>
-        <input type="number" id="priceTwoInput" min="0" step="0.01">
-      </div>
-      <button type="button" class="btn-add" id="savePricingBtn">Save Prices</button>
-      <span class="pricing-saved" id="pricingSaved"></span>
-    </div>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Revenue below is calculated from the <strong>Payment Link Amounts</strong> further down this page (the prices families actually pay), minus each player's discount. Change prices there only.</p>
     <div id="revenueTableWrap"></div>
 
     <div class="section-head">
@@ -2215,32 +2204,7 @@ module.exports = `<!doctype html>
   async function loadPricing(){
     const p = await api('/api/admin/pricing');
     currentPricing = p;
-    document.getElementById('priceOneInput').value = (p.priceOneCents / 100).toFixed(2);
-    document.getElementById('priceTwoInput').value = (p.priceTwoCents / 100).toFixed(2);
   }
-
-  document.getElementById('savePricingBtn').addEventListener('click', async () => {
-    const priceOneCents = Math.round(parseFloat(document.getElementById('priceOneInput').value || '0') * 100);
-    const priceTwoCents = Math.round(parseFloat(document.getElementById('priceTwoInput').value || '0') * 100);
-    const btn = document.getElementById('savePricingBtn');
-    btn.disabled = true;
-    try {
-      currentPricing = await api('/api/admin/pricing', {
-        method: 'POST',
-        body: JSON.stringify({ priceOneCents, priceTwoCents }),
-      });
-      const savedMsg = document.getElementById('pricingSaved');
-      savedMsg.textContent = 'Saved.';
-      setTimeout(() => { savedMsg.textContent = ''; }, 2000);
-      if (lastOverview) {
-        document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(lastOverview, currentPricing, lastChargesCents);
-      }
-    } catch (e) {
-      alert('Could not save pricing. Please try again.');
-    } finally {
-      btn.disabled = false;
-    }
-  });
 
   // ---- Payment Link Amounts (what "Send Payment Link" actually charges) ----
 
@@ -2268,6 +2232,9 @@ module.exports = `<!doctype html>
       const savedMsg = document.getElementById('paymentPricingSaved');
       savedMsg.textContent = 'Saved.';
       setTimeout(() => { savedMsg.textContent = ''; }, 2000);
+      await loadPricing();
+      await loadOverviewAndRevenue();
+      await loadRoster();
     } catch (e) {
       alert('Could not save payment amounts. Please try again.');
     } finally {

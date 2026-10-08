@@ -379,9 +379,9 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
 // Admin: read/update the per-session prices used for the Revenue table.
 router.get('/admin/pricing', requireAdmin, async (req, res) => {
   try {
-    const priceOneCents = parseInt(await getSetting('price_one_session_cents', '15000'), 10);
-    const priceTwoCents = parseInt(await getSetting('price_two_session_cents', '25000'), 10);
-    res.json({ priceOneCents, priceTwoCents });
+    // One source of truth: the Payment Link Amounts (what families are charged).
+    const rates = await getMonthlyRates();
+    res.json({ priceOneCents: rates.one, priceTwoCents: rates.two });
   } catch (err) {
     console.error('Get pricing error:', err);
     res.status(500).json({ error: 'Could not load pricing.' });
