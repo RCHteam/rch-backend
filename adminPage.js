@@ -56,7 +56,21 @@ module.exports = `<!doctype html>
   #login-view button{ width:100%; padding:12px; background:var(--gold); border:none; border-radius:3px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.95rem; transition:background .2s ease; }
   #login-view button:hover{ background:var(--gold-bright); }
   #login-error{ color:#b5482f; font-size:0.9rem; min-height:1.2em; }
-  .summary{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:30px; }
+  .summary{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:18px 34px; margin-bottom:30px; }
+  .sum-group{ min-width:0; }
+  .sum-title{ margin:0 0 10px; font-family:'Anton',sans-serif; font-weight:400; font-size:1.25rem; letter-spacing:0.03em; padding-bottom:6px; border-bottom:3px solid var(--gc); display:flex; align-items:baseline; gap:10px; }
+  .sum-title small{ font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:#6b7568; }
+  .sum-cards{ display:grid; gap:12px; }
+  .sum-reg{ --gc:#9aa39b; } .sum-reg .sum-cards{ grid-template-columns:repeat(2,minmax(130px,1fr)); }
+  .sum-rch{ --gc:#3fcf7a; } .sum-rch .sum-cards{ grid-template-columns:minmax(150px,1fr); }
+  .sum-sul{ --gc:#d98a76; flex:1 1 520px; } .sum-sul .sum-cards{ grid-template-columns:repeat(4,minmax(110px,1fr)); }
+  .sum-reg .card{ background:#fff; }
+  .sum-rch .card{ background:#dff3e4; border-top-color:#3fcf7a; }
+  .sum-sul .card{ background:#f9dfd9; border-top-color:#d98a76; }
+  .sum-sul .card .n{ color:#8a3b27; }
+  .sum-rch .card .n{ color:#164a30; }
+  @media (max-width:820px){ .sum-sul .sum-cards{ grid-template-columns:repeat(2,minmax(110px,1fr)); } .sum-reg, .sum-rch, .sum-sul{ flex:1 1 100%; } }
+  @media (max-width:820px){ .btn-export, .btn-add{ white-space:normal; } #exportJoin{ margin-left:0 !important; } main div:has(> #exportJoin){ flex-wrap:wrap; } }
   .card{ background:#fff; border-radius:6px; border-top:3px solid var(--acc); padding:16px 22px; box-shadow:var(--shadow); min-width:150px; }
   .card .n{ font-family:'Anton',sans-serif; font-size:2rem; font-weight:400; color:var(--pitch); line-height:1.1; }
   .card .l{ font-family:'Space Mono',monospace; font-size:0.65rem; color:#6b7568; text-transform:uppercase; letter-spacing:0.14em; margin-top:4px; }
@@ -2015,12 +2029,17 @@ module.exports = `<!doctype html>
     };
     const counts = Object.fromEntries(groups.map(g => [g, 0]));
     (s.joinCountsByAgeGroup || []).forEach(r => { counts[r.age_group] = r.n; });
-    document.getElementById('summary').innerHTML = \`
-      <div class="card"><div class="n">\${s.potentialRchCount ?? 0}</div><div class="l">Potential RCH</div></div>
-      <div class="card"><div class="n">\${s.potentialSultansCount ?? 0}</div><div class="l">Potential Sultans</div></div>
-      <div class="card"><div class="n">\${s.skillsTrainingCount}</div><div class="l">Skills Training</div></div>
-      \${groups.map(g => \`<div class="card"><div class="n">\${counts[g]}</div><div class="l">Join FC \${groupLabels[g]}</div></div>\`).join('')}
-    \`;
+    const card = (n, l) => '<div class="card"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
+    document.getElementById('summary').innerHTML =
+      '<div class="sum-group sum-reg"><h3 class="sum-title">Registrations</h3><div class="sum-cards">' +
+        card(s.potentialRchCount ?? 0, 'Potential RCH') + card(s.potentialSultansCount ?? 0, 'Potential Sultans') +
+      '</div></div>' +
+      '<div class="sum-group sum-rch"><h3 class="sum-title">RCH Training</h3><div class="sum-cards">' +
+        card(s.skillsTrainingCount ?? 0, 'Skills Training') +
+      '</div></div>' +
+      '<div class="sum-group sum-sul"><h3 class="sum-title">Sultans</h3><div class="sum-cards">' +
+        groups.map(g => card(counts[g], groupLabels[g])).join('') +
+      '</div></div>';
   }
 
   function paymentLabel(row){
