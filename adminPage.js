@@ -427,6 +427,12 @@ module.exports = `<!doctype html>
       <div class="checkbox-row"><input type="checkbox" id="apRch"><label for="apRch">RCH</label></div>
       <div class="checkbox-row"><input type="checkbox" id="apSultans"><label for="apSultans">Sultans</label></div>
     </div>
+    <label for="apSibling">Sibling discount</label>
+    <select id="apSibling">
+      <option value="0">None</option>
+      <option value="15">15% (3 siblings)</option>
+      <option value="20">20% (4 siblings)</option>
+    </select>
     <label for="apDiscount">Discount ($)</label>
     <input type="number" id="apDiscount" min="0" step="0.01" value="0">
     <p class="modal-error" id="addPlayerError"></p>
@@ -471,6 +477,12 @@ module.exports = `<!doctype html>
       <div class="checkbox-row"><input type="checkbox" id="epRch"><label for="epRch">RCH</label></div>
       <div class="checkbox-row"><input type="checkbox" id="epSultans"><label for="epSultans">Sultans</label></div>
     </div>
+    <label for="epSibling">Sibling discount</label>
+    <select id="epSibling">
+      <option value="0">None</option>
+      <option value="15">15% (3 siblings)</option>
+      <option value="20">20% (4 siblings)</option>
+    </select>
     <label for="epDiscount">Discount ($)</label>
     <input type="number" id="epDiscount" min="0" step="0.01" value="0">
     <p class="modal-error" id="editPlayerError"></p>
@@ -565,6 +577,12 @@ module.exports = `<!doctype html>
       <option value="one">One</option>
       <option value="two">Two</option>
       <option value="online">Online Course</option>
+    </select>
+    <label for="moveSibling">Sibling discount</label>
+    <select id="moveSibling">
+      <option value="0">None</option>
+      <option value="15">15% (3 siblings)</option>
+      <option value="20">20% (4 siblings)</option>
     </select>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="moveRch"><label for="moveRch">RCH</label></div>
@@ -890,6 +908,7 @@ module.exports = `<!doctype html>
     // directly from parents at signup, so this is usually already correct.
     document.getElementById('moveGrade').value = row.grade || row.age_group || 'pre-k';
     document.getElementById('moveSessionType').value = row.session_type || 'one';
+    document.getElementById('moveSibling').value = String(row.sibling_discount || 0);
     document.getElementById('moveRch').checked = true;
     // Skills Training applicants default to RCH-only, but the admin can still
     // check Sultans too if this player is also joining that squad. Join
@@ -931,6 +950,7 @@ module.exports = `<!doctype html>
       sourceId: moveModalCtx.id,
       grade: document.getElementById('moveGrade').value,
       sessionType: document.getElementById('moveSessionType').value,
+      siblingDiscount: Number(document.getElementById('moveSibling').value) || 0,
       rch: document.getElementById('moveRch').checked,
       sultans: document.getElementById('moveSultans').checked,
       parentName: document.getElementById('moveParentName').value.trim(),
@@ -1001,7 +1021,8 @@ module.exports = `<!doctype html>
         const id = btn.getAttribute('data-id');
         const label = btn.getAttribute('data-label') || '';
         const sessionType = btn.getAttribute('data-session') || null;
-        openPaymentModal(registrationType, id, label, onSent, sessionType);
+        const sibling = btn.getAttribute('data-sibling') || '0';
+        openPaymentModal(registrationType, id, label, onSent, sessionType, sibling);
       });
     });
   }
@@ -1055,7 +1076,7 @@ module.exports = `<!doctype html>
       '<br><span style="color:#888;">First charge is prorated automatically for the Tue/Thu practices left this month.</span>';
   }
 
-  function openPaymentModal(registrationType, id, label, onSent, sessionType){
+  function openPaymentModal(registrationType, id, label, onSent, sessionType, sibling){
     paymentModalCtx = { registrationType, id, onSent };
     document.getElementById('paymentModalSub').textContent = label;
     const tierSelect = document.getElementById('tierSelect');
@@ -1075,7 +1096,7 @@ module.exports = `<!doctype html>
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
     document.getElementById('includeKitFee').checked = false;
-    document.getElementById('siblingDiscountSelect').value = '0';
+    document.getElementById('siblingDiscountSelect').value = (sibling === '15' || sibling === '20') ? sibling : '0';
     document.getElementById('includeKitFeeLabel').textContent = 'Include kit fee ($' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + ')';
     document.getElementById('paymentModalError').textContent = '';
     updateModalAmounts();
@@ -1814,8 +1835,10 @@ module.exports = `<!doctype html>
     return 'status-neutral';
   }
 
+  function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—' }; }
+
   async function loadSkills(){
-    const rows = await api('/api/admin/skills-registrations');
+    const rows = (await api('/api/admin/skills-registrations')).map(addSiblingLabel);
     document.getElementById('skillsTableWrap').innerHTML = renderTable(rows, [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
@@ -1823,6 +1846,7 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'team', label:'Team' },
+      { key:'sibling_label', label:'Sibling' },
       { key:'experience', label:'Experience' },
       { key:'submitted_at', label:'Submitted' },
     ], { onDelete: true, onMoveToRoster: true, labelKey: 'full_name' });
@@ -1841,7 +1865,7 @@ module.exports = `<!doctype html>
 
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
-    const rows = await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''));
+    const rows = (await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''))).map(addSiblingLabel);
     const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
@@ -1852,6 +1876,7 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
+      { key:'sibling_label', label:'Sibling' },
       { key:'submitted_at', label:'Submitted' },
     ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name' });
     wireDeleteButtons('joinTableWrap', async (id) => {
@@ -1894,7 +1919,7 @@ module.exports = `<!doctype html>
     if (!rows.length) return '<div class="empty">No players yet.</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Payment Status</th><th>Agreement</th><th></th>' +
+      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
@@ -1908,11 +1933,12 @@ module.exports = `<!doctype html>
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + (r.discount_cents / 100).toFixed(2) + '</td>' +
+        '<td>' + (r.sibling_discount ? r.sibling_discount + '%' : '—') + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
         '<td>' + agreementCell(r, label) + '</td>' +
         '<td>' +
           '<div class="row-actions">' +
-            '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '">Send Payment Link</button>' +
+            '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '" data-sibling="' + (r.sibling_discount || 0) + '">Send Payment Link</button>' +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
               (r.agreement_signed_at
@@ -1944,10 +1970,11 @@ module.exports = `<!doctype html>
     document.getElementById('epParentName').value = player.parent_name || '';
     document.getElementById('epParentPhone').value = player.parent_phone || '';
     document.getElementById('epParentEmail').value = player.parent_email || '';
-    document.getElementById('epSessions').value = player.session_type === 'two' ? 'two' : 'one';
+    document.getElementById('epSessions').value = (player.session_type === 'two' || player.session_type === 'online') ? player.session_type : 'one';
     document.getElementById('epRch').checked = !!player.rch;
     document.getElementById('epSultans').checked = !!player.sultans;
     document.getElementById('epDiscount').value = (player.discount_cents / 100).toFixed(2);
+    document.getElementById('epSibling').value = String(player.sibling_discount || 0);
     document.getElementById('editPlayerError').textContent = '';
     document.getElementById('editPlayerModal').classList.remove('hidden');
   }
@@ -1970,6 +1997,7 @@ module.exports = `<!doctype html>
       rch: document.getElementById('epRch').checked,
       sultans: document.getElementById('epSultans').checked,
       discountCents: Math.round(parseFloat(document.getElementById('epDiscount').value || '0') * 100),
+      siblingDiscount: Number(document.getElementById('epSibling').value) || 0,
     };
     if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
     const btn = document.getElementById('editPlayerSubmit');
@@ -2598,6 +2626,7 @@ module.exports = `<!doctype html>
     document.getElementById('apRch').checked = false;
     document.getElementById('apSultans').checked = false;
     document.getElementById('apDiscount').value = '0';
+    document.getElementById('apSibling').value = '0';
     document.getElementById('addPlayerError').textContent = '';
     document.getElementById('addPlayerModal').classList.remove('hidden');
   });
@@ -2619,6 +2648,7 @@ module.exports = `<!doctype html>
       rch: document.getElementById('apRch').checked,
       sultans: document.getElementById('apSultans').checked,
       discountCents: Math.round(parseFloat(document.getElementById('apDiscount').value || '0') * 100),
+      siblingDiscount: Number(document.getElementById('apSibling').value) || 0,
     };
     if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
     const btn = document.getElementById('addPlayerSubmit');

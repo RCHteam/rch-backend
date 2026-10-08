@@ -8,6 +8,10 @@ const router = express.Router();
 const GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
 const VALID_GRADES = new Set(GRADES);
 const VALID_SESSION_TYPES = new Set(['one', 'two', 'online']);
+function normalizeSibling(v) {
+  return [15, 20].includes(Number(v)) ? Number(v) : 0;
+}
+
 function normalizeSessionType(sessionType, fallback) {
   return VALID_SESSION_TYPES.has(sessionType) ? sessionType : (fallback || 'one');
 }
@@ -74,7 +78,7 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
 router.post('/admin/players', requireAdmin, async (req, res) => {
   const {
     grade, playerName, dob, parentName, parentPhone, parentEmail,
-    sessionType, rch, sultans, discountCents,
+    sessionType, rch, sultans, discountCents, siblingDiscount,
   } = req.body || {};
 
   if (!VALID_GRADES.has(grade)) {
@@ -88,11 +92,11 @@ router.post('/admin/players', requireAdmin, async (req, res) => {
   try {
     const insertRes = await pool.query(
       `INSERT INTO players
-        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [grade, playerName.trim(), dob || null, parentName || '', parentPhone || '', parentEmail || '',
-       session, !!rch, !!sultans, Number(discountCents) || 0]
+       session, !!rch, !!sultans, Number(discountCents) || 0, normalizeSibling(siblingDiscount)]
     );
     res.status(201).json({ ok: true, entry: insertRes.rows[0] });
   } catch (err) {
@@ -113,7 +117,7 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
 
     const {
       grade, playerName, dob, parentName, parentPhone, parentEmail,
-      sessionType, rch, sultans, discountCents,
+      sessionType, rch, sultans, discountCents, siblingDiscount,
     } = req.body || {};
 
     if (grade !== undefined && !VALID_GRADES.has(grade)) {
@@ -134,16 +138,17 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
       rch: rch !== undefined ? !!rch : existing.rch,
       sultans: sultans !== undefined ? !!sultans : existing.sultans,
       discountCents: discountCents !== undefined ? (Number(discountCents) || 0) : existing.discount_cents,
+      siblingDiscount: siblingDiscount !== undefined ? normalizeSibling(siblingDiscount) : existing.sibling_discount,
     };
 
     const updateRes = await pool.query(
       `UPDATE players SET
          grade = $1, player_name = $2, dob = $3, parent_name = $4, parent_phone = $5,
-         parent_email = $6, session_type = $7, rch = $8, sultans = $9, discount_cents = $10
-       WHERE id = $11
+         parent_email = $6, session_type = $7, rch = $8, sultans = $9, discount_cents = $10, sibling_discount = $11
+       WHERE id = $12
        RETURNING *`,
       [merged.grade, merged.playerName, merged.dob, merged.parentName, merged.parentPhone,
-       merged.parentEmail, merged.sessionType, merged.rch, merged.sultans, merged.discountCents, id]
+       merged.parentEmail, merged.sessionType, merged.rch, merged.sultans, merged.discountCents, merged.siblingDiscount, id]
     );
     res.json({ ok: true, entry: updateRes.rows[0] });
   } catch (err) {
@@ -283,13 +288,14 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   const isRch = isSultans ? true : !!rch; // Sultans always implies RCH
 
   try {
-    let sourceTable, playerName, dob;
+    let sourceTable, playerName, dob, siblingDiscount = 0;
     if (sourceType === 'skills') {
       const r = await pool.query('SELECT * FROM skills_registrations WHERE id = $1', [sourceId]);
       if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
       if (r.rows[0].moved_at) return res.status(409).json({ error: 'This registration has already been moved to the roster.' });
       sourceTable = 'skills_registrations';
       playerName = r.rows[0].full_name;
+      siblingDiscount = r.rows[0].sibling_discount || 0;
       dob = r.rows[0].dob;
     } else {
       const r = await pool.query('SELECT * FROM join_registrations WHERE id = $1', [sourceId]);
@@ -297,16 +303,18 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
       if (r.rows[0].moved_at) return res.status(409).json({ error: 'This registration has already been moved to the roster.' });
       sourceTable = 'join_registrations';
       playerName = r.rows[0].child_name;
+      siblingDiscount = r.rows[0].sibling_discount || 0;
       dob = r.rows[0].dob;
     }
 
     const insertRes = await pool.query(
       `INSERT INTO players
-        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [grade, playerName, dob || null, parentName || '', parentPhone || '', parentEmail || '',
-       normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0]
+       normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0,
+       siblingOverride !== undefined ? normalizeSibling(siblingOverride) : normalizeSibling(siblingDiscount)]
     );
 
     await pool.query(`UPDATE ${sourceTable} SET moved_at = now() WHERE id = $1`, [sourceId]);

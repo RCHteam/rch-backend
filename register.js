@@ -33,7 +33,7 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 
-  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType } = req.body || {};
+  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType, siblingDiscount } = req.body || {};
 
   const errors = {};
   if (!fullName || !String(fullName).trim()) errors.fullName = "Please enter the player's name.";
@@ -56,10 +56,10 @@ router.post('/register', async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO skills_registrations
-        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type, sibling_discount)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
-      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType]
+      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0]
     );
 
     const entry = insertRes.rows[0];

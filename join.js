@@ -77,7 +77,7 @@ router.post('/join/:ageGroup', async (req, res) => {
 
   const {
     childName, dob, motivation, experience, availability,
-    parentName, email, phone, emName, emPhone, medical, sessionType,
+    parentName, email, phone, emName, emPhone, medical, sessionType, siblingDiscount,
   } = req.body || {};
 
   const errors = {};
@@ -115,13 +115,13 @@ router.post('/join/:ageGroup', async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
-         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type, sibling_discount)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16::int
        WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
        parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey,
-       sessionType, capacity]
+       sessionType, capacity, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0]
     );
 
     if (!insertRes.rows[0]) {

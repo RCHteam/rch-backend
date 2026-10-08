@@ -330,3 +330,8 @@ CREATE TABLE IF NOT EXISTS agreements (
   signer_user_agent TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_agreements_reg ON agreements(registration_type, registration_id);
+
+-- Sibling discount chosen by parents at registration (0, 15 or 20 percent).
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE players ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
