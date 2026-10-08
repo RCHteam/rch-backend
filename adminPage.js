@@ -119,6 +119,8 @@ module.exports = `<!doctype html>
   .btn-cancel-billing{ background:#fff; border:1px solid #b5482f; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-cancel-billing:hover{ background:#b5482f; color:#fff; }
   .btn-cancel-billing:disabled{ opacity:0.6; cursor:default; }
+  .btn-start-billing{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-start-billing:hover{ background:var(--pitch); color:#fff; }
   .btn-edit-row{ background:#fff; border:1px solid #8a8a8a; color:#444; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-edit-row:hover{ background:#444; color:#fff; }
   .btn-edit-row:disabled{ opacity:0.6; cursor:default; }
@@ -156,6 +158,69 @@ module.exports = `<!doctype html>
   .pricing-box label{ display:block; font-size:0.8rem; font-weight:600; color:#444; }
   .pricing-box input{ margin-top:5px; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; width:140px; }
   .pricing-saved{ color:#2f8f57; font-size:0.85rem; font-weight:600; }
+
+  /* collapsible panels (Finances + Data) */
+  .panel-tools{ display:flex; justify-content:flex-end; gap:8px; margin:0 0 12px; }
+  .panel-tool{ background:transparent; border:1px solid #d9d2bd; color:#555; font-family:'Space Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; padding:6px 10px; border-radius:3px; cursor:pointer; }
+  .panel-tool:hover{ border-color:var(--pitch); color:var(--pitch); }
+  details.panel{ background:#fff; border-radius:6px; box-shadow:var(--shadow); margin-bottom:14px; border-left:4px solid var(--gold); }
+  details.panel[open]{ border-left-color:var(--acc); }
+  details.panel > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:14px; padding:16px 20px; user-select:none; }
+  details.panel > summary::-webkit-details-marker{ display:none; }
+  details.panel > summary:hover{ background:#faf7ee; border-radius:6px; }
+  .panel-title{ font-family:'Anton',sans-serif; font-size:1.3rem; letter-spacing:0.02em; }
+  .panel-hint{ color:#7a8277; font-size:0.85rem; flex:1; }
+  .panel-chev{ width:10px; height:10px; border-right:2px solid var(--pitch); border-bottom:2px solid var(--pitch); transform:rotate(45deg); transition:transform .2s ease; margin-right:4px; }
+  details.panel[open] .panel-chev{ transform:rotate(-135deg); }
+  .panel-body{ padding:4px 20px 22px; }
+  .panel-body p{ margin:8px 0 14px !important; }
+  .panel-body .pricing-box, .panel-body .modal-amounts{ box-shadow:none; border:1px solid #eee8d8; padding:16px 18px; }
+  .panel-body table{ box-shadow:none; border:1px solid #eee8d8; margin-bottom:6px; }
+  .panel-actions{ display:flex; justify-content:flex-end; margin-bottom:10px; }
+
+  /* tables scroll inside their own box so the page never slides sideways */
+  body{ overflow-x:clip; }
+  main{ min-width:0; }
+  [id$="TableWrap"]{ overflow-x:auto; max-width:100%; padding:2px 8px 30px; margin:-2px -8px 0; }
+  [id$="TableWrap"] table{ margin-bottom:0; }
+  .panel-body [id$="TableWrap"]{ padding-bottom:6px; }
+  .row-menu{ position:fixed; }
+
+  /* coach cards */
+  .coach-role-head{ display:flex; align-items:center; gap:10px; margin:30px 0 14px; }
+  .coach-role-head h3{ margin:0; font-size:1.35rem; }
+  .coach-role-head .dot{ width:12px; height:12px; border-radius:50%; background:var(--rc); box-shadow:0 0 0 3px rgba(0,0,0,0.06); }
+  .coach-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:22px; }
+  .coach-card{ --rc:#3f8f5b; --rc2:#8fd9a8; position:relative; padding:9px; border-radius:16px; background:linear-gradient(145deg,var(--rc),var(--rc2) 45%,var(--rc) 100%); box-shadow:0 8px 22px rgba(11,23,16,0.22); transition:transform .25s ease, box-shadow .25s ease; display:flex; }
+  .coach-card:hover{ transform:translateY(-6px) rotate(-0.4deg); box-shadow:0 18px 34px rgba(11,23,16,0.3); }
+  .coach-card.role-general_manager{ --rc:#c98f1c; --rc2:#f6d98a; }
+  .coach-card.role-head_coach{ --rc:#b5482f; --rc2:#f0a58f; }
+  .coach-card.role-coach{ --rc:#2f8f57; --rc2:#9be3b5; }
+  .coach-card.role-volunteer{ --rc:#2f78a8; --rc2:#a6d6f0; }
+  .coach-role-head.role-general_manager{ --rc:#c98f1c; } .coach-role-head.role-head_coach{ --rc:#b5482f; } .coach-role-head.role-coach{ --rc:#2f8f57; } .coach-role-head.role-volunteer{ --rc:#2f78a8; }
+  .cc-inner{ background:linear-gradient(180deg,#fffdf6,#f6f0dc); border-radius:10px; padding:12px 14px 14px; width:100%; display:flex; flex-direction:column; gap:10px; }
+  .cc-top{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .cc-stage{ font-family:'Space Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; background:var(--rc); color:#fff; padding:2px 7px; border-radius:3px; white-space:nowrap; }
+  .cc-name{ font-family:'Anton',sans-serif; font-size:1.35rem; letter-spacing:0.02em; line-height:1.1; flex:1; margin-left:8px; }
+  .cc-hp{ font-family:'Space Mono',monospace; font-size:0.6rem; text-transform:uppercase; color:#b5482f; text-align:right; line-height:1.1; }
+  .cc-hp b{ font-family:'Anton',sans-serif; font-size:1.05rem; font-weight:400; letter-spacing:0.02em; }
+  .cc-art{ position:relative; height:118px; border-radius:6px; border:3px solid #d8c88f; background:radial-gradient(circle at 30% 25%,rgba(255,255,255,0.65),transparent 45%),linear-gradient(135deg,var(--rc),var(--rc2)); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .cc-art::before{ content:""; position:absolute; inset:0; background:repeating-linear-gradient(115deg,rgba(255,255,255,0.14) 0 8px,transparent 8px 18px); }
+  .cc-art::after{ content:""; position:absolute; width:150px; height:150px; right:-40px; bottom:-60px; border-radius:50%; border:10px solid rgba(255,255,255,0.22); }
+  .cc-initials{ position:relative; font-family:'Anton',sans-serif; font-size:3.2rem; color:#fff; letter-spacing:0.05em; text-shadow:0 3px 0 rgba(0,0,0,0.25); }
+  .cc-role{ position:absolute; left:8px; bottom:6px; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; background:rgba(11,23,16,0.7); color:#fff; padding:2px 7px; border-radius:3px; z-index:1; }
+  .cc-star{ position:absolute; right:8px; top:6px; font-size:0.65rem; font-family:'Space Mono',monospace; letter-spacing:0.08em; background:var(--gold); color:var(--ink); padding:2px 7px; border-radius:3px; z-index:1; font-weight:700; }
+  .cc-info{ font-style:italic; font-size:0.72rem; color:#6b7568; text-align:center; border-top:1px solid #e6dcb8; border-bottom:1px solid #e6dcb8; padding:4px 0; }
+  .cc-move{ display:flex; align-items:flex-start; gap:9px; font-size:0.82rem; }
+  .cc-cost{ min-width:28px; height:22px; border-radius:11px; background:var(--rc); color:#fff; font-family:'Space Mono',monospace; font-size:0.62rem; display:flex; align-items:center; justify-content:center; padding:0 6px; white-space:nowrap; margin-top:1px; }
+  .cc-move b{ display:block; font-size:0.84rem; }
+  .cc-move span.txt{ color:#555; }
+  .cc-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .cc-chip{ background:#fff; border:1px solid var(--rc); color:var(--ink); font-size:0.68rem; padding:1px 7px; border-radius:10px; }
+  .cc-card-details{ font-size:0.78rem; } .cc-card-details summary{ cursor:pointer; color:var(--pitch); font-weight:600; } .cc-card-details div{ margin-top:4px; color:#444; white-space:pre-wrap; }
+  .cc-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; padding-top:8px; border-top:1px solid #e6dcb8; }
+  .cc-contact{ font-size:0.7rem; color:#555; line-height:1.35; word-break:break-all; }
+  .cc-actions{ display:flex; gap:6px; }
   table tfoot td, table tr.grand-total td{ font-weight:700; background:#f3e6c4; }
 </style>
 </head>
@@ -266,16 +331,21 @@ module.exports = `<!doctype html>
     </div><!-- /section-registrations -->
 
     <div id="section-finances" class="hidden">
+    <div class="panel-tools"><button type="button" class="panel-tool" data-panels="expand">Expand all</button><button type="button" class="panel-tool" data-panels="collapse">Collapse all</button></div>
 
-    <div class="section-head">
-      <h2>Pricing &amp; Revenue</h2>
-    </div>
+
+    <details class="panel" open>
+      <summary><span class="panel-title">Pricing &amp; Revenue</span><span class="panel-hint">Estimated monthly revenue by grade</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Revenue below is calculated from the <strong>Payment Link Amounts</strong> further down this page (the prices families actually pay), minus each player's discount. Change prices there only.</p>
     <div id="revenueTableWrap"></div>
 
-    <div class="section-head">
-      <h2>Payment Link Amounts</h2>
-    </div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Payment Link Amounts</span><span class="panel-hint">What families are charged</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">What "Send Payment Link" actually charges. Change these here whenever the season's rate changes — no code update needed. The first payment is automatically prorated for however many Tuesday/Thursday practices are left in the current month; the kit fee (if included) is a one-time add-on on top of that.</p>
     <div class="pricing-box">
       <div>
@@ -298,9 +368,12 @@ module.exports = `<!doctype html>
       <span class="pricing-saved" id="paymentPricingSaved"></span>
     </div>
 
-    <div class="section-head">
-      <h2>Proration Mode</h2>
-    </div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Proration Mode</span><span class="panel-hint">How the first month is calculated</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">While locked, the "this month" amount is fixed the moment you click Send Link — so a family that pays a few days late still owes what was shown to them, instead of a smaller amount recalculated at payment time. Turn this off once initial enrollment settles, so new signups pay live based on practices left as of the moment they actually pay.</p>
     <div class="pricing-box">
       <div class="checkbox-row">
@@ -311,9 +384,12 @@ module.exports = `<!doctype html>
       <span class="pricing-saved" id="prorationModeSaved"></span>
     </div>
 
-    <div class="section-head">
-      <h2>One-Time Payments</h2>
-    </div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">One-Time Payments</span><span class="panel-hint">Tournament fees, extra kits, one-off charges</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Create a stand-alone payment link for a single charge — a tournament fee, a replacement kit, a test charge, anything that isn't a recurring membership. Not tied to any registration or subscription; the family just pays this one amount once.</p>
     <div class="modal-amounts" style="background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
       <div>
@@ -333,15 +409,21 @@ module.exports = `<!doctype html>
     </div>
     <div id="oneTimePaymentsTableWrap"></div>
 
-    <div class="section-head">
-      <h2>Reset Payment Status</h2>
-    </div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Reset Payment Status</span><span class="panel-hint">Start a fresh billing month</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
     <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">For the start of a new billing month (e.g. November 1st, after last month's links have expired). Sets everyone's Payment Status back to "Not sent", cancels any unpaid links that are still open, and clears every "Paid otherwise" mark so you can send fresh links at the new price. Active Stripe subscriptions are not touched. Can only be used once per calendar month.</p>
     <div class="pricing-box">
       <button type="button" class="btn-reset-payments" id="resetPaymentStatusBtn">Reset Payment Status…</button>
       <span class="pricing-saved" id="resetPaymentInfo" style="color:#666;"></span>
     </div>
 
+
+      </div>
+    </details>
     </div><!-- /section-finances -->
 
     <div id="section-charges" class="hidden">
@@ -380,23 +462,25 @@ module.exports = `<!doctype html>
         <button type="button" class="btn-add" id="addCoachBtn">+ Add Coach</button>
       </div>
 
-      <div class="section-head" style="margin-top:10px;"><h3>General Manager</h3></div>
+      <div class="coach-role-head role-general_manager"><span class="dot"></span><h3>General Manager</h3></div>
       <div id="coachesTableWrap_general_manager"></div>
 
-      <div class="section-head" style="margin-top:24px;"><h3>Head Coaches</h3></div>
+      <div class="coach-role-head role-head_coach"><span class="dot"></span><h3>Head Coaches</h3></div>
       <div id="coachesTableWrap_head_coach"></div>
 
-      <div class="section-head" style="margin-top:24px;"><h3>Coaches</h3></div>
+      <div class="coach-role-head role-coach"><span class="dot"></span><h3>Coaches</h3></div>
       <div id="coachesTableWrap_coach"></div>
 
-      <div class="section-head" style="margin-top:24px;"><h3>Volunteer</h3></div>
+      <div class="coach-role-head role-volunteer"><span class="dot"></span><h3>Volunteers</h3></div>
       <div id="coachesTableWrap_volunteer"></div>
     </div><!-- /section-coaches -->
 
     <div id="section-data" class="hidden">
-      <div class="section-head">
-        <h2>Monthly Report</h2>
-      </div>
+    <div class="panel-tools"><button type="button" class="panel-tool" data-panels="expand">Expand all</button><button type="button" class="panel-tool" data-panels="collapse">Collapse all</button></div>
+
+    <details class="panel" open>
+      <summary><span class="panel-title">Monthly Report</span><span class="panel-hint">PDF report, emailed on the 1st</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A full PDF dashboard report — roster counts, Season Overview, Final Net Revenue, one-time payments, business charges, and current coaches — is emailed automatically on the 1st of each month for the month that just ended. Use the buttons below to preview the current month any time, or to resend/send early.</p>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
         <a class="btn-export" href="#" id="downloadMonthlyReportLink">Download This Month's PDF</a>
@@ -404,31 +488,45 @@ module.exports = `<!doctype html>
       </div>
       <span class="pricing-saved" id="monthlyReportStatus"></span>
 
-      <div class="section-head" style="margin-top:32px;">
-        <h2>Monthly Snapshots</h2>
-        <button type="button" class="btn-add" id="generateSnapshotBtn">Generate This Month's Snapshot</button>
       </div>
-      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A snapshot of the roster + estimated revenue, charges, and net income is saved automatically on the 1st of each month for the month that just ended. Revenue is estimated from each active player's current monthly rate minus their discount — it's a projection from the roster, not a reconciliation against actual settled Stripe payments, which Stripe's own dashboard remains the source of truth for.</p>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Monthly Snapshots</span><span class="panel-hint">Saved roster and revenue, month by month</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+        <div class="panel-actions"><button type="button" class="btn-add" id="generateSnapshotBtn">Generate This Month's Snapshot</button></div>      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A snapshot of the roster + estimated revenue, charges, and net income is saved automatically on the 1st of each month for the month that just ended. Revenue is estimated from each active player's current monthly rate minus their discount — it's a projection from the roster, not a reconciliation against actual settled Stripe payments, which Stripe's own dashboard remains the source of truth for.</p>
       <div id="snapshotsTableWrap"></div>
 
-      <div class="section-head" style="margin-top:32px;">
-        <h2>Signed Agreements</h2>
       </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Signed Agreements</span><span class="panel-hint">E-signed PDFs on file</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Use <b>Send Agreement</b> on a registration or roster row to email the family an e-sign link. Once they fill in the form and sign, the signed PDF is stored here and a copy is emailed to them and to you.</p>
       <div id="agreementsTableWrap"></div>
 
-      <div class="section-head" style="margin-top:32px;">
-        <h2>Unsubscribed Players</h2>
       </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Unsubscribed Players</span><span class="panel-hint">Archived players who quit</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Players who quit. Cancel their billing first (from the Players Roster), then Unsubscribe them here to archive them off the active roster.</p>
       <div id="archivedTableWrap"></div>
 
-      <div class="section-head" style="margin-top:32px;">
-        <h2>Exports</h2>
       </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Exports</span><span class="panel-hint">CSV downloads</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <a class="btn-export" href="#" id="exportRosterLink">Download Roster CSV</a>
       </div>
+
+      </div>
+    </details>
     </div><!-- /section-data -->
 
   </main>
@@ -1418,37 +1516,37 @@ module.exports = `<!doctype html>
 
   function renderCoachesTable(rows){
     if (!rows.length) return '<div class="empty">None yet.</div>';
-    let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Degree</th><th>Qualifications</th>' +
-      '<th>Certificates</th><th>Full/Part-Time</th><th>Fixed Salary</th><th>Referral Salary</th><th>Grades</th><th>Sultans Coach</th><th>Notes</th><th></th></tr></thead><tbody>';
+    const money = (c) => '$' + ((c || 0) / 100).toFixed(2);
+    let html = '<div class="coach-grid">';
     rows.forEach((c) => {
-      const gradeLabels = (c.grades || []).map((g) => ALL_GRADE_LABELS[g] || g).join(', ') || '—';
-      const fixedSalary = '$' + ((c.fixed_salary_cents || 0) / 100).toFixed(2);
+      const role = c.role || 'coach';
+      const initials = String(c.name || '?').trim().split(/\\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+      const grades = (c.grades || []).map((g) => '<span class="cc-chip">' + escapeHtml(ALL_GRADE_LABELS[g] || g) + '</span>').join('');
       const referred = c.players_referred || 0;
       const referralRate = (c.referral_rate_cents || 0) / 100;
-      const referralTotal = referred * referralRate;
-      const referralLabel = referralRate > 0
-        ? '$' + referralRate.toFixed(2) + ' x ' + referred + ' = $' + referralTotal.toFixed(2)
-        : '—';
-      html += '<tr>' +
-        '<td>' + escapeHtml(c.name) + '</td>' +
-        '<td>' + escapeHtml(c.email || '') + '</td>' +
-        '<td>' + escapeHtml(c.phone || '') + '</td>' +
-        '<td>' + escapeHtml(c.degree || '') + '</td>' +
-        '<td>' + collapsibleCell(c.qualifications) + '</td>' +
-        '<td>' + collapsibleCell(c.certificates) + '</td>' +
-        '<td>' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</td>' +
-        '<td>' + fixedSalary + '</td>' +
-        '<td>' + referralLabel + '</td>' +
-        '<td class="cell-wrap">' + gradeLabels + '</td>' +
-        '<td>' + (c.sultans ? '✓' : '—') + '</td>' +
-        '<td>' + collapsibleCell(c.notes) + '</td>' +
-        '<td style="display:flex; gap:6px; flex-wrap:wrap;">' +
-          '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
-          '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
-        '</td>' +
-        '</tr>';
+      const contact = [c.email, c.phone].filter(Boolean).map(escapeHtml).join('<br>');
+      html += '<div class="coach-card role-' + role + '"><div class="cc-inner">' +
+        '<div class="cc-top"><span class="cc-stage">' + (c.employment_type === 'full_time' ? 'Full-Time' : 'Part-Time') + '</span>' +
+          '<span class="cc-name">' + escapeHtml(c.name) + '</span>' +
+          '<span class="cc-hp">Salary<br><b>' + money(c.fixed_salary_cents) + '</b></span></div>' +
+        '<div class="cc-art"><span class="cc-initials">' + escapeHtml(initials) + '</span>' +
+          '<span class="cc-role">' + (COACH_ROLE_LABELS[role] || role) + '</span>' +
+          (c.sultans ? '<span class="cc-star">★ SULTANS</span>' : '') + '</div>' +
+        '<div class="cc-info">' + (c.degree ? escapeHtml(c.degree) : 'No degree listed') + '</div>' +
+        '<div class="cc-move"><span class="cc-cost">GRADES</span><div class="txt">' + (grades ? '<div class="cc-chips">' + grades + '</div>' : '<span class="txt">None assigned</span>') + '</div></div>' +
+        '<div class="cc-move"><span class="cc-cost">REFER</span><div><b>Referral bonus</b><span class="txt">' +
+          (referralRate > 0 ? '$' + referralRate.toFixed(2) + ' × ' + referred + ' = $' + (referralRate * referred).toFixed(2) : '—') + '</span></div></div>' +
+        (c.qualifications ? '<details class="cc-card-details"><summary>Qualifications</summary><div>' + escapeHtml(c.qualifications) + '</div></details>' : '') +
+        (c.certificates ? '<details class="cc-card-details"><summary>Certificates</summary><div>' + escapeHtml(c.certificates) + '</div></details>' : '') +
+        (c.notes ? '<details class="cc-card-details"><summary>Notes</summary><div>' + escapeHtml(c.notes) + '</div></details>' : '') +
+        '<div class="cc-foot"><div class="cc-contact">' + (contact || '&nbsp;') + '</div>' +
+          '<div class="cc-actions">' +
+            '<button type="button" class="btn-edit-row" data-id="' + c.id + '">Edit</button>' +
+            '<button type="button" class="btn-delete-row" data-id="' + c.id + '">Delete</button>' +
+          '</div></div>' +
+        '</div></div>';
     });
-    html += '</tbody></table>';
+    html += '</div>';
     return html;
   }
 
@@ -1946,6 +2044,8 @@ module.exports = `<!doctype html>
     document.querySelectorAll('.row-menu').forEach((m) => m.classList.add('hidden'));
   }
   document.addEventListener('click', closeAllRowMenus);
+  window.addEventListener('scroll', closeAllRowMenus, { passive: true });
+  window.addEventListener('resize', closeAllRowMenus);
 
   // Agreement column on the roster: signed ✓, or sent/not sent with a button
   // to (re)send the e-sign link right from the row.
@@ -2129,7 +2229,14 @@ module.exports = `<!doctype html>
         const menu = btn.nextElementSibling;
         const wasHidden = menu.classList.contains('hidden');
         closeAllRowMenus();
-        if (wasHidden) menu.classList.remove('hidden');
+        if (wasHidden) {
+          menu.classList.remove('hidden');
+          // The menu is position:fixed so the table's own scroll box can't clip it.
+          const r = btn.getBoundingClientRect();
+          menu.style.top = (r.bottom + 4) + 'px';
+          menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+          menu.style.left = 'auto';
+        }
       });
     });
     wrap.querySelectorAll('.btn-unsubscribe').forEach((btn) => {
@@ -2719,6 +2826,8 @@ module.exports = `<!doctype html>
 
   const SECTION_IDS = ['registrations', 'finances', 'charges', 'coaches', 'data'];
   function showSection(name){
+    // The count cards belong to the dashboard (Registrations) only.
+    document.getElementById('summary').classList.toggle('hidden', name !== 'registrations');
     SECTION_IDS.forEach((id) => {
       document.getElementById('section-' + id).classList.toggle('hidden', id !== name);
     });
@@ -2835,6 +2944,14 @@ module.exports = `<!doctype html>
     ]);
     await loadOverviewAndRevenue();
   }
+
+  // ---- Expand / collapse all panels (Finances + Data) ----
+  document.querySelectorAll('.panel-tool').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('data-panels') === 'expand';
+      btn.closest('[id^="section-"]').querySelectorAll('details.panel').forEach((d) => { d.open = open; });
+    });
+  });
 
   // ---- Logo -> dashboard ----
   function goDashboard(e){
