@@ -602,6 +602,12 @@ module.exports = `<!doctype html>
     </select>
     <label for="seasonEndInput">Billing ends on</label>
     <input type="date" id="seasonEndInput">
+    <label for="siblingDiscountSelect">Sibling discount (monthly fee only)</label>
+    <select id="siblingDiscountSelect">
+      <option value="0">None</option>
+      <option value="15">15% off — 3 siblings</option>
+      <option value="20">20% off — 4 siblings</option>
+    </select>
     <div class="checkbox-row">
       <input type="checkbox" id="includeKitFee">
       <label for="includeKitFee" id="includeKitFeeLabel">Include kit fee</label>
@@ -1037,7 +1043,11 @@ module.exports = `<!doctype html>
 
   function updateModalAmounts(){
     const tier = currentTiers()[document.getElementById('tierSelect').value];
-    const monthlyText = '$' + (tier.monthly / 100).toFixed(2) + '/mo';
+    const sibPct = Number(document.getElementById('siblingDiscountSelect').value) || 0;
+    const discounted = Math.round(tier.monthly * (100 - sibPct) / 100);
+    const monthlyText = sibPct
+      ? '<s>$' + (tier.monthly / 100).toFixed(2) + '</s> <b>$' + (discounted / 100).toFixed(2) + '/mo</b> (' + sibPct + '% sibling discount)'
+      : '$' + (tier.monthly / 100).toFixed(2) + '/mo';
     const includeKit = document.getElementById('includeKitFee').checked;
     const kitText = includeKit ? 'Kit fee (one-time): $' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + '<br>' : '';
     document.getElementById('modalAmounts').innerHTML =
@@ -1065,6 +1075,7 @@ module.exports = `<!doctype html>
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
     document.getElementById('includeKitFee').checked = false;
+    document.getElementById('siblingDiscountSelect').value = '0';
     document.getElementById('includeKitFeeLabel').textContent = 'Include kit fee ($' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + ')';
     document.getElementById('paymentModalError').textContent = '';
     updateModalAmounts();
@@ -1078,6 +1089,7 @@ module.exports = `<!doctype html>
 
   document.getElementById('tierSelect').addEventListener('change', updateModalAmounts);
   document.getElementById('includeKitFee').addEventListener('change', updateModalAmounts);
+  document.getElementById('siblingDiscountSelect').addEventListener('change', updateModalAmounts);
   document.getElementById('seasonSelect').addEventListener('change', (e) => {
     document.getElementById('seasonEndInput').value = computeSeasonEndDate(e.target.value);
   });
@@ -1095,7 +1107,9 @@ module.exports = `<!doctype html>
     const tierKey = document.getElementById('tierSelect').value;
     const tier = currentTiers()[tierKey];
     const seasonKey = document.getElementById('seasonSelect').value;
-    const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey];
+    const sibPct = Number(document.getElementById('siblingDiscountSelect').value) || 0;
+    const monthlyAmount = Math.round(tier.monthly * (100 - sibPct) / 100);
+    const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey] + (sibPct ? ' (' + sibPct + '% sibling discount)' : '');
     const includeKit = document.getElementById('includeKitFee').checked;
     const ctx = paymentModalCtx;
 
@@ -1110,7 +1124,7 @@ module.exports = `<!doctype html>
           registrationId: ctx.id,
           seasonEndDate,
           oneTimeAmount: includeKit ? PAYMENT_PRICING.kitFeeCents : 0,
-          monthlyAmount: tier.monthly,
+          monthlyAmount,
           tierLabel,
         }),
       });
