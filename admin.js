@@ -260,25 +260,68 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
 // breakdown below (Skills Training = total RCH players on the roster, across
 // all grades; Join FC <grade> = Sultans players on the roster, per grade).
 router.get('/admin/summary', requireAdmin, async (req, res) => {
-  const potentialRch = await pool.query(
-    `SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`
-  );
-  const potentialSultans = await pool.query(
-    `SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`
-  );
-  const rosterRch = await pool.query(
-    `SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`
-  );
-  const rosterSultansByGrade = await pool.query(
-    `SELECT grade AS age_group, COUNT(*)::int AS n FROM players
-     WHERE sultans AND archived_at IS NULL GROUP BY grade`
-  );
+  const [potentialRch, potentialSultans, rosterRch, rosterSultansByGrade] = await Promise.all([
+    pool.query(`SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`),
+    pool.query(
+      `SELECT grade AS age_group, COUNT(*)::int AS n FROM players
+       WHERE sultans AND archived_at IS NULL GROUP BY grade`
+    ),
+  ]);
   res.json({
     potentialRchCount: potentialRch.rows[0].n,
     potentialSultansCount: potentialSultans.rows[0].n,
     skillsTrainingCount: rosterRch.rows[0].n,
     joinCountsByAgeGroup: rosterSultansByGrade.rows,
   });
+});
+
+// Admin: one search box for everything. Looks across the Players Roster,
+// Skills Training registrations and Join Sultans FC registrations by player
+// name, parent name, email or phone. A few results per list keeps it fast.
+router.get('/admin/search', requireAdmin, async (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 80);
+  if (q.length < 2) return res.json({ results: [] });
+  const like = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+  try {
+    const [players, skills, join] = await Promise.all([
+      pool.query(
+        `SELECT id, player_name, grade, parent_name, parent_email, parent_phone, session_type, sibling_discount, archived_at
+           FROM players
+          WHERE player_name ILIKE $1 OR parent_name ILIKE $1 OR parent_email ILIKE $1 OR parent_phone ILIKE $1
+          ORDER BY (archived_at IS NOT NULL), player_name LIMIT 8`, [like]),
+      pool.query(
+        `SELECT id, full_name, grade, parent_name, email, phone, session_type, sibling_discount, moved_at
+           FROM skills_registrations
+          WHERE full_name ILIKE $1 OR parent_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1
+          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like]),
+      pool.query(
+        `SELECT id, child_name, age_group, parent_name, email, phone, session_type, sibling_discount, moved_at
+           FROM join_registrations
+          WHERE child_name ILIKE $1 OR parent_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1
+          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like]),
+    ]);
+    const results = [
+      ...players.rows.map((r) => ({
+        type: 'player', id: r.id, name: r.player_name, grade: r.grade, parent: r.parent_name,
+        email: r.parent_email, phone: r.parent_phone, sessionType: r.session_type,
+        sibling: r.sibling_discount, archived: !!r.archived_at,
+      })),
+      ...skills.rows.map((r) => ({
+        type: 'skills', id: r.id, name: r.full_name, grade: r.grade, parent: r.parent_name,
+        email: r.email, phone: r.phone, sessionType: r.session_type, sibling: r.sibling_discount, moved: !!r.moved_at,
+      })),
+      ...join.rows.map((r) => ({
+        type: 'join', id: r.id, name: r.child_name, grade: r.age_group, parent: r.parent_name,
+        email: r.email, phone: r.phone, sessionType: r.session_type, sibling: r.sibling_discount, moved: !!r.moved_at,
+      })),
+    ];
+    res.json({ results });
+  } catch (err) {
+    console.error('Admin search error:', err);
+    res.status(500).json({ error: 'Search failed.' });
+  }
 });
 
 function toCsv(rows) {

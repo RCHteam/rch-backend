@@ -50,6 +50,7 @@ async function gatherMonthlyReportData(monthKey) {
     overviewRows,
     pricingOne,
     pricingTwo,
+    pricingOnline,
     chargesRows,
     oneTimePayments,
     coaches,
@@ -63,11 +64,13 @@ async function gatherMonthlyReportData(monthKey) {
         COUNT(*)::int AS total_players,
         COUNT(*) FILTER (WHERE session_type = 'one')::int AS total_one,
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
+        COUNT(*) FILTER (WHERE session_type = 'online')::int AS total_online,
         COALESCE(SUM(${effectiveDiscountSql(discountRates)}), 0)::int AS total_discount_cents
       FROM players WHERE archived_at IS NULL GROUP BY grade
     `),
     getSetting('payment_one_session_monthly_cents', '6000'),
     getSetting('payment_two_session_monthly_cents', '10000'),
+    getSetting('payment_online_course_monthly_cents', '3120'),
     pool.query(`SELECT * FROM charges WHERE kind = 'recurring' OR charge_month = $1::date ORDER BY kind, description`, [monthKey]),
     pool.query(
       `SELECT * FROM one_time_payments
@@ -83,11 +86,12 @@ async function gatherMonthlyReportData(monthKey) {
 
   const priceOneCents = parseInt(pricingOne, 10);
   const priceTwoCents = parseInt(pricingTwo, 10);
+  const priceOnlineCents = parseInt(pricingOnline, 10);
 
-  const overviewByGrade = Object.fromEntries(GRADES.map((g) => [g, { totalPlayers: 0, totalOne: 0, totalTwo: 0, totalDiscountCents: 0 }]));
+  const overviewByGrade = Object.fromEntries(GRADES.map((g) => [g, { totalPlayers: 0, totalOne: 0, totalTwo: 0, totalOnline: 0, totalDiscountCents: 0 }]));
   overviewRows.rows.forEach((r) => {
     overviewByGrade[r.grade] = {
-      totalPlayers: r.total_players, totalOne: r.total_one, totalTwo: r.total_two,
+      totalPlayers: r.total_players, totalOne: r.total_one, totalTwo: r.total_two, totalOnline: r.total_online,
       totalDiscountCents: r.total_discount_cents,
     };
   });
@@ -99,17 +103,18 @@ async function gatherMonthlyReportData(monthKey) {
     const o = overviewByGrade[g];
     const revOne = o.totalOne * priceOneCents;
     const revTwo = o.totalTwo * priceTwoCents;
+    const revOnline = o.totalOnline * priceOnlineCents;
     const disc = o.totalDiscountCents || 0;
-    const total = revOne + revTwo - disc;
-    const fee = Math.round(total * (STRIPE_PCT + STRIPE_BILLING_PCT)) + ((o.totalOne + o.totalTwo) * STRIPE_FIXED_CENTS);
+    const total = revOne + revTwo + revOnline - disc;
+    const fee = Math.round(total * (STRIPE_PCT + STRIPE_BILLING_PCT)) + ((o.totalOne + o.totalTwo + o.totalOnline) * STRIPE_FIXED_CENTS);
     const net = total - fee;
-    return { grade: g, label: GRADE_LABELS[g], totalOne: o.totalOne, totalTwo: o.totalTwo, revOne, revTwo, disc, total, fee, net };
+    return { grade: g, label: GRADE_LABELS[g], totalOne: o.totalOne, totalTwo: o.totalTwo, totalOnline: o.totalOnline, revOne, revTwo, revOnline, disc, total, fee, net };
   });
   const revenueTotals = revenueByGrade.reduce((acc, r) => ({
-    totalOne: acc.totalOne + r.totalOne, totalTwo: acc.totalTwo + r.totalTwo,
-    revOne: acc.revOne + r.revOne, revTwo: acc.revTwo + r.revTwo, disc: acc.disc + r.disc,
+    totalOne: acc.totalOne + r.totalOne, totalTwo: acc.totalTwo + r.totalTwo, totalOnline: acc.totalOnline + r.totalOnline,
+    revOne: acc.revOne + r.revOne, revTwo: acc.revTwo + r.revTwo, revOnline: acc.revOnline + r.revOnline, disc: acc.disc + r.disc,
     total: acc.total + r.total, fee: acc.fee + r.fee, net: acc.net + r.net,
-  }), { totalOne: 0, totalTwo: 0, revOne: 0, revTwo: 0, disc: 0, total: 0, fee: 0, net: 0 });
+  }), { totalOne: 0, totalTwo: 0, totalOnline: 0, revOne: 0, revTwo: 0, revOnline: 0, disc: 0, total: 0, fee: 0, net: 0 });
 
   const businessChargesCents = chargesRows.rows.reduce((sum, c) => sum + c.amount_cents, 0);
   const finalNetRevenueCents = revenueTotals.net - businessChargesCents;
@@ -174,7 +179,7 @@ function buildMonthlyReportPdf(data) {
       drawSectionHeading(doc, 'Season Overview — All Grades');
       GRADES.forEach((g) => {
         const o = data.overviewByGrade[g];
-        drawRow(doc, GRADE_LABELS[g], `${o.totalPlayers} players (One: ${o.totalOne}, Two: ${o.totalTwo})`);
+        drawRow(doc, GRADE_LABELS[g], `${o.totalPlayers} players (One: ${o.totalOne}, Two: ${o.totalTwo}, Online: ${o.totalOnline})`);
       });
       const totalPlayers = GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalPlayers, 0);
       doc.font('Helvetica-Bold');
@@ -185,7 +190,7 @@ function buildMonthlyReportPdf(data) {
       drawSectionHeading(doc, 'Final Net Revenue');
       GRADES.forEach((g) => {
         const r = data.revenueByGrade.find((x) => x.grade === g);
-        if (r.total === 0 && r.totalOne === 0 && r.totalTwo === 0) return;
+        if (r.total === 0 && r.totalOne === 0 && r.totalTwo === 0 && r.totalOnline === 0) return;
         drawRow(doc, r.label, `${money(r.total)} gross, -${money(r.fee)} Stripe fees, ${money(r.net)} net`);
       });
       doc.moveDown(0.3);

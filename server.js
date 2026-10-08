@@ -22,6 +22,10 @@ const { router: reportsRoutes, runMonthEndCheckIfDue } = require('./reports');
 
 const app = express();
 
+// Render sits behind a proxy; trusting it lets the rate limiter see each
+// visitor's real IP (and removes the X-Forwarded-For warning in the logs).
+app.set('trust proxy', 1);
+
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
@@ -79,6 +83,7 @@ app.get('/pay/one-time/:token/success', (req, res) => {
 // Logo, served as a real file (not a data: URI) — email clients like Gmail
 // don't reliably render inline base64 images, only hosted image URLs.
 app.get('/assets/logo.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.join(__dirname, 'assets', 'logo.png'));
 });
 
@@ -87,9 +92,11 @@ app.get('/sign/:token', (req, res) => {
   res.type('html').send(signPageHtml);
 });
 app.get('/assets/agreement-rch.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
   res.sendFile(assetPath('agreement-rch.png'));
 });
 app.get('/assets/agreement-sultans.png', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
   res.sendFile(assetPath('agreement-sultans.png'));
 });
 

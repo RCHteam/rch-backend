@@ -347,6 +347,7 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
         COUNT(*) FILTER (WHERE rch AND sultans)::int AS total_both,
         COUNT(*) FILTER (WHERE session_type = 'one')::int AS total_one,
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
+        COUNT(*) FILTER (WHERE session_type = 'online')::int AS total_online,
         COALESCE(SUM(${effectiveDiscountSql(rates)}), 0)::int AS total_discount_cents
       FROM players
       WHERE archived_at IS NULL
@@ -361,12 +362,13 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
         totalBoth: r.total_both,
         totalOne: r.total_one,
         totalTwo: r.total_two,
+        totalOnline: r.total_online,
         totalDiscountCents: r.total_discount_cents,
       };
     });
     GRADES.forEach((g) => {
       if (!byGrade[g]) {
-        byGrade[g] = { totalPlayers: 0, totalRch: 0, totalSultans: 0, totalBoth: 0, totalOne: 0, totalTwo: 0, totalDiscountCents: 0 };
+        byGrade[g] = { totalPlayers: 0, totalRch: 0, totalSultans: 0, totalBoth: 0, totalOne: 0, totalTwo: 0, totalOnline: 0, totalDiscountCents: 0 };
       }
     });
     res.json(byGrade);
@@ -381,7 +383,7 @@ router.get('/admin/pricing', requireAdmin, async (req, res) => {
   try {
     // One source of truth: the Payment Link Amounts (what families are charged).
     const rates = await getMonthlyRates();
-    res.json({ priceOneCents: rates.one, priceTwoCents: rates.two });
+    res.json({ priceOneCents: rates.one, priceTwoCents: rates.two, priceOnlineCents: rates.online });
   } catch (err) {
     console.error('Get pricing error:', err);
     res.status(500).json({ error: 'Could not load pricing.' });

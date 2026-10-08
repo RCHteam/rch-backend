@@ -335,3 +335,11 @@ CREATE INDEX IF NOT EXISTS idx_agreements_reg ON agreements(registration_type, r
 ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN IF NOT EXISTS sibling_discount INTEGER NOT NULL DEFAULT 0;
+
+-- Speed: the roster and registration lists look up each player's latest payment
+-- link, and search scans a few text columns; these keep both snappy as the
+-- club grows.
+CREATE INDEX IF NOT EXISTS idx_payment_links_reg ON payment_links(registration_type, registration_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_players_archived ON players(archived_at);
+CREATE INDEX IF NOT EXISTS idx_skills_moved ON skills_registrations(moved_at);
+CREATE INDEX IF NOT EXISTS idx_join_moved ON join_registrations(moved_at);

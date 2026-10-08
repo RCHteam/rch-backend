@@ -4,39 +4,80 @@ module.exports = `<!doctype html>
 <meta charset="utf-8">
 <title>RCH Elite Training — Admin</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --pitch-deep:#0c2a1c; --pitch:#164a30; --gold:#d9a441; --chalk:#f6f2e7; }
+  :root{ --pitch-deep:#0c2a1c; --pitch:#164a30; --turf:#3f8f5b; --gold:#d9a441; --gold-bright:#f0c674; --chalk:#f6f2e7; --chalk-dim:#e9e2d0; --ink:#0b1710; --acc:#3fcf7a; --away:#b5482f; --line:#e4dcc6; --shadow:0 10px 30px rgba(11,23,16,0.10); }
   *{ box-sizing:border-box; }
-  body{ margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:#f4f1e8; color:#1c2a20; }
-  header{ background:var(--pitch-deep); color:var(--chalk); padding:12px 28px; display:flex; align-items:center; justify-content:space-between; }
-  header .header-brand{ flex:1; display:flex; align-items:center; justify-content:center; }
-  header .header-brand img{ height:76px; width:auto; display:block; }
-  #sectionNav{ background:#fff; border:none; border-radius:6px; padding:8px 12px; font-size:0.85rem; font-weight:600; color:var(--pitch-deep); cursor:pointer; }
+  body{ margin:0; font-family:'Work Sans',-apple-system,Segoe UI,Roboto,sans-serif; background:var(--chalk); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  h1,h2,h3{ font-family:'Anton',sans-serif; font-weight:400; letter-spacing:0.02em; }
+  header{ background:var(--pitch-deep); border-bottom:3px solid var(--acc); color:var(--chalk); padding:10px 28px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:16px; position:sticky; top:0; z-index:40; }
+  header .header-brand{ display:flex; align-items:center; justify-content:center; }
+  header .header-brand a{ display:block; line-height:0; border-radius:4px; }
+  header .header-brand a:focus-visible{ outline:2px solid var(--gold); outline-offset:4px; }
+  header .header-brand img{ height:56px; width:auto; display:block; transition:transform .2s ease; }
+  header .header-brand a:hover img{ transform:scale(1.04); }
+  .header-right{ display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+  #sectionNav{ background:transparent; border:1px solid rgba(246,242,231,0.3); border-radius:3px; padding:9px 12px; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--chalk); cursor:pointer; }
+  #sectionNav option{ color:var(--ink); text-transform:none; letter-spacing:0; }
+  /* search */
+  .search-wrap{ position:relative; max-width:380px; width:100%; }
+  .search-wrap input{ width:100%; padding:10px 14px 10px 36px; border:1px solid rgba(246,242,231,0.3); background:rgba(246,242,231,0.08); color:var(--chalk); border-radius:3px; font-family:inherit; font-size:0.9rem; }
+  .search-wrap input::-webkit-search-cancel-button, .search-wrap input::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; }
+  .search-wrap input:focus ~ kbd, .search-wrap input:not(:placeholder-shown) ~ kbd{ display:none; }
+  .search-wrap input::placeholder{ color:rgba(246,242,231,0.55); }
+  .search-wrap input:focus{ outline:none; border-color:var(--acc); background:rgba(246,242,231,0.14); }
+  .search-wrap .search-icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; opacity:0.7; pointer-events:none; }
+  .search-wrap kbd{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-family:'Space Mono',monospace; font-size:0.65rem; color:rgba(246,242,231,0.55); border:1px solid rgba(246,242,231,0.3); border-radius:3px; padding:1px 6px; pointer-events:none; }
+  .search-results{ position:absolute; top:calc(100% + 6px); left:0; width:min(560px,92vw); background:#fff; color:var(--ink); border-radius:6px; box-shadow:0 20px 50px rgba(11,23,16,0.35); max-height:70vh; overflow-y:auto; z-index:60; }
+  .search-results.hidden{ display:none; }
+  .sr-item{ display:grid; grid-template-columns:auto 1fr auto; gap:4px 12px; align-items:center; padding:10px 14px; border-bottom:1px solid #eee; cursor:pointer; }
+  .sr-item:last-child{ border-bottom:none; }
+  .sr-item:hover, .sr-item.active{ background:#f3f7f1; }
+  .sr-item.sr-dim{ opacity:0.55; cursor:default; }
+  .sr-type{ font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; padding:3px 8px; border-radius:3px; background:var(--pitch); color:var(--chalk); white-space:nowrap; }
+  .sr-type.t-skills{ background:var(--gold); color:var(--ink); }
+  .sr-type.t-join{ background:var(--turf); }
+  .sr-name{ font-weight:700; }
+  .sr-meta{ grid-column:2 / 4; font-size:0.78rem; color:#666; }
+  .sr-tag{ font-size:0.72rem; color:#777; text-align:right; }
+  .sr-empty{ padding:16px; color:#888; font-size:0.9rem; }
+  tr.row-flash td{ animation:rowflash 2.2s ease; }
+  @keyframes rowflash{ 0%,60%{ background:#fff3c4; } 100%{ background:transparent; } }
   #login-view .login-logo{ display:block; max-width:200px; width:100%; height:auto; margin:0 auto 20px; }
-  header button{ background:transparent; border:1px solid rgba(246,242,231,0.4); color:var(--chalk); padding:8px 14px; border-radius:6px; cursor:pointer; }
+  header button{ background:transparent; border:1px solid rgba(246,242,231,0.3); color:var(--chalk); padding:9px 14px; border-radius:3px; cursor:pointer; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; white-space:nowrap; transition:background .2s ease,border-color .2s ease; }
+  header button:hover{ background:rgba(246,242,231,0.1); border-color:var(--acc); }
   main{ max-width:1500px; margin:0 auto; padding:28px; }
-  #login-view{ max-width:360px; margin:80px auto; background:#fff; padding:30px; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.08); }
-  #login-view h2{ margin-top:0; }
-  #login-view input{ width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; margin:10px 0; font-size:1rem; }
-  #login-view button{ width:100%; padding:10px; background:var(--gold); border:none; border-radius:6px; font-weight:700; cursor:pointer; }
+  @media (max-width:820px){ header{ grid-template-columns:1fr auto; padding:10px 14px; } header .search-slot{ grid-column:1 / -1; order:3; } .header-right{ gap:8px; } main{ padding:16px; } }
+  #login-view{ max-width:360px; margin:80px auto; background:#fff; padding:30px; border-radius:6px; border-top:4px solid var(--acc); box-shadow:var(--shadow); }
+  #login-view h2{ margin-top:0; font-size:1.5rem; }
+  #login-view input{ width:100%; padding:11px 12px; border:1px solid #d9d2bd; border-radius:3px; margin:10px 0; font-size:1rem; font-family:inherit; }
+  #login-view input:focus{ outline:2px solid var(--acc); outline-offset:0; border-color:transparent; }
+  #login-view button{ width:100%; padding:12px; background:var(--gold); border:none; border-radius:3px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.95rem; transition:background .2s ease; }
+  #login-view button:hover{ background:var(--gold-bright); }
   #login-error{ color:#b5482f; font-size:0.9rem; min-height:1.2em; }
-  .summary{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:28px; }
-  .card{ background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); min-width:140px; }
-  .card .n{ font-size:1.6rem; font-weight:800; color:var(--pitch); }
-  .card .l{ font-size:0.8rem; color:#666; text-transform:uppercase; letter-spacing:0.05em; }
-  table{ width:100%; border-collapse:collapse; background:#fff; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:32px; font-size:0.88rem; }
-  th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid #eee; white-space:nowrap; }
+  .summary{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-bottom:30px; }
+  .card{ background:#fff; border-radius:6px; border-top:3px solid var(--acc); padding:16px 22px; box-shadow:var(--shadow); min-width:150px; }
+  .card .n{ font-family:'Anton',sans-serif; font-size:2rem; font-weight:400; color:var(--pitch); line-height:1.1; }
+  .card .l{ font-family:'Space Mono',monospace; font-size:0.65rem; color:#6b7568; text-transform:uppercase; letter-spacing:0.14em; margin-top:4px; }
+  table{ width:100%; border-collapse:collapse; background:#fff; border-radius:6px; box-shadow:var(--shadow); margin-bottom:34px; font-size:0.88rem; }
+  tbody tr{ transition:background .15s ease; }
+  tbody tr:hover{ background:#faf7ee; }
+  th, td{ text-align:left; padding:11px 10px; border-bottom:1px solid #eee8d8; white-space:nowrap; }
   td.cell-wrap{ white-space:normal; max-width:240px; word-wrap:break-word; }
   td details{ white-space:normal; }
   td details summary{ cursor:pointer; color:var(--pitch); font-size:0.8rem; list-style:none; }
   td details summary::-webkit-details-marker{ display:none; }
   td details summary:before{ content:"▸ "; }
   td details[open] summary:before{ content:"▾ "; }
-  th{ background:#f0ece0; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:#555; }
-  .section-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 12px; }
-  .section-head h2{ margin:0; font-size:1.05rem; }
+  th{ background:var(--pitch-deep); font-family:'Space Mono',monospace; font-size:0.62rem; font-weight:400; text-transform:uppercase; letter-spacing:0.09em; color:var(--chalk-dim); white-space:normal; line-height:1.35; vertical-align:bottom; }
+  thead th:first-child{ border-top-left-radius:6px; } thead th:last-child{ border-top-right-radius:6px; }
+  .section-head{ display:flex; align-items:center; justify-content:space-between; margin:0 0 14px; gap:12px; flex-wrap:wrap; }
+  .section-head h2{ margin:0; font-size:1.5rem; padding-left:12px; border-left:4px solid var(--gold); line-height:1.15; }
   .section-head select, .section-head a{ font-size:0.85rem; }
-  a.btn-export{ background:var(--pitch); color:#fff; padding:7px 14px; border-radius:6px; text-decoration:none; }
+  .section-head select{ padding:8px 10px; border:1px solid #d9d2bd; border-radius:3px; background:#fff; font-family:inherit; color:var(--ink); cursor:pointer; }
+  a.btn-export{ background:var(--pitch); color:#fff; padding:8px 14px; border-radius:3px; text-decoration:none; font-weight:600; transition:background .2s ease; }
+  a.btn-export:hover{ background:var(--turf); }
   .hidden{ display:none; }
   .empty{ padding:20px; color:#888; font-style:italic; }
   .btn-delete-row{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
@@ -89,16 +130,17 @@ module.exports = `<!doctype html>
   .switch-row input:checked + .switch-track{ background:#2f8f57; }
   .switch-row input:checked + .switch-track .switch-thumb{ transform:translateX(16px); }
   .switch-row input:disabled + .switch-track{ opacity:0.5; cursor:default; }
-  .btn-add{ background:var(--gold); color:#1c2a20; border:none; padding:7px 14px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.85rem; }
+  .btn-add{ background:var(--gold); color:var(--ink); border:none; padding:8px 15px; border-radius:3px; font-weight:700; cursor:pointer; font-size:0.85rem; font-family:inherit; transition:background .2s ease, transform .2s ease; }
+  .btn-add:hover{ background:var(--gold-bright); transform:translateY(-1px); }
   .modal-overlay{ position:fixed; inset:0; background:rgba(12,42,28,0.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
   .modal-overlay.hidden{ display:none; }
-  .modal{ background:#fff; border-radius:10px; padding:26px 28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-  .modal h3{ margin:0 0 4px; font-size:1.1rem; }
+  .modal{ background:#fff; border-radius:6px; border-top:4px solid var(--acc); padding:26px 28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  .modal h3{ margin:0 0 4px; font-size:1.4rem; }
   .modal .modal-sub{ color:#666; font-size:0.85rem; margin-bottom:6px; }
   .modal label{ display:block; font-size:0.8rem; font-weight:600; color:#444; margin:14px 0 5px; }
   .modal select, .modal input, .modal textarea{ width:100%; padding:9px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; font-family:inherit; }
   .modal textarea{ resize:vertical; min-height:56px; }
-  .modal .modal-amounts{ background:#f4f1e8; border-radius:6px; padding:10px 12px; margin-top:16px; font-size:0.85rem; color:#333; line-height:1.5; }
+  .modal .modal-amounts{ background:var(--chalk); border-left:3px solid var(--gold); border-radius:3px; padding:10px 12px; margin-top:16px; font-size:0.85rem; color:#333; line-height:1.5; }
   .modal .modal-actions{ display:flex; gap:10px; margin-top:22px; }
   .modal .modal-actions button{ flex:1; padding:10px; border-radius:6px; font-weight:700; cursor:pointer; border:none; font-size:0.92rem; }
   .modal .btn-cancel{ background:#eee; color:#333; }
@@ -110,11 +152,11 @@ module.exports = `<!doctype html>
   .checkbox-row{ display:flex; align-items:center; gap:6px; margin-top:14px; }
   .checkbox-row input[type="checkbox"]{ width:auto; }
   .checkbox-row label{ margin:0; font-weight:400; }
-  .pricing-box{ background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:20px; display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; }
+  .pricing-box{ background:#fff; border-radius:6px; padding:18px 22px; box-shadow:var(--shadow); margin-bottom:20px; display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; }
   .pricing-box label{ display:block; font-size:0.8rem; font-weight:600; color:#444; }
   .pricing-box input{ margin-top:5px; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; width:140px; }
   .pricing-saved{ color:#2f8f57; font-size:0.85rem; font-weight:600; }
-  table tfoot td, table tr.grand-total td{ font-weight:700; background:#f0ece0; }
+  table tfoot td, table tr.grand-total td{ font-weight:700; background:#f3e6c4; }
 </style>
 </head>
 <body>
@@ -129,10 +171,20 @@ module.exports = `<!doctype html>
 
 <div id="app-view" class="hidden">
   <header>
-    <div class="header-brand">
-      <img src="/assets/logo.png" alt="RCH Elite Training">
+    <div class="search-slot">
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="#f6f2e7" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="globalSearch" placeholder="Search players, parents, emails…" autocomplete="off" spellcheck="false" aria-label="Search">
+        <kbd>/</kbd>
+        <div class="search-results hidden" id="searchResults" role="listbox"></div>
+      </div>
     </div>
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div class="header-brand">
+      <a href="#dashboard" id="logoHome" title="Back to the dashboard" aria-label="RCH Elite Training — back to the dashboard">
+        <img src="/assets/logo.png" alt="RCH Elite Training">
+      </a>
+    </div>
+    <div class="header-right">
       <select id="sectionNav">
         <option value="registrations">Registrations</option>
         <option value="finances">Finances</option>
@@ -852,7 +904,7 @@ module.exports = `<!doctype html>
     const cols = hasActions ? [...columns, { key:'__actions', label:'' }] : columns;
     let html = '<table><thead><tr>' + cols.map(c => \`<th>\${c.label}</th>\`).join('') + '</tr></thead><tbody>';
     for (const row of rows) {
-      html += '<tr>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
+      html += '<tr' + (opts.ridPrefix ? ' data-rid="' + opts.ridPrefix + row[opts.idKey || 'id'] + '"' : '') + '>' + columns.map(c => \`<td>\${row[c.key] ?? ''}</td>\`).join('');
       if (hasActions) {
         html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">';
         if (opts.onMoveToRoster) {
@@ -1824,11 +1876,12 @@ module.exports = `<!doctype html>
     return 'status-neutral';
   }
 
+  function fmtDay(v){ return v ? String(v).slice(0, 10) : ''; }
   function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—' }; }
 
   async function loadSkills(){
     const rows = (await api('/api/admin/skills-registrations')).map(addSiblingLabel);
-    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows, [
+    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows.map(r => ({ ...r, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) })), [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
       { key:'dob', label:'DOB' },
@@ -1838,7 +1891,7 @@ module.exports = `<!doctype html>
       { key:'sibling_label', label:'Sibling' },
       { key:'experience', label:'Experience' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onMoveToRoster: true, labelKey: 'full_name' });
+    ], { onDelete: true, onMoveToRoster: true, labelKey: 'full_name', ridPrefix: 'skills-' });
     wireDeleteButtons('skillsTableWrap', async (id) => {
       await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadSkills()]);
@@ -1855,7 +1908,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = (await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''))).map(addSiblingLabel);
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group }));
+    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },
@@ -1867,7 +1920,7 @@ module.exports = `<!doctype html>
       { key:'availability', label:'Availability' },
       { key:'sibling_label', label:'Sibling' },
       { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name' });
+    ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name', ridPrefix: 'join-' });
     wireDeleteButtons('joinTableWrap', async (id) => {
       await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
       await Promise.all([loadSummary(), loadJoin()]);
@@ -1879,7 +1932,7 @@ module.exports = `<!doctype html>
   // ---- Players Roster, Season Overview, Pricing & Revenue ----
 
   const GRADES = ['pre-k','kindergarten','1st-grade','2nd-grade','3rd-grade','4th-grade','5th-grade','6th-grade'];
-  let currentPricing = { priceOneCents: 15000, priceTwoCents: 25000 };
+  let currentPricing = { priceOneCents: 6000, priceTwoCents: 10000, priceOnlineCents: 3120 };
   let lastOverview = null;
   let lastChargesCents = 0;
 
@@ -1912,9 +1965,9 @@ module.exports = `<!doctype html>
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
-      html += '<tr>' +
+      html += '<tr data-rid="player-' + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
-        '<td>' + escapeHtml(r.dob || '') + '</td>' +
+        '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_email || '') + '</td>' +
@@ -2098,17 +2151,17 @@ module.exports = `<!doctype html>
 
   function renderOverviewTable(overview){
     let html = '<table><thead><tr><th>Grade</th><th>Total Players</th><th>Total RCH</th>' +
-      '<th>Total Sultans</th><th>Total Both</th><th>Total One Session</th><th>Total Two Session</th></tr></thead><tbody>';
-    const grand = { players:0, rch:0, sultans:0, both:0, one:0, two:0 };
+      '<th>Total Sultans</th><th>Total Both</th><th>Total One Session</th><th>Total Two Session</th><th>Total Online</th></tr></thead><tbody>';
+    const grand = { players:0, rch:0, sultans:0, both:0, one:0, two:0, online:0 };
     GRADES.forEach((g) => {
-      const o = overview[g] || { totalPlayers:0, totalRch:0, totalSultans:0, totalBoth:0, totalOne:0, totalTwo:0 };
+      const o = overview[g] || { totalPlayers:0, totalRch:0, totalSultans:0, totalBoth:0, totalOne:0, totalTwo:0, totalOnline:0 };
       grand.players += o.totalPlayers; grand.rch += o.totalRch; grand.sultans += o.totalSultans;
-      grand.both += o.totalBoth; grand.one += o.totalOne; grand.two += o.totalTwo;
+      grand.both += o.totalBoth; grand.one += o.totalOne; grand.two += o.totalTwo; grand.online += (o.totalOnline || 0);
       html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalPlayers + '</td><td>' + o.totalRch + '</td>' +
-        '<td>' + o.totalSultans + '</td><td>' + o.totalBoth + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td></tr>';
+        '<td>' + o.totalSultans + '</td><td>' + o.totalBoth + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td><td>' + (o.totalOnline || 0) + '</td></tr>';
     });
     html += '<tr class="grand-total"><td>GRAND TOTAL</td><td>' + grand.players + '</td><td>' + grand.rch + '</td>' +
-      '<td>' + grand.sultans + '</td><td>' + grand.both + '</td><td>' + grand.one + '</td><td>' + grand.two + '</td></tr>';
+      '<td>' + grand.sultans + '</td><td>' + grand.both + '</td><td>' + grand.one + '</td><td>' + grand.two + '</td><td>' + grand.online + '</td></tr>';
     html += '</tbody></table>';
     return html;
   }
@@ -2150,32 +2203,35 @@ module.exports = `<!doctype html>
   }
 
   function renderRevenueTable(overview, pricing, chargesCents){
-    let html = '<table><thead><tr><th>Grade</th><th>One-Session Players</th><th>Two-Session Players</th>' +
-      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Discounts</th><th>Total Revenue</th>' +
+    let html = '<table><thead><tr><th>Grade</th><th>One-Session Players</th><th>Two-Session Players</th><th>Online Players</th>' +
+      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Revenue (Online)</th><th>Discounts</th><th>Total Revenue</th>' +
       '<th>Est. Stripe Fees</th><th>Net After Stripe</th></tr></thead><tbody>';
-    const totals = { one:0, two:0, revOne:0, revTwo:0, disc:0, total:0, fee:0, net:0 };
+    const totals = { one:0, two:0, online:0, revOne:0, revTwo:0, revOnline:0, disc:0, total:0, fee:0, net:0 };
+    const money = (c) => '$' + (c/100).toFixed(2);
     GRADES.forEach((g) => {
-      const o = overview[g] || { totalOne:0, totalTwo:0, totalDiscountCents:0 };
+      const o = overview[g] || { totalOne:0, totalTwo:0, totalOnline:0, totalDiscountCents:0 };
+      const online = o.totalOnline || 0;
       const revOne = o.totalOne * pricing.priceOneCents;
       const revTwo = o.totalTwo * pricing.priceTwoCents;
+      const revOnline = online * (pricing.priceOnlineCents || 0);
       const disc = o.totalDiscountCents || 0;
-      const total = revOne + revTwo - disc;
+      const total = revOne + revTwo + revOnline - disc;
       // Each player is charged separately (its own subscription), so the
       // $0.30 fixed fee applies per player, not once per grade.
-      const fee = stripeFeeCents(total, o.totalOne + o.totalTwo);
+      const fee = stripeFeeCents(total, o.totalOne + o.totalTwo + online);
       const net = total - fee;
-      totals.one += o.totalOne; totals.two += o.totalTwo;
-      totals.revOne += revOne; totals.revTwo += revTwo; totals.disc += disc; totals.total += total;
-      totals.fee += fee; totals.net += net;
-      html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td>' +
-        '<td>$' + (revOne/100).toFixed(2) + '</td><td>$' + (revTwo/100).toFixed(2) + '</td>' +
-        '<td>$' + (disc/100).toFixed(2) + '</td><td>$' + (total/100).toFixed(2) + '</td>' +
-        '<td>$' + (fee/100).toFixed(2) + '</td><td>$' + (net/100).toFixed(2) + '</td></tr>';
+      totals.one += o.totalOne; totals.two += o.totalTwo; totals.online += online;
+      totals.revOne += revOne; totals.revTwo += revTwo; totals.revOnline += revOnline;
+      totals.disc += disc; totals.total += total; totals.fee += fee; totals.net += net;
+      html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td><td>' + online + '</td>' +
+        '<td>' + money(revOne) + '</td><td>' + money(revTwo) + '</td><td>' + money(revOnline) + '</td>' +
+        '<td>' + money(disc) + '</td><td>' + money(total) + '</td>' +
+        '<td>' + money(fee) + '</td><td>' + money(net) + '</td></tr>';
     });
-    html += '<tr class="grand-total"><td>TOTAL WON (Revenue)</td><td>' + totals.one + '</td><td>' + totals.two + '</td>' +
-      '<td>$' + (totals.revOne/100).toFixed(2) + '</td><td>$' + (totals.revTwo/100).toFixed(2) + '</td>' +
-      '<td>$' + (totals.disc/100).toFixed(2) + '</td><td>$' + (totals.total/100).toFixed(2) + '</td>' +
-      '<td>$' + (totals.fee/100).toFixed(2) + '</td><td>$' + (totals.net/100).toFixed(2) + '</td></tr>';
+    html += '<tr class="grand-total"><td>TOTAL WON (Revenue)</td><td>' + totals.one + '</td><td>' + totals.two + '</td><td>' + totals.online + '</td>' +
+      '<td>' + money(totals.revOne) + '</td><td>' + money(totals.revTwo) + '</td><td>' + money(totals.revOnline) + '</td>' +
+      '<td>' + money(totals.disc) + '</td><td>' + money(totals.total) + '</td>' +
+      '<td>' + money(totals.fee) + '</td><td>' + money(totals.net) + '</td></tr>';
     html += '</tbody></table>';
 
     const charges = chargesCents || 0;
@@ -2670,6 +2726,7 @@ module.exports = `<!doctype html>
   document.getElementById('sectionNav').addEventListener('change', async (e) => {
     const name = e.target.value;
     showSection(name);
+    if (name === 'finances') await loadFinancesExtras();
     if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
     if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
     if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements()]); }
@@ -2759,15 +2816,131 @@ module.exports = `<!doctype html>
 
   document.getElementById('ageGroupFilter').addEventListener('change', applyJoinToggleForSelectedGrade);
 
+  // Everything the first screen needs loads at once. Pricing is needed before
+  // the revenue table can draw, so that single dependency runs second. The
+  // Finances-only panels (proration mode, reset info, one-time payments) wait
+  // until you actually open the Finances tab.
+  let financesLoaded = false;
+  async function loadFinancesExtras(){
+    if (financesLoaded) return;
+    financesLoaded = true;
+    await Promise.all([loadProrationMode(), loadResetInfo(), loadOneTimePayments()]);
+  }
+
   async function loadAll(){
-    await Promise.all([loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster()]);
-    await loadPricing();
-    await loadPaymentPricing();
-    await loadProrationMode();
-    await loadResetInfo();
-    await loadOneTimePayments();
+    financesLoaded = false;
+    await Promise.all([
+      loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster(),
+      loadPricing(), loadPaymentPricing(),
+    ]);
     await loadOverviewAndRevenue();
   }
+
+  // ---- Logo -> dashboard ----
+  function goDashboard(e){
+    if (e) e.preventDefault();
+    document.getElementById('sectionNav').value = 'registrations';
+    showSection('registrations');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.getElementById('logoHome').addEventListener('click', goDashboard);
+
+  // ---- Global search ----
+  const searchInput = document.getElementById('globalSearch');
+  const searchBox = document.getElementById('searchResults');
+  let searchSeq = 0, searchTimer = null, searchItems = [], searchActive = -1;
+  const TYPE_LABEL = { player: 'Roster', skills: 'Skills', join: 'Sultans' };
+
+  function closeSearch(){ searchBox.classList.add('hidden'); searchActive = -1; }
+
+  function renderSearch(results, q){
+    searchItems = results;
+    searchActive = results.length ? 0 : -1;
+    if (!results.length) {
+      searchBox.innerHTML = '<div class="sr-empty">No matches for "' + escapeHtml(q) + '".</div>';
+    } else {
+      searchBox.innerHTML = results.map((r, i) => {
+        const dim = (r.moved || r.archived);
+        const sess = r.sessionType === 'two' ? 'Two sessions' : r.sessionType === 'online' ? 'Online' : r.sessionType === 'one' ? 'One session' : '';
+        const tag = r.archived ? 'Archived' : r.moved ? 'Moved to roster' : (r.sibling ? r.sibling + '% sibling' : '');
+        return '<div class="sr-item' + (dim ? ' sr-dim' : '') + (i === 0 ? ' active' : '') + '" data-i="' + i + '" role="option">' +
+          '<span class="sr-type t-' + r.type + '">' + TYPE_LABEL[r.type] + '</span>' +
+          '<span class="sr-name">' + escapeHtml(r.name) + '</span>' +
+          '<span class="sr-tag">' + escapeHtml(tag) + '</span>' +
+          '<span class="sr-meta">' + [GRADE_LABELS[r.grade] || r.grade, sess, r.parent, r.email, r.phone].filter(Boolean).map(escapeHtml).join(' · ') + '</span>' +
+          '</div>';
+      }).join('');
+    }
+    searchBox.classList.remove('hidden');
+  }
+
+  function setSearchActive(i){
+    const items = searchBox.querySelectorAll('.sr-item');
+    if (!items.length) return;
+    searchActive = (i + items.length) % items.length;
+    items.forEach((el, n) => el.classList.toggle('active', n === searchActive));
+    items[searchActive].scrollIntoView({ block: 'nearest' });
+  }
+
+  function flashRow(rid){
+    const tr = document.querySelector('tr[data-rid="' + rid + '"]');
+    if (!tr) return false;
+    tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tr.classList.remove('row-flash'); void tr.offsetWidth; tr.classList.add('row-flash');
+    return true;
+  }
+
+  async function openSearchResult(r){
+    if (!r || r.moved || r.archived) {
+      if (r && r.archived) { document.getElementById('sectionNav').value = 'data'; showSection('data'); await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements()]); closeSearch(); }
+      return;
+    }
+    closeSearch();
+    searchInput.blur();
+    document.getElementById('sectionNav').value = 'registrations';
+    showSection('registrations');
+    if (r.type === 'player') {
+      const sel = document.getElementById('rosterGradeFilter');
+      if (sel.value !== r.grade) { sel.value = r.grade; await loadRoster(); }
+      flashRow('player-' + r.id);
+    } else if (r.type === 'join') {
+      const sel = document.getElementById('ageGroupFilter');
+      if (sel.value && sel.value !== r.grade) { sel.value = r.grade; applyJoinToggleForSelectedGrade(); await loadJoin(); }
+      flashRow('join-' + r.id);
+    } else {
+      flashRow('skills-' + r.id);
+    }
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    const q = searchInput.value.trim();
+    if (q.length < 2) { searchSeq++; closeSearch(); return; }
+    searchTimer = setTimeout(async () => {
+      const seq = ++searchSeq;
+      try {
+        const data = await api('/api/admin/search?q=' + encodeURIComponent(q));
+        if (seq !== searchSeq) return; // a newer keystroke already replaced this
+        renderSearch(data.results || [], q);
+      } catch (e) { /* login redirect handled in api() */ }
+    }, 220);
+  });
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSearchActive(searchActive + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setSearchActive(searchActive - 1); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (searchActive >= 0) openSearchResult(searchItems[searchActive]); }
+    else if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
+  });
+  searchInput.addEventListener('focus', () => { if (searchInput.value.trim().length >= 2 && searchBox.innerHTML) searchBox.classList.remove('hidden'); });
+  searchBox.addEventListener('click', (e) => {
+    const el = e.target.closest('.sr-item');
+    if (el) openSearchResult(searchItems[Number(el.getAttribute('data-i'))]);
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.search-wrap')) closeSearch(); });
+  document.addEventListener('keydown', (e) => {
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(tag) && !appView.classList.contains('hidden')) { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+  });
 
   wireExportLinks();
   if (getToken()) showApp(); else showLogin();
