@@ -18,6 +18,7 @@
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
   @media(max-width:560px){ .grid{ grid-template-columns:1fr; } }
   label{ font-size:.78rem; font-weight:700; color:#444; display:block; margin-bottom:3px; }
+  input.date-bad{ border-color:#b5482f !important; background:#fdf1ee; }
   input[type=text],input[type=email],input[type=tel],input[type=date],textarea{ width:100%; padding:10px; border:1px solid #bbb; border-radius:6px; font:inherit; font-size:.95rem; }
   textarea{ min-height:70px; resize:vertical; }
   .checks label{ font-weight:400; font-size:.92rem; display:flex; gap:8px; align-items:center; margin:5px 0; color:#222; }
@@ -54,7 +55,7 @@
     <h2>Player Information</h2>
     <div class="grid">
       <div><label>Player full name *</label><input type="text" id="playerName"></div>
-      <div><label>Date of birth *</label><input type="date" id="dob"></div>
+      <div><label>Date of birth *</label><input type="text" data-datemask id="dob"></div>
       <div><label>Age group / grade</label><input type="text" id="grade"></div>
       <div><label>School (optional)</label><input type="text" id="school"></div>
     </div>
@@ -125,6 +126,63 @@
   canvas.addEventListener('pointermove', (e) => { if (!drawing) return; const p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); });
   ['pointerup','pointercancel','pointerleave'].forEach((n) => canvas.addEventListener(n, () => { drawing = false; }));
   $('clearSig').addEventListener('click', () => { ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.restore(); hasInk = false; $('sigHint').style.display = ''; });
+
+  // ---- Typed dates: MM/DD/YYYY (no pop-up calendar) ----
+  // Any <input data-datemask> becomes a typed field that auto-inserts the
+  // slashes. Its .value still reads and writes ISO (YYYY-MM-DD), so every
+  // existing save/load path keeps working; an incomplete or impossible date
+  // reads as '' so the usual "please enter a date" checks fire.
+  (function(){
+    var proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    function pad(n){ return n < 10 ? '0' + n : String(n); }
+    function toIso(txt){
+      var d = String(txt || '').replace(/[^0-9]/g, '');
+      if (d.length !== 8) return '';
+      var m = +d.slice(0, 2), day = +d.slice(2, 4), y = +d.slice(4, 8);
+      if (y < 1900 || y > 2100 || m < 1 || m > 12 || day < 1) return '';
+      if (day > new Date(y, m, 0).getDate()) return '';
+      return y + '-' + pad(m) + '-' + pad(day);
+    }
+    function fromIso(v){
+      var p = String(v || '').slice(0, 10).split('-');
+      return (p.length === 3 && p[0].length === 4) ? p[1] + '/' + p[2] + '/' + p[0] : '';
+    }
+    function mask(raw){
+      if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(raw)) return fromIso(raw);
+      var d = raw.replace(/[^0-9]/g, '').slice(0, 8);
+      if (d.length > 4) return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+      if (d.length > 2) return d.slice(0, 2) + '/' + d.slice(2);
+      return d;
+    }
+    function setup(el){
+      if (el.__dateMask) return;
+      el.__dateMask = true;
+      el.type = 'text';
+      el.setAttribute('inputmode', 'numeric');
+      el.setAttribute('maxlength', '10');
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('placeholder', 'MM/DD/YYYY');
+      Object.defineProperty(el, 'value', {
+        configurable: true,
+        get: function(){ return toIso(proto.get.call(el)); },
+        set: function(v){ proto.set.call(el, fromIso(v)); el.setCustomValidity(''); el.classList.remove('date-bad'); },
+      });
+      el.addEventListener('input', function(){
+        var cur = proto.get.call(el), m = mask(cur);
+        if (m !== cur) proto.set.call(el, m);
+        el.setCustomValidity('');
+        el.classList.remove('date-bad');
+      });
+      el.addEventListener('blur', function(){
+        var raw = proto.get.call(el);
+        if (raw && !toIso(raw)) {
+          el.setCustomValidity('Enter a real date as MM/DD/YYYY');
+          el.classList.add('date-bad');
+        }
+      });
+    }
+    document.querySelectorAll('input[data-datemask]').forEach(setup);
+  })();
 
   async function init(){
     try {

@@ -63,7 +63,7 @@ module.exports = `<!doctype html>
   table{ width:100%; border-collapse:collapse; background:#fff; border-radius:6px; box-shadow:var(--shadow); margin-bottom:34px; font-size:0.88rem; }
   tbody tr{ transition:background .15s ease; }
   tbody tr:hover{ background:#faf7ee; }
-  th, td{ text-align:left; padding:11px 10px; border-bottom:1px solid #eee8d8; white-space:nowrap; }
+  th, td{ text-align:left; padding:11px 8px; border-bottom:1px solid #eee8d8; white-space:nowrap; }
   td.cell-wrap{ white-space:normal; max-width:240px; word-wrap:break-word; }
   td details{ white-space:normal; }
   td details summary{ cursor:pointer; color:var(--pitch); font-size:0.8rem; list-style:none; }
@@ -78,6 +78,7 @@ module.exports = `<!doctype html>
   .section-head select{ padding:8px 10px; border:1px solid #d9d2bd; border-radius:3px; background:#fff; font-family:inherit; color:var(--ink); cursor:pointer; }
   a.btn-export{ background:var(--pitch); color:#fff; padding:8px 14px; border-radius:3px; text-decoration:none; font-weight:600; transition:background .2s ease; }
   a.btn-export:hover{ background:var(--turf); }
+  .date-bad{ border-color:#b5482f !important; background:#fdf1ee; }
   .hidden{ display:none; }
   .empty{ padding:20px; color:#888; font-style:italic; }
   .btn-delete-row{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
@@ -185,6 +186,18 @@ module.exports = `<!doctype html>
   [id$="TableWrap"] table{ margin-bottom:0; }
   .panel-body [id$="TableWrap"]{ padding-bottom:6px; }
   .row-menu{ position:fixed; }
+
+  /* email dropdown */
+  details.email-dd summary{ cursor:pointer; color:var(--pitch); font-weight:600; font-size:0.8rem; list-style:none; display:inline-block; border:1px solid #d9d2bd; border-radius:3px; padding:3px 9px; background:#fff; }
+  td details.email-dd summary:before, td details.email-dd[open] summary:before{ content:none; }
+  details.email-dd summary::-webkit-details-marker{ display:none; }
+  details.email-dd summary::after{ content:" ▾"; }
+  details.email-dd[open] summary::after{ content:" ▴"; }
+  details.email-dd summary:hover{ border-color:var(--pitch); }
+  .email-dd-body{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-top:6px; max-width:210px; }
+  .email-dd-text{ user-select:all; -webkit-user-select:all; cursor:text; font-size:0.85rem; padding:3px 6px; background:#f3f7f1; border-radius:3px; word-break:break-all; white-space:normal; }
+  .btn-copy-email{ background:var(--pitch); color:#fff; border:none; border-radius:3px; padding:4px 10px; font-size:0.72rem; cursor:pointer; white-space:nowrap; }
+  .btn-copy-email:hover{ background:var(--turf); }
 
   /* coach cards */
   .coach-role-head{ display:flex; align-items:center; gap:10px; margin:30px 0 14px; }
@@ -449,7 +462,7 @@ module.exports = `<!doctype html>
         </div>
         <div id="chargeMonthWrap" class="hidden">
           <label for="chargeMonthInput">Month</label><br>
-          <input type="date" id="chargeMonthInput">
+          <input type="text" data-datemask id="chargeMonthInput">
         </div>
         <button type="button" class="btn-add" id="addChargeBtn">+ Add Charge</button>
       </div>
@@ -549,7 +562,7 @@ module.exports = `<!doctype html>
     <label for="apName">Player name</label>
     <input type="text" id="apName">
     <label for="apDob">Date of birth</label>
-    <input type="date" id="apDob">
+    <input type="text" data-datemask id="apDob">
     <div class="two-col">
       <div><label for="apParentName">Parent name</label><input type="text" id="apParentName"></div>
       <div><label for="apParentPhone">Parent phone</label><input type="text" id="apParentPhone"></div>
@@ -599,7 +612,7 @@ module.exports = `<!doctype html>
     <label for="epName">Player name</label>
     <input type="text" id="epName">
     <label for="epDob">Date of birth</label>
-    <input type="date" id="epDob">
+    <input type="text" data-datemask id="epDob">
     <div class="two-col">
       <div><label for="epParentName">Parent name</label><input type="text" id="epParentName"></div>
       <div><label for="epParentPhone">Parent phone</label><input type="text" id="epParentPhone"></div>
@@ -758,7 +771,7 @@ module.exports = `<!doctype html>
       <option value="summer">Summer (Jun 3 – Jul 3)</option>
     </select>
     <label for="seasonEndInput">Billing ends on</label>
-    <input type="date" id="seasonEndInput">
+    <input type="text" data-datemask id="seasonEndInput">
     <label for="siblingDiscountSelect">Sibling discount (monthly fee only)</label>
     <select id="siblingDiscountSelect">
       <option value="0">None</option>
@@ -783,7 +796,7 @@ module.exports = `<!doctype html>
     <h3>Pause Billing</h3>
     <p class="modal-sub" id="pauseModalSub"></p>
     <label for="resumeDateInput">Resume billing on</label>
-    <input type="date" id="resumeDateInput">
+    <input type="text" data-datemask id="resumeDateInput">
     <p class="modal-error" id="pauseModalError"></p>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="pauseModalCancel">Cancel</button>
@@ -842,7 +855,7 @@ module.exports = `<!doctype html>
       <div><label for="asParentName">Parent / guardian name</label><input type="text" id="asParentName"></div>
     </div>
     <label for="asDob">Date of birth</label>
-    <input type="date" id="asDob">
+    <input type="text" data-datemask id="asDob">
     <div class="two-col">
       <div><label for="asEmail">Email</label><input type="email" id="asEmail"></div>
       <div><label for="asPhone">Phone (+1 followed by 10 digits)</label><input type="text" id="asPhone" placeholder="+12145551234"></div>
@@ -903,7 +916,7 @@ module.exports = `<!doctype html>
     </select>
     <div class="two-col">
       <div><label for="ajChildName">Player name</label><input type="text" id="ajChildName"></div>
-      <div><label for="ajDob">DOB</label><input type="date" id="ajDob"></div>
+      <div><label for="ajDob">DOB</label><input type="text" data-datemask id="ajDob"></div>
     </div>
     <label for="ajMotivation">Why they want to join</label>
     <textarea id="ajMotivation"></textarea>
@@ -943,6 +956,64 @@ module.exports = `<!doctype html>
   // from the API. Leave as '' if the dashboard is served by the same server
   // (the default setup in server.js).
   const API_BASE = '';
+
+  // ---- Typed dates: MM/DD/YYYY (no pop-up calendar) ----
+  // Any <input data-datemask> becomes a typed field that auto-inserts the
+  // slashes. Its .value still reads and writes ISO (YYYY-MM-DD), so every
+  // existing save/load path keeps working; an incomplete or impossible date
+  // reads as '' so the usual "please enter a date" checks fire.
+  (function(){
+    var proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    function pad(n){ return n < 10 ? '0' + n : String(n); }
+    function toIso(txt){
+      var d = String(txt || '').replace(/[^0-9]/g, '');
+      if (d.length !== 8) return '';
+      var m = +d.slice(0, 2), day = +d.slice(2, 4), y = +d.slice(4, 8);
+      if (y < 1900 || y > 2100 || m < 1 || m > 12 || day < 1) return '';
+      if (day > new Date(y, m, 0).getDate()) return '';
+      return y + '-' + pad(m) + '-' + pad(day);
+    }
+    function fromIso(v){
+      var p = String(v || '').slice(0, 10).split('-');
+      return (p.length === 3 && p[0].length === 4) ? p[1] + '/' + p[2] + '/' + p[0] : '';
+    }
+    function mask(raw){
+      if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(raw)) return fromIso(raw);
+      var d = raw.replace(/[^0-9]/g, '').slice(0, 8);
+      if (d.length > 4) return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+      if (d.length > 2) return d.slice(0, 2) + '/' + d.slice(2);
+      return d;
+    }
+    function setup(el){
+      if (el.__dateMask) return;
+      el.__dateMask = true;
+      el.type = 'text';
+      el.setAttribute('inputmode', 'numeric');
+      el.setAttribute('maxlength', '10');
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('placeholder', 'MM/DD/YYYY');
+      Object.defineProperty(el, 'value', {
+        configurable: true,
+        get: function(){ return toIso(proto.get.call(el)); },
+        set: function(v){ proto.set.call(el, fromIso(v)); el.setCustomValidity(''); el.classList.remove('date-bad'); },
+      });
+      el.addEventListener('input', function(){
+        var cur = proto.get.call(el), m = mask(cur);
+        if (m !== cur) proto.set.call(el, m);
+        el.setCustomValidity('');
+        el.classList.remove('date-bad');
+      });
+      el.addEventListener('blur', function(){
+        var raw = proto.get.call(el);
+        if (raw && !toIso(raw)) {
+          el.setCustomValidity('Enter a real date as MM/DD/YYYY');
+          el.classList.add('date-bad');
+        }
+      });
+    }
+    document.querySelectorAll('input[data-datemask]').forEach(setup);
+  })();
+
 
   const loginView = document.getElementById('login-view');
   const appView = document.getElementById('app-view');
@@ -1974,12 +2045,21 @@ module.exports = `<!doctype html>
     return 'status-neutral';
   }
 
-  function fmtDay(v){ return v ? String(v).slice(0, 10) : ''; }
+  // Email as a small dropdown: keeps the table narrow, and the address stays
+  // selectable (one click selects it all) with a Copy button as well.
+  function emailDropdown(email){
+    if (!email) return '—';
+    const e = escapeHtml(email);
+    return '<details class="email-dd"><summary>Email</summary>' +
+      '<div class="email-dd-body"><span class="email-dd-text">' + e + '</span>' +
+      '<button type="button" class="btn-copy-email" data-copy="' + e + '">Copy</button></div></details>';
+  }
+  function fmtDay(v){ const p = String(v || '').slice(0, 10).split('-'); return p.length === 3 ? p[1] + '/' + p[2] + '/' + p[0] : ''; }
   function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—' }; }
 
   async function loadSkills(){
     const rows = (await api('/api/admin/skills-registrations')).map(addSiblingLabel);
-    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows.map(r => ({ ...r, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) })), [
+    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows.map(r => ({ ...r, email: emailDropdown(r.email), dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) })), [
       { key:'jersey_number', label:'#' },
       { key:'full_name', label:'Name' },
       { key:'dob', label:'DOB' },
@@ -2006,7 +2086,7 @@ module.exports = `<!doctype html>
   async function loadJoin(){
     const ageGroup = document.getElementById('ageGroupFilter').value;
     const rows = (await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''))).map(addSiblingLabel);
-    const displayRows = rows.map(r => ({ ...r, age_group: GRADE_LABELS[r.age_group] || r.age_group, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) }));
+    const displayRows = rows.map(r => ({ ...r, email: emailDropdown(r.email), age_group: GRADE_LABELS[r.age_group] || r.age_group, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) }));
     document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
       { key:'jersey_number', label:'#' },
       { key:'age_group', label:'Grade' },
@@ -2070,7 +2150,7 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
-        '<td>' + escapeHtml(r.parent_email || '') + '</td>' +
+        '<td>' + emailDropdown(r.parent_email) + '</td>' +
         '<td>' + (r.session_type === 'two' ? 'Two' : r.session_type === 'online' ? 'Online' : 'One') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
@@ -2951,6 +3031,25 @@ module.exports = `<!doctype html>
       const open = btn.getAttribute('data-panels') === 'expand';
       btn.closest('[id^="section-"]').querySelectorAll('details.panel').forEach((d) => { d.open = open; });
     });
+  });
+
+  // ---- Copy-email buttons (works on every table) ----
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-copy-email');
+    if (!btn) return;
+    const text = btn.getAttribute('data-copy') || '';
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      // Older/locked-down browsers: select the text and use the legacy copy command.
+      const span = btn.parentElement.querySelector('.email-dd-text');
+      const range = document.createRange(); range.selectNodeContents(span);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      try { document.execCommand('copy'); } catch (e2) { /* the text is selected; Ctrl+C still works */ }
+    }
+    const old = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(() => { btn.textContent = old; }, 1400);
   });
 
   // ---- Logo -> dashboard ----
