@@ -269,7 +269,7 @@ router.put('/admin/players/:id/unarchive', requireAdmin, async (req, res) => {
 router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   const {
     sourceType, sourceId, grade, sessionType,
-    rch, sultans, parentName, parentPhone, parentEmail, discountCents,
+    rch, sultans, parentName, parentPhone, parentEmail, discountCents, siblingDiscount: siblingOverride,
   } = req.body || {};
 
   if (!['skills', 'join'].includes(sourceType)) {
