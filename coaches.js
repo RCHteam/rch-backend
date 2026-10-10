@@ -6,7 +6,7 @@ const { syncCoachCharges } = require('./coachCharges');
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_ROLES = new Set(['general_manager', 'head_coach', 'coach', 'volunteer']);
+const VALID_ROLES = new Set(['president', 'general_manager', 'head_coach', 'coach', 'volunteer']);
 const VALID_EMPLOYMENT_TYPES = new Set(['full_time', 'part_time']);
 
 router.get('/admin/coaches', requireAdmin, async (req, res) => {
@@ -34,7 +34,7 @@ router.post('/admin/coaches', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Please enter a valid email, or leave it blank.' });
   }
   if (!VALID_ROLES.has(role)) {
-    return res.status(400).json({ error: 'Please choose a category (General Manager, Head Coach, Coach, or Volunteer).' });
+    return res.status(400).json({ error: 'Please choose a category (President, General Manager, Head Coach, Coach, or Volunteer).' });
   }
   if (!VALID_EMPLOYMENT_TYPES.has(employmentType)) {
     return res.status(400).json({ error: 'Please choose Full-Time or Part-Time.' });
@@ -80,7 +80,7 @@ router.put('/admin/coaches/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Please enter a valid email, or leave it blank.' });
     }
     if (role !== undefined && !VALID_ROLES.has(role)) {
-      return res.status(400).json({ error: 'Please choose a category (General Manager, Head Coach, Coach, or Volunteer).' });
+      return res.status(400).json({ error: 'Please choose a category (President, General Manager, Head Coach, Coach, or Volunteer).' });
     }
     if (employmentType !== undefined && !VALID_EMPLOYMENT_TYPES.has(employmentType)) {
       return res.status(400).json({ error: 'Please choose Full-Time or Part-Time.' });

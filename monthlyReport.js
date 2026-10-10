@@ -9,9 +9,9 @@ const GRADE_LABELS = {
   'pre-k': 'Pre-K', 'kindergarten': 'Kindergarten', '1st-grade': '1st Grade', '2nd-grade': '2nd Grade',
   '3rd-grade': '3rd Grade', '4th-grade': '4th Grade', '5th-grade': '5th Grade', '6th-grade': '6th Grade',
 };
-const COACH_ROLES = ['general_manager', 'head_coach', 'coach', 'volunteer'];
+const COACH_ROLES = ['president', 'general_manager', 'head_coach', 'coach', 'volunteer'];
 const COACH_ROLE_LABELS = {
-  general_manager: 'General Manager', head_coach: 'Head Coaches', coach: 'Coaches', volunteer: 'Volunteer',
+  president: 'President', general_manager: 'General Manager', head_coach: 'Head Coaches', coach: 'Coaches', volunteer: 'Volunteer',
 };
 
 // Same confirmed Stripe rates used in the live Pricing & Revenue table

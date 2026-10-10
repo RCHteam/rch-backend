@@ -462,3 +462,15 @@ ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS assessment_result TEXT NOT 
 
 ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS term TEXT NOT NULL DEFAULT '';
 ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS chapters_json TEXT NOT NULL DEFAULT '[]';
+
+-- New top coaches category: President. Allow it, and (once only) move Ismail Rachidi there from General Manager.
+ALTER TABLE coaches DROP CONSTRAINT IF EXISTS coaches_role_check;
+ALTER TABLE coaches ADD CONSTRAINT coaches_role_check CHECK (role IN ('president', 'general_manager', 'head_coach', 'coach', 'volunteer'));
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key = 'migrated_ismail_president') THEN
+    UPDATE coaches SET role = 'president'
+     WHERE role = 'general_manager' AND lower(trim(name)) = 'ismail rachidi';
+    INSERT INTO site_settings (key, value) VALUES ('migrated_ismail_president', 'true');
+  END IF;
+END $$;

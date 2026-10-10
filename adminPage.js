@@ -228,11 +228,12 @@ module.exports = `<!doctype html>
   .coach-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:22px; }
   .coach-card{ --rc:#3f8f5b; --rc2:#8fd9a8; position:relative; padding:9px; border-radius:16px; background:linear-gradient(145deg,var(--rc),var(--rc2) 45%,var(--rc) 100%); box-shadow:0 8px 22px rgba(11,23,16,0.22); transition:transform .25s ease, box-shadow .25s ease; display:flex; }
   .coach-card:hover{ transform:translateY(-6px) rotate(-0.4deg); box-shadow:0 18px 34px rgba(11,23,16,0.3); }
+  .coach-card.role-president{ --rc:#0c2a1c; --rc2:#7fcf9f; }
   .coach-card.role-general_manager{ --rc:#c98f1c; --rc2:#f6d98a; }
   .coach-card.role-head_coach{ --rc:#b5482f; --rc2:#f0a58f; }
   .coach-card.role-coach{ --rc:#2f8f57; --rc2:#9be3b5; }
   .coach-card.role-volunteer{ --rc:#2f78a8; --rc2:#a6d6f0; }
-  .coach-role-head.role-general_manager{ --rc:#c98f1c; } .coach-role-head.role-head_coach{ --rc:#b5482f; } .coach-role-head.role-coach{ --rc:#2f8f57; } .coach-role-head.role-volunteer{ --rc:#2f78a8; }
+  .coach-role-head.role-president{ --rc:#0c2a1c; } .coach-role-head.role-general_manager{ --rc:#c98f1c; } .coach-role-head.role-head_coach{ --rc:#b5482f; } .coach-role-head.role-coach{ --rc:#2f8f57; } .coach-role-head.role-volunteer{ --rc:#2f78a8; }
   .cc-inner{ background:linear-gradient(180deg,#fffdf6,#f6f0dc); border-radius:10px; padding:12px 14px 14px; width:100%; display:flex; flex-direction:column; gap:10px; }
   .cc-top{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
   .cc-stage{ font-family:'Space Mono',monospace; font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; background:var(--rc); color:#fff; padding:2px 7px; border-radius:3px; white-space:nowrap; }
@@ -626,6 +627,9 @@ module.exports = `<!doctype html>
         <h2>Our Coaches</h2>
         <button type="button" class="btn-add" id="addCoachBtn">+ Add Coach</button>
       </div>
+
+      <div class="coach-role-head role-president"><span class="dot"></span><h3>President</h3></div>
+      <div id="coachesTableWrap_president"></div>
 
       <div class="coach-role-head role-general_manager"><span class="dot"></span><h3>General Manager</h3></div>
       <div id="coachesTableWrap_general_manager"></div>
@@ -1137,6 +1141,7 @@ module.exports = `<!doctype html>
     <h3 id="coachModalTitle">Add Coach</h3>
     <label for="coachCategory">Category</label>
     <select id="coachCategory">
+      <option value="president">President</option>
       <option value="general_manager">General Manager</option>
       <option value="head_coach">Head Coach</option>
       <option value="coach">Coach</option>
@@ -2127,9 +2132,9 @@ module.exports = `<!doctype html>
   };
 
   const COACH_ROLE_LABELS = {
-    general_manager: 'General Manager', head_coach: 'Head Coach', coach: 'Coach', volunteer: 'Volunteer',
+    president: 'President', general_manager: 'General Manager', head_coach: 'Head Coach', coach: 'Coach', volunteer: 'Volunteer',
   };
-  const COACH_ROLES = ['general_manager', 'head_coach', 'coach', 'volunteer'];
+  const COACH_ROLES = ['president', 'general_manager', 'head_coach', 'coach', 'volunteer'];
 
   // Renders a long text field as a collapsed "Details ▾" dropdown instead of
   // inline text, so a long qualifications/certificates/notes entry doesn't
