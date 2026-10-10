@@ -168,7 +168,7 @@ router.get('/admin/agreements/:id/pdf', requireAdmin, async (req, res) => {
 
 router.delete('/admin/agreements/:id', requireAdmin, async (req, res) => {
   try {
-    await pool.query('DELETE FROM agreements WHERE id=$1 AND signed_at IS NULL', [req.params.id]);
+    await pool.query('DELETE FROM agreements WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Could not delete.' });

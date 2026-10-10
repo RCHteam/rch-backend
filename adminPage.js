@@ -2380,7 +2380,7 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(fmtDate(r.sent_at)) + '</td>' +
         '<td>' + (signed ? '<span class="status-badge status-paid">Signed ' + escapeHtml(fmtDate(r.signed_at)) + '</span>' : '<span class="status-badge status-pending">Awaiting signature</span>') + '</td>' +
         '<td>' + (signed
-          ? '<a class="btn-export" href="#" data-pdf="' + r.id + '">Download PDF</a>'
+          ? '<a class="btn-export" href="#" data-pdf="' + r.id + '">Download PDF</a> <button type="button" class="btn-delete-row" data-del="' + r.id + '" data-signed="1">Delete</button>'
           : '<button type="button" class="btn-payment-link" data-resend-type="' + escapeHtml(r.registration_type) + '" data-resend-id="' + r.registration_id + '">Resend</button> <button type="button" class="btn-delete-row" data-del="' + r.id + '">Delete</button>') + '</td>' +
         '</tr>';
     });
@@ -2404,8 +2404,12 @@ module.exports = `<!doctype html>
     });
     wrap.querySelectorAll('[data-del]').forEach((b) => {
       b.addEventListener('click', async () => {
-        if (!confirm('Delete this unsigned agreement request? The family\\'s link will stop working.')) return;
-        await api('/api/admin/agreements/' + b.getAttribute('data-del'), { method: 'DELETE' });
+        const signedRow = b.getAttribute('data-signed') === '1';
+        if (!confirm(signedRow
+          ? 'Delete this SIGNED agreement? The stored PDF will be permanently removed and cannot be recovered. Download the PDF first if you want to keep a copy.'
+          : 'Delete this unsigned agreement request? The family\\'s link will stop working.')) return;
+        b.disabled = true;
+        try { await api('/api/admin/agreements/' + b.getAttribute('data-del'), { method: 'DELETE' }); } catch (e) { alert('Could not delete. Please try again.'); }
         loadAgreements();
       });
     });
