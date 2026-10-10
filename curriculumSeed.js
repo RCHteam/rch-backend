@@ -1,5 +1,5 @@
 // The chapter lists of the coaches' curriculum pages (curriculum-prek.html, curriculum-kindergarten.html,
-// curriculum-1st-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
+// curriculum-1st-grade.html, curriculum-2nd-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
 // each grade's chapters and assessment checks. On every start the saved chapters are brought in line with
 // these lists (matched by chapter number), so a new version of a curriculum page updates the report choices.
 const CURRICULA = {
@@ -597,6 +597,224 @@ const CURRICULA = {
     "Rolls to a target within 3 yards 4 of 5 times"
    ],
    "check": "Child sets a ready position, catches with a W, dives from a crouch and rolls to a teammate."
+  }
+ ],
+ "2nd-grade": [
+  {
+   "n": 1,
+   "title": "Leadership, Roles and Fair Play",
+   "lead": "Second graders move from taking part to taking responsibility. They elect rotating captains, own a role in every game, help run restarts with the real signals, work out disagreements with a short method and begin to set a small goal for the whole team.",
+   "objectives": [
+    "Take the captain role with a fair rotation and say the three captain jobs",
+    "Wear a role bib in a game and name the job of that role",
+    "Call and show restarts with the referee signals (ball out, goal, free kick, advantage)",
+    "Use stop, say, solve with a teammate and set one team goal for the cycle"
+   ],
+   "outcomes": [
+    "Names the three captain jobs and does one without help",
+    "Says what the role bib means before the game starts",
+    "Shows two referee signals and calls the restart",
+    "Helps the team set a goal and says if it was reached"
+   ],
+   "check": "Child names the captain jobs, says what their bib means, shows two referee signals and takes part in stop, say, solve."
+  },
+  {
+   "n": 2,
+   "title": "Agility, Speed and Rhythm",
+   "lead": "Athletic movement grows with new tools. Second graders use agility ladders and low hurdles, run longer sprints from varied starts, change direction at speed, react to a signal and time themselves against their own earlier result.",
+   "objectives": [
+    "Run through an agility ladder with quick, light feet in two or three patterns",
+    "Clear low hurdles with a soft, balanced landing",
+    "Sprint 15 to 20 yards from a standing, crouch or lying start",
+    "React to a sight or sound signal and cut in the called direction"
+   ],
+   "outcomes": [
+    "Runs a ladder pattern without touching the rungs",
+    "Lands from a hurdle hop and holds for two seconds",
+    "Sprints 15 yards tall and compares with their own time",
+    "Reacts to a signal in 3 of 4 tries"
+   ],
+   "check": "Child runs a ladder pattern cleanly, lands from a hurdle with balance, sprints 15 yards tall and reacts to a signal."
+  },
+  {
+   "n": 3,
+   "title": "Control, Dribbling and Change of Pace",
+   "lead": "Ball mastery and dribbling join in 2nd grade. Players dribble with both feet around poles and cones, change pace and direction with a cut, a drag back or a simple step-over, shield from a chaser and look up to find space.",
+   "objectives": [
+    "Dribble around poles and cones on both feet at a steady pace",
+    "Use a cut, a drag back and a simple step-over to change direction",
+    "Change pace twice in one run: slow, fast, slow",
+    "Shield the ball from a chaser and look up to find space"
+   ],
+   "outcomes": [
+    "Dribbles six poles with no stray touch on either foot",
+    "Shows a cut, a drag back and a step-over in a sequence",
+    "Changes pace on a call twice in 20 yards",
+    "Shields for 5 seconds and turns away from a chaser"
+   ],
+   "check": "Child dribbles six poles with both feet, shows a cut, drag back and step-over, changes pace twice and shields for five seconds."
+  },
+  {
+   "n": 4,
+   "title": "Receiving, Turning and Orientation",
+   "lead": "Receiving moves from stopping the ball to using the first touch to set up the next action. Second graders use a rebound board, receive across the body, take a directional first touch, receive and turn and peek before the ball arrives.",
+   "objectives": [
+    "Control a pass from the board or a partner with either foot and in the called direction",
+    "Receive across the body with the far foot and open the hips",
+    "Take a first touch that moves the ball into the next action",
+    "Peek before the ball arrives and receive and turn away from a passive defender"
+   ],
+   "outcomes": [
+    "Controls 7 of 10 balls from the rebound board within one stride",
+    "Receives across the body and plays on with the next touch",
+    "Peeks in 6 of 10 passes before the ball arrives",
+    "Receives and turns past a passive defender in 4 of 6 tries"
+   ],
+   "check": "Child controls balls from a rebound board, receives across the body, takes a directional touch and receives and turns."
+  },
+  {
+   "n": 5,
+   "title": "Passing Range, Patterns and Weight",
+   "lead": "Passing becomes a pattern. Second graders pass over 12 to 15 yards, pass through passing arcs and rings, play wall passes and third-player runs in a triangle, judge the weight of a pass and pass with both feet.",
+   "objectives": [
+    "Pass accurately over 12 to 15 yards with the inside and the laces",
+    "Pass through a passing arc and into a ring with the right weight",
+    "Play a wall pass and a third-player run in a triangle",
+    "Pass with the weaker foot and the outside of the foot in a game"
+   ],
+   "outcomes": [
+    "Passes 7 of 10 accurately from 12 yards with either foot",
+    "Hits a ring from 10 yards in 4 of 8 tries",
+    "Completes a triangle pattern with a third runner",
+    "Plays an outside-foot pass in a small game"
+   ],
+   "check": "Child passes 7 of 10 over 12 yards, hits a ring, plays a triangle pattern and uses the weaker foot in a game."
+  },
+  {
+   "n": 6,
+   "title": "Finishing and Shooting Variety",
+   "lead": "Finishing grows from one clean strike to a set of ways to score. Second graders use pop-up goals, shoot with a short run-up with both feet, finish from a pass first time, place the ball far side, finish rebounds and shoot early in a 1 v 1.",
+   "objectives": [
+    "Strike with the instep after a two- or three-step run-up with either foot",
+    "Place a shot to the far side of a pop-up goal",
+    "Finish a pass first time without stopping it",
+    "Shoot early in a 1 v 1 and follow up a rebound"
+   ],
+   "outcomes": [
+    "Hits 5 of 10 shots on target from 12 yards",
+    "Places 3 of 8 shots to a called corner",
+    "Finishes 3 of 8 first-time balls",
+    "Follows up a rebound in 2 of 5 tries"
+   ],
+   "check": "Child strikes with either foot from a run-up, places a shot, finishes first time and follows up a rebound."
+  },
+  {
+   "n": 7,
+   "title": "Defending: 1 v 1, Jockey, Tackle and Recover",
+   "lead": "Defending becomes a skill in its own right. Second graders use mannequins to learn the jockey, delay and cover, make a safe block tackle, recover goal-side after losing the ball and play 1 v 1 with real rules about fair challenges.",
+   "objectives": [
+    "Jockey: stay side-on, knees bent and delay an attacker for three seconds",
+    "Use a mannequin to practise the jockey, close and cover",
+    "Make a block tackle with the inside of the foot on a rolling ball",
+    "Recover goal-side after losing the ball and know what a fair challenge is"
+   ],
+   "outcomes": [
+    "Delays an attacker for 3 seconds in 3 of 5 tries",
+    "Closes down a mannequin side-on without reaching",
+    "Wins a rolled ball with a block tackle in 3 of 6 tries",
+    "Recovers and gets goal-side in 3 seconds"
+   ],
+   "check": "Child jockeys for three seconds, closes a mannequin side-on, makes a block tackle on a rolling ball and recovers goal-side."
+  },
+  {
+   "n": 8,
+   "title": "Small-Group Play: 2 v 1, 3 v 2 and 3 v 3",
+   "lead": "Combinations grow into small-group play. Second graders use the free player in 2 v 1, 3 v 2 and 3 v 3, play wall passes, overlaps and third-player runs, use width and begin to hear the idea of staying level with the ball (the first step toward offside).",
+   "objectives": [
+    "Find the free player in a 2 v 1 and a 3 v 2",
+    "Play a wall pass, an overlap and a third-player run in a 3 v 3",
+    "Use width and support angles with marked discs",
+    "Stay level with or behind the ball when the team is attacking (the idea, not the law)"
+   ],
+   "outcomes": [
+    "Finds the free player in 4 of 6 tries",
+    "Plays a wall pass and runs into space in 4 of 6 tries",
+    "Spreads to marked discs without reminders",
+    "Explains “stay level with the ball” in a sentence"
+   ],
+   "check": "Child finds the free player, plays a wall pass and an overlap, spreads to the discs and explains staying level with the ball."
+  },
+  {
+   "n": 9,
+   "title": "Scanning, Space and Decisions",
+   "lead": "Seeing becomes a habit. Second graders scan before and after the ball arrives, name the free player and the open space, use if-then cues in games, take decisions under a light clock and answer questions that explain what they saw.",
+   "objectives": [
+    "Scan before the ball arrives and again after the first touch",
+    "Name two options (free player and space) before receiving",
+    "Use an if-then cue to choose pass, dribble or shoot in a small game",
+    "Say in one sentence what you saw and why you chose it"
+   ],
+   "outcomes": [
+    "Peeks in 7 of 10 passes before the ball arrives",
+    "Names two options in 4 of 6 plays",
+    "Follows the cue in 4 of 6 decisions",
+    "Explains a decision in one sentence"
+   ],
+   "check": "Child peeks before the ball arrives, names two options, follows a cue and says what they saw."
+  },
+  {
+   "n": 10,
+   "title": "Team Shape, Roles and Transitions in 5 v 5",
+   "lead": "Team play moves to the 5 v 5 format used in many European youth leagues at this age. Second graders learn a simple shape (back, two sides, front), roles with bibs, a three-second transition, how to build from the keeper and how to restart with a plan.",
+   "objectives": [
+    "Take a role (back, side, front) and say the job in one sentence",
+    "Keep a simple shape with discs and rotate roles after a goal",
+    "Transition from attack to defence in three seconds and back",
+    "Build from the keeper with a roll or a short pass and restart with a plan"
+   ],
+   "outcomes": [
+    "Names their role and the next job after a rotation",
+    "Spreads to the shape without reminders in 4 of 5 rounds",
+    "Reacts within three seconds to a change of possession",
+    "Plays a restart plan with one taker and two movers"
+   ],
+   "check": "Child names their role, keeps the shape, reacts within three seconds and takes part in a restart plan."
+  },
+  {
+   "n": 11,
+   "title": "Goalkeeper: Positioning, Handling and Distribution",
+   "lead": "Goalkeeping becomes a skill for everyone. Second graders learn to stand on the line between ball and goal, handle low and chest-high shots, dive and recover, throw and roll with accuracy, understand the back-pass rule and the time limit.",
+   "objectives": [
+    "Stand on the line between ball and goal and move to the ball’s side",
+    "Catch low and chest-high shots with the hands in a W",
+    "Dive to both sides from a crouch and get up quickly",
+    "Roll or throw to a target and explain when the hands may be used"
+   ],
+   "outcomes": [
+    "Stops 7 of 10 slow shots from 10 yards",
+    "Catches 5 of 10 chest-high balls",
+    "Dives to both sides and recovers in 3 of 5 tries",
+    "Rolls or throws to a target in 4 of 5 tries"
+   ],
+   "check": "Child stands between ball and goal, catches with a W, dives from a crouch and rolls or throws to a target."
+  },
+  {
+   "n": 12,
+   "title": "Rules of the Game and Restarts",
+   "lead": "Second graders meet the real laws through play: throw-in, goal kick, corner kick, fouls and free kicks, handball, offside as an idea and the referee signals. Each rule is taught inside a game where breaking it has a fair, simple consequence.",
+   "objectives": [
+    "Take a legal throw-in with both hands over the head and both feet on or behind the line",
+    "Know a goal kick, a corner kick and a free kick and who takes each",
+    "Explain the difference between a direct and an indirect free kick in simple words",
+    "Understand handball, advantage, the offside idea and the referee signals"
+   ],
+   "outcomes": [
+    "Takes a legal throw-in in 6 of 8 tries",
+    "Says who takes a goal kick, corner and free kick in 3 of 3 cases",
+    "Explains a foul and a free kick in one sentence",
+    "Shows three referee signals"
+   ],
+   "check": "Child takes a legal throw-in, says who takes a goal kick, corner and free kick, explains a foul and shows three referee signals."
   }
  ]
 };

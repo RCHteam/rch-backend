@@ -27,7 +27,7 @@ function monthKeyOf({ year, month }) { return `${year}-${String(month).padStart(
 
 
 /* ---- The full curriculum pages (one HTML file per grade, shown in the admin inside a frame) ---- */
-const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html', 'kindergarten': 'curriculum-kindergarten.html', '1st-grade': 'curriculum-1st-grade.html' };
+const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html', 'kindergarten': 'curriculum-kindergarten.html', '1st-grade': 'curriculum-1st-grade.html', '2nd-grade': 'curriculum-2nd-grade.html' };
 router.all('/admin/curriculum-view/:grade', requireAdmin, (req, res) => {
   const file = CURRICULUM_FILES[req.params.grade];
   if (!file) return res.status(404).json({ error: 'This curriculum has not been loaded yet.' });
