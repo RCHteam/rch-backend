@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RCH Pre-K Curriculum</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -232,7 +237,11 @@ thead th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercas
 .dcb p{margin:0;font-size:13.5px}.dcf{color:var(--mute);font-size:12.5px!important}
 .dcb .scene{margin-top:4px}
 @media (max-width:600px){.rems{grid-template-columns:minmax(0,1fr)}}
+.dsteps{list-style:none;margin:6px 0 2px;padding:0;display:grid;gap:6px}.dsteps li{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.45}.dsteps b{font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--mute);padding-top:3px}@media (max-width:600px){.dsteps li{grid-template-columns:minmax(0,1fr);gap:1px}}
 </style>
+<style>.dlv{margin:12px 0 4px;font:600 11px/1.2 var(--mono,monospace);text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#667)}.dlist .dlv:first-child{margin-top:0}</style>
+</head>
+<body>
 <div class="app">
 <aside id="side"><div class="brand"><small>RCH Elite Training</small><b>Pre-K Curriculum</b><span>Coaches' edition, ages 4 to 6</span></div><nav id="nav" aria-label="Pages"></nav><button id="theme" type="button">Light / Dark</button></aside>
 <div class="mainwrap" style="min-width:0"><div class="topbar"><button id="menu" type="button">Menu</button><b>Pre-K Curriculum</b></div><main id="page"></main></div>
@@ -447,6 +456,7 @@ window.CHAPTERS = [
  check:'Child plays in a small-sided game, spreads out and tries at least two roles.'
 }
 ];
+
 </script>
 <script>
 // Depth additions: learning notes, faults and fixes, goalkeeper chapter, drill-scene mapping
@@ -494,7 +504,7 @@ const GK={
   ['Spider Ready',6,'All','10 x 10 yd','None','Players take the ready position when the coach says "spider" and move with small steps around the area.','Knees bent, hands forward','Add a ball in the hands','Standing flat-footed: demonstrate the bounce'],
   ['Roll and Scoop',10,'Pairs','5 yd apart','Soft ball per pair','A partner rolls the ball; the keeper scoops it with both hands.','Behind the ball, hug it','Add a small angle','Fear of the ball: use softer balls'],
   ['Save and Roll Out',10,'Groups of 3','Small goal','Balls, small goal, cones','A shooter rolls a ball at the goal; keeper stops it and rolls it to a target cone.','Mine! Then roll low','Slightly faster shots','Throwing too high: cue "roll like a bowling ball"'],
-  ['Keeper Rotation Game',12,'3 v 3','Small field','Small goals, bibs','Play a short game; after each goal the scored-on team picks a new keeper.','Everyone gets a turn','Add a second goal','Child refuses: allow a trial for 1 minute']
+  ['Goalkeeper Swap Game',12,'3 v 3','Small field','Small goals, bibs','Play a short game; after each goal the scored-on team picks a new keeper.','Everyone gets a turn','Add a second goal','Child refuses: allow a trial for 1 minute']
  ],
  check:'Child takes a ready position and stops a slow rolled ball with both hands, then rolls it out.'
 };
@@ -516,6 +526,290 @@ window.DSCENE={
  11:[['balance','Ready position, then move with small steps.'],['pairs','A rolled ball is scooped and hugged.'],['keeper','Stop the shot, call mine, roll out to the cone.'],['smallgame','Rotate the keeper after every goal.']]
 };
 })();
+
+</script>
+<script>
+// Pre-K exercise bank (ages 4 to 5). Each chapter: 9 new skill drills (levels 2,3,3,4,4,5,5,6,6) then 5 new games (levels 2 to 6).
+// Tuple: [name, min, players, area, equipment, organisation, coaching points, progression, common issue, level, [scene, caption]]
+window.BANK_SKILLS=9;
+window.BANK={
+1:[
+ ['Name Train',12,'All','Circle 10 yd','None','Children walk in a line behind the coach like a train. When the coach calls a name, that child becomes the engine and leads the train around the field while everyone waves.','Say the name with a smile; walk, do not run','The engine chooses how the train moves (tiptoe, giant steps, hops)','A child freezes at the front: let a buddy lead beside them',2,['circle','Children walk in a train and take turns leading when their name is called.']],
+ ['Line Treasure Hunt',12,'Groups of 4','Full field','Cones, soft toys','Soft toys are hidden along the field lines. Each group walks one line, finds a toy and says the name of the line (sideline, end line, middle line) before bringing the toy back.','Walk on the line; say its name','Run to the line instead of walking; find two toys on different lines','Children wander off the line: walk beside a buddy',3,['tour','Groups walk the field lines to find hidden toys and name each line.']],
+ ['Zoo Parade to the Goal',12,'All','Full field','None','The coach names a place (goal, sideline, middle) and an animal. Children move like that animal to the place and freeze like a statue when they arrive.','Name the place when you arrive; freeze still','Link two places in one call (hop like a frog to the goal, then crawl like a bear to the sideline)','Rushing past the place: start with slow animals',3,['lanes','Children move like animals to named places on the field and freeze there.']],
+ ['Cone Colors Dash',12,'All','20 x 20 yd','Colored cones','Colored cones are spread around the space. The coach calls a color and children run to a cone of that color and touch it with a hand.','Look first, then run; touch gently','Call two colors in a row; add a foot tap on the cone','Collisions at one cone: put several cones of each color out',4,['colors','Children run to a cone of the called color.']],
+ ['Equipment Helpers',12,'Groups of 4','Edge of the field','Balls, cones, bibs','Each child has a job for the setup: cone carrier, ball carrier, bib carrier and water carrier. Together they set up a small field and say thank you to each other.','Help, share, thank','Swap jobs each round; set up the field in 60 seconds','Arguments over jobs: use a picture list of who has which job',4,['stations','Children each take a job and set up a small field together.']],
+ ['Circle Greeting Dance',12,'All','Circle 10 yd','None','Children walk around the circle. When the music or clap stops, they greet the child in front of them with a high five, a wave or a silly bow and say their name.','Look at a friend; say a name','Add a new greeting each round; greet three friends in a row','Skipping the shy child: the coach walks beside them',5,['circle','Children greet each friend in the circle with a high five, wave or bow.']],
+ ['Freeze Dance',12,'All','20 x 20 yd','Music or a drum','Children dance or move around the space. When the music stops they freeze in the pose the coach calls (tree, star, statue).','Stop quickly; hold the pose still','Add a pose on one foot; hold it for five seconds','Wiggling: praise the stillest child',5,['freeze','Children dance and freeze in a pose when the music stops.']],
+ ['Three-Step Listening Walk',12,'All','20 x 20 yd','None','The coach gives three actions in a row (for example: tiptoe, giant steps, spin). Children listen to all three, then do them in order.','Listen to the whole message first','Give four actions; give them in a silly order','Children start after the first action: wait for the word go',6,['laps','Children listen to three actions and do them in order.']],
+ ['Team Name Workshop',12,'All','Circle 10 yd','Paper, markers','The group suggests team names. The coach writes the favorite ideas and the group picks one by clapping. Each child adds a clap, stomp or word to a team chant.','Everyone adds something; listen to friends','Make a hand motion for the chant; use it as the closing cheer','One loud child decides: take turns around the circle',6,['circle','The group invents a team name and a chant together.']],
+ ['Mini Field Party',10,'3 v 3','20 x 15 yd','Small goals, bibs','Children play a free 3 v 3 game on a small field. Everyone cheers when a goal is scored, whichever team scores it.','Play, share, smile','Add a rule: everyone touches the ball before a shot','Crying after a goal against: celebrate effort, not score',2,['smallgame','Children play a friendly mini game and cheer every goal.']],
+ ['Ball to the Hoop',10,'Groups of 6','20 x 20 yd','Hoops, balls','Each team has a hoop home. Children dribble one ball at a time from the middle pile to their hoop and keep going until the pile is gone.','Bring it back with your foot','Two balls at a time; use only the weaker foot for the last ball','Children use hands: remind them that feet carry the ball',3,['gates','Teams dribble balls from a pile in the middle to their hoop.']],
+ ['Follow the Coach Dribble',10,'All','Full field','1 ball each','Children dribble behind the coach, who changes direction, speed and path. When the coach stops, everyone stops with a foot on the ball.','Eyes on the coach; foot on the ball to stop','The coach lets a child lead the line','Running ahead of the group: keep the line close',4,['laps','Children dribble in a line behind the coach and stop when the coach stops.']],
+ ['Everyone Plays Mini Match',10,'3 v 3 + rotation','20 x 15 yd','Small goals','Four spots rotate every two minutes (goal side, field player, field player, helper at the line). Every child tries every spot.','Try every place; cheer the friend who comes in','Add a bib color for the helper; rotate on a whistle','Wanting to stay in one spot: use a visible timer',5,['smallgame','Children rotate through every spot in a mini game.']],
+ ['Mini Match Day',10,'3 v 3','20 x 15 yd','Goals, bibs','Short rounds with new teams every round. Everyone shakes hands before and after, and the coach does not keep score.','Play, shake hands, smile','Add a team cheer to finish each round','A child upset by losing: celebrate the handshake',6,['matchday','Short rounds with new teams, handshakes and no score.']]
+],
+2:[
+ ['Giants and Mice',12,'All','20 x 20 yd','None','On the call, children move like giants (big slow steps, arms high) or mice (tiny quick steps, low). The coach switches the call every ten seconds.','Big and small; stay balanced','Add elephants (stomp) and snakes (slither)','Mixing up the calls: show the animal with your own body',2,['lanes','Children move as giants or mice when the coach calls.']],
+ ['Lily Pad Hop',12,'Groups of 4','Lane 10 yd','Hoops','Hoops are lily pads in a path. Children hop from pad to pad on two feet, landing softly. Then they try one foot.','Land softly; knees bend','Move the pads farther apart; add a quarter turn on one pad','Missing the pads: bring the pads closer',3,['balance','Children hop from hoop to hoop with soft landings.']],
+ ['Spinning Tops',12,'All','20 x 20 yd','None','Children spin slowly like tops on the spot, then stop and balance on both feet for three seconds before spinning the other way.','Slow spin; balance after','Stop on one foot','Dizziness: sit down and breathe, then rejoin',3,['freeze','Children spin like tops and balance when they stop.']],
+ ['Bridge Walk',12,'Groups of 4','Lane 8 yd','Lines or ropes','Children walk along a line like a narrow bridge with arms out. They go forward, then sideways, then backward with a friend’s hand for help.','Eyes ahead; arms wide','Carry a bean bag on the head; add a ball on the hand','Stepping off: start again with a smile',4,['balance','Children walk along a line with arms out and balance.']],
+ ['Crab and Crocodile',12,'Groups of 4','Lane 10 yd','None','Children crawl like crocodiles along one lane, then walk like crabs back along the next, with hips up and fingers pointing backward.','Hips up; move slowly','Race to the cone and back at a medium pace','Dropping the hips: slow the pace',4,['lanes','Children crawl like crocodiles and walk like crabs.']],
+ ['Worm Wiggle Run',12,'All','20 x 20 yd','Cones','Children run in a wiggle path around cones like a worm, leaning into each turn.','Lean into the turn; quick feet','Run backward for a few steps; add a second worm path','Cutting across: put cones closer together',5,['zigzag','Children run in a wiggle path around cones like worms.']],
+ ['Stop on a Spot',12,'All','20 x 20 yd','Spot markers','Children run freely. When the coach claps, they stop with both feet on the nearest spot and freeze for two seconds.','Quiet landing on both feet','Hop on one foot to the spot; spin before the stop','Sliding past: slow the run',5,['freeze','Children run and stop with both feet on a spot.']],
+ ['Rainbow Jumps',12,'All','Open area','Colored spots','Colored spots are spread out. The coach calls a color and children jump onto that color with a soft landing.','Land on two feet; knees soft','Hop on one foot; call two colors in a row','Missing the spots: put them closer',6,['colors','Children jump to the called color spot.']],
+ ['Obstacle Adventure',12,'Groups of 4','Lane 15 yd','Cones, ropes, hoops','Children move over a rope, through a hoop, around a cone and under a low rope in a path, then run back.','Move carefully; wait for your turn','Carry a bean bag through the course','Rushing: walk the path first',6,['stations','Children move through a simple obstacle path.']],
+ ['Animal Goals',10,'3 v 3','20 x 15 yd','Small goals','Before a shot, the shooter moves like an animal named by the coach for three steps, then shoots. Teams change roles after each goal.','Move like the animal, then shoot','Change the animal after each goal','Forgetting the animal: start the move again',2,['smallgame','Children move like an animal before every shot.']],
+ ['Tree Tag',10,'Groups of 6','20 x 20 yd','Cones','One tagger chases the group with a gentle touch. Children are safe if they freeze in a tree pose on one foot until the coach counts to three.','Balance like a tree; gentle tags','Two taggers; hold the tree pose for five seconds','Rough tags: tag only with two fingers on the shoulder',3,['shark','Children play tag and balance like trees to stay safe.']],
+ ['Balance Relay',10,'Teams of 4','Lane 10 yd','Bean bags','Teams carry a bean bag on their head to the cone and back, passing it to the next runner without using hands on the bag.','Stand tall; walk smoothly','Add a turn at the cone','Dropping the bag: pick it up and keep going',4,['balance','Teams carry bean bags on their heads in a relay.']],
+ ['Lane Racers',10,'Teams of 4','Lane 15 yd','Hoops, cones','Teams run in their own lanes through hoops and around cones and tag the next runner with a high five.','Help your team; high five to tag','Add a hop and a spin','Pushing: each team has its own lane',5,['stations','Teams race in their own lanes through simple obstacles.']],
+ ['Superhero Run',10,'All','Full field','Bibs as capes','Children run as superheroes around the field. When the coach says “villain”, they freeze in a superhero pose until the coach says “safe”.','Quiet freeze; strong pose','Add a balance pose on one foot','Giggling: allow it and restart',6,['freeze','Children run as superheroes and freeze on the call.']]
+],
+3:[
+ ['Ball Hello',12,'All','20 x 20 yd','1 ball each','Children say hello to their ball by touching it gently with a hand, then a foot, then a knee, then an elbow. They name the body part each time.','Gentle touches; say the part','Add a heel and a shoulder','Squeezing or kicking: use a soft touch',2,['free','Children touch the ball with different body parts.']],
+ ['Sole Roll Walk',12,'All','20 x 20 yd','1 ball each','Children walk around the area, rolling the ball under the sole of the foot, pulling it back and pushing it forward.','Foot on top of the ball; walk slowly','Roll with the other foot; add a stop with the sole','Pushing the ball away: slow down',3,['free','Children roll the ball with the sole while walking.']],
+ ['Pumpkin Taps',12,'All','20 x 20 yd','1 ball each','The ball is a pumpkin. Children tap the top of it with the inside of each foot, back and forth like patting it.','Soft taps; ball stays still','Count ten taps; try the other order','Kicking it away: pat softly',3,['toetap','Children tap the ball with both feet as if patting a pumpkin.']],
+ ['Hoop Rolling',12,'Pairs','10 x 10 yd','Hoops, 1 ball each','Children roll the ball with the foot into a hoop and stop it inside by putting the sole on top.','Aim, then stop with the sole','Roll from farther away','Overshooting: roll more softly',4,['gates','Children roll the ball into a hoop and stop it with the sole.']],
+ ['Ball Zoo Moves',12,'All','20 x 20 yd','1 ball each','Children move around the space with the ball like animals: slow turtle, quick rabbit, sideways crab. The coach calls the animal.','Keep the ball close to your feet','Add a sound for each animal','Losing the ball: slow down like the turtle',4,['free','Children move with the ball like different animals.']],
+ ['Stop the Rolling Ball',12,'Pairs','10 x 8 yd','1 ball per pair','One child rolls the ball slowly with the hands. The partner stops it with the sole of the foot and rolls it back.','Sole on top of the ball','Roll a little faster; stop with the other foot','Missing the ball: roll slower',5,['cushion','Children stop a rolled ball with the sole.']],
+ ['Dance with the Ball',12,'All','20 x 20 yd','1 ball each, music','Children touch the ball in time with the music: slow touches for slow music, quick touches for quick music.','Stay on the beat; soft touches','Add a spin during the chorus','Ball runs away: take smaller touches',5,['toetap','Children touch the ball in time to music.']],
+ ['Cone Maze Roll',12,'All','20 x 20 yd','Cones','Cones form a maze with wide paths. Children guide the ball through the maze with soft touches.','Slow, soft touches','Narrow the paths; time yourself','Hitting cones: widen the paths',6,['gates','Children guide the ball through a cone maze.']],
+ ['Kick to the Cone',12,'Pairs','10 x 8 yd','Cones, balls','Children kick a still ball gently at a cone five yards away. They count how many times they hit it.','Look at the cone; kick with the inside','Move farther back; use the other foot','Kicking too hard: use a smaller kick',6,['shoot','Children kick a still ball at a cone.']],
+ ['Ball Garden',10,'Groups of 6','20 x 20 yd','Balls, hoops','Hoops are flower beds. Children plant a ball in each bed by rolling it in and stopping it with the sole, then water it with five gentle taps.','Control before you tap','Add a second bed; plant with the other foot','Kicking the ball out: gentle roll',2,['gates','Children roll balls into hoops and tap them gently.']],
+ ['Magic Word Stop',10,'All','20 x 20 yd','1 ball each','Children move with the ball. When the coach says the magic word, they stop the ball by putting the sole on it and stand still like a statue.','Sole on the ball; whole body still','Use two magic words with two different stops','Forgetting to stop: start slowly',3,['freeze','Children stop the ball on a magic word.']],
+ ['Ball Parade',10,'Teams of 4','Full field','1 ball each','Children parade around the field in a line, dribbling behind a leader. The leader changes the path and the speed.','Follow the leader; keep the ball close','Change leaders every minute','Crashing: keep a ball-length gap',4,['laps','Children dribble in a parade behind a leader.']],
+ ['Ball Party',10,'Groups of 6','20 x 20 yd','1 ball each','Children dribble freely. When the coach calls “party”, they stop the ball and dance beside it for five seconds.','Stop the ball first, then dance','Call “party” more often; dance with a toe tap','Losing the ball while dancing: stop it first',5,['free','Children stop their ball and dance when the coach calls party.']],
+ ['Touch Count Day',10,'Pairs','15 x 15 yd','1 ball each','Children count their touches for 30 seconds and tell the coach their number. The next try aims to beat their own number.','Beat your own number','Count with the other foot','Counting too fast: count slowly with a friend',6,['free','Children count their ball touches and try to beat their own number.']]
+],
+4:[
+ ['Astronaut Dribble',12,'All','20 x 20 yd','1 ball each','Children dribble in slow motion like astronauts. When the coach says “zoom”, they speed up for five steps and then return to slow motion.','Slow, then zoom; keep the ball close','Add a freeze between the speeds','Always fast: praise the slow astronauts',2,['zigzag','Children dribble slowly and then zoom on the call.']],
+ ['Cone City Drive',12,'All','20 x 20 yd','Cones, 1 ball each','Children are cars. Cones are buildings. They dribble the ball around the buildings without hitting any.','Look ahead; gentle touches','Add a second car (a partner) to share the road','Hitting buildings: slow down',3,['gates','Children dribble around cone buildings like cars.']],
+ ['Sunny Cloudy Stormy',12,'All','20 x 20 yd','1 ball each','The coach calls the weather. Sunny means slow and relaxed, cloudy means medium, stormy means fast with quick turns. Rainbow means stop.','Match your speed to the weather','Add snow (tiny touches)','Ignoring the call: use hand signals too',3,['free','Children change their dribbling speed with the weather.']],
+ ['Dribble Home',12,'Groups of 4','Lane 15 yd','Cones, balls','Each child dribbles to a far cone, circles it and dribbles back to their home hoop. Then the next child goes.','Close ball; look up at the cone','Add a turn at the middle; race against a timer','Losing the ball: slow down',4,['zigzag','Children dribble to a cone and back home.']],
+ ['Look Up Dribble',12,'All','20 x 20 yd','1 ball each','The coach holds up fingers. Children keep dribbling and call out the number they see.','Look up quickly, then look down','Show a color card too','Looking only at the ball: slow the pace',4,['fingers','Children look up to call a number while dribbling.']],
+ ['Bump and Turn',12,'Groups of 4','Lane 10 yd','Cones, balls','Children dribble to a cone, bump it gently with the ball, turn the ball with the sole and dribble back.','Soft bump; sole turns the ball','Turn the other way; speed up the return','Hitting the cone too hard: softer touch',5,['turn','Children dribble to a cone, bump and turn.']],
+ ['Tunnel Friends',12,'Pairs','10 x 10 yd','1 ball each','One child stands with legs wide as a tunnel while the partner dribbles through, then swaps. After three turns they find a new partner.','Slow, soft touches','Move the tunnel after each pass','Kicking the legs: aim at the middle',5,['gates','Children dribble through a partner’s legs tunnel.']],
+ ['Rainbow Dribble',12,'All','20 x 20 yd','Colored cones','Children dribble to the colors the coach calls in a row: red, blue, yellow.','Find the color, then go','Add a second ball color to remember','Mixing colors: slow down the calls',6,['colors','Children dribble to a series of called colors.']],
+ ['Snail Race',12,'Groups of 4','Lane 15 yd','Cones, balls','The slowest dribbler wins, but the ball must keep moving and may never stop.','Control the ball slowly','Race again with the other foot','Stopping: keep the ball rolling',6,['zigzag','Children try to dribble as slowly as they can without stopping.']],
+ ['Dinosaur Chase',10,'Groups of 6','20 x 20 yd','1 ball each','One child is a dinosaur without a ball and tries to touch others’ balls gently. Dribblers keep their ball close.','Keep the ball close','Two dinosaurs','Rough: gentle touches only',2,['shark','A dinosaur chases dribblers who keep the ball close.']],
+ ['Treasure Dribble',10,'Teams of 3','20 x 20 yd','Balls, cones','Each team dribbles a ball to a treasure box in the middle, picks up one bib treasure and dribbles it home.','Dribble and carry','Add a second treasure','Dropping the treasure: stop and pick it up',3,['gates','Teams dribble to the treasure and bring it home.']],
+ ['Ball Tag',10,'Groups of 6','20 x 20 yd','1 ball each','A tagger dribbles and tags others with a gentle hand touch on the back. Tagged players freeze on one foot until a friend taps them free.','Eyes up; keep the ball close','Two taggers','Rough tags: use a soft hand',4,['shark','Taggers dribble and tag others.']],
+ ['Dribble Race Day',10,'Teams of 4','Lane 15 yd','Cones, balls','Teams race in their own lane, dribbling to the end and back through two gates, then pass the ball to the next player.','Control, then speed','Add a turn','Racing and losing control: slow down',5,['gates','Teams race by dribbling through gates.']],
+ ['Dribble and Score',10,'3 v 3','20 x 15 yd','Small goals','Children play with a bonus point for every dribble past a cone before a shot.','Dribble first, then shoot','Add a pass before the shot','Hogging: share the ball',6,['smallgame','Children dribble around a cone before they shoot.']]
+],
+5:[
+ ['Catch the Bubble',12,'Pairs','10 x 10 yd','Soft balls','One child tosses a soft ball gently underhand. The partner lets it bounce once and traps it with the sole like catching a bubble.','Soft sole; eyes on the ball','Toss a little higher','Missing the ball: toss lower',2,['bounce','Children trap a gently tossed ball with the sole.']],
+ ['Roll and Stop Gates',12,'Pairs','10 x 8 yd','Cones, balls','One child rolls the ball through a gate. The partner stops it with the sole just after the gate.','Sole on top','Roll faster; stop with the other foot','Missing: roll more slowly',3,['cushion','Children stop a rolled ball after a gate.']],
+ ['Foot Pillow',12,'Pairs','10 x 8 yd','1 ball per pair','Children make their foot a soft pillow to stop a gently passed ball, then pass it back with the inside of the foot.','Soft foot; relax the ankle','Use the other foot','Stiff foot: wiggle the ankle first',3,['cushion','Children cushion a pass with a soft foot.']],
+ ['Statue Stop',12,'All','20 x 20 yd','1 ball each','Children dribble. On the signal, they stop the ball and their body at the same time like a statue.','Stop the ball; stop the body','Balance on one foot while stopped','Losing the ball: slow down',4,['freeze','Children stop the ball and freeze like a statue.']],
+ ['Bounce and Stop',12,'Pairs','10 x 10 yd','Soft balls','One child bounces a soft ball once toward the partner. The partner stops it with the sole after the bounce.','Watch the ball bounce','Use the thigh for a soft bounce','Missing: bounce lower',4,['bounce','Children stop a ball after it bounces once.']],
+ ['Corner Control',12,'Groups of 4','12 x 12 yd','Cones, balls','Children stand in the four corners of a square. They pass across, stop the ball and pass again.','Stop first, then pass','Pass around the corners in order','Rushing the pass: stop it first',5,['receive','Children stop the ball in a corner and pass on.']],
+ ['Same Foot Mirror',12,'Pairs','10 x 8 yd','1 ball per pair','Partners stop and pass with the same foot at the same time like a mirror.','Same foot; soft touch','Switch to the other foot','Mixing feet: slow down',5,['pairs','Partners stop passes with the same foot in a mirror.']],
+ ['Rainbow Roll',12,'Pairs','10 x 8 yd','Colored cones, balls','The partner calls a color and rolls the ball to it. The child runs to stop the ball at that cone.','Look, run, stop','Add a second ball','Overrunning: stop before the cone',6,['colors','Children stop balls at called colored cones.']],
+ ['Side Roll Stop',12,'Groups of 3','12 x 10 yd','Balls','A ball is rolled from the side. The child moves to it and stops it with the inside of the foot.','Move to the ball; soft foot','Faster roll','Lunging: take a step first',6,['receive','Children stop a ball that rolls in from the side.']],
+ ['Stop Before You Shoot',10,'3 v 3','20 x 15 yd','Small goals','A goal counts only if the shooter first stopped the ball with the sole. If they shoot without stopping, the ball goes to the other team.','Stop, then shoot','Stop with the other foot','Shooting early: restart',2,['smallgame','Children must stop the ball before they can shoot.']],
+ ['Quiet Feet Game',10,'Groups of 6','20 x 20 yd','Balls','Children try to stop passes so softly that the coach cannot hear the ball.','Soft touch','Pass from farther','Noisy touches: relax the foot',3,['cushion','Children try to stop passes quietly.']],
+ ['Stop It Relay',10,'Teams of 4','Lane 10 yd','Balls','Children pass the ball to the next child in the line, who stops it before passing on.','Stop, then pass','Add a gate','Dropping the ball: step closer',4,['lanes','Teams stop and pass the ball down a line.']],
+ ['Control Claps',10,'3 v 3','20 x 15 yd','Goals','The team claps when a pass is stopped with the first touch. The team with more claps after two minutes cheers for the other team.','Control, then play','Add a point for a weaker-foot stop','Wild passes: slow down',5,['smallgame','Teams clap for every controlled pass.']],
+ ['Control Cup',10,'3 v 3','20 x 15 yd','Goals','Short games where every pass stopped with the first touch earns a point.','Control, then play','Add a time limit','Rushing: control first',6,['smallgame','Teams earn points for controlled first touches.']]
+],
+6:[
+ ['Roll to a Friend',12,'Pairs','8 x 6 yd','1 ball per pair','Partners sit facing each other and roll the ball with their hands. Then they stand and push the ball with the inside of the foot.','Soft roll; look at your friend','Move farther apart','Hard roll: gentle push',2,['pairs','Partners roll and push the ball to each other.']],
+ ['Egg Pass',12,'Pairs','8 x 6 yd','1 ball per pair','The ball is an egg. Children pass gently with the inside of the foot so the egg does not crack.','Gentle pass; inside of the foot','Move a little farther apart','Hard pass: soft foot',3,['pass','Partners pass gently as if the ball were an egg.']],
+ ['Gate Pass Buddies',12,'Pairs','8 x 6 yd','Cones, balls','Partners pass through a gate placed between them. They count how many passes in a row go through.','Aim at the gate','Make the gate smaller','Missing the gate: make it wider',3,['pass','Partners pass through a gate.']],
+ ['Say the Name Pass',12,'Groups of 4','Circle 8 yd','1 ball','Children stand in a circle and say a friend’s name before they pass the ball to that friend.','Say the name first','Add a second ball','Passing without calling: pass back and say it first',4,['circle','Children say a friend’s name before passing.']],
+ ['Walking Buddy Pass',12,'Pairs','12 x 8 yd','1 ball per pair','Partners walk side by side across the area and pass the ball back and forth.','Walk, pass, walk','Jog','Rushing: walk slowly',4,['follow','Partners walk side by side and pass.']],
+ ['Square Dance Pass',12,'Groups of 4','Square 8 yd','Cones, balls','Four children stand at the corners of a square, pass across and follow their pass to the next corner.','Pass, then follow','Add a second ball','Collisions: all move the same direction',5,['triangle','Children pass and follow around a square.']],
+ ['Pass and Sit',12,'Pairs','8 x 6 yd','1 ball per pair','Children pass and sit down. The receiver stands, stops the ball and passes back.','Pass, sit; stand, stop, pass','Pass faster','Hard pass: gentle',5,['pass','Children pass and sit before receiving.']],
+ ['Bowling Pass',12,'Pairs','10 x 6 yd','Cones, balls','Children pass the ball to knock down a cone at the other end.','Aim at the cone','Move back','Missing: closer',6,['pass','Children aim passes at cones.']],
+ ['Triangle Buddies',12,'Groups of 3','Triangle 6 yd','Cones, balls','Three children pass around a triangle and follow their pass to the next cone.','Pass, then follow','Add a stop','Standing still: follow the ball',6,['triangle','Children pass around a triangle.']],
+ ['Share the Ball Game',10,'3 v 3','20 x 15 yd','Goals','Everyone must touch the ball before a team can score.','Share the ball','Add a count','Hogging: pass',2,['smallgame','Everyone must touch the ball before a goal.']],
+ ['Treasure Pass',10,'Groups of 6','15 x 15 yd','Balls, cones','Teams pass the treasure ball around and keep it for 20 seconds.','Pass and move','Add a defender','Giving up: keep trying',3,['rondo','Teams pass the treasure ball.']],
+ ['Pass Relay',10,'Teams of 4','Lane 12 yd','Balls','Children pass the ball down a line to the next player.','Aim','Add a turn','Wild passes: soft',4,['lanes','Teams pass the ball down a line.']],
+ ['Three Passes Game',10,'3 v 3','20 x 15 yd','Goals','Three passes in a row earn a bonus point.','Pass, pass, pass','Add a goal','Hogging: pass',5,['smallgame','Teams earn a bonus for three passes.']],
+ ['Pass Parade Day',10,'3 v 3','20 x 15 yd','Goals','Short rounds with new teams. Teams cheer for each other.','Pass and cheer','Add a goal','Losing: cheer',6,['funino','Short rounds of passing.']]
+],
+7:[
+ ['Roll and Knock',12,'Pairs','8 x 6 yd','Cones, balls','Children roll a ball with the foot to knock down a cone.','Aim','Farther','Missing: closer',2,['shoot','Children knock cones.']],
+ ['Goal Gate Shots',12,'Pairs','8 x 6 yd','Cones, balls','Children kick a still ball through a small gate.','Look at the gate','Smaller gate','Missing: closer',3,['shoot','Children kick through gates.']],
+ ['Laces Practice',12,'Pairs','8 x 6 yd','1 ball each','Children kick the ball with their shoelaces.','Foot like a hammer','Run-up','Toe kick: laces',3,['shoot','Children practice laces.']],
+ ['Color Goal',12,'Groups of 4','Goal','Colored cones, balls','The coach calls a color and the child shoots at it.','Look at the color','Two colors','Missing: closer',4,['shoot','Children shoot at colors.']],
+ ['Run and Kick',12,'Pairs','10 x 8 yd','Balls','Children take two steps and kick a still ball.','Step, step, kick','Three steps','Stutter: count',4,['shoot','Children take steps and kick.']],
+ ['Cone Keeper Goal',12,'Groups of 3','Goal','Cones, balls','A cone keeper stands in goal. Children shoot around it.','Aim at the open space','Move the cone','Hitting the cone: aim',5,['shoot','Children shoot around a cone.']],
+ ['Roll Shoot',12,'Pairs','10 x 6 yd','Balls','A partner rolls the ball and the child kicks it.','Watch the ball','Faster','Missing: slow',5,['firsttime','Children kick rolling balls.']],
+ ['Shoot from a Mark',12,'Groups of 4','Goal','Spot markers, balls','Children shoot from a spot and then step back one spot after each goal.','Strike','Both feet','Toe kick: laces',6,['shoot','Children shoot from marks.']],
+ ['Dribble Shoot Gates',12,'Groups of 4','Goal','Cones, balls','Children dribble through a gate and shoot.','Dribble, then shoot','Add a defender cone','Shooting early: dribble',6,['rebound','Children dribble and shoot.']],
+ ['Goal Cheer Game',10,'3 v 3','20 x 15 yd','Small goals','Every goal gets a cheer from both teams.','Cheer all goals','Add a count','Crying: cheer',2,['smallgame','Both teams cheer every goal.']],
+ ['Big Goal Little Goal',10,'3 v 3','20 x 15 yd','Goals of two sizes','Teams choose a big goal (one point) or a little goal (three points).','Choose and shoot','Move goals','Only little goals: try both',3,['smallgame','Teams choose goal size.']],
+ ['Shoot Relay',10,'Teams of 4','Goal','Balls','Children take turns shooting in a relay.','Shoot, run back','Add a dribble','Waiting: short lines',4,['lanes','Teams shoot in a relay.']],
+ ['Goal Rush',10,'3 v 3','20 x 15 yd','Goals','The coach counts shots, not goals.','Shoot','Add a pass','Not shooting: cheer attempts',5,['smallgame','Teams count shots.']],
+ ['Shooting Stars',10,'3 v 3','20 x 15 yd','Goals','Each shot earns a star. Teams collect stars.','Shoot','Add a time','Counting goals: count shots',6,['smallgame','Teams collect stars for shots.']]
+],
+8:[
+ ['Lean and Go',12,'Pairs','10 x 8 yd','Cones, balls','Children lean one way and go the other around a cone.','Lean, go','Add a ball','Slow: go fast',2,['fake','Children fake and go.']],
+ ['Dribble Around the Statue',12,'Pairs','10 x 8 yd','1 ball each','A partner stands like a statue. The child dribbles around.','Choose a side','Statue moves','Stopping: go around',3,['duel','Children dribble around a statue.']],
+ ['Shadow Friend Walk',12,'Pairs','12 x 8 yd','Cones','One child walks and the shadow mirrors.','Stay close','Faster','Dropping: slow',3,['mirror','Children mirror each other.']],
+ ['Doorway Dribble',12,'Pairs','10 x 8 yd','Cones, balls','A defender stands between two cones. The attacker dribbles through.','Choose a side','Smaller door','Stopping: go',4,['duel','Children dribble through a doorway.']],
+ ['Soft Defender',12,'Pairs','12 x 8 yd','Balls','The defender walks toward the attacker with arms behind the back.','Stay low','Faster','Reaching: arms back',4,['jockey','Defenders walk toward attackers.']],
+ ['Ball Stealers',12,'Groups of 4','15 x 15 yd','1 ball each','Children try to keep their ball and steal one gently.','Close ball','Add a time','Rough: gentle',5,['shark','Children try to steal balls gently.']],
+ ['Get It Back',12,'Pairs','15 x 8 yd','Balls','The attacker has a head start. The defender chases and tries to get in front.','Run fast','Smaller start','Giving up: praise',5,['goalside','Defenders chase attackers.']],
+ ['Goal Line Duel',12,'Pairs','10 x 8 yd','Small goals, balls','The attacker dribbles to a small goal while the defender tries to stop them.','Go early','Add a second goal','Rushing: look first',6,['duel','Children duel at a small goal.']],
+ ['Attack Defend Switch',12,'Pairs','10 x 8 yd','Balls','On a whistle, the attacker and defender switch roles.','Switch fast','Add a goal','Late: listen',6,['transition','Children switch roles on a whistle.']],
+ ['Cone Cops',10,'Groups of 6','20 x 20 yd','1 ball each','Cops (without a ball) try to touch the ball gently. Others keep it.','Shield','Two cops','Rough: gentle',2,['shark','Cops chase dribblers.']],
+ ['One v One Garden',10,'Pairs','10 x 8 yd','Small goals','Short 1 v 1 rounds with a handshake.','Play hard play kind','Add a bonus','Poor loser: praise',3,['duel','Short 1 v 1 rounds.']],
+ ['Two Door Game',10,'Pairs','10 x 8 yd','Cones','The attacker may go through either door. The defender guards.','Pick a door','Smaller doors','Stopping: go',4,['cover','Children use two doors.']],
+ ['Duel Cup',10,'Pairs','Several grids','Balls','Winners move up. Handshakes.','Play fair','Add a bonus','Poor loser: praise',5,['duel','Children play duels.']],
+ ['Win and Run',10,'3 v 3','20 x 15 yd','Goals','A goal after winning the ball counts double.','Win and go','Add a time','Hogging: share',6,['transition','Goals after winning count double.']]
+],
+9:[
+ ['Whistle Freeze Fun',12,'All','20 x 20 yd','Whistle, 1 ball each','Children dribble. One whistle means freeze with a foot on the ball.','Stop fast','Two whistles','Ignoring: practice',2,['freeze','Children freeze on the whistle.']],
+ ['Kind Words Pass',12,'Groups of 6','Circle 8 yd','1 ball','Children pass a ball and say a kind word to the receiver.','Kind words','Add a thank you','Silly words: kind',3,['circle','Children pass kind words.']],
+ ['Throw-In Bullseye',12,'Pairs','10 x 8 yd','Soft balls, cones','Children throw a ball in with two hands to a target.','Both hands','Add a step','One hand: both',3,['throwin','Children practice throw-ins.']],
+ ['Line Detectives',12,'Groups of 4','Field lines','Balls','Children decide if the ball is in or out when it rolls over the line.','Look at the line','Add a restart','Guessing: look',4,['refsignals','Children decide in or out.']],
+ ['Thumbs Up Thumbs Down',12,'All','Circle 10 yd','None','The coach acts out good and bad choices. Children give thumbs up or thumbs down.','Think kind','Children act out','Giggles: allow',4,['circle','Children judge choices.']],
+ ['High-Five Tunnel',12,'All','Two lines','None','Children walk past each other giving high fives and saying “good game”.','Eyes and smile','Add a name','Skipping: go again',5,['pairs','Children practice good game lines.']],
+ ['Helping Hand',12,'Pairs','10 x 10 yd','1 ball per pair','Partners practice helping each other up and giving back the ball.','Be kind','Add a thank you','Giggling: allow',5,['pairs','Children practice helping each other.']],
+ ['Referee Helper',12,'Groups of 4','Open area','Whistle','A child is the helper referee with the coach. They show a signal.','Big signal','No coach','Shy: buddy',6,['refsignals','Children try the referee job.']],
+ ['Share the Ball',12,'Groups of 4','15 x 15 yd','2 balls','Children share two balls among four and take turns.','Take turns','Add a third','Hogging: share',6,['pairs','Children share balls.']],
+ ['Follow the Rule Game',10,'3 v 3','20 x 15 yd','Goals','Teams play with one rule (no hands). A point for every rule kept.','Rule kept','Add a second rule','Forgetting: remind',2,['smallgame','Teams follow a rule.']],
+ ['Fair Play Game',10,'3 v 3','20 x 15 yd','Goals','Teams earn a point for a kind act.','Be kind','Add a bonus','Noticing friends only: notice others',3,['smallgame','Teams earn points for kindness.']],
+ ['Ball Out Game',10,'3 v 3','20 x 15 yd','Goals','When the ball goes out, the other team throws it in.','Throw in','Add a step','Wrong team: ask',4,['throwin','Children restart after balls go out.']],
+ ['Handshake Game',10,'3 v 3','20 x 15 yd','Goals','Children shake hands after each round.','Good game','Add a name','Skipping: go',5,['smallgame','Children shake hands.']],
+ ['Kindness Cup',10,'3 v 3','20 x 15 yd','Goals','A short cup where the fair-play team gets a prize.','Play fair','Add a thank you','Rivalry: friendly',6,['funino','A fair-play cup.']]
+],
+10:[
+ ['Space Walk',12,'All','20 x 20 yd','None','Children walk and find a space. When the coach claps, they stand still in empty space.','Find space','Add a ball','Bunching: spread',2,['spread','Children find space.']],
+ ['Triangle Walk',12,'Groups of 3','Triangle 6 yd','Cones','Three children walk around a triangle keeping the shape.','Keep the shape','Add a ball','Bunching: spread',3,['triangle','Children walk a triangle.']],
+ ['Pass and Move Friends',12,'Groups of 3','12 x 10 yd','Balls','Children pass and move to a new space.','Pass, move','Add a second ball','Standing: move',3,['triangle','Children pass and move.']],
+ ['Role Hats',12,'Groups of 4','Open area','Hats or bibs','Children wear a hat for each role (attacker, defender, helper, goalkeeper) and switch.','Know your hat','Swap often','Forgetting: show',4,['shapes','Children switch roles.']],
+ ['Defend Together',12,'Groups of 3','12 x 10 yd','Balls','Two defenders work together to stop an attacker.','Work together','Add a ball','Both go to the ball: one waits',4,['cover','Defenders work together.']],
+ ['Spread Like Stars',12,'All','20 x 20 yd','Balls','Children spread out until the coach says “group” and they form a team circle.','Spread, group','Add a ball','Crowding: spread',5,['spread','Children spread and group.']],
+ ['Team Shape',12,'Groups of 4','15 x 15 yd','Cones','Children make shapes (square, line, triangle) and move as one.','Move together','Add a ball','Bunching: spread',5,['shapes','Children form shapes.']],
+ ['Switch the Ball',12,'Groups of 4','15 x 15 yd','Balls','On the coach call, the ball goes to the other side of the field.','Look, pass','Add a second call','Passing back: switch',6,['funino','Children switch the field.']],
+ ['Team Dance',12,'All','Circle 10 yd','Music','The team creates a group dance with a soccer move in it.','Move together','Add a ball','Shy: buddy',6,['circle','The team makes a dance.']],
+ ['Team Hat Game',10,'3 v 3','20 x 15 yd','Goals, hats','Children switch hats after each goal.','Know the job','Add a challenge','Forgetting: show',2,['shapes','Children switch hats.']],
+ ['Spread Game',10,'3 v 3','20 x 15 yd','Goals','A goal counts only if all three were spread out.','Spread','Add a time','Bunching: restart',3,['funino','Teams spread out.']],
+ ['Pass and Score',10,'3 v 3','20 x 15 yd','Goals','A goal after two passes counts double.','Pass','Add a time','Hogging: pass',4,['smallgame','Goals after passes count double.']],
+ ['Teammate of the Day Game',10,'3 v 3','20 x 15 yd','Goals','The team picks a teammate of the day after each round.','Name a friend','Add a reason','Same friend: others',5,['smallgame','Teams pick a teammate of the day.']],
+ ['Team Day',10,'3 v 3','20 x 15 yd','Goals','Short rounds with new teams every round.','Play with everyone','Add a cheer','Counting wins: no',6,['matchday','Short rounds with new teams.']]
+],
+11:[
+ ['Goalie Hello',12,'Groups of 4','Goal','Soft balls','Children take a goalkeeper stance and say hello to the ball when it rolls.','Eyes on the ball','Faster','Missing: slower',2,['keeper','Children greet the ball.']],
+ ['Ready Position Freeze',12,'All','20 x 20 yd','None','Children move and freeze in a ready position when the coach calls.','Knees bent','Add a ball','Standing tall: bend',3,['setpos','Children freeze in a ready position.']],
+ ['Hug the Ball',12,'Pairs','8 x 6 yd','Soft balls','A partner rolls the ball. The child hugs it.','Soft hands','Faster','Dropping: slow',3,['keeper','Children hug rolled balls.']],
+ ['Side Shuffle Cones',12,'Groups of 4','Goal','Cones','Children shuffle side to side between cones.','Quick small steps','Add a ball','Crossing feet: shuffle',4,['setpos','Children shuffle side to side.']],
+ ['Catch the Toss',12,'Pairs','8 x 6 yd','Soft balls','A partner tosses softly. The child catches with two hands.','Hands soft','Higher','Dropping: soft ball',4,['keeper','Children catch tosses.']],
+ ['Fall to the Side',12,'Pairs','Soft ground','Soft balls','Children kneel and fall to the side to catch a rolled ball.','Fall to the side','From a crouch','Fear: kneel',5,['dive','Children fall to the side.']],
+ ['Roll Out to a Friend',12,'Pairs','10 x 8 yd','Balls','The keeper rolls the ball to a friend.','Aim, roll','Farther','Wild: closer',5,['gkthrow','Children roll out.']],
+ ['Call Mine',12,'Groups of 3','Goal','Balls','The keeper calls “mine” and catches the ball. Others stay away.','Call loud','Add a defender','Silent: remind',6,['keeper','Keepers call for the ball.']],
+ ['Save Then Throw',12,'Pairs','10 x 8 yd','Balls','The keeper saves and throws to a friend.','Save, throw','Farther','Slow: quick',6,['gkthrow','Keepers save and throw.']],
+ ['Keeper Turns',10,'Groups of 4','Goal','Balls','Every child takes a turn as goalkeeper for two minutes.','Be brave','Add a count','Same child: rotate',2,['keeper','Children rotate as goalkeeper.']],
+ ['Save Count',10,'3 v 3','Goals','Balls','The keeper counts saves and the team cheers each one.','Count saves','Add a bonus','Counting goals: saves',3,['keeper','Teams cheer saves.']],
+ ['Keeper Start',10,'3 v 3','Goals','Balls','After a save, the keeper rolls to a teammate who starts an attack.','Start the attack','Add a time','Slow: quick',4,['gkthrow','Keepers start attacks.']],
+ ['Goalie Party',10,'3 v 3','Goals','Balls','Short games with a rotating goalkeeper.','Be brave','Add a bonus','Same child: rotate',5,['funino','Games with a rotating keeper.']],
+ ['Keeper Cup',10,'3 v 3','Goals','Balls','Round robin games where every child plays as keeper.','Rotate and cheer','Add a challenge','Pressure: praise',6,['funino','Everyone plays as keeper.']]
+]
+};
+
+</script>
+<script>
+window.PATCH=Object.assign(window.PATCH||{},{
+'Roll and Knock':['Each child sits or stands 3 yards from a cone tower of one or two cones. They roll the ball with the inside of the foot to knock the cone over, then reset it with a partner.','Eyes on the cone, push the ball along the ground, follow it with your eyes','Move back a yard each time the cone falls; add a second cone to knock','Ball flies up: tell them to “kiss the middle of the ball” and keep the foot low'],
+'Goal Gate Shots':['Pairs set up a gate two shoe-lengths wide with cones. Each child kicks a still ball through the gate from 3 yards, then collects the ball and swaps with a partner.','Look at the gate, plant the other foot beside the ball, kick through the middle','Make the gate narrower or move one step back after two gates in a row','Ball hits the cone: celebrate the try, then ask “where do your eyes go?”'],
+'Laces Practice':['Each child places a ball on a spot and kicks it to a partner 4 yards away using the shoelaces part of the shoe. The partner stops it with a foot and kicks back.','Point the toes down, foot like a hammer, hit the middle','Take one step back, or add a two-step run-up','Toe kick: show them the bump on top of the foot where the laces are and tap it together'],
+'Color Goal':['Four coloured cones stand inside a wide goal. The coach calls a colour and the child kicks a still ball at that cone from 4 yards, then jogs to retrieve it.','Listen to the colour, find it, then kick','Call two colours in a row, or use a smaller target','Kicking before the colour is called: wait for the word, then go'],
+'Run and Kick':['Children stand behind a ball and take two steps, then kick towards a partner or a wide goal 5 yards away. Each child takes five kicks and swaps.','Step, step, kick; plant the standing foot next to the ball','Three steps, then kick with the other foot','Stuttering steps: clap the rhythm with them (one, two, kick)'],
+'Cone Keeper Goal':['A tall cone “keeper” stands in the middle of a goal made of two cones. Children shoot from 5 yards and try to put the ball past the keeper into the open space.','Find the open space, aim there, strike with the laces','Move the cone keeper after each goal or add a second cone','Hitting the cone every time: ask them to point at the space before kicking'],
+'Roll Shoot':['A partner rolls a slow ball from the side. The shooter steps up and kicks it towards a wide goal 6 yards away, then the partner and shooter swap.','Watch the ball all the way, step towards it, kick through it','Roll faster, or roll from a different side','Missing the moving ball: slow the roll and let the ball stop first'],
+'Shoot from a Mark':['Spot markers lie in a line at 3, 5 and 7 yards from a goal. Each child shoots from the nearest spot and steps back one spot after each goal. If they miss, they try again.','Strike through the ball, follow through towards the goal','Shoot with the weaker foot from the closest spot','Toe kicking from further back: return to the laces cue and the near spot'],
+'Dribble Shoot Gates':['Children dribble through a gate of two cones placed 5 yards from the goal and shoot straight after the gate. They jog back and the next child goes.','Dribble, gate, then shoot','Add a cone defender to dribble around before the gate','Shooting too early: say “gate first”, then the shot'],
+'Goal Cheer Game':['Two teams of three play a normal small game. Every goal for either team gets a cheer from everyone, and the scorers give a high five to the other team.','Cheer every goal, shoot when you can','Add a count: the whole group counts the goals out loud','A child cries after the other team scores: normalise it and ask the group to cheer louder'],
+'Big Goal Little Goal':['Each end has a wide goal worth one point and a tiny goal worth three. Teams may choose which to shoot at. Play two-minute rounds, then swap ends.','Choose a goal, then shoot','Move the little goal slightly farther away','Everyone only shoots at the big goal: ask them to try the little goal once this round'],
+'Shoot Relay':['Two teams of four line up behind a cone 6 yards from a goal. One child shoots, collects the ball, and runs it back to the next teammate. First team to score four goals wins.','Shoot, collect, run back, tag','Add a small dribble before the shot','Long waits: use two goals and teams of three so lines stay short'],
+'Goal Rush':['Two teams of three play with goals. The coach counts shots rather than goals, so any attempt earns a point. Rounds last two minutes.','Shoot when you see space','Add one pass before every shot','Children refuse to shoot: cheer every attempt loudly, even a miss'],
+'Shooting Stars':['In a small game each shot earns a paper star that the team places on a cone. At the end of the round both teams count their stars together.','Shoot and collect stars','Add a time limit of one minute per round','Counting only goals: remind them that every shot gets a star'],
+'Lean and Go':['Children dribble up to a cone, lean their body one way, then push the ball the other way around the cone and speed away. Do it without a ball first, then with.','Lean, then go the other way; keep the ball close','Add a second cone to repeat the move','Moving too slowly after the lean: ask for a big burst of speed'],
+'Dribble Around the Statue':['A partner stands still like a statue with arms at the sides. The dribbler dribbles up and goes around on whichever side they choose, then swaps with the statue.','Pick a side early, ball stays close','The statue starts to turn slowly from side to side','Stopping in front of the statue: go around quickly and keep moving'],
+'Shadow Friend Walk':['One child walks around a cone area and the other follows one step behind, copying every turn and stop like a shadow. After 45 seconds they swap roles.','Stay close, copy every move','Jog instead of walk, then change direction without warning','The shadow lags far behind: ask the leader to slow down and look back'],
+'Doorway Dribble':['Two cones make a doorway a few steps wide. A defender stands in the middle of the doorway, and the attacker dribbles through on either side. Swap after three tries.','Look at the defender, choose a side, go','Make the door narrower','Attacker stops and waits: remind them they can go on either side and just keep moving'],
+'Soft Defender':['Defenders walk slowly towards a child dribbling, with arms behind their back and no tackling. The attacker practises protecting the ball and walking past. Swap after one minute.','Stay low, keep the ball on your far foot','Defender walks faster, then jogs','Reaching with hands: arms behind the back like a penguin'],
+'Ball Stealers':['Four children each have a ball in a square. They keep their own ball while gently trying to tap another ball away with a foot; a child whose ball leaves the square just fetches it and rejoins.','Close ball, look up, gentle taps','Add a 30-second round and count how many balls you kept','Rough tackling: stop, reset, and show a “gentle foot” tap'],
+'Get It Back':['The attacker with the ball starts 3 yards ahead of a defender. The defender chases and tries to get in front of the ball, not to grab it. After one length they swap.','Run fast, get between the ball and the goal','Shorten the head start','A child gives up: praise the chase and give a bigger head start next time'],
+'Goal Line Duel':['One attacker, one defender and a small goal. The attacker dribbles from 8 yards and tries to score; the defender tries to stay between the ball and the goal. Three tries each, then swap.','Go early, take the first chance','Add a second small goal beside the first','Rushing the shot: say “look first, then kick”'],
+'Attack Defend Switch':['In pairs, one child attacks toward a small goal and the other defends. When the coach whistles, they swap roles immediately and the new attacker takes the ball.','Switch fast when you hear the whistle','Give the whistle after only a few seconds','Late switching: ask them to freeze with hands up before swapping'],
+'Cone Cops':['Six children dribble inside a square. Two are cops without a ball who try to gently touch a ball with a foot; a child caught swaps with a cop.','Shield the ball with your body, then move away','Add a third cop','Rough cops: remind them cops are gentle and only use their feet'],
+'One v One Garden':['Several small gardens each hold a pair and a small goal. Children play 1 v 1 for 30 seconds, then shake hands and move to a new garden.','Play hard, play kind','Add a bonus point for a dribble past','A child hates losing: praise the handshake before the score'],
+'Two Door Game':['Two doors 3 yards apart stand at the end of a short grid. The attacker may score through either door while the defender tries to guard them. Swap each turn.','Look at both doors, pick one','Make the doors narrower','Attacker stops: encourage moving to the other door'],
+'Duel Cup':['Several small grids hold pairs playing 1 v 1 for 45 seconds. Winners move one grid up, losers stay or move down, and everybody shakes hands each round.','Play fair, shake hands','Add a bonus point for a clean dribble','Tears after a loss: give a second round and praise effort'],
+'Win and Run':['A small game with a rule that a goal scored straight after winning the ball counts double. Teams play two-minute rounds and swap ends.','Win it, then go','Add a 5-second window after winning the ball','Hogging the ball: remind them to pass to a friend after winning it'],
+'Whistle Freeze Fun':['Everyone dribbles around the grid. One short whistle means stop the ball with a foot on top; two whistles mean change direction. Play for one minute at a time.','Foot on the ball when you hear the whistle','Add a second signal: two whistles = change direction','Ignoring the whistle: stop, practise the signal once, then restart'],
+'Kind Words Pass':['Six children stand in a circle of 8 yards with one ball. The passer says a kind word to the receiver by name, for example “nice job, Sam”, then passes.','Say the word, then pass','Add a thank you from the receiver','Silly words: laugh once, then ask for a kind one'],
+'Throw-In Bullseye':['Children stand 3 yards from a target cone or hoop and throw a soft ball with two hands over the head. Start with feet together, then add a step.','Two hands, ball behind the head, throw forward','Add a step before the throw','One-handed throws: show the “hug the ball over your head” grip'],
+'Line Detectives':['Four children roll or kick a ball over a field line. Each child shouts “in” or “out” and points, and the coach checks together with them.','Look at the line, then decide','Add a restart with a throw or kick','Guessing without watching: ask them to point to the line first'],
+'Thumbs Up Thumbs Down':['The coach acts out choices (sharing, pushing, helping up, shouting). Children show thumbs up or thumbs down, then act out a better choice themselves.','Think kind, show your thumb','Children take turns acting out the choice','Giggling is allowed; the point is that they notice the choice'],
+'High-Five Tunnel':['Two lines of children face each other. Each child walks down the middle giving a high five and saying “good game” to everyone.','Eyes up, smile, say good game','Add the other child’s name','A child skips the line: let them go again with a buddy'],
+'Helping Hand':['In pairs, one child lies or sits and the partner helps them up, then they pass a ball back and forth saying “thank you”. Swap after a minute.','Be kind, say thank you','Add a name to the thank you','Giggling: allow it, then reset with a calm voice'],
+'Referee Helper':['Groups of four play a tiny game while one child is the helper referee beside the coach. The helper shows a big signal for “ball out” or “goal”.','Big signal, clear voice','Helper works without the coach','A shy helper: give a buddy and let them point instead of speaking'],
+'Share the Ball':['Four children share two balls in a small square. Each pair keeps passing, and when the coach says “swap”, the balls go to the other pair.','Take turns, say thank you','Add a third ball','Hogging: ask “who hasn’t had a touch?”'],
+'Follow the Rule Game':['A normal 3 v 3 game with one rule, for example “no hands”. Each time the rule is kept in a round the team earns a point, and the coach reminds them gently.','Keep the rule, play hard','Add a second rule such as “thank the passer”','Forgetting the rule: replay the moment and ask the child to say the rule'],
+'Fair Play Game':['Teams of three play a small game. A kind act (helping a friend up, passing to someone new) earns a point, and the coach announces it.','Be kind, notice others','Add a bonus for kindness to the other team','Noticing only teammates: ask who they saw being kind on the other team'],
+'Ball Out Game':['Small game where the ball goes out and the other team restarts with a throw-in or kick-in. The coach models who restarts.','Know whose turn it is','Add a step before the throw','Wrong team restarts: stop and ask “whose turn?”'],
+'Handshake Game':['After each two-minute round both teams line up and shake hands, saying “good game” and the name of one opponent before the next round starts.','Look at them, say good game','Add each child’s name','A child skips the handshake: invite them to try a wave or fist bump'],
+'Kindness Cup':['A short cup with three rounds. After each round the coach awards a point to the team that showed the most fair-play acts, in addition to goals.','Play fair, be kind','Add a thank-you point for referees','Rivalry gets heated: pause and ask for a round of applause for both teams'],
+'Space Walk':['Children walk in a grid and look for empty space. When the coach claps, they stop in the biggest space they can find, then walk again.','Find space, keep your head up','Add a ball at the feet','Bunching up: ask them to find the empty corner'],
+'Triangle Walk':['Three children each hold a cone corner of a triangle and walk around it keeping the shape. Later each child stands at a corner and passes a ball around.','Keep the triangle shape','Add a ball to pass around','Bunching: use cones to mark the corners'],
+'Pass and Move Friends':['Groups of three pass a ball and move to a new space after each pass. The coach calls “change” to switch who starts.','Pass, then move','Add a second ball','Standing still after the pass: say “pass and go”'],
+'Role Hats':['Four children wear different coloured bibs: attacker, defender, helper and goalkeeper. They play a short game and swap hats after every goal.','Know your hat and your job','Swap more often','Forgetting the job: point to the hat and say the job aloud'],
+'Defend Together':['Two defenders stand together against one attacker with a small goal. One closes the ball while the other stays behind as a helper.','One goes, one helps','Add a second attacker','Both defenders rush: send one back as the helper'],
+'Spread Like Stars':['Children dribble or jog in a grid. At “stars” they spread out as wide as they can, and at “group” they gather in a team circle.','Spread wide, then group','Add a ball','Crowding: ask them to look for the empty space'],
+'Team Shape':['Groups of four make shapes with their bodies or cones (square, line, triangle) and move together to a new spot when the coach calls.','Move together, keep the shape','Add a ball in the middle','Bunching: mark the corners with cones'],
+'Switch the Ball':['Groups of four play across a short field. When the coach calls “switch”, the ball is passed to the far side.','Look up, then pass wide','Add a second call','Passing back instead of wide: point to the empty side'],
+'Team Dance':['The team invents a short dance with one soccer move in it, for example a toe-tap. They teach it to the coach and perform it for each other.','Move together, share ideas','Add a ball to the dance','A shy child: give them a buddy and a small part'],
+'Team Hat Game':['A small game with hats. After each goal children swap hats so everybody tries each job.','Know your job','Add a new role','Forgetting the role: point to the hat'],
+'Spread Game':['A small game where a goal only counts if all three players on the scoring team were spread out when the ball was shot.','Spread, then score','Add a one-minute round','Bunching: pause and ask the team to find space'],
+'Pass and Score':['A small game where a goal after at least two passes counts double. The coach counts passes out loud.','Pass, then score','Add a time limit','Hogging the ball: remind them to pass to a friend'],
+'Teammate of the Day Game':['After each round each team names one teammate of the day and tells one thing they did well. Everybody gets a turn by the end of practice.','Name a friend, say why','Add a reason from the other team','Choosing the same friend: ask for someone new'],
+'Team Day':['Three-minute rounds with new teams each round so every child plays with and against everyone. No scores are kept.','Play with everyone','Add a team cheer','Counting wins: say we are not counting today'],
+'Goalie Hello':['Four children stand in a small goal. The coach rolls a ball slowly and the keeper gets into a ready stance and says hello to the ball with soft hands.','Eyes on the ball, soft hands','Roll a little faster','Missing the ball: roll slower and closer'],
+'Ready Position Freeze':['Everyone moves around the grid. When the coach calls “ready”, they freeze in a goalkeeper stance with knees bent and hands out.','Knees bent, hands ready','Add a ball at the feet','Standing tall: ask for a “crouch like a cat”'],
+'Hug the Ball':['A partner rolls a soft ball to the child, who gets in front and hugs it to the chest. Then they swap.','Get in front, soft hands','Roll a bit faster','Dropping the ball: roll slower'],
+'Side Shuffle Cones':['Children shuffle side to side between two cones without crossing their feet. The coach claps and they shuffle to the other cone.','Quick small steps','Add a ball roll at the end','Crossing feet: slow down and take smaller steps'],
+'Catch the Toss':['A partner tosses a soft ball slowly to the child from 2 yards. The child catches it with two hands and tosses back.','Two hands, soft grip','Toss a little higher','Dropping: use a softer ball'],
+'Fall to the Side':['On a soft mat, children kneel and fall gently to the side to catch a rolled ball. Practise on both sides.','Fall to the side with hands first','Start from a crouch','Fear of falling: start kneeling on a mat'],
+'Roll Out to a Friend':['The keeper rolls a ball to a friend 6 yards away, aiming at the target. Swap after five rolls.','Aim, roll, follow through','Roll from farther away','Wild rolls: move closer'],
+'Call Mine':['A keeper stands in a goal and calls “mine” before catching a ball rolled or tossed by a teammate. Other players back away when they hear it.','Call loud, then catch','Add a defender','Silent keeper: practise the word first'],
+'Save Then Throw':['A keeper saves a rolled ball, gets up, and rolls it to a friend. Repeat with the next child.','Save, stand up, throw','Throw from farther away','Slow: ask them to be quick but accurate'],
+'Keeper Turns':['Four children take turns as goalkeeper for two minutes while others shoot softly.','Be brave, have fun','Add a count of saves','Same child always keeping: use a timer and rotate'],
+'Save Count':['A small game where the keeper counts saves and the team cheers each save as loudly as a goal.','Count saves','Add a bonus for a save and throw','Counting only goals: tally saves too'],
+'Keeper Start':['In a small game, after a save the keeper rolls to a teammate who starts a new attack.','Save, then start the attack','Add a time limit','Slow restart: say “keeper, go”'],
+'Goalie Party':['Short games with a new keeper every two minutes. Everyone gets a turn and the whole group cheers saves.','Be brave','Add a bonus for the first save','Same child keeping: rotate by timer'],
+'Keeper Cup':['A round robin cup where each child plays a round as goalkeeper. Teams cheer saves as much as goals.','Rotate and cheer','Add a challenge: save with two hands','Pressure on the keeper: praise effort']
+});
+(function(){var B=window.BANK||{},P=window.PATCH||{};Object.keys(B).forEach(function(ch){B[ch].forEach(function(d){var p=P[d[0]];if(p){d[5]=p[0];d[6]=p[1];d[7]=p[2];d[8]=p[3];}});});})();
+
+</script>
+<script>
+// Merge the original four drills of each chapter with the exercise bank so that every practice has its own exercises.
+// Result per chapter: 18 drills ordered [L1 skillA, L1 skillB, L1 game, L2 ..., L6 game].
+(function(){
+const CH=window.CHAPTERS,BANK=window.BANK||{},DS=window.DSCENE,out={};
+const OLD_SKILL=[0,1,2],OLD_HINT=[1,1,2],NS=window.BANK_SKILLS||9;
+CH.forEach(c=>{
+ const b=BANK[c.n];if(!b)return;
+ const items=[];
+ OLD_SKILL.forEach((oi,k)=>items.push({d:c.drills[oi].slice(0,9),lv:OLD_HINT[k],t:'s',sc:DS[c.n][oi]}));
+ items.push({d:c.drills[3].slice(0,9),lv:1,t:'g',sc:DS[c.n][3]});
+ b.forEach((x,i)=>items.push({d:x.slice(0,9),lv:x[9],t:i<NS?'s':'g',sc:x[10]}));
+ const drills=[],scenes=[];
+ for(let l=1;l<=6;l++){
+  const sk=items.filter(x=>x.lv===l&&x.t==='s'),gm=items.filter(x=>x.lv===l&&x.t==='g');
+  [...sk.slice(0,2),...gm.slice(0,1)].forEach(x=>{drills.push([...x.d,l,x.t]);scenes.push(x.sc);});
+ }
+ c.drills=drills;out[c.n]=scenes;
+});
+window.DSCENE=out;
+})();
+
 </script>
 <script>
 // Animated tactical-board scenes (SVG + SMIL). Coordinates in a 600 x 340 board.
@@ -561,7 +855,12 @@ function item(o){
         s+=`<circle cx="0" cy="${-26+i*26}" r="9" fill="${col}"><animate attributeName="opacity" values="${i==0?'1;.15;.15':i==1?'.15;1;.15':'.15;.15;1'}" keyTimes="0;.5;1" dur="${d}s" repeatCount="indefinite" calcMode="discrete"/></circle>`;});
       return s+'</g>';
    }
-   case 'flash': return `<text x="${o.x}" y="${o.y}" class="sc-t big" text-anchor="middle" opacity="0">${o.text}<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="${o.kt||'0;.3;.35;.7;.75'}" dur="${o.dur}s" repeatCount="indefinite"/></text>`;
+   case 'flash': {
+      let kt=(o.kt||'0;.3;.35;.7;.75').split(';').map(Number), vals=[0,0,1,1,0];
+      if(kt[0]>0){kt.unshift(0);vals.unshift(0);}
+      if(kt[kt.length-1]<1){kt.push(1);vals.push(0);}
+      return `<text x="${o.x}" y="${o.y}" class="sc-t big" text-anchor="middle" opacity="0">${o.text}<animate attributeName="opacity" values="${vals.join(';')}" keyTimes="${kt.join(';')}" dur="${o.dur}s" repeatCount="indefinite"/></text>`;
+   }
    case 'wedge': return `<g transform="translate(${o.x},${o.y})">${motion(o,o.x,o.y)}<polygon points="14,0 90,-34 90,34" fill="#fff"><animate attributeName="opacity" values=".42;.08;.42" dur="1.6s" repeatCount="indefinite"/></polygon></g>`;
    case 'p': {
       const col=TEAM[o.team||'a'];
@@ -743,6 +1042,8 @@ S.laps={cap:'Laps around the field. Everyone runs the perimeter together.',items
     pl(x+60,y+60,d,'D',[[x+140,y+50],[x+190,y+60],[x+60,y+60]],6,{begin:i*.4}),
     bl(x+46,y+60,[[x+136,y+32],[x+206,y+70],[x+46,y+60]],6,{begin:i*.4})];}),
   lb(300,330,'Rotate opponents every 2 minutes',{cls:'w'})]};})();
+S.pairs={cap:'Partners work together with one ball between them.',items:[
+  ...[80,170,260].flatMap((y,i)=>[pl(130,y,['a','b','c'][i],i*2+1,[[134,y+4],[130,y]],2+i*.2),pl(470,y,['b','c','a'][i],i*2+2,[[466,y+4],[470,y]],2+i*.2),bl(150,y,[[450,y],[150,y]],4+i*.3,{begin:i*.5})])]};
 window.SCENES=S;
 window.renderScene=function(name,id,capOverride){
   const sc=S[name]; if(!sc) return '';
@@ -752,6 +1053,503 @@ window.renderScene=function(name,id,capOverride){
   return `<figure class="scene" id="${id}"><div class="scene-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${cap}">${body}</svg><button class="pp" type="button" aria-label="Pause animation" data-for="${id}"><span class="i-pause"></span></button></div><figcaption>${cap}</figcaption></figure>`;
 };
 })();
+
+</script>
+<script>
+// Kindergarten scenes (added to the shared scene library). Coordinates in a 600 x 340 board.
+(function(){
+const S=window.SCENES;
+const pl=(x,y,team,n,pts,dur,o={})=>({t:'p',x,y,team,n,pts,dur,...o});
+const bl=(x,y,pts,dur,o={})=>({t:'ball',x,y,pts,dur,...o});
+const cn=(x,y,c)=>({t:'cone',x,y,c});
+const lb=(x,y,text,o={})=>({t:'label',x,y,text,...o});
+const fl=(x,y,text,dur,a)=>({t:'flash',x,y,text,dur,kt:[a,a+.02,a+.04,a+.2,a+.22].join(';')});
+
+// The field in thirds
+S.thirds={cap:'The field in thirds: home, middle and away. Players travel to each third on the call.',items:[
+ {t:'raw',svg:'<line x1="205" y1="16" x2="205" y2="324" stroke="#fff" stroke-width="2" stroke-dasharray="7 6"/><line x1="395" y1="16" x2="395" y2="324" stroke="#fff" stroke-width="2" stroke-dasharray="7 6"/>'},
+ lb(110,44,'Home',{cls:'w big'}),lb(300,44,'Middle',{cls:'w big'}),lb(490,44,'Away',{cls:'w big'}),
+ pl(80,130,'a','1',[[300,130],[500,130]],9,{loop:false}),pl(80,200,'b','2',[[300,200],[500,200]],9,{loop:false,begin:.4}),pl(80,270,'c','3',[[300,270],[500,270]],9,{loop:false,begin:.8}),
+ lb(300,316,'Call a third and a way to travel',{cls:'w'})]};
+
+// Plant and push
+S.cut={cap:'Plant and push. Slow down, plant the outside foot, push off and go.',items:[
+ cn(300,170),
+ pl(70,100,'a','1',[[270,150],[300,175],[350,230],[530,250]],6.5,{loop:false}),
+ bl(88,102,[[288,152],[318,178],[368,232],[548,252]],6.5,{loop:false}),
+ pl(70,250,'b','2',[[270,196],[300,166],[350,110],[530,90]],6.5,{loop:false,begin:.3}),
+ lb(300,314,'Slow, plant, push, go',{cls:'w'})]};
+
+// Mirror
+S.mirror={cap:'Mirror. The follower copies the leader’s moves.',items:[
+ pl(200,110,'a','L',[[330,110],[200,110],[330,110]],6),pl(200,230,'b','F',[[330,230],[200,230],[330,230]],6,{begin:.35}),
+ {t:'line',x1:120,y1:170,x2:480,y2:170,stroke:'#fff6',w:2,dash:'4 6'},
+ lb(300,316,'Copy my moves',{cls:'w'})]};
+
+// Windshield wiper
+S.wiper={cap:'Windshield wiper. Tap the ball from the inside to the outside of the same foot.',items:[
+ ...[110,300,490].flatMap((x,i)=>[{t:'zone',x:x-70,y:90,w:140,h:150,stroke:'#fff6'},pl(x-12,150,['a','b','c'][i],'',[[x-8,156],[x-12,150]],1+i*.1),bl(x-26,196,[[x+26,196],[x-26,196]],1.3+i*.1)]),
+ lb(300,284,'Inside, outside, inside, outside',{cls:'w'})]};
+
+// Toss, bounce, stop
+S.bounce={cap:'Toss, bounce, stop. Let the ball bounce once, then cushion it with the sole.',items:[
+ pl(200,170,'a','1',[[205,172],[200,170]],3),
+ bl(215,150,[[235,60],[262,170],[290,100],[312,170],[324,170]],4,{loop:false}),
+ {t:'zone',x:276,y:150,w:60,h:40,stroke:'#fff8',pulse:true},
+ fl(380,128,'Stop',4,.6),
+ lb(300,300,'Toss low, bounce once, sole on top',{cls:'w'})]};
+
+// Turn
+S.turn={cap:'Turn. Dribble to the cone, turn, and accelerate away.',items:[
+ cn(300,170),
+ pl(80,170,'a','1',[[270,170],[320,155],[335,195],[290,215],[90,210]],8,{loop:false}),
+ bl(98,172,[[288,172],[338,160],[352,198],[308,216],[108,212]],8,{loop:false}),
+ lb(300,300,'Touch, turn, accelerate',{cls:'w'})]};
+
+// Shield
+S.shield={cap:'Shield. The body stays between the ball and the chaser.',items:[
+ {t:'circle',x:300,y:170,r:62,dash:'3 6'},
+ pl(360,170,'a','1',[[300,230],[240,170],[300,110],[360,170]],8),
+ bl(376,170,[[300,246],[224,170],[300,94],[376,170]],8),
+ pl(320,170,'b','C',[[300,196],[274,170],[300,144],[320,170]],8),
+ lb(300,314,'Body between ball and chaser',{cls:'w'})]};
+
+// Receive and go
+S.receive={cap:'Receive and go. Show your side, take the first touch away, and go.',items:[
+ pl(70,170,'b','P',[[70,170]],1),
+ pl(300,170,'a','R',[[300,170],[326,226],[480,232]],6,{loop:false,begin:0}),
+ bl(92,170,[[286,170],[330,230],[490,236]],6,{loop:false}),
+ cn(470,252),cn(470,212),
+ lb(300,110,'Show your side',{cls:'w'}),
+ lb(300,314,'First touch away, then go',{cls:'w'})]};
+
+// Give and go
+S.giveandgo={cap:'Give and go. Pass to the wall, run past, receive in space.',items:[
+ cn(300,110),cn(318,110),
+ pl(80,200,'a','1',[[170,200],[250,215],[350,232],[520,232]],7,{loop:false}),
+ bl(96,200,[[190,200],[296,126],[372,230],[520,232]],7,{loop:false}),
+ pl(300,92,'b','W',[[300,92]],1),
+ lb(300,314,'Pass, run past, receive',{cls:'w'})]};
+
+// Rondo
+S.rondo={cap:'Keep-away. Four players pass around a square; the defenders chase the ball.',items:[
+ {t:'zone',x:200,y:70,w:200,h:200,stroke:'#fff8'},
+ pl(200,70,'a','1',[[205,76],[200,70]],2),pl(400,70,'a','2',[[395,76],[400,70]],2.2),pl(400,270,'a','3',[[395,264],[400,270]],1.8),pl(200,270,'a','4',[[205,264],[200,270]],2.4),
+ pl(300,170,'b','D',[[340,120],[360,200],[260,230],[250,140],[300,170]],8),
+ pl(330,200,'b','D',[[270,170],[300,110],[340,170],[300,230]],7,{begin:.5}),
+ bl(220,70,[[380,70],[400,170],[400,250],[300,270],[210,250],[200,150]],9),
+ lb(300,314,'Pass, support, five in a row',{cls:'w'})]};
+
+// Rebound
+S.rebound={cap:'Rebound. Shoot, then chase the ball for a second chance.',items:[
+ {t:'goal',x:566,y:170,w:20,h:130},
+ pl(566,170,'k','K',[[566,140],[566,200]],3),
+ pl(280,170,'a','1',[[300,170]],3),
+ pl(320,240,'a','2',[[480,200],[520,190]],5,{loop:false,begin:0}),
+ bl(300,170,[[550,150],[500,185],[546,172]],5,{loop:false,kp:'0;.5;.75;1',kt:'0;.45;.7;1'}),
+ lb(300,314,'Shoot, then follow the shot',{cls:'w'})]};
+
+// Funino 3 v 3, four goals
+S.funino={cap:'Funino. 3 v 3 on a small field with four goals; teams attack two and defend two.',items:[
+ {t:'zone',x:120,y:20,w:360,h:300,stroke:'#fff8',dash:'none'},
+ {t:'raw',svg:'<line x1="190" y1="20" x2="190" y2="320" stroke="#fff6" stroke-width="2" stroke-dasharray="6 6"/><line x1="410" y1="20" x2="410" y2="320" stroke="#fff6" stroke-width="2" stroke-dasharray="6 6"/>'},
+ {t:'goal',x:120,y:100,w:14,h:56},{t:'goal',x:120,y:240,w:14,h:56},{t:'goal',x:480,y:100,w:14,h:56},{t:'goal',x:480,y:240,w:14,h:56},
+ pl(200,100,'a','1',[[250,130],[320,110],[260,160],[200,100]],8),pl(210,240,'a','2',[[260,230],[320,260],[260,200],[210,240]],8,{begin:.4}),pl(250,170,'a','3',[[290,170],[350,160],[300,180],[250,170]],8,{begin:.8}),
+ pl(400,100,'b','4',[[350,120],[300,100],[360,150],[400,100]],8),pl(390,240,'b','5',[[340,250],[300,230],[350,210],[390,240]],8,{begin:.4}),pl(350,175,'b','6',[[310,180],[290,150],[340,190],[350,175]],8,{begin:.8}),
+ bl(222,102,[[330,110],[360,230],[300,250],[160,260],[470,258],[222,102]],8,{kp:'0;.2;.4;.55;.8;1',kt:'0;.2;.4;.55;.8;1'}),
+ lb(300,12,'Shooting zone',{cls:'w'}),
+ lb(300,334,'Two goals to attack, two to defend',{cls:'w'})]};
+
+// Close and cover
+S.cover={cap:'Close and cover. The first defender closes down; the helper stands behind and to the side.',items:[
+ {t:'goal',x:584,y:170,w:16,h:100},
+ pl(120,170,'a','A',[[300,170]],6,{loop:false}),
+ bl(138,170,[[318,170]],6,{loop:false}),
+ pl(440,170,'b','1',[[350,170],[345,170]],6,{loop:false}),
+ pl(470,240,'b','2',[[410,215],[392,205]],6,{loop:false}),
+ lb(350,150,'Close',{cls:'w'}),lb(405,246,'Cover',{cls:'w'}),
+ lb(300,314,'Close the door, helper behind',{cls:'w'})]};
+
+// Jockey
+S.jockey={cap:'Jockey. Stay in front of the dribbler, side-on, matching speed and getting low.',items:[
+ {t:'goal',x:584,y:170,w:16,h:100},
+ pl(100,160,'a','A',[[260,170],[330,200],[400,170]],8,{loop:false}),
+ bl(118,162,[[278,172],[348,202],[418,172]],8,{loop:false}),
+ pl(240,162,'b','D',[[340,176],[420,195],[490,170]],8,{loop:false}),
+ lb(300,314,'Low, side-on, dance backward',{cls:'w'})]};
+
+// Force to a side
+S.force={cap:'Force to a side. Shade one shoulder to send the attacker toward the touchline.',items:[
+ {t:'line',x1:16,y1:300,x2:584,y2:300,stroke:'#fff',w:4},
+ lb(80,320,'Touchline',{cls:'w'}),
+ {t:'goal',x:584,y:150,w:16,h:100},
+ pl(80,150,'a','A',[[240,170],[330,230],[420,276]],8,{loop:false}),
+ bl(98,152,[[258,172],[348,232],[438,278]],8,{loop:false}),
+ pl(250,140,'b','D',[[330,190],[420,238],[500,262]],8,{loop:false}),
+ lb(300,100,'Show the open door, close the other',{cls:'w'})]};
+
+// Referee signals
+S.refsignals={cap:'Referee signals: throw-in, goal kick, corner and free kick.',items:[
+ pl(300,170,'c','R',[[300,170],[304,166],[300,170]],1.2),
+ fl(300,92,'Throw-in',8,0),fl(300,92,'Goal kick',8,.25),fl(300,92,'Corner',8,.5),fl(300,92,'Free kick',8,.75),
+ lb(300,300,'Make the signal big and clear',{cls:'w'})]};
+
+// Keeper dive
+S.dive={cap:'Fall to the side. Start on the knees, fall toward the ball, hands first.',items:[
+ {t:'goal',x:40,y:170,w:20,h:140},
+ pl(70,170,'k','K',[[70,170],[70,200],[70,200]],4,{loop:true}),
+ pl(300,170,'a','S',[[300,170]],1),
+ bl(320,170,[[80,208]],4,{loop:false}),
+ lb(300,300,'Hands first, land on your side',{cls:'w'})]};
+
+// Keeper throw
+S.gkthrow={cap:'Throw. Step with the opposite foot, throw overarm to the target, follow through.',items:[
+ {t:'goal',x:40,y:170,w:20,h:140},
+ pl(70,170,'k','K',[[78,168],[70,170]],4),
+ pl(400,110,'a','T',[[400,110]],1),cn(400,240),
+ bl(88,164,[[170,120],[260,96],[386,106]],4,{loop:false}),
+ lb(300,300,'Step, throw, follow through',{cls:'w'})]};
+
+// Pairs passing (also used as a general partner scene)
+S.pairs={cap:'Partners work together with one ball between them.',items:[
+ ...[80,170,260].flatMap((y,i)=>[pl(130,y,['a','b','c'][i],i*2+1,[[134,y+4],[130,y]],2+i*.2),pl(470,y,['b','c','a'][i],i*2+2,[[466,y+4],[470,y]],2+i*.2),bl(150,y,[[450,y],[150,y]],4+i*.3,{begin:i*.5})])]};
+// ---- 1st grade scenes ----
+S.sprint={cap:'Sprint start. Push the ground away, run tall, arms driving, then walk back to rest.',items:[
+ {t:'line',x1:90,y1:60,x2:90,y2:290,stroke:'#fff',w:3},{t:'line',x1:510,y1:60,x2:510,y2:290,stroke:'#fff',w:3},
+ pl(80,110,'a','1',[[500,110]],3.2,{loop:false}),pl(80,170,'b','2',[[500,170]],3.0,{loop:false,begin:.5}),pl(80,230,'c','3',[[500,230]],3.4,{loop:false,begin:1}),
+ lb(300,40,'Ready, set, explode',{cls:'w big'}),lb(300,318,'Push the ground, run tall',{cls:'w'})]};
+S.ladder={cap:'Quick feet. Tiny steps into every square; eyes up after the first try.',items:[
+ ...[0,1,2,3,4,5].map(i=>({t:'zone',x:120+i*60,y:140,w:56,h:56,stroke:'#fff8'})),
+ pl(100,168,'a','1',[[148,168],[208,168],[268,168],[328,168],[388,168],[448,168],[520,168]],5,{loop:false}),
+ lb(300,100,'Hot lava, tiny steps',{cls:'w big'}),lb(300,300,'One foot in each square',{cls:'w'})]};
+S.firsttime={cap:'First-time finish. Step into the line of the ball and strike it without stopping it.',items:[
+ {t:'goal',x:566,y:170,w:20,h:130},
+ pl(566,170,'k','K',[[566,150],[566,190]],3),
+ pl(110,240,'b','F',[[110,240]],1),
+ pl(380,170,'a','1',[[380,170],[392,176]],2),
+ bl(130,240,[[330,200],[390,176],[550,140]],4.5,{loop:false,kp:'0;.4;.55;1',kt:'0;.45;.5;1'}),
+ lb(300,314,'Watch it, step in, strike through',{cls:'w'})]};
+S.twovone={cap:'2 v 1. Dribble at the defender to draw them, then pass to the free player.',items:[
+ {t:'goal',x:584,y:170,w:16,h:110},
+ pl(100,150,'a','1',[[300,160],[330,170]],5,{loop:false}),
+ bl(118,152,[[318,162],[348,172],[400,230],[520,200]],6,{loop:false,kp:'0;.35;.55;1',kt:'0;.45;.55;1'}),
+ pl(100,260,'a','2',[[260,262],[400,236],[500,210]],6,{loop:false}),
+ pl(420,160,'b','D',[[350,170],[340,175]],5,{loop:false}),
+ lb(300,50,'Draw the defender, then pass',{cls:'w big'}),lb(300,314,'Dribble at them, pass to the free player',{cls:'w'})]};
+S.overlap={cap:'Overlap. The ball carrier keeps the ball while a teammate runs around the outside.',items:[
+ {t:'line',x1:16,y1:300,x2:584,y2:300,stroke:'#fff',w:4},
+ pl(120,220,'a','1',[[260,215],[400,215]],7,{loop:false}),
+ bl(138,222,[[278,217],[380,217],[500,262]],7,{loop:false,kp:'0;.5;.62;1',kt:'0;.5;.62;1'}),
+ pl(80,270,'a','2',[[240,272],[360,268],[500,268]],7,{loop:false}),
+ pl(420,215,'b','D',[[380,222],[360,226]],7,{loop:false}),
+ fl(300,120,'Overlap!',7,.1),
+ lb(300,284,'Run around the outside, ball in front',{cls:'w'})]};
+S.threevtwo={cap:'3 v 2. The extra attacker is always free; pass to them.',items:[
+ pl(120,100,'a','1',[[130,104],[120,100]],2),pl(120,240,'a','2',[[130,236],[120,240]],2.2),pl(240,170,'a','3',[[262,176],[240,170]],2),
+ pl(340,130,'b','D',[[300,150],[330,125],[340,130]],7),pl(340,215,'b','D',[[300,200],[330,222],[340,215]],7,{begin:.4}),
+ bl(138,102,[[250,168],[138,236],[250,168],[138,102]],8),
+ lb(300,314,'Move to be an option; pass to the free player',{cls:'w'})]};
+S.scan={cap:'Scan. Peek over your shoulder before the ball arrives, then decide.',items:[
+ pl(80,170,'b','P',[[80,170]],1),
+ pl(300,170,'a','R',[[300,170],[326,226],[480,232]],6,{loop:false}),
+ bl(100,170,[[286,170],[330,230],[490,236]],6,{loop:false}),
+ pl(300,70,'c','C',[[300,70]],1),
+ fl(300,120,'Peek!',6,.05),fl(380,130,'Go',6,.45),
+ lb(300,314,'Look, call what you saw, then touch',{cls:'w'})]};
+S.transition={cap:'Transition. Win it and go; lose it and defend at once.',items:[
+ {t:'goal',x:584,y:170,w:16,h:100},{t:'goal',x:16,y:170,w:16,h:100},
+ pl(300,170,'a','1',[[300,170],[470,170]],5,{loop:false}),
+ bl(318,170,[[330,170],[490,170]],5,{loop:false}),
+ pl(340,170,'b','2',[[320,175],[250,170]],5,{loop:false}),
+ fl(300,100,'Switch!',5,.1),
+ lb(300,314,'Win it, go; lose it, defend',{cls:'w'})]};
+S.tackle={cap:'Block tackle. Plant the standing foot and put the other foot on the ball like a wall.',items:[
+ pl(100,170,'a','A',[[250,170],[290,170]],5,{loop:false}),
+ bl(118,170,[[268,170],[306,170]],5,{loop:false}),
+ pl(400,170,'b','D',[[330,170],[318,170]],5,{loop:false}),
+ {t:'zone',x:296,y:150,w:44,h:40,stroke:'#fff8',pulse:true},
+ lb(300,300,'Foot like a wall; no sliding',{cls:'w'})]};
+S.follow={cap:'Pass on the move. Walk, jog, then run side by side and pass with the ball slightly in front.',items:[
+ pl(80,120,'a','1',[[500,120]],7,{loop:false}),pl(80,220,'a','2',[[500,220]],7,{loop:false}),
+ bl(100,122,[[200,218],[320,122],[420,218],[520,122]],7,{loop:false,kp:'0;.3;.55;.8',kt:'0;.3;.55;1'}),
+ cn(520,170),
+ lb(300,314,'Look up, ball in front, pass',{cls:'w'})]};
+S.juggle={cap:'Juggle with a bounce. Tap it up, let it bounce, tap again.',items:[
+ pl(300,190,'a','1',[[304,190],[300,190]],2),
+ bl(312,160,[[312,60],[312,172],[312,100],[312,172],[312,120],[312,172]],5),
+ fl(400,100,'Tap',5,.2),
+ lb(300,300,'Tap, bounce, tap, bounce',{cls:'w'})]};
+S.shapes={cap:'Front, middle and back. Three jobs that rotate after every goal.',items:[
+ {t:'goal',x:584,y:170,w:16,h:100},
+ pl(430,110,'a','F',[[460,130],[430,110]],6),pl(330,170,'a','M',[[350,190],[330,170]],6,{begin:.4}),pl(230,170,'a','B',[[240,150],[230,170]],6,{begin:.8}),
+ lb(430,90,'Front',{cls:'w'}),lb(330,230,'Middle',{cls:'w'}),lb(230,220,'Back',{cls:'w'}),
+ lb(300,314,'Scorer, helper, guard; then swap',{cls:'w'})]};
+S.setpos={cap:'Ready position. Feet apart, knees bent, hands in front; step toward the ball.',items:[
+ {t:'goal',x:566,y:170,w:20,h:130},
+ pl(540,170,'k','K',[[520,170],[520,190],[520,150],[520,170]],6),
+ pl(150,170,'a','1',[[150,170]],1),
+ bl(170,170,[[420,120],[170,170],[420,220],[170,170]],8),
+ lb(300,314,'Stay between the ball and the goal',{cls:'w'})]};
+})();
+
+</script>
+<script>
+// Generated drill scenes: every exercise gets its own animation built from its own setup (players, area, equipment, text).
+(function(){
+const S=window.SCENES, CH=window.CHAPTERS, DS=window.DSCENE;
+if(!S||!CH||!DS)return;
+const pl=(x,y,team,n,pts,dur,o={})=>({t:'p',x,y,team,n,pts,dur,...o});
+const bl=(x,y,pts,dur,o={})=>({t:'ball',x,y,pts,dur,...o});
+const cn=(x,y,c)=>({t:'cone',x,y,c});
+const lb=(x,y,text,o={})=>({t:'label',x,y,text,...o});
+const zone=(x,y,w,h,o={})=>({t:'zone',x,y,w,h,...o});
+const goal=(x,y,w,h)=>({t:'goal',x,y,w,h});
+const circ=(x,y,r,o={})=>({t:'circle',x,y,r,...o});
+const line=(x1,y1,x2,y2,o={})=>({t:'line',x1,y1,x2,y2,...o});
+const fl=(x,y,text,dur,a)=>({t:'flash',x,y,text,dur,kt:[a,a+.02,a+.04,a+.2,a+.22].join(';')});
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rng(seed){let a=seed;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const COL=['#F28C28','#F5B82E','#2fa35b','#5aa9ff','#e5484d','#c77dff'];
+const TM=['a','b','c'];
+// player that follows pts (first point is the start), ball that follows the same points shifted
+const P=(team,n,pts,dur,begin=0)=>pl(pts[0][0],pts[0][1],team,n,pts.slice(1),dur,{begin});
+const B=(pts,dur,begin=0,dx=9,dy=3)=>bl(pts[0][0]+dx,pts[0][1]+dy,pts.slice(1).map(p=>[p[0]+dx,p[1]+dy]),dur,{begin});
+const ring=(cx,cy,rx,ry,n,a0=0)=>Array.from({length:n},(_,i)=>{const a=a0+i*2*Math.PI/n;return [Math.round(cx+rx*Math.cos(a)),Math.round(cy+ry*Math.sin(a))];});
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function parse(d,k){
+ const pf=d[2]||'',area=d[3]||'',eq=((d[4]||'')+' '+(d[5]||'')+' '+d[0]).toLowerCase();
+ let np=6,vs=null,m;
+ if(m=pf.match(/(\d)\s*v\s*(\d)/i)){vs=[+m[1],+m[2]];np=vs[0]+vs[1];}
+ else if(/pair/i.test(pf))np=2;
+ else if(m=pf.match(/(\d+)/))np=+m[1];
+ else np=6;
+ let w=20,h=15;if(m=area.match(/(\d+)\s*x\s*(\d+)/)){w=+m[1];h=+m[2];}
+ const big=/field|goal|open/i.test(area)&&!m;
+ return {name:d[0],area:area,np,vs,team:/team/i.test(pf),
+  zw:clamp(w*17,250,520),zh:clamp(h*17,150,270),
+  goal:/goal/.test(eq),gate:/gate|door|tunnel|window/.test(eq),hoop:/hoop|island|ring|circle/.test(eq),
+  wall:/wall|rebound/.test(eq),relay:/relay|race|line up|queue/.test(eq),
+  third:/third|zone/.test(eq),tag:/tag|chase|tagger|freeze|catch/.test(eq),
+  lane:/lane|line/.test(eq),cones:/cone/.test(eq),shape:/triangle|square|diamond/.test(eq)};
+}
+function box(s){const x=Math.round(300-s.zw/2),y=Math.round(170-s.zh/2);return {x,y,w:s.zw,h:s.zh,cx:300,cy:170};}
+function head(s,b,R){const it=[zone(b.x,b.y,b.w,b.h,{stroke:'#fff7'})];return it;}
+function tag(s,b){return lb(300,b.y+b.h+22>330?b.y-8:b.y+b.h+18,(s.vs?s.vs[0]+' v '+s.vs[1]:(s.np===2?'Pairs':'Groups'))+(s.area?' · '+s.area:''),{cls:'w'});}
+// ---------- dribbling and movement with the ball ----------
+const DRIB=[
+ function slalom(s,b,R,k){const n=clamp(4+k%3,4,7),it=[],dx=(b.w-60)/(n-1);const cs=[];
+  for(let i=0;i<n;i++){const x=b.x+30+i*dx;cs.push(x);it.push(cn(x,b.cy,COL[(k+i)%COL.length]));}
+  const np=Math.min(s.np,3);for(let p=0;p<np;p++){const yo=(p-(np-1)/2)*50;const up=p%2===0;const pts=[];for(let i=0;i<n;i++){const x=cs[up?i:n-1-i];pts.push([x+(up?-12:12),b.cy+(i%2?-26:26)+yo]);}
+   it.push(P(TM[p%2],p+1,pts,5+k%3,p*.7),B(pts,5+k%3,p*.7));}
+  return it;},
+ function circle(s,b,R,k){const r=Math.min(b.w,b.h)/2-30,n=6+k%3,it=[];ring(b.cx,b.cy,r,r*.75,n).forEach((p,i)=>it.push(cn(p[0],p[1],COL[(k+i)%COL.length])));
+  const np=Math.min(s.np,4);for(let p=0;p<np;p++){const pts=ring(b.cx,b.cy,r+24,r*.75+24,10,p*Math.PI/2*(k%2?-1:1));if(k%2)pts.reverse();it.push(P(TM[p%2],p+1,pts,7,p*.4),B(pts,7,p*.4));}
+  return it;},
+ function gates(s,b,R,k){const it=[],gs=[[b.x+b.w*.25,b.y+b.h*.28],[b.x+b.w*.75,b.y+b.h*.28],[b.x+b.w*.75,b.y+b.h*.72],[b.x+b.w*.25,b.y+b.h*.72]];
+  gs.forEach((g,i)=>{const v=(i+k)%2;it.push(cn(g[0]-(v?0:14),g[1]-(v?14:0),COL[i]),cn(g[0]+(v?0:14),g[1]+(v?14:0),COL[i]));});
+  const np=Math.min(s.np,3);for(let p=0;p<np;p++){const pts=gs.map((g,i)=>gs[(i+p)%4]);if(k%2)pts.reverse();it.push(P(TM[p%2],p+1,pts,8,p*1.1),B(pts,8,p*1.1));}
+  return it;},
+ function garden(s,b,R,k){const it=[],cs=[];for(let i=0;i<9;i++){const p=[Math.round(b.x+30+R()*(b.w-60)),Math.round(b.y+25+R()*(b.h-50))];cs.push(p);it.push(cn(p[0],p[1],COL[i%COL.length]));}
+  const np=Math.min(s.np,4);for(let p=0;p<np;p++){const pts=[];for(let i=0;i<5;i++){const c=cs[(p*2+i*2)%9];pts.push([c[0]+16,c[1]+18]);}it.push(P(TM[p%2],p+1,pts,8+p,p*.5),B(pts,8+p,p*.5));}
+  return it;},
+ function lanes(s,b,R,k){const it=[],n=Math.min(Math.max(s.np,2),4),lh=b.h/n;
+  it.push(line(b.x+20,b.y,b.x+20,b.y+b.h,{dash:'5 5'}),line(b.x+b.w-20,b.y,b.x+b.w-20,b.y+b.h,{dash:'5 5'}));
+  for(let p=0;p<n;p++){const y=Math.round(b.y+lh*(p+.5));if(p)it.push(line(b.x,b.y+lh*p,b.x+b.w,b.y+lh*p,{stroke:'#fff4',dash:'3 6',w:1}));
+   const pts=[[b.x+30,y],[b.x+b.w/2,y+(k%2?14:-14)],[b.x+b.w-30,y],[b.x+b.w/2,y+(k%2?-14:14)]];
+   it.push(cn(b.x+b.w/2,y,COL[p]),P(TM[p%2],p+1,pts,4+p*.8+(k%3)*.5,p*.3),B(pts,4+p*.8+(k%3)*.5,p*.3));}
+  return it;},
+ function eight(s,b,R,k){const it=[],c1=[b.cx-b.w*.22,b.cy],c2=[b.cx+b.w*.22,b.cy];it.push(cn(c1[0],c1[1],COL[k%6]),cn(c2[0],c2[1],COL[(k+2)%6]));
+  const rx=b.w*.2,ry=b.h*.34,np=Math.min(s.np,2);for(let p=0;p<np;p++){const pts=[];for(let i=0;i<16;i++){const a=i/16*2*Math.PI+p*Math.PI;pts.push([Math.round(b.cx+Math.sin(a)*(rx+b.w*.2*0)+Math.sin(a)*b.w*.22*0+ (Math.sin(a)*(b.w*.22+rx*0))), Math.round(b.cy+Math.sin(2*a)*ry)]);}
+   it.push(P(TM[p],p+1,pts,9,p*4.5),B(pts,9,p*4.5));}
+  return it;},
+ function spokes(s,b,R,k){const it=[circ(b.cx,b.cy,22,{stroke:'#fff'})],ps=[[b.cx,b.y+20],[b.x+b.w-40,b.cy],[b.cx,b.y+b.h-20],[b.x+40,b.cy]];
+  ps.forEach((p,i)=>it.push(cn(p[0],p[1],COL[i])));
+  const np=Math.min(s.np,3);for(let p=0;p<np;p++){const pts=[];for(let i=0;i<4;i++){pts.push([b.cx+8,b.cy+8],ps[(i+p*1+k)%4].map((v,j)=>v+(j?10:12)));}it.push(P(TM[p%2],p+1,pts,9,p*1.4),B(pts,9,p*1.4));}
+  return it;},
+ function squareLoop(s,b,R,k){const it=[],cs=[[b.x+40,b.y+30],[b.x+b.w-40,b.y+30],[b.x+b.w-40,b.y+b.h-30],[b.x+40,b.y+b.h-30]];
+  cs.forEach((c,i)=>it.push(cn(c[0],c[1],COL[i])));
+  const np=Math.min(s.np,4);for(let p=0;p<np;p++){const pts=cs.map((c,i)=>cs[(i+p)%4]);if(k%2)pts.reverse();const a=pts.map((c,i)=>[c[0]+(c[0]<300?18:-18),c[1]+(c[1]<170?16:-16)]);it.push(P(TM[p%2],p+1,a,7,p*.5),B(a,7,p*.5));
+   }
+  return it;}
+];
+// ---------- passing and receiving ----------
+const PASS=[
+ function pairGate(s,b,R,k){const a=[b.x+40,b.cy],c=[b.x+b.w-40,b.cy];const it=[cn(b.cx,b.cy-16,COL[k%6]),cn(b.cx,b.cy+16,COL[k%6])];
+  it.push(P('a','1',[[a[0],a[1]],[a[0]+10,a[1]-14],[a[0],a[1]]],4),P('b','2',[[c[0],c[1]],[c[0]-10,c[1]+14],[c[0],c[1]]],4),bl(a[0]+14,a[1],[[c[0]-14,c[1]],[a[0]+14,a[1]]],4));
+  if(s.np>3){it.push(pl(a[0],a[1]-70,'a','3',[[a[0]+30,a[1]-70],[a[0],a[1]-70]].slice(0,1),4),pl(c[0],c[1]+70,'b','4',[[c[0]-30,c[1]+70]],4));}
+  return it;},
+ function tri(s,b,R,k){const r=Math.min(b.w,b.h)*.38,v=ring(b.cx,b.cy+8,r,r*.85,3,-Math.PI/2),it=[];v.forEach(p=>it.push(cn(p[0],p[1],COL[k%6])));
+  v.forEach((p,i)=>it.push(pl(p[0],p[1]-20,TM[i%2],String(i+1),[[p[0]+(i%2?10:-10),p[1]-8]],3)));
+  const bp=v.map(p=>[p[0]+16,p[1]-20]);it.push(bl(bp[0][0],bp[0][1],[bp[1],bp[2]],1.5*3,{kp:null}));
+  return it;},
+ function square4(s,b,R,k){const cs=[[b.x+60,b.y+36],[b.x+b.w-60,b.y+36],[b.x+b.w-60,b.y+b.h-36],[b.x+60,b.y+b.h-36]],it=[];cs.forEach((c,i)=>it.push(cn(c[0],c[1],COL[i])));
+  cs.forEach((c,i)=>it.push(pl(c[0]+(c[0]<300?-18:18),c[1],TM[i%2],String(i+1),[[c[0]+(c[0]<300?-10:10),c[1]+(c[1]<170?10:-10)]],3.2,{begin:i*.4})));
+  const bp=cs.map(c=>[c[0]+(c[0]<300?-4:4),c[1]]);const order=k%2?[0,2,1,3]:[0,1,2,3];it.push(bl(bp[order[0]][0],bp[order[0]][1],order.slice(1).map(i=>bp[i]),6));return it;},
+ function wall(s,b,R,k){const it=[{t:'raw',svg:`<rect x="${b.x+b.w-18}" y="${b.y+8}" width="12" height="${b.h-16}" fill="#d9d9d9" stroke="#333" stroke-width="2"/>`}];
+  const np=Math.min(s.np,3);for(let p=0;p<np;p++){const y=b.y+30+p*(b.h-60)/Math.max(1,np-1||1)*(np>1?1:0)+(np===1?(b.h-60)/2:0);const x=b.x+b.w*.35;
+   it.push(P(TM[p%2],p+1,[[x,y],[x+16,y+(p%2?-9:9)],[x,y]],2.4,p*.5),bl(x+12,y,[[b.x+b.w-24,y],[x+14,y]],2.4,{begin:p*.5}));}
+  return it;},
+ function relayLine(s,b,R,k){const it=[],n=Math.max(2,Math.min(3,Math.ceil(s.np/2)));const lx=b.x+50,rx=b.x+b.w-50;
+  for(let i=0;i<n;i++){const y=b.cy+(i-(n-1)/2)*44;it.push(cn(lx,y,COL[i]),cn(rx,y,COL[i]));
+   it.push(P('a',i+1,[[lx,y],[lx+6,y+16],[lx,y]],3.6,i*.6),P('b',i+4>9?'':String(i+4),[[rx,y],[rx-6,y-16],[rx,y]],3.6,i*.6),bl(lx+14,y,[[rx-14,y],[lx+14,y]],3.6,{begin:i*.6}));}
+  return it;},
+ function circlePass(s,b,R,k){const n=clamp(s.np,4,7),r=Math.min(b.w,b.h)*.4,v=ring(b.cx,b.cy,r,r*.8,n),it=[circ(b.cx,b.cy,r,{dash:'4 6',stroke:'#fff6'})];
+  v.forEach((p,i)=>it.push(pl(p[0],p[1],TM[i%2],String(i+1),[[p[0]+(p[0]<300?6:-6),p[1]]],2.4,{begin:i*.2})));
+  const step=k%2?2:1,seq=[];for(let i=1;i<=n;i++)seq.push(v[(i*step)%n]);it.push(bl(v[0][0]+12,v[0][1],seq.map(p=>[p[0]+12,p[1]]).slice(0,-1).concat([[v[0][0]+12,v[0][1]]]),n*1.3));
+  if(k%3===0)it.push(pl(b.cx,b.cy,'b','D',[[b.cx+30,b.cy-16],[b.cx-30,b.cy+16]],4));return it;},
+ function targets(s,b,R,k){const ts=[[b.x+50,b.y+28],[b.x+b.w-50,b.y+28],[b.x+b.w-50,b.y+b.h-28],[b.x+50,b.y+b.h-28]].slice(0,3+k%2),it=[];ts.forEach((t,i)=>it.push(cn(t[0],t[1],COL[i])));
+  const c=[b.cx,b.cy];it.push(pl(c[0],c[1],'a','1',[[c[0]+8,c[1]+8]],3));const seq=[];ts.forEach(t=>{seq.push(t,[c[0]+12,c[1]]);});it.push(bl(c[0]+12,c[1],seq,2*ts.length*1.2));return it;},
+ function diamond(s,b,R,k){const it=[],a=[b.x+40,b.cy],t=[b.x+b.w-60,b.cy];
+  it.push(pl(a[0],a[1],'a','P',[[a[0]+6,a[1]+8]],3),P('b','R',[[t[0],t[1]-50],[t[0]-70,t[1]-10],[t[0]-70,t[1]+40],[t[0],t[1]+50]],6),bl(a[0]+14,a[1],[[t[0]-70,t[1]-8],[a[0]+14,a[1]],[t[0]-70,t[1]+38]],6),cn(t[0],t[1]-50),cn(t[0],t[1]+50));
+  return it;}
+];
+// ---------- shooting and goalkeeping ----------
+function mkShoot(s,b,R,k,keeper){
+ const it=[],gx=b.x+b.w-6,gy=b.cy;const lay=k%6;
+ if(lay===0){it.push(goal(gx,gy,12,90));if(keeper)it.push(pl(gx-14,gy,'k','K',[[gx-14,gy-26],[gx-14,gy+26]],2.2));
+  for(let i=0;i<3;i++){const y=gy-60+i*60,x=b.x+30+i*14;it.push(pl(x,y,TM[i%2],String(i+1),[[x+80,y*.4+gy*.6]],3.6,{begin:i*1.2,loop:false}),bl(x+14,y,[[gx-8,gy-34+i*34]],3.6,{begin:i*1.2,loop:false}));}}
+ else if(lay===1){it.push(goal(b.cx,b.y-2,110,12));if(keeper)it.push(pl(b.cx,b.y+16,'k','K',[[b.cx-30,b.y+16],[b.cx+30,b.y+16]],2.4));
+  for(let i=0;i<3;i++){const x=b.cx-110+i*110,y=b.y+b.h-24;it.push(P(TM[i%2],String(i+1),[[x,y],[x+(i-1)*-30,y-80]],3,i*1.1),bl(x+10,y-3,[[b.cx-40+i*40,b.y+10]],3,{begin:i*1.1,loop:false}));}}
+ else if(lay===2){it.push(goal(b.x+4,gy,12,70),goal(gx,gy,12,70));if(keeper)it.push(pl(b.x+18,gy,'k','K',[[b.x+18,gy-22],[b.x+18,gy+22]],2),pl(gx-14,gy,'k','K',[[gx-14,gy+22],[gx-14,gy-22]],2.4));
+  it.push(P('a','1',[[b.cx-60,gy-30],[b.cx-110,gy-20]],3),bl(b.cx-48,gy-30,[[b.x+14,gy-8],[b.cx-48,gy-30]],3),P('b','2',[[b.cx+60,gy+30],[b.cx+110,gy+20]],3.4),bl(b.cx+72,gy+30,[[gx-8,gy+12],[b.cx+72,gy+30]],3.4));}
+ else if(lay===3){it.push(goal(gx,gy,12,100));const gt=b.cx+30;it.push(cn(gt,gy-24,COL[k%6]),cn(gt,gy+24,COL[k%6]));if(keeper)it.push(pl(gx-14,gy,'k','K',[[gx-14,gy-30],[gx-14,gy+30]],2.2));
+  const x=b.x+30;it.push(P('a','1',[[x,gy+40],[gt-60,gy+8]],3),bl(x+12,gy+42,[[gt,gy],[gx-8,gy-20],[x+12,gy+42]],3));it.push(pl(x,gy-50,'b','2',[[x+10,gy-50]],3));}
+ else if(lay===4){it.push(goal(gx,gy,12,110));[-40,-14,14,40].forEach((o,i)=>it.push(cn(gx-20,gy+o,COL[i])));
+  const x=b.x+60;it.push(P('a','1',[[x,gy],[x+60,gy+4]],4.8),bl(x+14,gy,[[gx-22,gy-40],[x+14,gy],[gx-22,gy+14],[x+14,gy],[gx-22,gy-14],[x+14,gy],[gx-22,gy+40],[x+14,gy]],4.8*1),fl(300,b.y+14,'Call a color',4.8,.02));}
+ else{it.push(goal(gx,gy,12,90));if(keeper)it.push(pl(gx-14,gy,'k','K',[[gx-14,gy-26],[gx-14,gy+26]],2.2));
+  const sx=b.x+60,sy=b.y+30;it.push(pl(sx,sy,'b','S',[[sx+6,sy+6]],3),pl(sx+120,gy,'a','1',[[sx+170,gy]],3),bl(sx+10,sy+4,[[sx+112,gy+4],[gx-8,gy-26],[sx+10,sy+4]],3));}
+ return it;}
+function keeperFam(s,b,R,k,nm){
+ const it=[],gx=b.x+b.w-6,gy=b.cy,lay=k%5;
+ if(lay===0){it.push(goal(gx,gy,12,90),pl(gx-16,gy,'k','K',[[gx-16,gy-30],[gx-16,gy+30]],2.2),pl(b.x+60,gy,'a','1',[[b.x+66,gy]],3),bl(b.x+74,gy,[[gx-26,gy-30],[b.x+74,gy],[gx-26,gy+30],[b.x+74,gy]],4.4));}
+ else if(lay===1){it.push(pl(b.cx-80,gy,'k','K',[[b.cx-80,gy]],3),pl(b.cx+90,gy-10,'a','1',[[b.cx+90,gy]],3),bl(b.cx-66,gy,[[b.cx+80,gy-10],[b.cx-66,gy]],3.2),cn(b.cx,gy-40),cn(b.cx,gy+40));}
+ else if(lay===2){it.push(goal(b.cx,b.y+4,110,12),pl(b.cx,b.y+24,'k','K',[[b.cx-34,b.y+24],[b.cx+34,b.y+24]],2.4),pl(b.cx-100,b.y+b.h-30,'a','1',[[b.cx-100,b.y+b.h-24]],3),bl(b.cx-90,b.y+b.h-34,[[b.cx-30,b.y+16],[b.cx-90,b.y+b.h-34]],2.2),pl(b.cx+100,b.y+b.h-30,'b','2',[[b.cx+100,b.y+b.h-24]],3),bl(b.cx+90,b.y+b.h-34,[[b.cx+30,b.y+16],[b.cx+90,b.y+b.h-34]],2.2,{begin:1.1}));}
+ else if(lay===3){it.push(circ(b.cx,b.cy,70,{stroke:'#fff6',dash:'4 6'}),pl(b.cx,b.cy,'k','K',[[b.cx+12,b.cy]],2));ring(b.cx,b.cy,90,70,4).forEach((p,i)=>it.push(pl(p[0],p[1],TM[i%2],String(i+1),[[p[0]+(p[0]<300?6:-6),p[1]]],3,{begin:i*.3})));
+  it.push(bl(b.cx+80,b.cy,[[b.cx+12,b.cy+6],[b.cx,b.cy-70],[b.cx+12,b.cy],[b.cx-90,b.cy],[b.cx+12,b.cy]],6));}
+ else{const y=b.cy;it.push(goal(gx,y,12,100),pl(gx-16,y,'k','K',[[gx-16,y+34],[gx-16,y-34]],3),pl(b.x+70,y-60,'b','T',[[b.x+70,y-60]],3),bl(b.x+82,y-60,[[gx-26,y+34],[gx-16,y-8],[b.x+82,y-60]],3.6),fl(b.cx,b.y+16,'Save, then throw',3.6,.4));}
+ return it;}
+// ---------- small-sided games ----------
+function mkGame(s,b,R,k){
+ let a=s.vs?s.vs[0]:3,c=s.vs?s.vs[1]:3;if(!s.vs){a=clamp(Math.floor(s.np/2)||3,2,4);c=a;}a=clamp(a,1,5);c=clamp(c,1,5);
+ const it=[],lay=k%7,gx1=b.x+4,gx2=b.x+b.w-4;
+ if(lay===0){it.push(goal(gx1,b.cy,12,90),goal(gx2,b.cy,12,90));}
+ else if(lay===1){[[gx1,b.cy-55],[gx1,b.cy+55],[gx2,b.cy-55],[gx2,b.cy+55]].forEach(g=>it.push(goal(g[0],g[1],12,50)));}
+ else if(lay===2){it.push(line(b.x+b.w/3,b.y,b.x+b.w/3,b.y+b.h,{dash:'6 6',stroke:'#fff9'}),line(b.x+2*b.w/3,b.y,b.x+2*b.w/3,b.y+b.h,{dash:'6 6',stroke:'#fff9'}),goal(gx1,b.cy,12,80),goal(gx2,b.cy,12,80));}
+ else if(lay===3){it.push(cn(b.cx,b.cy-24,COL[k%6]),cn(b.cx,b.cy+24,COL[k%6]),goal(gx1,b.cy,12,90),goal(gx2,b.cy,12,90));}
+ else if(lay===4){it.push(zone(b.x,b.y,22,b.h,{fill:'#ffffff22'}),zone(b.x+b.w-22,b.y,22,b.h,{fill:'#ffffff22'}));}
+ else if(lay===5){[[b.x+24,b.cy],[b.x+b.w-24,b.cy],[b.cx,b.y+22],[b.cx,b.y+b.h-22]].forEach((h,i)=>it.push(circ(h[0],h[1],16,{stroke:'#fff',fill:'#ffffff22'})));}
+ else{it.push(goal(gx1,b.cy,12,90),goal(gx2,b.cy,12,90),pl(b.cx,b.cy,'c','N',[[b.cx+40,b.cy-30],[b.cx-40,b.cy+30]],5));}
+ const placeTeam=(n,left,team,off)=>{const out=[];for(let i=0;i<n;i++){const row=n===1?0:(i-(n-1)/2);const x=left?b.x+b.w*.28+((i%2)*b.w*.12):b.x+b.w*.72-((i%2)*b.w*.12);const y=b.cy+row*Math.min(60,(b.h-50)/Math.max(1,n));
+  out.push(pl(x,y,team,String(i+1),[[x+(left?24:-24),y-14],[x+(left?-6:6),y+16]],4+i*.6+off,{begin:i*.35}));}return out;};
+ it.push(...placeTeam(a,true,'a',0),...placeTeam(c,false,'b',.3));
+ const bx=b.cx,by=b.cy;it.push(bl(bx,by,[[bx+R()*100-30,by-40],[b.x+b.w*.3,by+30],[bx-30,by-10]],3+R()*2));
+ it.push(fl(300,b.y+16,lay===4?'Stop the ball on the end zone':lay===5?'Collect in the hoops':'Goal!',6.5,.55));
+ return it;}
+// ---------- duels and defending ----------
+function mkDuel(s,b,R,k,nm){
+ const it=[],lay=k%6,ng=2;
+ for(let g=0;g<ng;g++){const y0=b.y+g*b.h/2,hh=b.h/2-8,cy=y0+hh/2+4,x0=b.x+20,x1=b.x+b.w-30,off=g*.5;
+  it.push(zone(b.x+4,y0+4,b.w-8,hh,{stroke:'#fff5'}));
+  if(lay===0||lay===3||lay===5){it.push(cn(x1,cy-18),cn(x1,cy+18));if(lay===3)it.push(cn(x1-60,cy-10),cn(x1-60,cy+26));}
+  else if(lay===1)it.push(goal(x1+8,cy,12,56));
+  else if(lay===2)it.push(line(x1,y0+6,x1,y0+hh,{stroke:'#fff',dash:'4 4'}));
+  else it.push(circ(b.cx,cy,Math.min(46,hh/2-4),{stroke:'#fff8'}));
+  const ax=x0+30,ay=cy;const defStart=lay===5?ax-34:ax+56;
+  const ap=lay===4?[[b.cx-26,cy],[b.cx+10,cy-20],[b.cx+22,cy+16],[b.cx-12,cy+8]]:[[ax,ay],[ax+90,ay-12],[x1-24,ay+4],[ax,ay]];
+  const dp=lay===4?[[b.cx+30,cy-6],[b.cx-4,cy+14],[b.cx-24,cy-14],[b.cx+10,cy+2]]:lay===5?[[defStart,ay+4],[ax+110,ay-6],[x1-30,ay+4],[defStart,ay+4]]:[[defStart,ay],[ax+110,ay-6],[x1-36,ay+8],[defStart,ay]];
+  it.push(P('a','A',ap,5,off),P('b','D',dp,5,off),B(ap,5,off));
+  if(nm&&nm.two)it.push(P('a','2',[[ap[0][0]-10,ap[0][1]-26],[ap[1][0]-10,ap[1][1]-30],[ap[2][0]-14,ap[2][1]-24],[ap[0][0]-10,ap[0][1]-26]],5,off));}
+ return it;}
+// ---------- tag, freeze and field games ----------
+const TAG=[
+ function tagHoops(s,b,R,k){const it=[],hs=ring(b.cx,b.cy,b.w*.34,b.h*.32,4,Math.PI/4);hs.forEach(h=>it.push(circ(h[0],h[1],17,{stroke:'#fff',fill:'#ffffff22'})));
+  const np=clamp(s.np-1,2,4);for(let p=0;p<np;p++){const pts=ring(b.cx,b.cy,b.w*(.18+.05*p),b.h*(.2+.06*p),7,p*1.3);it.push(P('a',p+1,pts,7+p,p*.6),B(pts,7+p,p*.6));}
+  const tp=ring(b.cx,b.cy,b.w*.3,b.h*.26,6,0.5);it.push(P('b','T',tp,6));return it;},
+ function tagLines(s,b,R,k){const it=[line(b.x+20,b.y,b.x+20,b.y+b.h,{dash:'5 5'}),line(b.x+b.w-20,b.y,b.x+b.w-20,b.y+b.h,{dash:'5 5'})];
+  const np=clamp(s.np,3,5);for(let p=0;p<np-1;p++){const y=b.y+24+p*((b.h-48)/(np-1));it.push(P('a',p+1,[[b.x+30,y],[b.x+b.w-30,y+(p%2?14:-14)],[b.x+30,y]],5.5+p*.3,p*.4),B([[b.x+30,y],[b.x+b.w-30,y+(p%2?14:-14)],[b.x+30,y]],5.5+p*.3,p*.4));}
+  it.push(P('b','T',[[b.cx,b.y+20],[b.cx,b.y+b.h-20]],2.6));return it;},
+ function freezeGrid(s,b,R,k){const it=[],np=clamp(s.np,3,6);for(let p=0;p<np;p++){const x=b.x+36+(p%3)*((b.w-72)/2),y=b.y+36+Math.floor(p/3)*(b.h-72);const pts=[[x,y],[x+22,y-14],[x+34,y+12],[x-6,y+8]];it.push(P(TM[p%2],p+1,pts,6,p*.3),B(pts,6,p*.3));}
+  it.push(fl(300,b.cy,'FREEZE!',6,.45),fl(300,b.cy-34,k%2?'Whistle':'Clap',6,.12));return it;}
+];
+const MOVE=[
+ function circuit(s,b,R,k){const n=4+k%2,v=ring(b.cx,b.cy,b.w*.36,b.h*.34,n,-Math.PI/2),it=[];v.forEach((p,i)=>it.push(zone(p[0]-24,p[1]-18,48,36,{stroke:'#fff9',fill:'#ffffff1a'}),lb(p[0],p[1]+4,String(i+1),{cls:'w'})));
+  const np=Math.min(s.np,3);for(let p=0;p<np;p++){const pts=v.map((q,i)=>v[(i+p)%n]);it.push(P(TM[p%2],p+1,pts,n*1.8,p*.5));}return it;},
+ function mirrorPairs(s,b,R,k){const it=[],pairs=Math.min(3,Math.max(1,Math.floor(s.np/2)));for(let p=0;p<pairs;p++){const y=b.y+30+p*((b.h-60)/Math.max(1,pairs-1||1))*(pairs>1?1:0)+(pairs===1?(b.h-60)/2:0);
+   const pts=[[b.cx-70,y],[b.cx-20,y],[b.cx-110,y],[b.cx-70,y]],mp=pts.map(q=>[q[0]+140-(q[0]-(b.cx-70))*2+ (q[0]-(b.cx-70)) , q[1]+34]);
+   it.push(P('a','L',[[b.cx-60,y],[b.cx-10,y],[b.cx-90,y]],3.5,p*.4),P('b','M',[[b.cx-60,y+36],[b.cx-10,y+36],[b.cx-90,y+36]],3.5,p*.4));}
+  it.push(lb(300,b.y+b.h+16>330?b.y-6:b.y+b.h+16,'Copy every move',{cls:'w'}));return it;},
+ function stand(s,b,R,k){const it=[],cols=[['#e5484d','Stop'],['#f5b82e','Slow'],['#2fa35b','Go']];const lx=b.x+b.w*.5;
+  it.push({t:'light',x:b.x+34,y:b.cy,dur:6});const np=Math.min(s.np,4);for(let p=0;p<np;p++){const y=b.y+30+p*((b.h-60)/Math.max(1,np-1));const pts=[[b.x+90,y],[b.x+b.w-40,y],[b.x+90,y]];it.push(P(TM[p%2],p+1,pts,6,p*.4),B(pts,6,p*.4));}return it;},
+ function colorZones(s,b,R,k){const it=[],cs=['#e5484d','#2f6fde','#f5b82e','#2fa35b'];[[b.x,b.y],[b.x+b.w/2,b.y],[b.x,b.y+b.h/2],[b.x+b.w/2,b.y+b.h/2]].forEach((p,i)=>it.push(zone(p[0]+4,p[1]+4,b.w/2-8,b.h/2-8,{stroke:cs[i],fill:cs[i]+'33'})));
+  const np=Math.min(s.np,4);for(let p=0;p<np;p++){const c=[[b.x+b.w*.25,b.y+b.h*.25],[b.x+b.w*.75,b.y+b.h*.25],[b.x+b.w*.75,b.y+b.h*.75],[b.x+b.w*.25,b.y+b.h*.75]];const pts=c.map((q,i)=>c[(i+p)%4]);it.push(P(TM[p%2],p+1,pts,8,p*.5),B(pts,8,p*.5));}
+  it.push(fl(300,b.cy,'Call a color',8,.1));return it;},
+ function balance(s,b,R,k){const it=[line(b.x+30,b.cy,b.x+b.w-30,b.cy,{stroke:'#fff',w:4})],np=Math.min(s.np,3);
+  for(let p=0;p<np;p++){const pts=[[b.x+40,b.cy-26+p*0],[b.x+b.w-60,b.cy-26],[b.x+40,b.cy-26]];it.push(P(TM[p%2],p+1,pts,9+p*1.5,p*1.8),bl(b.x+46,b.cy-38,pts.slice(1).map(q=>[q[0]+6,q[1]-12]),9+p*1.5,{begin:p*1.8}));}
+  return it;},
+ function sprint(s,b,R,k){const it=[],np=clamp(s.np,2,4),lh=(b.h-30)/np;[b.x+30,b.x+b.w*.5,b.x+b.w-30].forEach(x=>it.push(line(x,b.y,x,b.y+b.h,{dash:'5 5'})));
+  for(let p=0;p<np;p++){const y=b.y+20+p*lh+lh/2;it.push(cn(b.x+30,y),P(TM[p%2],p+1,[[b.x+30,y],[b.x+b.w-30,y],[b.x+b.w*.5,y],[b.x+30,y]],3.2+p*.35,p*.25));}return it;}
+];
+function pick(arr,k){return arr[k%arr.length];}
+const FAM={
+ gates:'D',free:'D',zigzag:'D',toetap:'D',fake:'D',shield:'D',turn:'D',cut:'D',juggle:'D',wiper:'D',ladder:'D',follow:'D',lanes:'D',colors:'M',tour:'D',trafficlight:'M',fingers:'M',shapes:'M',setpos:'M',spread:'T',thirds:'M',
+ pairs:'P',pass:'P',triangle:'P',receive:'P',bounce:'P',cushion:'P',firsttime:'P',giveandgo:'P',rondo:'P',overlap:'P',rebound:'P',circle:'P',throwin:'P',scan:'P',
+ shoot:'S',keeper:'K',gkthrow:'K',dive:'K',
+ smallgame:'G',funino:'G',matchday:'G',transition:'G',threevtwo:'G',twovone:'G',
+ duel:'U',jockey:'U',tackle:'U',cover:'U',goalside:'U',force:'U',
+ shark:'T',freeze:'T',refsignals:'M',laps:'T',stations:'M',balance:'M',mirror:'M',sprint:'M'
+};
+function route(rules,txt,fallback){for(const r of rules){if(r[0].test(txt))return r[1];}return fallback;}
+const RD=[[/slalom|zigzag|weave|zig-zag|row of cones|in and out/,0],[/roundabout|circle of cones|ring of cones|around the ring|around a circle/,1],[/gate|door|tunnel|window|bridge/,2],[/figure|eight/,5],[/spoke|star|hoop|island|compass|center/,6],[/square|corner|four cones/,7],[/lane|race|relay|line to line|end line/,4],[/garden|scatter|maze|space|free|anywhere|treasure/,3]];
+const RP=[[/triangle/,1],[/wall|rebound/,3],[/circle|ring/,5],[/square|corner/,2],[/relay|line|queue|facing lines/,4],[/target|bowling|knock|cone/,6],[/gate|door|through|window/,0],[/run|away|move|check|show/,7]];
+const RG=[[/four (small )?goals|four mini|4 goals/,1],[/third|zone/,2],[/gate|middle|center/,3],[/end zone|end line|stop the ball|line/,4],[/hoop|treasure|collect|box/,5],[/neutral|helper|wild|extra player/,6],[/goal/,0]];
+const RS=[[/color|colour|call a/,4],[/gate|door|through/,3],[/two goals|either|both goals|two small goals/,2],[/pass|server|serve|toss|feed|roll to/,5],[/angle|side|arc|top/,1]];
+const RT=[[/hoop|island|safe/,0],[/freeze|statue|stop|whistle/,2],[/line|across|run/,1]];
+const RM=[[/color|colour|zone/,3],[/balance|beam|walk|stand on|statue/,4],[/mirror|shadow|copy|follow|buddy/,1],[/light|red|green|signal|listen/,2],[/sprint|race|dash|speed|fast/,5],[/station|circuit|olympics|decathlon|round|rotate/,0]];
+function build(d,kind,idx,ch){
+ const s=parse(d,idx),b=box(s),R=rng(hash(d[0]+ch));const f=FAM[kind]||'D';
+ const txt=(d[0]+' '+d[5]).toLowerCase();
+ let items=[zone(b.x,b.y,b.w,b.h,{stroke:'#fff7'})];
+ if(f==='D'){const i=route(RD,txt,(idx+ch*3)%DRIB.length);items.push(...DRIB[i](s,b,R,idx));}
+ else if(f==='P'){const i=route(RP,txt,(idx+ch*2)%PASS.length);items.push(...PASS[i](s,b,R,idx));}
+ else if(f==='S'){items.push(...mkShoot(s,b,R,route(RS,txt,idx+ch),false));}
+ else if(f==='K'){items.push(...keeperFam(s,b,R,idx+ch,kind));}
+ else if(f==='G'){items.push(...mkGame(s,b,R,route(RG,txt,idx+ch*2)));}
+ else if(f==='U'){items.push(...mkDuel(s,b,R,idx+ch,{two:/2 v|two attackers/i.test(d[5])}));}
+ else if(f==='T'){items.push(...TAG[route(RT,txt,(idx+ch)%TAG.length)](s,b,R,idx));}
+ else {items.push(...MOVE[route(RM,txt,(idx+ch)%MOVE.length)](s,b,R,idx));}
+ items.push(tag(s,b));
+ return {cap:'',items};
+}
+function firstSentence(t){const m=String(t).match(/^[^.!?]*[.!?]/);let x=(m?m[0]:t).trim();return x.length>150?x.slice(0,147)+'…':x;}
+CH.forEach(c=>{const arr=DS[c.n];if(!arr)return;
+ c.drills.forEach((d,i)=>{const old=arr[i];if(!old)return;const kind=old[0];const key='x'+c.n+'_'+i;
+  const sc=build(d,kind,i,c.n);S[key]=sc;arr[i]=[key,firstSentence(d[5])];});});
+// ---------- finale scenes (duel games that grow) ----------
+function fin(name,cap,a,c,opt){
+ const b={x:60,y:48,w:480,h:244,cx:300,cy:170};const it=[zone(b.x,b.y,b.w,b.h,{stroke:'#fff8'})];
+ const goals=opt.goals;
+ if(goals==='gate'){it.push(cn(b.x+b.w-30,b.cy-20),cn(b.x+b.w-30,b.cy+20));}
+ else if(goals==='goal'){it.push(goal(b.x+b.w-4,b.cy,12,70));}
+ else if(goals==='two'){it.push(goal(b.x+4,b.cy,12,70),goal(b.x+b.w-4,b.cy,12,70));}
+ else if(goals==='four'){[[b.x+4,b.cy-55],[b.x+4,b.cy+55],[b.x+b.w-4,b.cy-55],[b.x+b.w-4,b.cy+55]].forEach(g=>it.push(goal(g[0],g[1],12,46)));}
+ else if(goals==='keep'){it.push(goal(b.x+4,b.cy,12,80),goal(b.x+b.w-4,b.cy,12,80),pl(b.x+20,b.cy,'k','K',[[b.x+20,b.cy-22],[b.x+20,b.cy+22]],2.2),pl(b.x+b.w-20,b.cy,'k','K',[[b.x+b.w-20,b.cy+22],[b.x+b.w-20,b.cy-22]],2.6));}
+ if(opt.zone)it.push(line(b.cx,b.y,b.cx,b.y+b.h,{dash:'6 6',stroke:'#fff9'}),lb(b.cx,b.y+b.h+18,opt.zone,{cls:'w'}));
+ for(let i=0;i<a;i++){const y=b.cy+(i-(a-1)/2)*(a>2?52:70),x=b.x+90+(i%2)*30;it.push(pl(x,y,'a',String(i+1),[[x+70,y-16],[x+120,y+10],[x+20,y+22]],4+i*.5,{begin:i*.3}));}
+ for(let i=0;i<c;i++){const y=b.cy+(i-(c-1)/2)*(c>2?52:70),x=b.x+b.w-130-(i%2)*30;it.push(pl(x,y,'b',String(i+1),[[x-40,y+14],[x-90,y-8],[x+10,y-18]],4.4+i*.5,{begin:i*.3}));}
+ if(opt.neutral)it.push(pl(b.cx,b.cy-60,'c','N',[[b.cx+30,b.cy+40],[b.cx-30,b.cy-60]],5));
+ it.push(bl(b.x+110,b.cy,[[b.cx-20,b.cy-14],[b.x+b.w-80,b.cy+8],[b.cx+20,b.cy-26]],4.4));
+ S[name]={cap,items:it};}
+fin('fin_1v1gate','1 v 1 to a gate. The defender walks or jogs.',1,1,{goals:'gate'});
+fin('fin_1v1goal','1 v 1 to a small goal. The defender is live.',1,1,{goals:'goal'});
+fin('fin_2v1','2 v 1 to a small goal. The pair passes and the single defender must choose.',2,1,{goals:'goal'});
+fin('fin_2v2','2 v 2 with two small goals. Both teams attack and defend.',2,2,{goals:'two'});
+fin('fin_3v2','3 v 2 to a small goal. One defender is added when the ball is lost.',3,2,{goals:'goal',neutral:false});
+fin('fin_3v3','3 v 3 with four small goals. Teams rotate every round.',3,3,{goals:'four'});
+fin('fin_3v3def','3 v 3 with defenders. Each team keeps one back defender in its own half.',3,3,{goals:'two',zone:'Back defender stays in own half'});
+fin('fin_4v4','4 v 4 with goalkeepers, defenders and a neutral helper. Teams rotate every round.',4,4,{goals:'keep',neutral:true});
+})();
+
 </script>
 <script>
 // Interleaved plan: Tuesday + Thursday, 75-minute practices, one chapter per session, cycling through all chapters, then again at the next level.
@@ -787,7 +1585,7 @@ const LAPS=[
  '4 laps in pairs, matching each other\'s pace and calling the pace changes.',
  '4 laps led by a player who sets the pace and calls the changes.'
 ];
-// Every practice ends with 1 v 1. Chapter-specific twist: [name, rule]
+// Every practice ends with duels that grow from 1 v 1 to team games. Chapter-specific twist: [name, rule]
 const DUEL={
  1:['Duel to the gate','Attacker dribbles through a gate inside the boundary; defender tries to stop them.'],
  2:['Duel with a freeze','On the coach whistle both players freeze, then play on.'],
@@ -801,7 +1599,10 @@ const DUEL={
  10:['Team duel','Each win scores a point for the team; the team spreads out around the grids.'],
  11:['Duel with a keeper','Attacker shoots; the defender plays goalkeeper when the shot comes.']
 };
+const FIN=[["1 v 1 gate duel", "fin_1v1gate", "8 x 5 yards, one gate", "Pairs of similar size. The attacker dribbles through the gate and the defender only walks beside them.", "The defender is passive and the attacker succeeds often. Rounds of 20 seconds."], ["1 v 1 goal duel", "fin_1v1goal", "10 x 6 yards, one big cone goal", "The attacker dribbles and shoots into the goal. The defender jogs and may gently poke the ball.", "The defender is slightly active. Winner stays, loser swaps."], ["2 v 1 helper duel", "fin_2v1", "10 x 8 yards, one goal", "Two attackers against one defender. The ball carrier can pass to the friend. The defender walks or jogs.", "The first team game: two friends work together."], ["2 v 2 mini-goal game", "fin_2v2", "12 x 8 yards, two small goals", "Two pairs play to two small goals. Rounds of one minute, then new pairs.", "Real small teams: attack together and defend together."], ["2 v 2 with a helper", "fin_3v2", "12 x 8 yards, two small goals", "Two pairs plus one neutral helper who always plays with the team that has the ball.", "The helper adds a passing choice. Rotate the helper every round."], ["3 v 3 mini-goal game", "fin_3v3", "20 x 12 yards, four mini goals", "Short 3 v 3 rounds with four mini goals. Teams rotate after every round.", "Full small-team play with kind handshakes at the end."]];
 const DUELPROG=['Defender is passive (walks) and the attacker succeeds often.','Defender jogs and may poke the ball away.','Defender is active but no contact; short 30-second duels.','Real 1 v 1; keep score by gate or goal.','First to three points; winners move to the next grid.','Ladder: winners move up, losers move down; players run the rotation.'];
+const DYN={1:'high knees, side shuffles, bunny hops, a team clap',2:'skips, gallops, leg swings, hops',3:'heel flicks, toe walks, ankle circles, light jogs backward',4:'side skips, butt kicks, arm circles, quick feet',5:'high skips, knee hugs, quick feet, bunny hops',6:'jog with arm swings, side shuffles, frog hops, leg swings',7:'hip circles, high knees, backward jog, jump and land',8:'side shuffles, quick feet, bear walk, jog and stop',9:'skips, mirror steps, quick turns, hops',10:'jog in shapes, side shuffles, partner high fives, hops',11:'quick feet, side shuffles, mini squats, reach and catch with no ball'};
+const DUELFMT=['Gate duel: dribble through one gate to score.','Small-goal duel: shoot at a big cone goal, no keeper.','Line duel: dribble across the end line under control.','Two-gate duel: the attacker picks either gate.','Circle duel: keep the ball in the ring for 10 seconds, then switch.','Ladder duel: winners move up a grid, with a handshake each time.'];
 const LVLTXT=l=>LEVELS[l-1][0]+': '+LEVELS[l-1][1];
 // ---- slots ----
 const TEACH=66, WEEKS=40;
@@ -809,27 +1610,112 @@ function slot(s){const week=Math.ceil(s/2)+Math.floor((s-1)/22);const day=s%2?'T
 const FEST=[{k:1,week:12},{k:2,week:24},{k:3,week:36}];
 function prevOf(ch,level){return ch===1?{ch:N,level:Math.max(1,level-1)}:{ch:ch-1,level};}
 function ref(n,i){const a=(window.DSCENE||{})[n];return a&&a[i]?[a[i][0],a[i][1]]:null;}
+// Closing-circle motivation and morale tips (psychology). [title, what to do and say, why it works]
+const TIPS=[
+ ['Name the effort','Pick three children and say one specific effort each made ("you kept trying with your weaker foot"). Praise the effort, not the result.','Praise for effort and strategy builds persistence; praise for talent can make children avoid challenges.'],
+ ['Shout-outs','Each child gives one teammate a shout-out ("thanks for passing to me"). Start by modeling one.','Appreciation from peers builds belonging, the strongest driver of staying in a team.'],
+ ['Mistake of the day','Share one mistake you or a child made today and what it taught. Say "mistakes are how we grow".','Normalizing mistakes lowers fear of failure, so children try harder skills.'],
+ ['The power of not yet','When a child says "I cannot do it", answer "not yet". Have the whole group say it once together.','Not-yet language supports a growth mindset: ability is something you build.'],
+ ['We did it together','Share one team number ("we made 20 passes, we all touched the ball"). Cheer as a group.','Shared success builds team identity and moral beyond individual results.'],
+ ['Goodbye by name','Say each child\'s name with a high five and eye contact as they leave. No one is skipped.','Being seen and named tells a child they matter to the group.'],
+ ['Choose tomorrow','Offer two games and let the group vote for one to open the next practice.','Small choices satisfy the need for autonomy and raise motivation.'],
+ ['Butterflies are normal','Say that everyone feels nervous sometimes, and brave means trying anyway. Ask who tried something a little scary today.','Naming feelings reduces their power and makes trying safe.'],
+ ['Spot the brave try','Tell a short story of a brave attempt today, even if it did not work.','Rewarding courage keeps children taking healthy risks.'],
+ ['End on a win','Finish the circle by recalling something the whole group did well today.','People remember how an experience ended; a positive ending raises the wish to return.'],
+ ['Thank you','Thank the children for listening, helping and trying. Invite them to thank a teammate or a parent who brought them.','Gratitude builds warmth and a positive culture.'],
+ ['Look how far we have come','Remind them of something they could not do at the start of the season and can do now.','Seeing progress builds a sense of competence, a core motivator.'],
+ ['Kindness spotlight','Name one kind act you saw (helping someone up, sharing a ball). Cheer it as loudly as a goal.','What the coach celebrates becomes what the team values.'],
+ ['Three calm breaths','Take three slow breaths together before leaving: smell the flower, blow the candle.','A calm end helps children regulate big feelings after intense play.'],
+ ['Something to look forward to','Give a teaser for next practice ("next time we will play a new game").','Anticipation builds excitement and attendance.'],
+ ['A quiet word','Take one child aside for a private, specific compliment. Choose someone who has not had one lately.','Private praise feels genuine and protects quieter children.'],
+ ['Team promise','Say the team promise together: safe, kind and listening. Ask which one we showed best today.','Shared rules said aloud strengthen group norms.'],
+ ['Win or lose, we learn','After a game, ask what we learned, not who won. Keep the score out of the circle.','Focusing on learning protects motivation after a loss.'],
+ ['Include everyone','Check your own list: has every child been praised this week? Give a specific compliment to anyone missed.','Every child needs a regular signal that they are valued.'],
+ ['Tiny home challenge','Give one tiny challenge to try at home with family (10 toe taps, balance for 5 seconds). Ask them to tell the group next time.','Small, achievable challenges build confidence and connect family to the team.'],
+ ['I believe in you','Tell the group one thing you believe they can do by the end of the season.','High, kind expectations raise effort and confidence.'],
+ ['Mood check','Ask for a thumbs up, middle or down on how they feel. Thank honest answers.','Giving feelings a place at the end lets children leave settled.'],
+ ['Highs and lows','Each child shares one high (best moment) and one low (hardest moment) from today. Thank every answer.','Naming a hard moment next to a good one builds emotional skill and trust.'],
+ ['Pass the compliment','Start a compliment and pass it around the circle by tossing a ball; the catcher adds a new one.','Peer appreciation spreads belonging and makes praise a group habit.'],
+ ['What I learned from a friend','Ask each child to name one thing they learned from a teammate today.','Seeing teammates as teachers strengthens cooperation and respect.'],
+ ['Strong body, strong mind','Ask: “What did you do today when it got hard?” Celebrate staying with it.','Linking effort to perseverance builds resilience.'],
+ ['Rate your effort','Hold up one to five fingers for how hard you tried. Tell the group that five is about trying, not about winning.','Self-rating of effort puts the focus on what children control.'],
+ ['Secret helper','Name a child who helped someone today without being asked. Ask the group to guess how it helped.','Spotlighting quiet kindness rewards prosocial behavior.'],
+ ['Goal for the week','Each child states one small goal for the next practice and tells a buddy.','Specific short goals raise a sense of control and commitment.'],
+ ['Surprise thanks','Thank a parent, a helper or the field with a group cheer.','Gratitude expands the circle of belonging beyond the team.'],
+ ['Team heartbeat','Everyone claps the same slow rhythm for ten seconds, then speeds up and stops together.','Moving in sync builds closeness and a calm, shared ending.'],
+ ['Pride moment','Ask: “What are you proud of today?” Allow a pass.','Pride from effort strengthens intrinsic motivation.'],
+ ['Fix it forward','Ask: “What would you do differently next time?” Let each child answer with one action.','Looking forward after a mistake keeps it from sticking.'],
+ ['Role model','Name a way someone showed good sportsmanship. Ask the group to copy it next time.','Describing models gives children a clear picture to follow.'],
+ ['I noticed','Say “I noticed…” and give a detail about three children (a smile, a try, a kind word).','Specific noticing says every child is seen.'],
+ ['Fun rating','Ask for a fun rating with a thumb. Ask what made it a thumbs-up.','Fun is a top reason children keep playing, so check it.'],
+ ['Take a bow','Each child takes a small bow while the group cheers.','Silly celebration reduces fear of attention and shares joy.'],
+ ['Team promise check','Ask which promise was strongest today and which needs help.','Revisiting group rules keeps them alive.'],
+ ['Calm landing','Ask children to sit and take five slow breaths, counting on their fingers.','A short breathing routine helps children settle before they leave.'],
+ ['Letter of the day','Pick a letter and ask for a team word that starts with it (for example: “brave”, “bold”).','Positive words become part of the team language.'],
+ ['Mistake museum','Show a funny “mistake” you made and explain what you learned. Invite one volunteer to share.','Adults modeling mistakes lowers fear.'],
+ ['High five line','Children line up and give each other a high five and a name.','Physical connection and names strengthen belonging.'],
+ ['Show and tell a skill','One child shows a skill they worked on at home. The group cheers.','Practice at home is celebrated and spreads.'],
+ ['Brave breath','Say: “When I feel nervous, I breathe in for three and out for three.” Do it twice.','A simple breathing tool gives a skill for stress.'],
+ ['Next practice vote','Offer two warm-up games and let the group vote.','Choice supports autonomy and anticipation.'],
+ ['Thank your partner','Pairs thank each other for one thing they did well together.','Two-way thanks builds friendships.'],
+ ['Mirror the smile','Ask children to smile at the child next to them and pass it around.','Shared smiles lift mood and group feeling.'],
+ ['Silent cheer','Everyone cheers with no sound, using hands and faces. Then the loud cheer.','Playful contrast keeps the ending light.'],
+ ['Growth story','Tell a one-minute story about a player who learned a hard skill step by step.','Stories show that skill grows with practice.'],
+ ['Equal voices','Go around the circle so every child can speak for ten seconds. Pass is allowed.','Equal turns say every voice counts.'],
+ ['Kind challenge','Challenge everyone to do one kind thing before the next practice.','Kindness tasks spread the team culture beyond practice.'],
+ ['Energy gauge','Ask: “Battery low, medium or full?” Remind everyone to rest.','Naming energy teaches self-awareness and rest.'],
+ ['Best teammate move','Name a teamwork move you saw (a pass, a shout, a switch) and cheer it.','Praising teamwork actions sets the standard.'],
+ ['Silent thanks','Think of one person who helped you, and give them a silent thank you. Then share if you want.','Quiet reflection deepens gratitude.'],
+ ['Hope for tomorrow','Ask: “What do you hope to get better at next time?”','Expressing hope keeps motivation forward-looking.'],
+ ['Tough but fair','Praise the group for playing hard and fair. Ask for one example of each.','Naming both sets a balance between competing and caring.'],
+ ['Your story, your number','Remind each child of their own personal best and ask for a next target.','Progress against yourself builds competence.'],
+ ['Everyone wins a moment','Make sure every child hears one specific win from today before they leave.','Equal recognition protects belonging.'],
+ ['Smile and wave','Count down from three, then everyone smiles and waves to the group.','A joyful ritual makes goodbyes positive.'],
+ ['Learning detectives','Ask: “What did you discover today?” Accept any answer.','Curiosity as a goal makes mistakes part of the game.'],
+ ['Helping hands','Ask children to show with their hands how they helped (a high five, a pat, a pass).','Embodied recall makes kindness concrete.'],
+ ['One word','Each child says one word about how they feel. No explaining.','A one-word check is quick and safe.'],
+ ['Coach admits','Say something you learned from the children today.','Reversed learning shows respect and builds trust.'],
+ ['Team pride chant','Create a new line for your team chant and say it together.','Shared words build identity.'],
+ ['Stand tall','Everyone stands tall for three seconds as the “team of the day”.','Posture shapes feeling and closes with confidence.'],
+ ['Gratitude pass','Pass a ball: whoever holds it says one thing they are thankful for.','Gratitude practice raises mood.'],
+ ['Bright side','Ask: “Name one good thing from a hard moment today.”','Reframing builds optimism.'],
+ ['Ready for next time','Ask: “What will help you be ready next time?” (sleep, water, shoes).','Preparation habits build independence.'],
+ ['Cheer for effort','Give a group cheer for the hardest-working moment of the day.','Celebrating effort over outcome keeps all children included.'],
+ ['Together tower','Everyone puts a hand in the middle, counts to three and lifts.','A shared physical ritual closes the session as a team.']
+];
+function closingBlock(s,min,extraQ){
+ const t=TIPS[(s-1)%TIPS.length];
+ return {min,name:'Closing circle: motivation and morale',short:'Tip of the day: '+t[0]+'. '+t[1],how:'Tip of the day: '+t[0]+'. '+t[1]+' '+extraQ+' Finish with a high five for each child by name, the team chant and a reminder of the next practice.',focus:'Motivation and morale: '+t[2],prog:'',watch:'Keep it warm and short. Every child hears something positive.',scene:null};
+}
+
 function drillBlock(c,i,level,time,label){
  const d=c.drills[i];
- return {min:time||15,name:label+': '+d[0],how:d[5]+' Setup: '+d[3]+', '+d[2]+'. Equipment: '+d[4]+'.',focus:d[6],prog:level===1?'Start simple: slow pace and a big space.':d[7]+' (Level focus: '+LEVELS[level-1][1]+')',watch:d[8],scene:ref(c.n,i)};
+ return {min:time||15,name:label+': '+d[0],how:d[5]+' Setup: '+d[3]+', '+d[2]+'. Equipment: '+d[4]+'.',focus:d[6],prog:d[7]+' (Level focus: '+LEVELS[level-1][1]+')',watch:d[8],scene:ref(c.n,i),steps:[['Set up',d[3]+', '+d[2]+'. You need: '+d[4]+'.'],['Do',d[5]],['Say',d[6]],['Make it harder',d[7]],['Watch for',d[8]]]};
 }
 function session(s){
  const o=slot(s),c=CH[o.ch-1],l=o.level,r=(l-1)%3;
  const pr=prevOf(o.ch,l),pc=CH[pr.ch-1];
- const skillA=[0,1,2][r], skillB=[1,2,0][r];
+ const skillA=3*(l-1), skillB=3*(l-1)+1, gameI=3*(l-1)+2;
  const blocks=[];
  blocks.push({min:5,name:'Arrival and circle',how:'Greet each child by name, quick team chant, check shin guards and water. Tell the group the one idea for today: '+c.objectives[0].toLowerCase()+'.',focus:'Belonging and clarity',prog:'',watch:'Late arrivals: let them join the run start',scene:['circle','Circle up, greet, share the idea of the day.']});
- blocks.push({min:10,short:LAPS[l-1].replace(/\.$/,'')+'. Then 2 min dynamic moves.',name:'Run start: laps around the field',how:'Always start by running around the field. '+LAPS[l-1]+' Finish with 2 min dynamic moves: high knees, heel flicks, side shuffles, bunny hops.',focus:'Raise the heart rate; tall posture, bent arms, light feet',prog:'Level '+l+' running: '+LAPS[l-1],watch:'Children tire at different rates: allow walking. Never use running as punishment.',scene:['laps','Everyone runs around the field.']});
+ blocks.push({min:10,short:LAPS[l-1].replace(/\.$/,'')+'. Then 2 min dynamic moves.',name:'Run start: laps around the field',how:'Always start by running around the field. '+LAPS[l-1]+' Finish with 2 min dynamic moves: '+DYN[o.ch]+'.',focus:'Raise the heart rate; tall posture, bent arms, light feet',prog:'Level '+l+' running: '+LAPS[l-1],watch:'Children tire at different rates: allow walking. Never use running as punishment.',scene:['laps','Everyone runs around the field.']});
  blocks.push({min:5,name:'Water and one idea',how:'Water break. Then demonstrate today\'s skill for two minutes and give one cue. Key words: '+c.concepts[0][1].map(k=>k[0]).slice(0,3).join(', ')+'.',focus:'One idea, one cue',prog:'',watch:'Keep the talk to two minutes',scene:null});
  blocks.push(drillBlock(c,skillA,l,15,'Skill play 1'));
  blocks.push(drillBlock(c,skillB,l,10,'Skill play 2'));
- const g=drillBlock(c,3,l,10,'Game');g.how=g.how+' Water at the halfway point. Today\'s level target: '+LT[o.ch][l-1]+'.';blocks.push(g);
+ const g=drillBlock(c,gameI,l,10,'Game');g.how=g.how+' Water at the halfway point. Today\'s level target: '+LT[o.ch][l-1]+'.';blocks.push(g);
  const du=DUEL[o.ch];
- blocks.push({min:10,name:'1 v 1 finale: '+du[0],how:'Every practice ends with 1 v 1. Pairs of similar size duel in small grids (about 8 x 5 yards) with a gate or small goal. Rotate opponents every 2 minutes. Chapter twist: '+du[1],focus:'Compete bravely and kindly; try today\'s skill under duel conditions',prog:DUELPROG[l-1],watch:'Match pairs by size and confidence. No sliding, grabbing or pushing. Keep score light and praise effort.',scene:["duel",du[0]+'. '+du[1]]});
- const rd=pc.drills[0];
- blocks.push({min:10,name:'Review and close',how:'5 min review of Chapter '+pc.n+' ('+pc.short+') at level '+pr.level+': '+rd[0]+'. '+rd[5]+' Then 5 min closing circle: ask what they learned, praise effort, team chant, remind the group when the next practice is.',focus:'Spiral review and praise',prog:'',watch:'Keep the review light and playful',scene:ref(pc.n,0)});
+ {const F=FIN[l-1];blocks.push({min:10,name:'Duel finale: '+F[0],how:'Every practice ends with duels that grow with the level. '+(l>1&&F[1]!=='fin_1v1goal'?'Open with two minutes of 1 v 1 in pairs, then play today\'s format. ':'')+'Format: '+F[3]+' Grid: '+F[2]+'. Chapter twist ('+du[0]+'): '+du[1]+' In team formats the twist applies to the player on the ball.',focus:'Compete bravely and kindly; use today\'s skill under duel conditions',prog:F[4],watch:'Match players by size and confidence. No sliding, grabbing or pushing. Keep score light and praise effort.',scene:[F[1],F[0]+'. '+F[3]]});}
+ blocks.push(closingBlock(s,10,'Ask one question: what was your favorite part today?'));
+ const TP=TIPS[(s-1)%TIPS.length];
+ blocks[0].steps=[['Do','Greet each child by name. Check shin guards and water. Gather in a circle.'],['Say','Today we are working on this: '+c.objectives[0].toLowerCase()+'.'],['Watch for','Children who arrive late. Send them straight to the run.']];
+ blocks[1].steps=[['Do',LAPS[l-1]],['Then','2 minutes of dynamic moves: '+DYN[o.ch]+'.'],['Say','Tall back, bent arms, light feet.'],['Watch for','Tired children can walk. Never use running as a punishment.']];
+ blocks[2].steps=[['Do','Water break, about 1 minute.'],['Show','Demonstrate today\'s skill for 2 minutes. Keep your talking short.'],['Say','One cue only. Words for today: '+c.concepts[0][1].map(k=>k[0]).slice(0,3).join(', ')+'.']];
+ blocks[5].steps.push(['Today\'s target',LT[o.ch][l-1]]);
+ if(typeof GAMEVAR!=='undefined')blocks[5].steps.splice(4,0,['Game level',GAMEVAR[l-1]]);
+ blocks[6].steps=[['Set up',FIN[l-1][2]+'.'],['Do',FIN[l-1][3]],['Start',l>1&&FIN[l-1][1]!=='fin_1v1goal'?'Two minutes of 1 v 1 in pairs first, then the team format.':'Rotate opponents every 2 minutes.'],['Chapter twist',du[0]+': '+du[1]],['Level step',FIN[l-1][4]],['Watch for','No pushing or grabbing. Match players by size. Praise effort.']];
+ blocks[7].steps=[['Do','Gather in a circle. Share today\'s tip.'],['Tip',TP[0]+'. '+TP[1]],['Why it works',TP[2]],['End','High five each child by name, team chant, tell them when the next practice is.']];
  let t=0;blocks.forEach(b=>{b.t=t+'-'+(t+b.min);t+=b.min;});
- const eq=[...new Set(blocks.slice(3,6).map(b=>(b.how.match(/Equipment: ([^.]*)\./)||[])[1]).concat([(rd[4])]).filter(Boolean).join(', ').split(',').map(x=>x.trim().toLowerCase()).filter(x=>x&&x!=='none'))].join(', ')||'balls and cones';
+ const eq=[...new Set(blocks.slice(3,6).map(b=>(b.how.match(/Equipment: ([^.]*)\./)||[])[1]).filter(Boolean).join(', ').split(',').map(x=>x.trim().toLowerCase()).filter(x=>x&&x!=='none'))].join(', ')||'balls and cones';
  return {...o,chapter:c,target:LT[o.ch][l-1],levelName:LVLTXT(l),blocks,equip:eq,check:'Check: '+c.check,total:t,prev:pc};
 }
 function festival(k,day){
@@ -863,6 +1749,7 @@ function toText(p){
 }
 window.PLAN={LEVELS,LT,LAPS,DUEL,DUELPROG,TEACH,WEEKS,FEST,slot,session,festival,toText,N};
 })();
+
 </script>
 <script>
 (function(){
@@ -928,7 +1815,7 @@ function overview(){
  buildSchedule();
  const t=iso(new Date()),nx=SCH.find(e=>e.iso>=t),nxt=nx?`<div class="next"><span class="eyebrow">Next practice</span><b>${nx.dstr}</b><span>${evTitle(nx)}${nx.kind==='p'?', Level '+evLevel(nx):''}</span><a class="btn pri" href="${nx.kind==='p'?'#/session/'+nx.s:'#/festival/'+nx.k+'/'+nx.day}">Open</a></div>`:'';
  return nxt+`<div class="hero"><div><div class="eyebrow">RCH Elite Training · Pre-K and Kindergarten</div><h1>Foundations of the Game</h1><p>Eleven chapters taught in rotation, starting now at chapter 2. Every Tuesday and Thursday practice moves one chapter forward by a small step. After all eleven, the cycle returns to chapter 1 at a higher level.</p><div class="stats"><div><b>11</b>chapters</div><div><b>6</b>levels</div><div><b>66</b>practices</div><div><b>75</b>min each</div></div></div><div id="hero-scene">${window.renderScene('triangle',nid())}</div></div>
- <div class="cols3"><div class="card"><h4>Always start by running</h4><p>Every practice opens with running around the field and ends with 1 v 1.</p></div><div class="card"><h4>Mixed, not blocked</h4><p>No month of only dribbling. Each practice teaches one chapter, and the next practice teaches the next chapter.</p></div><div class="card"><h4>Six passes through the book</h4><p>Level 1 introduces each chapter. Levels 2 to 6 repeat it with more speed, less space, pressure and game play.</p></div></div>
+ <div class="cols3"><div class="card"><h4>Always start by running</h4><p>Every practice opens with running around the field and ends with a duel finale that grows by level: 1 v 1, then 2 v 1, 2 v 2, 3 v 2, 3 v 3 and finally teams with defenders.</p></div><div class="card"><h4>Mixed, not blocked</h4><p>No month of only dribbling. Each practice teaches one chapter, and the next practice teaches the next chapter.</p></div><div class="card"><h4>Six passes through the book</h4><p>Level 1 introduces each chapter. Levels 2 to 6 repeat it with more speed, less space, pressure and game play.</p></div></div>
  <div class="rhythm"><h4>The cycle</h4><div class="cyc" aria-label="Chapter rotation">${CH.map(c=>`<a href="#/ch/${c.n}" title="${c.title}"><b>${c.n}</b><span>${c.short}</span></a>`).join('')}<i class="loop">back to 1, one level higher</i></div></div>`;
 }
 
@@ -974,7 +1861,7 @@ function dayCard(e){
  const blocks=p.blocks.filter(b=>b.name.indexOf('Arrival')!==0);
  const head=e.kind==='p'?`<span class="eyebrow">Practice ${e.s} of ${PL.TEACH} · Week ${e.week} · 75 min</span><h3>Chapter ${p.ch}: ${p.chapter.title}</h3><p class="dsub">${e.dstr}</p><p class="lvl"><b>Level ${l}, ${LV[l-1][0]}.</b> Target: ${p.target}.</p>`:`<span class="eyebrow">Festival ${e.k} · Week ${e.week} · 75 min</span><h3>${e.day==='Tuesday'?'Assessment stations':'Festival games'}</h3><p class="dsub">${e.dstr}</p>`;
  const rem=`<div class="rems">${REM.map(r=>`<a href="#/g/${r[2]}" class="rem"><b>${r[0]}</b><span>${r[1]}</span></a>`).join('')}</div>`;
- const bl=blocks.map(b=>{const sid=nid();return `<section class="dcb"><div class="dch"><span class="bt2">${b.t} min</span><h4>${b.name}</h4></div><p>${b.short||firstSent(b.how)}</p>${b.focus?`<p class="dcf"><b>Focus:</b> ${b.focus}${b.watch?` · <b>Watch:</b> ${b.watch}`:''}</p>`:''}${b.scene?window.renderScene(b.scene[0],sid,b.scene[1]):''}</section>`;}).join('');
+ const bl=blocks.map(b=>{const sid=nid();return `<section class="dcb"><div class="dch"><span class="bt2">${b.t} min</span><h4>${b.name}</h4></div>${b.steps?`<ul class="dsteps">${b.steps.map(x=>`<li><b>${x[0]}</b><span>${x[1]}</span></li>`).join('')}</ul>`:`<p>${b.short||firstSent(b.how)}</p>${b.focus?`<p class="dcf"><b>Focus:</b> ${b.focus}${b.watch?` · <b>Watch:</b> ${b.watch}`:''}</p>`:''}`}${b.scene?window.renderScene(b.scene[0],sid,b.scene[1]):''}</section>`;}).join('');
  const open=e.kind==='p'?`#/session/${e.s}`:`#/festival/${e.k}/${e.day}`;
  return `<div class="dcard"><div class="dp-bar" style="background:${col}"></div><button type="button" class="x" data-act="back" aria-label="Close">&times;</button>${head}<div class="pbar"><a class="btn pri" href="${open}">Open full practice</a><button type="button" class="btn" data-act="skip" data-iso="${e.iso}">Skip this day</button></div><h4 class="sp">Reminders</h4>${rem}<h4 class="sp">Running to the end</h4><p class="dsub">Before the run start: 0 to 5 min arrival and circle.</p>${bl}</div>`;
 }
@@ -1050,8 +1937,8 @@ function chapterPage(n,tab,idx){
  }else{
   const i=Math.min(Math.max(0,idx),c.drills.length-1),d=c.drills[i];
   const ds=(window.DSCENE||{})[n]&&window.DSCENE[n][i];
-  const lst=c.drills.map((x,j)=>`<a href="#/ch/${n}/drills/${j}" class="dsel" aria-current="${j===i}"><span class="dn">D${j+1}</span><span>${x[0]}</span><small>${x[1]} min</small></a>`).join('');
-  body=`<div class="drillpage"><div class="dlist">${lst}</div><article class="drill"><header><h3>${d[0]}</h3><div class="meta"><span>${d[1]} min</span><span>${d[2]}</span><span>${d[3]}</span><span>${d[4]}</span></div></header>${ds?window.renderScene(ds[0],nid(),ds[1]):''}<dl><div><dt>Organisation</dt><dd>${d[5]}</dd></div><div><dt>Coaching points</dt><dd>${d[6]}</dd></div><div><dt>Progression</dt><dd>${d[7]}</dd></div><div><dt>Common issue</dt><dd>${d[8]}</dd></div></dl></article></div><p class="check"><b>Check for learning.</b> ${c.check}</p>`;
+  const lst=c.drills.map((x,j)=>(x[9]&&(j%3===0)?`<h5 class="dlv">Level ${x[9]}: ${LV[x[9]-1][0]}</h5>`:'')+`<a href="#/ch/${n}/drills/${j}" class="dsel" aria-current="${j===i}"><span class="dn">D${j+1}</span><span>${x[0]}</span><small>${x[10]==='g'?'Game · ':'Skill · '}${x[1]} min</small></a>`).join('');
+  body=`<div class="drillpage"><div class="dlist">${lst}</div><article class="drill"><header><h3>${d[0]}</h3><div class="meta">${d[9]?`<span>Level ${d[9]}</span><span>${d[10]==='g'?'Game':'Skill exercise'}</span>`:''}<span>${d[1]} min</span><span>${d[2]}</span><span>${d[3]}</span><span>${d[4]}</span></div></header>${ds?window.renderScene(ds[0],nid(),ds[1]):''}<dl><div><dt>Organisation</dt><dd>${d[5]}</dd></div><div><dt>Coaching points</dt><dd>${d[6]}</dd></div><div><dt>Progression</dt><dd>${d[7]}</dd></div><div><dt>Common issue</dt><dd>${d[8]}</dd></div></dl></article></div><p class="check"><b>Check for learning.</b> ${c.check}</p>`;
  }
  return `<header class="ph chh"><div class="ch-no"><span>Chapter</span>${String(n).padStart(2,'0')}</div><div><h2>${c.title}</h2><p class="lead">${c.lead}</p><div class="chips"><span class="chips-l">Builds on</span>${b}</div></div></header>${tabsHTML(CTABS,tab,'#/ch/'+n)}<div class="pbody2">${body}</div>`;
 }
@@ -1060,14 +1947,50 @@ function chapterPage(n,tab,idx){
 const WEEKEXP=[['Weeks 1 to 2','Team name, chant, buddy system','Parent welcome meeting; share the year plan and the Tuesday and Thursday schedule'],['Week 12','Festival 1 (end of Term 1)','Parent showcase; share first progress sheet'],['Weeks 13 to 14','Rebuild routines after the break','Short note about the next term'],['Week 24','Festival 2 (end of Term 2)','Family fun day; mid-year feedback'],['Weeks 25 to 26','Raise the challenge in games','Invite parents to watch one practice'],['Week 36','Festival 3 and graduation','Certificates, final report, photos'],['Weeks 37 to 40','Off-season: optional free play','Home challenge cards; registration; handover to Grade 1']];
 const GUIDE={
  run:['Always Start by Running','Every practice opens by running around the field. It warms the body, burns off arrival energy and builds stamina and coordination.',()=>`<div class="cols3"><div class="card"><h4>Minutes 5 to 13</h4><p>Laps around the field. Pace and number of laps follow the level (below).</p></div><div class="card"><h4>Minutes 13 to 15</h4><p>Dynamic moves: high knees, heel flicks, side shuffles, bunny hops.</p></div><div class="card"><h4>Then</h4><p>Water, then one idea and the first skill drill.</p></div></div><h4 class="sp">Laps by level</h4>`+tbl(['Level','Laps and pace'],LV.map((l,i)=>[`Level ${i+1} ${l[0]}`,PL.LAPS[i]]))+ul(['Allow walking for tired children; never use running as punishment','Keep the whole group moving in the same direction','Traffic Lights is a chapter 2 exercise, not the run start'])],
- structure:['The 75-Minute Practice','A fixed structure so children know what happens next. The practice repeats on Tuesdays and Thursdays.',()=>tbl(['Minutes','Part','What happens'],[['0 to 5','Arrival and circle','Greet by name, team chant, kit and water check, one idea for the day'],['5 to 15','Run start','Always. Laps around the field, then dynamic moves'],['15 to 20','Water and one idea','Short demonstration of the skill with one cue'],['20 to 35','Skill play 1','Chapter drill at the current level'],['35 to 45','Skill play 2','Second chapter drill with progression'],['45 to 55','Game','Small-sided game applying the idea'],['55 to 65','1 v 1 finale','Always. Duels in small grids with a chapter twist'],['65 to 75','Review and close','5 minutes reviewing the previous chapter, 5 minutes closing circle']])+ul(['Change activity if children lose focus','Water at minute 15, between the game and the 1 v 1, and at the end','If energy is low, shorten skill play 2 and keep the 1 v 1 finale','Everyone has a ball in at least half of the practice','Rotate groups so each child plays with different teammates'])],
+ structure:['The 75-Minute Practice','A fixed structure so children know what happens next. The practice repeats on Tuesdays and Thursdays.',()=>tbl(['Minutes','Part','What happens'],[['0 to 5','Arrival and circle','Greet by name, team chant, kit and water check, one idea for the day'],['5 to 15','Run start','Always. Laps around the field, then dynamic moves'],['15 to 20','Water and one idea','Short demonstration of the skill with one cue'],['20 to 35','Skill play 1','Chapter drill at the current level'],['35 to 45','Skill play 2','Second chapter drill with progression'],['45 to 55','Game','Small-sided game applying the idea'],['55 to 65','Duel finale','Always. 1 v 1 at first, growing to 2 v 2, 3 v 3 and defenders'],['65 to 75','Closing circle','A motivation and morale tip, a high five for every child by name, the team chant and the next practice']])+ul(['Change activity if children lose focus','Water at minute 15, between the game and the 1 v 1, and at the end','If energy is low, shorten skill play 2 and keep the duel finale','Everyone has a ball in at least half of the practice','Rotate groups so each child plays with different teammates'])],
  psych:['Child Psychology and Motivation','Three ideas guide coaching behavior at this age.',()=>`<div class="cols3"><div class="card"><h4>Competence</h4><p>Design tasks so that most attempts succeed. Reduce difficulty if success falls below about half; add challenge when it is routine.</p></div><div class="card"><h4>Autonomy</h4><p>Offer small choices: which ball, which cone color, which game.</p></div><div class="card"><h4>Belonging</h4><p>Names, rituals, buddies and a team identity. This is the strongest source of retention.</p></div></div>`+ul(['Praise effort and strategy ("you kept your head up"), not talent','Use "not yet" language to support a growth mindset','Expect egocentric play; teach sharing through game design','If a child is upset, give a calm job and let them rejoin when ready','Seventy-five minutes is long for this age: keep activities short and varied'])],
- safety:['Physical Development and Safety','Practice twice a week with a strong running start. Protect joints and manage heat.',()=>ul(['Emphasise fundamental movement skills: balance, running, jumping, hopping, throwing, catching','Short running bouts with rests; allow walking','Monitor heat and hydration; shorten the run start in hot weather','No heading practice at this age','Check the field and anchor all goals before each practice','Keep a first-aid kit, emergency contacts and an injury plan on site','Children grow at different rates: do not compare or group by size'])],
+ safety:['Physical Development and Safety','Practice twice a week with a strong running start. Protect joints and manage heat.',()=>ul(['Emphasise fundamental movement skills: balance, running, jumping, hopping, throwing, catching','Short running bouts with rests; allow walking','Monitor heat and hydration; shorten the run start in hot weather','No heading practice at this age','Follow your club’s safeguarding policy, with two adults present; FIFA Guardians is FIFA’s child-safeguarding programme and a good model','Warm-up: our running start and 2-minute dynamic moves are a simple routine. FIFA’s 11+ Kids programme (tested in a trial in children’s football) is a longer structured option; see the Sources page. For serious injuries follow the FIFA pitchside emergency-care guidance and your club’s medical lead','Check the field and anchor all goals before each practice','Keep a first-aid kit, emergency contacts and an injury plan on site','Children grow at different rates: do not compare or group by size'])],
  team:['Team Chemistry and Extra-Curricular','Run these across the year so belonging keeps growing.',()=>tbl(['Activity','Purpose','When'],[['Team name and chant','Identity and belonging','Weeks 1 to 2'],['Buddy of the week','Friendships across the group','Weekly'],['Shared snack','Social bonding off the field','After festivals'],['Team banner art day','Creative ownership','Mid-year'],['Family fun day','Parents and children play together','Week 24'],['Fair play recognition','Models respect and kindness','Each practice']])],
  parents:['Working with Parents','Clear communication with families all year.',()=>tbl(['When','Team culture','Parents'],WEEKEXP)+ul(['Ask parents to encourage effort and avoid coaching from the sideline','Share one small home activity each week (toe taps, balance)','Report progress using the level targets in positive, specific language'])],
  assess:['Assessment','Record Yes, Almost or Not yet at each festival (weeks 12, 24 and 36), plus a baseline in week 1. Assess inside normal games and do not rank children.',()=>tbl(['Chapter','Check','Wk 1','Wk 12','Wk 24','Wk 36'],CH.map(c=>[c.n+'. '+c.short,c.check,'','','','']),'grid-t asm')],
  next:['Looking Ahead to 1st Grade','The first-grade curriculum extends this base.',()=>`<p>It adds simple passing patterns, more dribbling moves, first goalkeeper skills and a clearer understanding of the rules. Use the level ladder to see which chapters need more time before the group moves on.</p>`],
- sources:['Frameworks and Sources','The content is original writing informed by the frameworks below. It has not been checked against the original documents. Verify any specific figure or quotation before using it publicly.',()=>tbl(['Source','Used for'],[['FIFA','Grassroots coaching and Football for Schools materials'],['US Soccer','Player development guidelines and best practices for coaching youth soccer'],['The FA (England)','Youth development framework and the four-corner model'],['KNVB / Coerver','Technical development approach for young players'],['Balyi, I. et al.','Long-term athlete development model'],['Gallahue, D.','Understanding Motor Development: fundamental movement skills'],['Ryan, R. and Deci, E. (2000)','Self-determination theory'],['Dweck, C. (2006)','Mindset: growth versus fixed mindset']])]
+ sources:['Frameworks and Sources',"The content is original writing. Most of its base is European and FIFA material (FIFA Training Centre, The FA, DFB, KNVB, UEFA); U.S. sources are secondary. We list what was actually read and what is background knowledge. Verify any specific figure before using it publicly.",()=>tbl(['Source','Used for','Status'],[
+   ['<b>European and FIFA sources (the main base)</b>','',''],
+   ['<a href="https://fifatrainingcentre.com/en/practice/grassroots/grassroots-and-youth-football-essentials/grassroots-coaching-essentials/jene-general-principles-1.php" target="_blank" rel="noopener">FIFA Training Centre, grassroots coaching principles</a>', 'Sessions should be fun, safe and effective; 2 v 2 mini-games with space; warm-ups; no fixed timings', 'Read'],
+   ['<a href="https://www.fifatrainingcentre.com/en/practice/grassroots/grassroots-and-youth-football-essentials/grassroots-coaching-essentials/jene-3-dribbling-as-a-positive-start.php" target="_blank" rel="noopener">FIFA Training Centre, dribbling as a positive start (ages 4 to 8)</a>', 'Unopposed dribbling first, then light competition, then 1 v 1, 2 v 2 and 2 v 1; freedom of expression', 'Read'],
+   ['<a href="https://www.fifatrainingcentre.com/en/practice/training-perspectives/designing-games-for-development/3v3-funino-developing-game-intelligence-and-decision-making.php" target="_blank" rel="noopener">FIFA Training Centre, 3 v 3 Funino</a>', 'Four-goal 3 v 3 format and the reasons given for it', 'Read (the page cites no studies; treat as expert perspective)'],
+   ['<a href="https://fifatrainingcentre.com/en/community/science-explained/jan-verbeek-on-the-relative-age-effect.php" target="_blank" rel="noopener">FIFA Training Centre, relative age effect (Verbeek)</a>', 'Age spread within a cohort and coaching implications', 'Read (text summary only)'],
+   ['<a href="https://bjsm.bmj.com/content/53/22/1418" target="_blank" rel="noopener">British Journal of Sports Medicine, FIFA 11+ Kids trial</a>', 'Evidence that a structured warm-up programme can reduce injuries in children’s football', 'Read (abstract level; the programme is longer than our 2-minute dynamic moves, so it is an option, not a copy)'],
+   ['<a href="https://inside.fifa.com/en/news/fifa-launches-child-safeguarding-programme-and-toolkit-fifa-guardianstm" target="_blank" rel="noopener">FIFA Guardians, child safeguarding programme</a>', 'Safeguarding approach for the Safety page', 'Read (the launch announcement; the toolkit itself was not opened)'],
+   ['<a href="https://www.thefa.com/bootroom/england-dna-foundation-phase" target="_blank" rel="noopener">The FA (England), Foundation Phase</a> and <a href="https://www.thefa.com/bootroom/resources/coaching/developing-socially-skilled-children-in-the-foundation-phase" target="_blank" rel="noopener">social skills</a>', 'Four-corner framework, five social areas, three ground rules, player-led and coach-led balance', 'Read'],
+   ['<a href="https://www.thefa.com/bootroom/resources/coaching/how-to-help-5-11-year-olds-stay-on-the-ball-and-master-it" target="_blank" rel="noopener">The FA, staying on the ball for 5 to 11 year olds</a>', 'Ball mastery progression, when to stay on the ball, shielding', 'Read'],
+   ['<a href="https://www.thefa.com/bootroom/resources/coaching/plan-do-review" target="_blank" rel="noopener">The FA, Plan, Do, Review</a>', 'Practice loop and the 70 percent ball-rolling guide', 'Read'],
+   ['<a href="https://assets.dfb.de/uploads/000/236/239/original_Booklet_-_Spielformen_im_Kinderfu%C3%9Fball.pdf?1616499665" target="_blank" rel="noopener">DFB (Germany), Booklet Spielformen im Kinderfußball</a>', 'G- and F-Jugend formats: 2 v 2, 3 v 3 and 5 v 5, pitch and goal sizes, shooting zone, rounds and rotation, coaches as game leaders, restarts', 'Read'],
+   ['<a href="https://archive.trainingground.guru/articles/matthias-lochmann-how-germany-revolutionised-the-foundation-phase" target="_blank" rel="noopener">Training Ground Guru, Lochmann on the German foundation phase</a>', 'Smaller teams, four goals, shooting zones, self-pass, DFB pilot', 'Read (reported results, not the study itself)'],
+   ['<a href="https://knvb.h5mag.com/knvb/pupillenvoetbal/onder_7_advies/94579/Flyer_interne_wedstrijdvormen_pupillen___4_tegen_4.pdf" target="_blank" rel="noopener">KNVB (Netherlands), flyer on 4 v 4 for under 7s</a>', '4 v 4 as the internal match form for the youngest pupils; small-sided play', 'Read (a short flyer, in Dutch)'],
+   ['<a href="https://www.uefa.com/newsfiles/377902.pdf" target="_blank" rel="noopener">UEFA Grassroots Newsletter No. 3 (December 2005)</a>', 'Grassroots Charter ages 5 to 12, 4 v 4 on about 30 x 20 m without keepers or referees, free play', 'Read (old; used as background only)'],
+   ['<a href="https://passport.world.rugby/conditioning-for-rugby/introduction-to-conditioning-children/long-term-athlete-development/fundamental-stage/" target="_blank" rel="noopener">World Rugby, LTAD fundamental stage</a>', 'Fundamental stage ages, movement skills first, speed and suppleness windows', 'Read (a rugby source, used for the general model)'],
+   ['<a href="https://acuresearchbank.acu.edu.au/item/8w1zv/the-association-between-visual-exploration-and-passing-performance-in-high-level-u13-and-u23-football-players" target="_blank" rel="noopener">Visual exploration and passing in U13 and U23 football players</a>', 'More head turns before receiving linked to faster passing', 'Read (abstract only; older players, so a guide)'],
+   ['<b>U.S. sources (secondary)</b>','',''],
+   ['<a href="https://www.ussoccer.com/us-way/player-development/environment/age-group-guide/u6" target="_blank" rel="noopener">U.S. Soccer, age-group guides U5 and U6</a>', 'Small-sided formats, technical focus, no heading, coaching approach', 'Read (secondary source)'],
+   ['<a href="https://www.azsoccerassociation.org/wp-content/uploads/sites/186/2024/08/US-Soccer-Player-Development-Initiatives-PDI.pdf" target="_blank" rel="noopener">U.S. Soccer, Player Development Initiatives (copy hosted by Arizona Soccer Association)</a>', 'U7 and U8 4 v 4: no goalkeepers, field sizes, size 3 ball', 'Read (secondary; a copy of the document)'],
+   ['<a href="https://www.playlouisianasoccer.org/wp-content/uploads/sites/205/2023/12/US_Youth_Soccer_Player_Development_Model.pdf" target="_blank" rel="noopener">US Youth Soccer, Player Development Model</a>', '3 v 3 and 4 v 4, characteristics of the age, arguments as learning', 'Read (secondary; age chapters were cut off in the copy)'],
+   ['<a href="https://www.lfsrm.org/userfiles/2522/files/6-8%20middle%20childhood%20ChildDevelopment_CDCTipSheet.pdf" target="_blank" rel="noopener">CDC, middle childhood child development tip sheet</a>', 'Friendship, team, independence, mental and physical skills', 'Read (secondary; a hosted copy)'],
+   ['<a href="https://www.cdc.gov/heat-health/risk-factors/heat-and-athletes.html" target="_blank" rel="noopener">CDC, Heat and Athletes</a>', 'Hydration, timing, warning signs and what to do', 'Read (secondary)'],
+   ['<a href="https://shareprogram.gwu.edu/new-study-dispels-myths-about-what-makes-youth-sports-fun-kids" target="_blank" rel="noopener">George Washington University, news summary of Visek and colleagues</a>', 'Top fun factors for players aged 8 to 19; winning ranked 40th of 81', 'Read (secondary; news summary, paper not opened)'],
+   ['<b>Background knowledge and unread items</b>','',''],
+   ['Gallahue, D., Understanding Motor Development', 'Stability, locomotion and manipulation', 'Background knowledge; not rechecked'],
+   ['Ryan, R. and Deci, E. (2000), self-determination theory', 'Competence, autonomy and belonging', 'Background knowledge; not rechecked'],
+   ['Dweck, C. (2006), Mindset', 'Praise for effort and strategy, not-yet language', 'Background knowledge; not rechecked'],
+   ['Côté, J., Developmental Model of Sport Participation', 'Sampling years and deliberate play', 'Background knowledge; not rechecked'],
+   ['Erikson, E., psychosocial development (industry versus inferiority)', 'Social comparison at about 6 to 11', 'Background knowledge; not rechecked'],
+   ['Balyi, I. and colleagues, long-term athlete development', 'Windows of trainability', 'Background knowledge'],
+   ['<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8226694/" target="_blank" rel="noopener">Sport-based interventions and children’s executive function (meta-analysis)</a>', 'Direction of research only', 'Not read (access blocked); no findings claimed'],
+   ['<b>FIFA manuals worth adding to your library</b>','',''],
+   ['FIFA Coaching Manual and grassroots materials (FIFA Training Centre / Football for Schools)', 'Wider technical, tactical and youth-development reading', 'Not opened; recommended further reading'],
+   ['<a href="https://inside.fifa.com/health-and-medical/education-awareness/pitchside-emergency-care" target="_blank" rel="noopener">FIFA pitchside emergency care and Emergency Care Manual</a>', 'First aid and emergency protocols; have your club medical lead follow these', 'Not opened; recommended further reading'],
+   ['FIFA Legal Handbook (annual edition)', 'Governance and regulations for associations and clubs, not coaching content', 'Not used']
+  ])]
 };
 const GORDER=[['run','Run start'],['structure','75-minute practice'],['psych','Psychology'],['safety','Safety'],['team','Team chemistry'],['parents','Parents'],['assess','Assessment'],['next','Next grade'],['sources','Sources']];
 function guidePage(id){const g=GUIDE[id]||GUIDE.run;return head('Coaching guide',g[0],g[1])+`<div class="gbody">${g[2]()}</div>`;}
@@ -1122,4 +2045,7 @@ th.addEventListener('click',()=>{const cur=document.documentElement.getAttribute
 try{const t=localStorage.getItem('rch-theme');if(t)setTheme(t);}catch(e){}
 route();
 })();
+
 </script>
+</body>
+</html>
