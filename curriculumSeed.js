@@ -1,5 +1,5 @@
 // The chapter lists of the coaches' curriculum pages (curriculum-prek.html, curriculum-kindergarten.html,
-// curriculum-1st-grade.html, curriculum-2nd-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
+// curriculum-1st-grade.html, ... curriculum-4th-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
 // each grade's chapters and assessment checks. On every start the saved chapters are brought in line with
 // these lists (matched by chapter number), so a new version of a curriculum page updates the report choices.
 const CURRICULA = {
@@ -815,6 +815,442 @@ const CURRICULA = {
     "Shows three referee signals"
    ],
    "check": "Child takes a legal throw-in, says who takes a goal kick, corner and free kick, explains a foul and shows three referee signals."
+  }
+ ],
+ "3rd-grade": [
+  {
+   "n": 1,
+   "title": "Leadership, Communication and Team Culture",
+   "lead": "Leadership grows from taking a job to guiding a team. Third graders run a team talk, referee a short game, lead a restart plan, give and receive feedback with kind words and keep the team promise without a reminder.",
+   "objectives": [
+    "Lead a three-sentence team talk before a game",
+    "Referee a short game with clear signals and explain a call in one sentence",
+    "Give a teammate feedback with a kind word and one tip",
+    "Run a restart plan (throw-in, corner, free kick) as captain"
+   ],
+   "outcomes": [
+    "Leads a team talk without a script",
+    "Refs two minutes with 80 percent correct calls",
+    "Gives a kind-word-and-tip feedback twice in a practice",
+    "Leads a restart plan with the group following"
+   ],
+   "check": "Child leads a team talk, refs a short game with correct signals, gives a kind word and a tip and runs a restart plan."
+  },
+  {
+   "n": 2,
+   "title": "Speed, Agility and Power",
+   "lead": "Athletic movement becomes faster and more explosive. Third graders sprint over 20 to 25 yards from different starts, use cone-sprint grids and speed rings, run ladder and hurdle circuits, react to a ball that bounces unpredictably and time themselves against their own best.",
+   "objectives": [
+    "Sprint 20 to 25 yards from standing, crouch, lying and moving starts",
+    "Run a ladder, hurdle and dots circuit with light feet",
+    "React to an unpredictable bounce and change direction",
+    "Compare your own times on a timing gate across the season"
+   ],
+   "outcomes": [
+    "Runs a 20-yard sprint in an improving own time",
+    "Completes a three-tool circuit without a touch",
+    "Catches or controls 3 of 5 reaction-ball bounces",
+    "Keeps good running form at the end of a set"
+   ],
+   "check": "Child sprints 20 yards with good form, completes a ladder, hurdle and dots circuit and reacts to a bounce."
+  },
+  {
+   "n": 3,
+   "title": "Dribbling, Feints and 1 v 1 Attack",
+   "lead": "Dribbling becomes a weapon. Third graders carry the ball at speed with both feet, learn the step-over, the Cruyff turn, the stop-and-go and the body feint, weave poles and slalom sets, and attack a defender in a 1 v 1 with a plan.",
+   "objectives": [
+    "Dribble through a slalom set at speed with both feet",
+    "Perform a step-over, a Cruyff turn and a stop-and-go",
+    "Use a body feint to beat a mannequin",
+    "Decide in a 1 v 1 whether to dribble, shield or pass"
+   ],
+   "outcomes": [
+    "Dribbles a ten-pole set with no stray touch",
+    "Performs three feints on request",
+    "Beats a mannequin in 4 of 6 tries",
+    "Chooses to pass when a teammate is free"
+   ],
+   "check": "Child dribbles a ten-pole set, performs three feints and beats a mannequin in 4 of 6 tries."
+  },
+  {
+   "n": 4,
+   "title": "First Touch, Turning and Playing Under Pressure",
+   "lead": "Receiving moves from controlling the ball to playing under pressure. Third graders control a bouncing and a driven pass, take the first touch away from a mannequin or a chaser, receive on the half-turn, and use rebound boards and bounce-back nets for many repeated touches.",
+   "objectives": [
+    "Control a driven pass and a bouncing ball with different surfaces",
+    "Receive on the half-turn with the body open to the field",
+    "Take a first touch away from a mannequin or a chaser",
+    "Use the bounce-back net for fast repetitions on both feet"
+   ],
+   "outcomes": [
+    "Controls 7 of 10 driven passes within a stride",
+    "Receives on the half-turn in 6 of 10",
+    "Takes a first touch away from pressure in 5 of 8",
+    "Completes 30 net touches in a minute"
+   ],
+   "check": "Child controls 7 of 10 driven passes, receives on the half-turn and takes a first touch away from a mannequin."
+  },
+  {
+   "n": 5,
+   "title": "Passing: Long, Short and Switching",
+   "lead": "Passing grows in distance and purpose. Third graders pass 15 to 20 yards with the laces, play firm short passes under light pressure, switch the point of attack with a long pass, pass into a runner’s path and use the outside and the weaker foot as normal choices.",
+   "objectives": [
+    "Pass 15 to 20 yards with the laces and a clear follow-through",
+    "Pass firmly under light pressure with the inside foot",
+    "Switch the play with a long pass to the free side",
+    "Lead a runner with a pass into the path"
+   ],
+   "outcomes": [
+    "Hits the target in 6 of 10 passes from 18 yards",
+    "Completes 8 of 10 short passes under light pressure",
+    "Switches the play in 3 of 5 tries",
+    "Leads a runner in 4 of 6 passes"
+   ],
+   "check": "Child passes 6 of 10 from 18 yards, switches the play and leads a runner into the path."
+  },
+  {
+   "n": 6,
+   "title": "Finishing: Angles, Cutbacks and Rebounds",
+   "lead": "Finishing grows from clean strikes to scoring in game situations. Third graders shoot from different angles, finish cutbacks and low crosses first time, follow up rebounds, finish after a dribble and use small cages and target nets to aim at corners.",
+   "objectives": [
+    "Shoot from different angles with either foot",
+    "Finish a cutback or a low cross first time",
+    "Follow up a rebound in a game",
+    "Place a shot at a corner target or a mini cage"
+   ],
+   "outcomes": [
+    "Hits 6 of 10 shots on target from 12 yards",
+    "Finishes 4 of 8 cutbacks first time",
+    "Scores one rebound in 5 tries",
+    "Hits a corner target in 3 of 8 tries"
+   ],
+   "check": "Child hits 6 of 10 shots on target, finishes cutbacks first time and follows up a rebound."
+  },
+  {
+   "n": 7,
+   "title": "Defending: Pressure, Cover and Winning the Ball",
+   "lead": "Defending becomes a team skill. Third graders close the ball quickly, jockey side-on, cover a teammate, keep goal-side, make a safe tackle on a moving ball and work with a partner in a 2 v 2 using a pressure and cover pattern.",
+   "objectives": [
+    "Close the ball quickly, then slow down and stay side-on",
+    "Cover a teammate and speak: \"I have cover\"",
+    "Make a safe tackle on a moving ball with the inside of the foot",
+    "Know what a foul is and why a card exists"
+   ],
+   "outcomes": [
+    "Delays an attacker for 3 seconds in a 1 v 1",
+    "Provides cover in 4 of 5 attempts in a 2 v 2",
+    "Wins 3 of 8 moving balls without a foul",
+    "Explains a foul in one sentence"
+   ],
+   "check": "Child delays an attacker, provides cover, makes a safe tackle and explains a foul."
+  },
+  {
+   "n": 8,
+   "title": "Combination Play: Overlaps, Third-Man Runs and 4 v 2",
+   "lead": "Combinations become patterns that unlock defenders. Third graders play a wall pass, an overlap and a third-man run, keep the ball in a 4 v 2, build triangles and diamonds with discs, and start to use width and depth together.",
+   "objectives": [
+    "Play a wall pass and run past",
+    "Play an overlap and a third-man run",
+    "Keep the ball in a 4 v 2 with triangles",
+    "Use width and depth with disc markers"
+   ],
+   "outcomes": [
+    "Completes a wall pass in 4 of 6 tries",
+    "Plays an overlap in 3 of 5 tries",
+    "Keeps a 4 v 2 for 10 passes",
+    "Marks a triangle with discs"
+   ],
+   "check": "Child plays a wall pass, an overlap and a third-man run in a 4 v 2 or a 5 v 5."
+  },
+  {
+   "n": 9,
+   "title": "Scanning, Decisions and Playing Forward",
+   "lead": "Seeing becomes deciding. Third graders scan before and after the first touch, name two options before the ball arrives, choose between a safe pass and a forward pass, and say in one sentence why they chose it.",
+   "objectives": [
+    "Scan before the ball arrives and again after the first touch",
+    "Name two options (free player, space) before receiving",
+    "Choose between a safe pass and a forward pass",
+    "Say what you saw and why in one sentence"
+   ],
+   "outcomes": [
+    "Scans before receiving in 7 of 10 passes",
+    "Names two options in 5 of 8 receptions",
+    "Plays a forward pass when it is on in 4 of 6 cases",
+    "Gives a reason in one sentence"
+   ],
+   "check": "Child scans before and after the first touch, names two options and chooses safe or forward with a reason."
+  },
+  {
+   "n": 10,
+   "title": "Team Shape, Roles and Transitions in 6 v 6 and 7 v 7",
+   "lead": "Team play moves to the bigger formats that European associations use at this age. Third graders learn roles (back, middle, front, keeper), keep a simple shape, move together when the ball moves, win the ball and go in three seconds, and build from the keeper in 6 v 6 and 7 v 7.",
+   "objectives": [
+    "Take a role (back, middle, front, keeper) and say its job",
+    "Keep a simple shape with zones and discs",
+    "Switch from attack to defence and back within three seconds",
+    "Build from the keeper with a short pass to a back player"
+   ],
+   "outcomes": [
+    "Names the jobs of three roles",
+    "Keeps the shape for a full game",
+    "Wins the ball and goes in 3 seconds in 4 of 6 cases",
+    "Plays out from the keeper in 5 of 8 restarts"
+   ],
+   "check": "Child plays a role in a 6 v 6 or 7 v 7, keeps the shape and transitions in three seconds."
+  },
+  {
+   "n": 11,
+   "title": "Goalkeeper: Shot-Stopping, 1 v 1s and Playing Out",
+   "lead": "The keeper becomes part of the team. Third graders catch and parry shots, dive to both sides, come out to close a 1 v 1, throw and roll to start attacks, kick from the ground and use the back-pass rule.",
+   "objectives": [
+    "Dive to both sides and get up quickly",
+    "Come out and close a 1 v 1 with a wide, low body",
+    "Parry and catch with the hands in a W",
+    "Start an attack with a roll or a throw and use the back-pass rule"
+   ],
+   "outcomes": [
+    "Stops 7 of 10 moderate shots",
+    "Closes a 1 v 1 in 3 of 6 tries",
+    "Catches 5 of 10 shots chest-high",
+    "Plays a back-pass correctly in a game"
+   ],
+   "check": "Child stops 7 of 10 moderate shots, closes a 1 v 1 and starts an attack with a roll or throw."
+  },
+  {
+   "n": 12,
+   "title": "Rules, Offside and Set Plays",
+   "lead": "The rules grow into the real game. Third graders learn the offside rule step by step (stay level, the last 14 yards, then the full rule), take throw-ins, goal kicks, corners, free kicks and penalties, understand fouls and cards, use advantage and run simple set plays.",
+   "objectives": [
+    "Understand offside step by step: stay level, the last 14 yards, then the full rule",
+    "Take a throw-in, a goal kick, a corner kick, a free kick and a penalty correctly",
+    "Understand fouls, cards and advantage",
+    "Run a simple set play with three jobs"
+   ],
+   "outcomes": [
+    "Explains offside in a sentence",
+    "Takes a legal throw-in in 4 of 5",
+    "Names every restart in a game",
+    "Runs a corner set play with three jobs"
+   ],
+   "check": "Child explains offside, takes a legal throw-in, names every restart and runs a set play."
+  }
+ ],
+ "4th-grade": [
+  {
+   "n": 1,
+   "title": "Leadership, Communication and Team Plans",
+   "lead": "Leadership grows from running a game to running the team’s plan. Fourth graders choose a simple plan on a tactics board, call short signals during play, lead a warm-up, referee with the full set of signals and review a game with three questions.",
+   "objectives": [
+    "Choose a simple game plan and explain it in two sentences",
+    "Call short signals during play (man on, time, switch)",
+    "Lead a four-minute warm-up for the group",
+    "Review a game with three questions: what worked, what was tricky, what is our next step"
+   ],
+   "outcomes": [
+    "Explains the plan before and after a game",
+    "Uses at least two signals in a game without a reminder",
+    "Leads a warm-up with a clear order and kind words",
+    "Names one thing the team did well and one next step"
+   ],
+   "check": "Child explains the plan, uses two signals, leads a warm-up and reviews a game with the three questions."
+  },
+  {
+   "n": 2,
+   "title": "Speed, Agility and Power",
+   "lead": "Athletic movement becomes stronger and sharper. Fourth graders sprint 25 to 30 yards from many starts, change direction on a cue, jump and land softly from low boxes, throw a light medicine ball for power and race their own best on timing gates.",
+   "objectives": [
+    "Sprint 25 to 30 yards from standing, crouch, lying and moving starts",
+    "Jump up to a low box and land softly on both feet",
+    "Change direction on a cue without losing balance",
+    "Beat your own time on a timing gate across the season"
+   ],
+   "outcomes": [
+    "Sprints 25 yards in an improving own time",
+    "Lands soft from a low box in 8 of 10 jumps",
+    "Cuts and accelerates on the call in 6 of 8 tries",
+    "Keeps good running form at the end of a set"
+   ],
+   "check": "Child sprints 25 yards with good form, lands softly from a low box and cuts on a call."
+  },
+  {
+   "n": 3,
+   "title": "Dribbling, Feints and 1 v 1 Attack",
+   "lead": "Dribbling grows in speed and in thinking. Fourth graders dribble at pace through slalom sets, link two feints, change direction under pressure, attack a live defender with a plan and know when to dribble, pass or shoot.",
+   "objectives": [
+    "Link two feints in a row and finish with a change of pace",
+    "Dribble through poles and around mannequins at pace with both feet",
+    "Change direction under pressure with a scissors or a chop",
+    "Choose to dribble, pass or shoot and say why"
+   ],
+   "outcomes": [
+    "Dribbles a ten-pole set with both feet at jogging pace",
+    "Beats a mannequin with a feint in 4 of 6 tries",
+    "Keeps the ball in a 1 v 1 for four seconds",
+    "Chooses a good option in 3 of 5 tries"
+   ],
+   "check": "Child links two feints, dribbles ten poles with both feet, beats a mannequin in 4 of 6 tries and chooses dribble, pass or shoot."
+  },
+  {
+   "n": 4,
+   "title": "First Touch, Receiving and Turning on the Move",
+   "lead": "Receiving becomes faster and more purposeful. Fourth graders control driven and lofted balls with different surfaces, receive across the body and on the back foot, turn with a defender close and use the first touch to start the next action.",
+   "objectives": [
+    "Control lofted balls with the thigh and chest",
+    "Receive across the body and on the back foot",
+    "Choose first time or one touch by what the game gives",
+    "Turn away from a defender behind you and play on within three seconds"
+   ],
+   "outcomes": [
+    "Controls 6 of 10 lofted balls within a stride",
+    "Receives across the body in 5 of 8 passes",
+    "Turns away from a defender behind in 5 of 8",
+    "Plays on within three seconds in a 6 v 6"
+   ],
+   "check": "Child controls 6 of 10 lofted balls, receives across the body and turns away from a defender behind in 5 of 8 tries."
+  },
+  {
+   "n": 5,
+   "title": "Passing: Range, Weight and Lofted Balls",
+   "lead": "Passing grows in distance, speed and variety. Fourth graders pass 20 to 25 yards on the ground and in the air, choose the weight of the pass for the teammate, play through gaps with a through pass and keep passing quickly in groups of three.",
+   "objectives": [
+    "Pass 20 to 25 yards accurately along the ground",
+    "Pass 12 to 15 yards in the air with a short lofted pass",
+    "Choose the weight of a pass for a teammate who is waiting or running",
+    "Play a through pass into a gap between two defenders"
+   ],
+   "outcomes": [
+    "Passes 6 of 10 over 20 yards",
+    "Hits a ring or arc in 4 of 8 lofted passes over 12 yards",
+    "Plays a through pass to a runner in 3 of 5 tries",
+    "Keeps a 4 v 2 for 8 passes"
+   ],
+   "check": "Child passes 6 of 10 over 20 yards, plays a lofted pass to a ring and plays a through pass to a runner."
+  },
+  {
+   "n": 6,
+   "title": "Finishing: Power, Placement and Composure",
+   "lead": "Finishing grows in power and calm. Fourth graders shoot with the instep and the inside of the foot from many angles, strike a rolling or bouncing ball, finish 1 v 1 against a keeper and score from crosses with their feet.",
+   "objectives": [
+    "Strike with power and accuracy with the instep",
+    "Strike a rolling or bouncing ball cleanly",
+    "Finish a 1 v 1 against a keeper with a calm choice",
+    "Score from a low cross with the foot"
+   ],
+   "outcomes": [
+    "Hits 6 of 10 shots on target from 14 yards",
+    "Half-volleys 3 of 8 bouncing balls on target",
+    "Scores 3 of 6 in a 1 v 1 against a keeper",
+    "Finishes 3 of 8 low crosses first time"
+   ],
+   "check": "Child hits 6 of 10 on target from 14 yards, half-volleys a bounce and finishes a low cross with the foot."
+  },
+  {
+   "n": 7,
+   "title": "Defending as a Group: Pressing, Cover and Recovery",
+   "lead": "Defending becomes a team job. Fourth graders press on a trigger, cover a teammate, keep the team close together, recover goal-side and win the ball with a safe tackle in 2 v 2 and 3 v 3.",
+   "objectives": [
+    "Press on a trigger and stop when the cover is not there",
+    "Keep the team compact within a 20-yard block",
+    "Recover goal-side in a sprint after losing the ball",
+    "Defend a cross with the body between ball and goal"
+   ],
+   "outcomes": [
+    "Presses on the trigger in 4 of 6 tries",
+    "Stays within a 20-yard block in a 6 v 6",
+    "Recovers goal-side within three seconds in 4 of 6",
+    "Wins the ball without a foul in 3 of 8 duels"
+   ],
+   "check": "Child presses on a trigger, covers a teammate, recovers goal-side and makes a safe tackle in a 2 v 2."
+  },
+  {
+   "n": 8,
+   "title": "Attacking Principles: Support, Width, Depth and Penetration",
+   "lead": "Attacking becomes a team idea. Fourth graders support the ball carrier at good angles, stretch the field with width, offer depth for forward passes, use quick combinations and play through or around a defending team in 4 v 3 and 5 v 4.",
+   "objectives": [
+    "Choose a support angle and distance for the ball carrier",
+    "Stretch the field with width and offer depth",
+    "Play a combination and then move to a new spot",
+    "Attack in a 4 v 3 or 5 v 4 with a named idea"
+   ],
+   "outcomes": [
+    "Supports at a good angle in 4 of 6 tries",
+    "Stays wide or deep on request in a 5 v 5",
+    "Completes a combination in 3 of 5 tries",
+    "Creates a chance with a named idea in a 5 v 4"
+   ],
+   "check": "Child supports at an angle, stays wide or deep on request and plays a combination in a 4 v 3."
+  },
+  {
+   "n": 9,
+   "title": "Positions and Roles: Defender, Midfielder, Winger and Forward",
+   "lead": "Positions arrive as jobs, not labels. Fourth graders learn what a goalkeeper, a defender, a midfielder, a winger and a forward do with and without the ball, and every child tries every position so that nobody is stuck in one place.",
+   "objectives": [
+    "Name the job of each position with and without the ball",
+    "Play a defender, a midfielder and a forward with a clear job",
+    "Switch positions after a goal or a whistle and say the new job",
+    "Explain the idea of lines (back, middle, front) and of left, right and center"
+   ],
+   "outcomes": [
+    "Names the jobs of three positions",
+    "Plays two positions in a 7 v 7 with the right job",
+    "Switches position within ten seconds of the call",
+    "Explains left, right and center in the lines"
+   ],
+   "check": "Child names the job of three positions, plays two positions with the right job and switches on the call."
+  },
+  {
+   "n": 10,
+   "title": "Team Tactics: Shape, Phases of Play and Transitions",
+   "lead": "Tactics begin as simple team ideas. Fourth graders learn a shape for 7 v 7 and 8 v 8, the four phases of the game (build up, attack, defend and transition), pressing triggers and compactness, and they choose a plan, then change it at half time.",
+   "objectives": [
+    "Hold a 7 v 7 or 8 v 8 shape in the four phases of the game",
+    "Press on a trigger and stay compact",
+    "Counter-attack within five seconds of winning the ball",
+    "Choose a plan, explain it and change it at half time"
+   ],
+   "outcomes": [
+    "Holds the shape for two minutes in a 7 v 7",
+    "Presses on a trigger in 4 of 6 tries",
+    "Starts a counter within five seconds in 3 of 5",
+    "Explains the plan and the change in two sentences"
+   ],
+   "check": "Child holds the shape in a 7 v 7, presses on a trigger, counters within five seconds and explains a plan and a change."
+  },
+  {
+   "n": 11,
+   "title": "The Goalkeeper: Positioning, Crosses and Distribution",
+   "lead": "Goalkeeping grows in positioning and leadership. Fourth graders narrow the angle, catch crosses with soft hands, save with hands and feet, start attacks with the hands or the foot from the ground and organise the defenders with a loud voice.",
+   "objectives": [
+    "Move to narrow the angle and set before the shot",
+    "Catch a cross with a W grip and a step",
+    "Save with the hands and with the feet",
+    "Start an attack with a throw or a kick from the ground"
+   ],
+   "outcomes": [
+    "Stops 6 of 10 moderate shots",
+    "Catches 4 of 8 crosses cleanly",
+    "Saves with the feet in 3 of 5 close shots",
+    "Starts an attack to a free teammate in 4 of 6"
+   ],
+   "check": "Child narrows the angle, catches a cross, starts an attack to a free teammate and organises the team with a call."
+  },
+  {
+   "n": 12,
+   "title": "Rules, Referees and Set Plays",
+   "lead": "Rules deepen and become tools. Fourth graders learn what offside really means (interfering with play), handball, direct and indirect free kicks, the dropped ball, kick-off and substitutions, then use them to run set plays for corners, free kicks and throw-ins.",
+   "objectives": [
+    "Explain offside as interfering with play and spot an example",
+    "Show and say the signal for handball and for direct and indirect free kicks",
+    "Take a kick-off and a dropped ball correctly",
+    "Run a set play for a corner, a free kick and a throw-in"
+   ],
+   "outcomes": [
+    "Explains offside in two sentences",
+    "Calls handball correctly in 3 of 4 tries",
+    "Takes a kick-off, a dropped ball and a free kick correctly",
+    "Runs three set plays in a game"
+   ],
+   "check": "Child explains offside, takes a legal restart, calls handball with a reason and runs a set play."
   }
  ]
 };

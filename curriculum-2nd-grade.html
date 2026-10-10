@@ -8,12 +8,12 @@
 <style>
 /* Layout: fixed chapter index on the left, long-form coach's reference on the right; tactical boards are the visual centerpiece */
 :root{
- --bg:#F2F5F3;--bg2:#FFFFFF;--bg3:#E8EEEA;--ink:#0D1C16;--mute:#52635B;--line:#D2DCD7;--accent:#0B7A49;--accent-ink:#FFFFFF;--hi:#D98E04;
+ --bg:#FFFFFF;--bg2:#F7F9F8;--bg3:#E8EEEA;--ink:#0D1C16;--mute:#52635B;--line:#D2DCD7;--accent:#0B7A49;--accent-ink:#FFFFFF;--hi:#D98E04;
  --turf:#2C7A4D;--turf2:#318455;--tline:#ffffffd0;--ta:#2F6FDE;--tb:#E5484D;--tc:#F5B82E;--tk:#7B5EA7;--cone:#F28C28;
  --c1:#0B7A49;--c2:#2F6FDE;--c3:#D98E04;--c4:#7B5EA7;--c5:#7B8C84;--c6:#E5484D;
  --disp:'Barlow Condensed','Arial Narrow',sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1310;--bg2:#111D18;--bg3:#18271F;--ink:#E7EFEB;--mute:#93A59C;--line:#243830;--accent:#3FCB86;--accent-ink:#06130D;--hi:#F2B33D;--turf:#1F5E3B;--turf2:#236843;--c1:#3FCB86;--c2:#6B9BF0;--c3:#F2B33D;--c4:#A58BD6;--c5:#8DA096;--c6:#F2767A;color-scheme:dark}}
+
 :root[data-theme="dark"]{--bg:#0A1310;--bg2:#111D18;--bg3:#18271F;--ink:#E7EFEB;--mute:#93A59C;--line:#243830;--accent:#3FCB86;--accent-ink:#06130D;--hi:#F2B33D;--turf:#1F5E3B;--turf2:#236843;--c1:#3FCB86;--c2:#6B9BF0;--c3:#F2B33D;--c4:#A58BD6;--c5:#8DA096;--c6:#F2767A;color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -247,7 +247,22 @@ thead th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercas
 .dsteps{list-style:none;margin:6px 0 2px;padding:0;display:grid;gap:6px}.dsteps li{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.45}.dsteps b{font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--mute);padding-top:3px}@media (max-width:600px){.dsteps li{grid-template-columns:minmax(0,1fr);gap:1px}}
 </style>
 <style>.devc{margin-top:14px}.devc h4{margin-top:0}</style>
-<style>.dlv{margin:12px 0 4px;font:600 11px/1.2 var(--mono,monospace);text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#667)}.dlist .dlv:first-child{margin-top:0}</style>
+<style>.dlv{margin:12px 0 4px;font:600 11px/1.2 var(--mono,monospace);text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#667)}.dlist .dlv:first-child{margin-top:0}
+.sc-key{margin:.5rem 0 0;font-size:.82rem;line-height:1.35;border:1px solid var(--line,#ccd);border-radius:8px;padding:.35rem .6rem;background:var(--card,transparent)}
+.sc-key summary{cursor:pointer;font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;opacity:.75}
+.sc-key ul{list-style:none;margin:.35rem 0 .1rem;padding:0;display:grid;gap:.3rem}
+.sc-key li{display:flex;gap:.5rem;align-items:flex-start}
+.sc-key .kd{flex:none;width:1.45rem;height:1.45rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:.75rem;border:2px solid #fff;box-shadow:0 0 0 1px #0003}
+.sc-key li.kx{opacity:.8;padding-left:2rem}
+
+.sc-key .kd.ko{background:#2C7A4D;border-color:#fff;color:#fff}
+.sc-key .kd.tool{background:#7a4a00}
+.sc-key .kd.rule{background:#444}
+.sc-key li.kx{padding-left:0}
+.how{margin:.8rem 0;padding:.7rem .9rem;border:1px solid var(--line,#ccd);border-radius:10px}
+.how h4{margin:0 0 .4rem;font-size:.85rem;letter-spacing:.05em;text-transform:uppercase}
+.how ol{margin:0;padding-left:1.3rem;display:grid;gap:.35rem;font-size:.95rem;line-height:1.4}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1052,12 +1067,124 @@ S.laps={cap:'Laps around the field. Everyone runs the perimeter together.',items
     bl(x+46,y+60,[[x+136,y+32],[x+206,y+70],[x+46,y+60]],6,{begin:i*.4})];}),
   lb(300,330,'Rotate opponents every 2 minutes',{cls:'w'})]};})();
 window.SCENES=S;
+
+/*SCKEY*/
+const KEYCOL={a:['Blue','var(--ta)','#fff'],b:['Red','var(--tb)','#fff'],k:['Purple','var(--tk)','#fff'],c:['Yellow','var(--tc)','#1a1a1a']};
+const KEYNUM={a:'One team, usually the team with the ball. The number is the player’s turn or job.',b:'The other team, or the defenders.',c:'Neutral helpers who play with the team that has the ball.',k:'The goalkeeper.'};
+const KEYLET={
+ A:'Attacker',D:'Defender',K:'Goalkeeper',C:'Coach',N:'Neutral helper (plays with the team that has the ball)',P:'Passer',R:'Receiver',S:'Shooter',T:'Tagger (chaser)',W:'Wall player (gives the ball back)',L:'Leader',M:'Mirror (copies the leader)',F:'Feeder',B:'Back player',H:'Hurdle runner'};
+const KEYSC={
+ stations:{A:'Group A',B:'Group B',C:'Group C'},
+ shark:{S:'Shark (tries to win the ball)'},
+ keeper:{S:'Shooter'},dive:{S:'Shooter'},
+ mirror:{L:'Leader',F:'Follower (copies the leader)'},
+ receive:{P:'Passer',R:'Receiver'},scan:{P:'Passer',R:'Receiver'},
+ giveandgo:{W:'Wall player (gives the ball back)'},
+ refsignals:{R:'Referee'},
+ gkthrow:{T:'Thrower'},
+ firsttime:{F:'Feeder (passes the ball in)'},
+ shapes:{F:'Front player',M:'Middle player',B:'Back player'}};
+const KEYTC={c:{L:'Ladder runner',H:'Hurdle runner',W:'Pole weaver (slalom)',S:'Sprinter',R:'Runner on the speed rings',D:'Agility dots dancer',N:'Neutral helper (plays with the team that has the ball)'}};
+
+/*SCKEY2*/
+const KEYOBJ={
+ cone:['<svg viewBox="-9 -10 18 18" width="18" height="18"><path d="M-7,6 L0,-8 L7,6 Z" fill="#F28C28" stroke="#0006"/></svg>','Cone: a marker for a start, a turn, a gate or a corner of the area. Different colors are used when the coach calls a color.'],
+ goal:['<svg viewBox="0 0 20 16" width="20" height="16"><rect x="1" y="1" width="18" height="14" fill="#ffffff33" stroke="#fff" stroke-width="2"/></svg>','Goal: the white frame with a net. A goal counts when the ball goes in, or through the gate if it is a small goal.'],
+ zone:['<svg viewBox="0 0 20 16" width="20" height="16"><rect x="1" y="1" width="18" height="14" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/></svg>','Dashed box: a zone or the playing area. The word inside tells you the job or the rule for that zone.'],
+ circle:['<svg viewBox="0 0 20 20" width="18" height="18"><circle cx="10" cy="10" r="8" fill="none" stroke="#fff" stroke-width="2"/></svg>','Circle: a space to stay in, a target to hit, or the center circle.'],
+ line:['<svg viewBox="0 0 20 8" width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#fff" stroke-width="2"/></svg>','White line: a boundary, a starting or finish line, or the path to follow.'],
+ link:['<svg viewBox="0 0 20 8" width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/></svg>','Moving dashed line: a defender stays connected to the player they are marking.'],
+ light:['<svg viewBox="0 0 12 20" width="12" height="20"><rect width="12" height="20" rx="3" fill="#111"/><circle cx="6" cy="5" r="2.5" fill="#e5484d"/><circle cx="6" cy="10" r="2.5" fill="#f5b82e"/><circle cx="6" cy="15" r="2.5" fill="#2fa35b"/></svg>','Traffic light: green means run, yellow means walk, red means freeze.'],
+ flash:['<b style="font-size:.7rem">GO</b>','Flashing word: the call the coach makes. React to it right away.'],
+ wedge:['<svg viewBox="0 0 20 16" width="20" height="16"><polygon points="0,8 20,0 20,16" fill="#fff" opacity=".6"/></svg>','White wedge: where the player is looking (scanning the field).']};
+const KEYTOOL={
+ 'Cone sprint grid':'Four colored cones at 5, 10, 15 and 20 yards. The coach calls a color; the runner sprints there and back.',
+ 'Speed rings':'Flat rings in a row on the ground. Hop or step in each ring with quick feet.',
+ 'Agility dots':'Flat colored dots. The coach names a dot and a foot; touch it with that foot.',
+ 'Reaction ball':'A ball with an odd shape that bounces in a surprise direction. React and catch it.',
+ 'Mini cage':'A very small goal, about 1 yard wide, for accurate placement.',
+ 'Bounce-back net':'A tilted net that returns the ball so a player can pass or control alone.',
+ 'Mannequin wall':'Three foam dummies side by side. They act as the wall in a free kick.',
+ 'Offside flags':'Small orange flags in a line that mark the offside line (the last defender).',
+ 'Target net':'A net hung in a goal with four corner targets. Aim the shot at a corner.',
+ 'Bibs':'Colored vests that show a team or a role (attacker, defender, neutral or keeper).',
+ 'Discs':'Flat round markers for lines, zones and support spots.',
+ 'Agility ladder':'A flat ladder on the ground (yellow squares). Step quickly into each square.',
+ 'Speed hurdles':'Low hurdles (red). Step or jump over each one with light feet.',
+ 'Timing gates':'Two markers with a stopwatch. A player beats their own best time.',
+ 'Poles':'Tall poles (white with colored tops). Weave between them like a slalom.',
+ 'Mannequin':'A foam dummy that stands still as a defender. Dribble or pass around it.',
+ 'Rebound board':'A firm board that sends the ball back. Pass at it and receive.',
+ 'Passing arc':'An arch. The ball must roll through it to score the pass.',
+ 'Pop-up goal':'A light folding goal. Used for small games.',
+ 'Hoops and rings':'Flat hoops on the ground. A target to pass into or a spot to stand in.',
+ 'Colored cones':'Cones in several colors for color-call games.'};
+const KEYRULE={
+ 'Kick-off and restarts':'Start and restart play from the center after a goal. The ball must move forward or be passed.',
+ 'Referee signals':'The referee shows what happened: throw-in, goal kick, corner, free kick, advantage.',
+ 'Advantage':'If the team that was fouled still has the ball and a chance, the referee lets play go on.',
+ 'Fouls and cards':'Pushing, tripping or a hard tackle is a foul. Yellow card is a warning, red card is off the field.',
+ 'Throw-in':'Both hands, from behind the head, both feet on the line or behind it.',
+ 'Goal kick':'When the ball goes out over the goal line off the attackers, the defending team restarts from the goal area.',
+ 'Corner kick':'When the ball goes out over the goal line off the defenders, the attackers restart from the corner arc.',
+ 'Free kick and wall':'After a foul the other team kicks from where it happened. Defenders stand 6 yards away, or build a wall.',
+ 'Penalty kick':'A foul in the box. One player kicks from the mark (9 yards), only the keeper defends.',
+ 'Back-pass rule':'The keeper may not pick up a ball a teammate kicked back on purpose.',
+ 'Offside: stay level':'Attackers stay level with or behind the ball when the pass is played.',
+ 'Offside: last 14 yards':'In the last 14 yards before the goal, an attacker may not be nearer the goal than the last defender when the pass is played.',
+ 'Offside: the full rule':'An attacker is offside if nearer the goal line than both the ball and the second-last defender when the pass is played, and is taking part in play.',
+ 'Throw-ins and corners':'Restarts after the ball goes out of play.'};
+function keyExtra(sc){
+  const types={};let tools=[],rules=[];
+  sc.items.forEach(o=>{types[o.t]=1;
+    if(o.t==='label'&&typeof o.text==='string'&&/Tool:|Rule:/.test(o.text)){
+      const mt=o.text.match(/Tool:\s*([^|]*)/),mr=o.text.match(/Rule:\s*(.*)$/);
+      if(mt)tools=mt[1].split(',').map(x=>x.trim()).filter(Boolean);
+      if(mr)rules=mr[1].split(',').map(x=>x.trim()).filter(Boolean);}});
+  const r=[];
+  r.push(`<li class="kx"><i class="kd ko"><svg viewBox="-8 -8 16 16" width="16" height="16"><circle r="6.5" fill="#fff" stroke="#111" stroke-width="1.6"/><circle r="2.4" fill="#111"/></svg></i><span><b>Ball</b>: the white ball. Players and the ball follow the path in the animation, and it repeats.</span></li>`);
+  ['cone','goal','zone','circle','line','link','light','flash','wedge'].forEach(k=>{if(types[k])r.push(`<li class="kx"><i class="kd ko">${KEYOBJ[k][0]}</i><span>${KEYOBJ[k][1]}</span></li>`);});
+  tools.forEach(t=>{if(KEYTOOL[t])r.push(`<li class="kx kt"><i class="kd ko tool">T</i><span><b>Tool: ${t}.</b> ${KEYTOOL[t]}</span></li>`);});
+  rules.forEach(t=>{if(KEYRULE[t])r.push(`<li class="kx kt"><i class="kd ko rule">R</i><span><b>Rule: ${t}.</b> ${KEYRULE[t]}</span></li>`);});
+  return r.join('');
+}
+window.howTo=function(d){
+  const org=String(d[5]||'').split(/(?<=[.!?])\s+/).filter(s=>s&&!/^Rule in play/.test(s));
+  const li=[];
+  li.push(`<li><b>Set up.</b> Area: ${d[3]}. Players: ${d[2]}. You need: ${d[4]}.</li>`);
+  org.forEach((s,i)=>li.push(`<li><b>${i===0?'Start.':'Then.'}</b> ${s}</li>`));
+  li.push(`<li><b>Coach says.</b> ${d[6]}</li>`);
+  li.push(`<li><b>Make it harder.</b> ${d[7]}</li>`);
+  li.push(`<li><b>If it goes wrong.</b> ${d[8]}</li>`);
+  return `<section class="how"><h4>How to run it</h4><ol>${li.join('')}</ol></section>`;
+};
+
+function keyHTML(sc,name){
+  const num={},let_={};let hasK=false;
+  sc.items.forEach(o=>{if(o.t!=='p')return;const t=o.team||'a';if(t==='k')hasK=true;const n=o.n==null?'':String(o.n);
+    if(n===''||!isNaN(n))num[t]=1;else let_[t+n]=[t,n];});
+  const rows=[];
+  ['a','b','k','c'].forEach(t=>{if(num[t]){const c=KEYCOL[t];rows.push(`<li><i class="kd" style="background:${c[1]};color:${c[2]}">1</i><span><b>${c[0]}</b>: ${KEYNUM[t]}</span></li>`);}});
+  Object.values(let_).sort((x,y)=>'abkc'.indexOf(x[0])-'abkc'.indexOf(y[0])).forEach(([t,n])=>{
+    if(t==='k'&&n==='K'&&!num.k&&Object.keys(let_).filter(z=>z[0]==='k').length===1){/* fallthrough */}
+    let m=(KEYSC[name]&&KEYSC[name][n])||(KEYTC[t]&&KEYTC[t][n])||KEYLET[n];
+    if(n==='T'&&!(KEYSC[name]&&KEYSC[name].T))m=hasK?'Thrower (sends the ball to the keeper)':'Tagger (chaser)';
+    if(n==='L'&&t==='c')m='Ladder runner';
+    if(n==='M'&&t==='a')m='Middle player';
+    if(n==='F'&&t==='a')m='Front player';
+    if(n==='B'&&t==='a')m='Back player';
+    if(!m)return;const c=KEYCOL[t];
+    rows.push(`<li><i class="kd" style="background:${c[1]};color:${c[2]}">${n}</i><span><b>${c[0]} ${n}</b>: ${m}</span></li>`);});
+  rows.push(keyExtra(sc));
+  return `<details class="sc-key" open><summary>Key: colors, letters, tools and markings</summary><ul>${rows.join('')}</ul></details>`;
+}
+
 window.renderScene=function(name,id,capOverride){
   const sc=S[name]; if(!sc) return '';
   const cap=capOverride||sc.cap;
   let body=pitch();
   sc.items.forEach(o=>{ body+= o.t==='raw'?o.svg:item(o); });
-  return `<figure class="scene" id="${id}"><div class="scene-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${cap}">${body}</svg><button class="pp" type="button" aria-label="Pause animation" data-for="${id}"><span class="i-pause"></span></button></div><figcaption>${cap}</figcaption></figure>`;
+  return `<figure class="scene" id="${id}"><div class="scene-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${cap}">${body}</svg><button class="pp" type="button" aria-label="Pause animation" data-for="${id}"><span class="i-pause"></span></button></div><figcaption>${cap}</figcaption>${keyHTML(sc,name)}</figure>`;
 };
 })();
 
@@ -1987,7 +2114,7 @@ function chapterPage(n,tab,idx){
   const i=Math.min(Math.max(0,idx),c.drills.length-1),d=c.drills[i];
   const ds=(window.DSCENE||{})[n]&&window.DSCENE[n][i];
   const lst=c.drills.map((x,j)=>(x[9]&&(j%3===0)?`<h5 class="dlv">Level ${x[9]}: ${LV[x[9]-1][0]}</h5>`:'')+`<a href="#/ch/${n}/drills/${j}" class="dsel" aria-current="${j===i}"><span class="dn">D${j+1}</span><span>${x[0]}</span><small>${x[10]==='g'?'Game · ':'Skill · '}${x[1]} min</small></a>`).join('');
-  body=`<div class="drillpage"><div class="dlist">${lst}</div><article class="drill"><header><h3>${d[0]}</h3><div class="meta">${d[9]?`<span>Level ${d[9]}</span><span>${d[10]==='g'?'Game':'Skill exercise'}</span>`:''}<span>${d[1]} min</span><span>${d[2]}</span><span>${d[3]}</span><span>${d[4]}</span>${d[11]?`<span class="tl">Tool: ${d[11]}</span>`:''}${d[12]?`<span class="tl">Rule: ${d[12]}</span>`:''}</div></header>${ds?window.renderScene(ds[0],nid(),ds[1]):''}<dl><div><dt>Organisation</dt><dd>${d[5]}</dd></div><div><dt>Coaching points</dt><dd>${d[6]}</dd></div><div><dt>Progression</dt><dd>${d[7]}</dd></div>${d[11]?`<div><dt>New tool</dt><dd>${d[11]} (shown in the animation). <a href="#/g/tools">Tools page</a></dd></div>`:''}${d[12]?`<div><dt>Rule</dt><dd>${d[12]}. <a href="#/g/rules">Rules page</a></dd></div>`:''}<div><dt>Common issue</dt><dd>${d[8]}</dd></div></dl></article></div><p class="check"><b>Check for learning.</b> ${c.check}</p>`;
+  body=`<div class="drillpage"><div class="dlist">${lst}</div><article class="drill"><header><h3>${d[0]}</h3><div class="meta">${d[9]?`<span>Level ${d[9]}</span><span>${d[10]==='g'?'Game':'Skill exercise'}</span>`:''}<span>${d[1]} min</span><span>${d[2]}</span><span>${d[3]}</span><span>${d[4]}</span>${d[11]?`<span class="tl">Tool: ${d[11]}</span>`:''}${d[12]?`<span class="tl">Rule: ${d[12]}</span>`:''}</div></header>${ds?window.renderScene(ds[0],nid(),ds[1]):''}${window.howTo(d)}<dl>${d[11]?`<div><dt>New tool</dt><dd>${d[11]} (shown in the animation). <a href="#/g/tools">Tools page</a></dd></div>`:''}${d[12]?`<div><dt>Rule</dt><dd>${d[12]}. <a href="#/g/rules">Rules page</a></dd></div>`:''}</dl></article></div><p class="check"><b>Check for learning.</b> ${c.check}</p>`;
  }
  return `<header class="ph chh"><div class="ch-no"><span>Chapter</span>${String(n).padStart(2,'0')}</div><div><h2>${c.title}</h2><p class="lead">${c.lead}</p><div class="chips"><span class="chips-l">Builds on</span>${b}</div></div></header>${tabsHTML(CTABS,tab,'#/ch/'+n)}<div class="pbody2">${body}</div>`;
 }
@@ -2226,7 +2353,7 @@ window.addEventListener('hashchange',route);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CAL&&(CAL.sel!==null||CAL.panel)){CAL.sel=null;CAL.panel=null;if($('#drawer'))renderCal();}});
 const th=$('#theme');
 function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('rchg2-theme',t);}catch(e){}}
-th.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');setTheme(cur==='dark'?'light':'dark');});
+th.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||'light';setTheme(cur==='dark'?'light':'dark');});
 try{const t=localStorage.getItem('rchg2-theme');if(t)setTheme(t);}catch(e){}
 route();
 })();
