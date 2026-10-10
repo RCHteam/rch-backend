@@ -682,11 +682,9 @@ module.exports = `<!doctype html>
       <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Draft shop: no payments are connected yet. When the switch is off, the website's Shop tab says the shop is currently unavailable. While it is on but you have not added products, the website shows clearly marked sample products.</p>
       <div class="photo-panel">
         <h3>Page photos</h3>
-        <p>These photos decorate the website Shop page. Each product also has its own photos (up to 8) when you add or edit it.</p>
-        <label>Banner photo (the big picture at the top of the page)</label>
+        <p>These photos fade in the background behind "The RCH Shop" title. Each product also has its own photos (up to 8) when you add or edit it.</p>
+        <label>Background photos (up to 6; they fade one after another behind the page title, like the home page)</label>
         <div class="img-slots one" id="shopHeroImgs"></div>
-        <label>Lookbook photos (up to 6, shown in a photo wall under the products)</label>
-        <div class="img-slots" id="shopGalleryImgs"></div>
         <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;"><button type="button" class="btn-add" id="shopPhotosSave">Save page photos</button><span id="shopPhotosMsg" style="font-size:.85rem;color:#555;"></span></div>
       </div>
       <div id="shopGrid"></div>
@@ -707,8 +705,8 @@ module.exports = `<!doctype html>
       <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Add a summer or winter camp when it is ready. When the switch is off, the website's Camp tab says camps are currently unavailable. Registration and payment are not connected yet.</p>
       <div class="photo-panel">
         <h3>Page photos</h3>
-        <p>These photos decorate the website Camp page. Each camp also has its own photos (up to 8) when you add or edit it.</p>
-        <label>Banner photo (the big picture at the top of the page)</label>
+        <p>The background photos fade behind the "RCH Camps" title; the camp life photos appear in a strip at the bottom of the page. Each camp also has its own photos (up to 8) when you add or edit it.</p>
+        <label>Background photos (up to 6; they fade one after another behind the page title, like the home page)</label>
         <div class="img-slots one" id="campHeroImgs"></div>
         <label>Camp life photos (up to 8, shown in a scrolling photo strip)</label>
         <div class="img-slots" id="campGalleryImgs"></div>
@@ -3761,22 +3759,21 @@ module.exports = `<!doctype html>
   }
   const productSlots = buildImageSlots('spImages', 8);
   const campSlots = buildImageSlots('cpImages', 8);
-  const shopHeroSlots = buildImageSlots('shopHeroImgs', 1, 'Banner photo: click or drop');
-  const shopGallerySlots = buildImageSlots('shopGalleryImgs', 6, 'Lookbook photo: click or drop');
-  const campHeroSlots = buildImageSlots('campHeroImgs', 1, 'Banner photo: click or drop');
+  const shopHeroSlots = buildImageSlots('shopHeroImgs', 6, 'Background photo: click or drop');
+  const campHeroSlots = buildImageSlots('campHeroImgs', 6, 'Background photo: click or drop');
   const campGallerySlots = buildImageSlots('campGalleryImgs', 8, 'Camp life photo: click or drop');
   function wirePagePhotos(kind, heroSlots, gallerySlots){
     document.getElementById(kind + 'PhotosSave').addEventListener('click', async function(){
       const btn = this, msg = document.getElementById(kind + 'PhotosMsg');
       btn.disabled = true; msg.textContent = 'Saving…';
       try {
-        const r = await api('/api/admin/' + kind + '/page-images', { method: 'POST', body: JSON.stringify({ hero: heroSlots.get(), gallery: gallerySlots.get() }) });
+        const r = await api('/api/admin/' + kind + '/page-images', { method: 'POST', body: JSON.stringify({ hero: heroSlots.get(), gallery: gallerySlots ? gallerySlots.get() : [] }) });
         msg.textContent = r && r.ok ? 'Saved. The website is updated.' : 'Could not save.';
       } catch (err) { msg.textContent = 'Could not save. Try fewer or smaller photos.'; }
       btn.disabled = false;
     });
   }
-  wirePagePhotos('shop', shopHeroSlots, shopGallerySlots);
+  wirePagePhotos('shop', shopHeroSlots, null);
   wirePagePhotos('camp', campHeroSlots, campGallerySlots);
 
   function imgStyle(arr){ return arr && arr[0] ? ' style="background-image:url(' + arr[0] + ')"' : ''; }
@@ -3786,7 +3783,7 @@ module.exports = `<!doctype html>
   let productEditId = null;
   async function loadShopAdmin(){
     shopData = await api('/api/admin/shop');
-    shopHeroSlots.set(shopData.pageImages ? shopData.pageImages.hero : []); shopGallerySlots.set(shopData.pageImages ? shopData.pageImages.gallery : []);
+    shopHeroSlots.set(shopData.pageImages ? shopData.pageImages.hero : []);
     document.getElementById('shopOpenToggle').checked = !!shopData.open;
     document.getElementById('shopOpenLabel').textContent = shopData.open ? 'Shop open' : 'Shop closed';
     const grid = document.getElementById('shopGrid');

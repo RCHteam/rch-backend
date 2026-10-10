@@ -6,7 +6,8 @@ const { getSetting, setSetting } = require('./settings');
 const router = express.Router();
 
 const MAX_IMAGES = 8;
-const PAGE_LIMITS = { shop: { hero: 1, gallery: 6 }, camp: { hero: 1, gallery: 8 } };
+// hero = rotating background photos behind the page title; gallery (camp only) = the "Camp life" strip.
+const PAGE_LIMITS = { shop: { hero: 6 }, camp: { hero: 6, gallery: 8 } };
 const MAX_IMAGE_CHARS = 2000000; // a resized JPEG as a data URL is ~100-300 KB; this is a generous ceiling
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const SEASONS = new Set(['summer', 'winter', 'spring', 'fall', 'other']);
@@ -26,11 +27,15 @@ async function getPageImages(kind) {
   const lim = PAGE_LIMITS[kind];
   let o = {};
   try { o = JSON.parse(await getSetting(kind + '_page_images', '{}')) || {}; } catch (e) { o = {}; }
-  return { hero: cleanImages(o.hero, lim.hero), gallery: cleanImages(o.gallery, lim.gallery) };
+  const out = {};
+  Object.keys(lim).forEach((k) => { out[k] = cleanImages(o[k], lim[k]); });
+  if (!out.gallery) out.gallery = [];
+  return out;
 }
 async function savePageImages(kind, body) {
   const lim = PAGE_LIMITS[kind];
-  const v = { hero: cleanImages(body && body.hero, lim.hero), gallery: cleanImages(body && body.gallery, lim.gallery) };
+  const v = {};
+  Object.keys(lim).forEach((k) => { v[k] = cleanImages(body && body[k], lim[k]); });
   await setSetting(kind + '_page_images', JSON.stringify(v));
   return v;
 }
