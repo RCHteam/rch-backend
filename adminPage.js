@@ -323,7 +323,7 @@ module.exports = `<!doctype html>
   .cal-head h3{ margin:0; font-size:1.5rem; font-family:'Anton',sans-serif; letter-spacing:0.02em; flex:1 1 auto; }
   .cal-btn{ background:#fff; border:1px solid #d6d6d6; border-radius:6px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; border:none; width:100%; font-family:inherit; }
+  .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:visible; white-space:normal; word-break:break-word; text-align:left; border:none; width:100%; font-family:inherit; }
   .cal-ev.fx{ box-shadow:inset 3px 0 0 rgba(0,0,0,.35); }
   .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; }
   .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
