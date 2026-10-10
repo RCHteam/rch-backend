@@ -5,6 +5,7 @@ const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { sendStudentReportEmail } = require('./email');
 const { centralDateParts, practiceDates } = require('./proration');
+const { fixedEvents } = require('./fixedEvents');
 
 const router = express.Router();
 
@@ -452,7 +453,7 @@ function eventFields(b) {
 router.get('/admin/calendar-events', requireAdmin, async (req, res) => {
   try {
     const r = await pool.query('SELECT * FROM calendar_events ORDER BY event_date, start_time, id');
-    res.json(r.rows.map(eventOut));
+    res.json(r.rows.map(eventOut).concat(fixedEvents()));
   } catch (err) {
     console.error('List events error:', err);
     res.status(500).json({ error: 'Could not load the calendar.' });
@@ -473,6 +474,7 @@ router.post('/admin/calendar-events', requireAdmin, async (req, res) => {
 });
 
 router.put('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'This is a fixed date and cannot be changed.' });
   const f = eventFields(req.body);
   if (f.error) return res.status(400).json({ error: f.error });
   try {
@@ -488,6 +490,7 @@ router.put('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
 });
 
 router.delete('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'This is a fixed date and cannot be deleted.' });
   try {
     await pool.query('DELETE FROM calendar_events WHERE id = $1', [req.params.id]);
     res.json({ ok: true });

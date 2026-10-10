@@ -324,6 +324,7 @@ module.exports = `<!doctype html>
   .cal-btn{ background:#fff; border:1px solid #d6d6d6; border-radius:6px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; border:none; width:100%; font-family:inherit; }
+  .cal-ev.fx{ box-shadow:inset 3px 0 0 rgba(0,0,0,.35); }
   .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; }
   .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
   .cal-wrap{ background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden; border:1px solid #e3e3e3; }
@@ -3722,7 +3723,7 @@ module.exports = `<!doctype html>
       const sh = ev.startTime ? Number(ev.startTime.split(':')[0]) : 6;
       return Math.min(Math.max(sh, 6), 21) === hour;
     }).map(function(ev){
-      return '<button type="button" class="cal-ev ' + escapeHtml(ev.color) + '" data-evid="' + ev.id + '" title="' + escapeHtml(ev.title) + '">' + (ev.startTime ? evTimeLabel(ev.startTime) + ' ' : '') + escapeHtml(ev.title) + '</button>';
+      return '<button type="button" class="cal-ev ' + escapeHtml(ev.color) + (ev.fixed ? ' fx' : '') + '" data-evid="' + ev.id + '" title="' + escapeHtml(ev.title) + (ev.fixed ? ' (fixed date)' : '') + '">' + (ev.fixed ? '&#128274; ' : '') + (ev.startTime ? evTimeLabel(ev.startTime) + ' ' : '') + escapeHtml(ev.title) + '</button>';
     }).join('');
   }
   async function loadCalEvents(){
@@ -3738,14 +3739,18 @@ module.exports = `<!doctype html>
     evEditId = ev ? ev.id : null;
     document.getElementById('evFormTitle').textContent = ev ? 'Edit event' : 'Add event';
     document.getElementById('evTitle').value = ev ? ev.title : '';
-    document.getElementById('evDate').value = ev ? fmtDay(ev.date) : (isoDate ? fmtDay(isoDate) : '');
+    document.getElementById('evDate').value = ev ? ev.date : (isoDate || '');
     document.getElementById('evColor').value = ev ? ev.color : 'green';
     document.getElementById('evStart').value = ev ? ev.startTime : '';
     document.getElementById('evEnd').value = ev ? ev.endTime : '';
     document.getElementById('evLocation').value = ev ? ev.location : '';
     document.getElementById('evNotes').value = ev ? ev.notes : '';
     document.getElementById('evError').textContent = '';
-    document.getElementById('evDelete').style.display = ev ? '' : 'none';
+    const fixed = !!(ev && ev.fixed);
+    if (fixed) document.getElementById('evFormTitle').textContent = 'Fixed event (this date never moves)';
+    ['evTitle','evDate','evColor','evStart','evEnd','evLocation','evNotes'].forEach(function(id){ document.getElementById(id).disabled = fixed; });
+    document.getElementById('evSave').style.display = fixed ? 'none' : '';
+    document.getElementById('evDelete').style.display = (ev && !fixed) ? '' : 'none';
     showCalSub('add');
   }
   document.querySelectorAll('#calSubtabs .subtab').forEach(function(b){
