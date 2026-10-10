@@ -273,6 +273,13 @@ module.exports = `<!doctype html>
   .cur-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .cur-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:16px 18px; border-top:4px solid var(--acc); }
   .cur-num{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--pitch); }
+  .cur-frame-box{ position:relative; background:#fff; border:1px solid #d8d4c4; border-radius:8px; overflow:hidden; }
+  .cur-frame-box iframe{ display:block; width:100%; height:78vh; min-height:520px; border:0; }
+  .cur-frame-bar{ display:none; }
+  .cur-frame-box.full{ position:fixed; inset:0; z-index:5000; border-radius:0; border:0; display:flex; flex-direction:column; }
+  .cur-frame-box.full iframe{ flex:1 1 auto; height:auto; min-height:0; }
+  .cur-frame-box.full .cur-frame-bar{ display:flex; align-items:center; justify-content:space-between; background:var(--pitch-deep); color:#fff; padding:8px 14px; font-weight:700; }
+  .cur-frame-bar button{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,.6); border-radius:6px; padding:6px 12px; font-family:inherit; font-weight:700; cursor:pointer; }
   .cur-assess{ background:#f3efe3; border-left:4px solid var(--gold); padding:8px 10px; font-size:0.8rem; color:#333; margin:0 0 12px; border-radius:3px; }
   .cur-card h4{ margin:4px 0 8px; font-size:1.05rem; }
   .cur-card p{ margin:0 0 12px; color:#555; font-size:0.86rem; white-space:pre-wrap; max-height:11em; overflow:auto; }
@@ -607,8 +614,13 @@ module.exports = `<!doctype html>
         </div>
         <div class="tool-row">
           <div class="grow"><label for="curGrade">Grade</label><select id="curGrade" data-grades></select></div>
+          <div><button type="button" class="btn-add" id="curExpandBtn">&#x26F6; Expand</button></div>
         </div>
-        <div id="curriculumWrap"></div>
+        <div id="curFrameBox" class="cur-frame-box">
+          <div class="cur-frame-bar"><span id="curFrameTitle"></span><button type="button" id="curCloseBtn">&#10005; Close full screen</button></div>
+          <iframe id="curFrame" title="Curriculum"></iframe>
+          <div id="curEmpty" class="empty hidden"></div>
+        </div>
       </div>
 
       <div id="coachSub-reports" class="hidden">
@@ -832,24 +844,6 @@ module.exports = `<!doctype html>
     </div><!-- /section-data -->
 
   </main>
-</div>
-
-<div class="modal-overlay hidden" id="chapterModal">
-  <div class="modal wide">
-    <h3 id="chapterModalTitle">Edit Chapter</h3>
-    <p class="modal-sub" id="chapterModalSub"></p>
-    <label for="chTitle">Chapter title</label>
-    <input type="text" id="chTitle" placeholder="e.g. Dribbling basics">
-    <label for="chContent">What this chapter covers</label>
-    <textarea id="chContent" style="min-height:180px;" placeholder="Goals, drills, skills, what the kids should be able to do by the end…"></textarea>
-    <label for="chAssessment">Assessment (shown under the coach's comment in the student report)</label>
-    <textarea id="chAssessment" style="min-height:70px;" placeholder="e.g. Child can pass 5 of 10 balls to a partner with the inside of the foot."></textarea>
-    <p class="modal-error" id="chapterError"></p>
-    <div class="modal-actions">
-      <button type="button" class="btn-cancel" id="chapterCancel">Cancel</button>
-      <button type="button" class="btn-send" id="chapterSave">Save</button>
-    </div>
-  </div>
 </div>
 
 <div class="modal-overlay hidden" id="outreachModal">
@@ -3426,70 +3420,33 @@ module.exports = `<!doctype html>
     b.addEventListener('click', function(){ showCoachSub(b.getAttribute('data-sub')); });
   });
 
-  // ---- Our Curriculum ----
-  let chapterEditId = null;
+  // ---- Our Curriculum: the full curriculum app, shown inside the page, with a full-screen Expand button ----
   async function loadCurriculum(){
     const grade = document.getElementById('curGrade').value;
-    const wrap = document.getElementById('curriculumWrap');
-    wrap.innerHTML = '<div class="empty">Loading…</div>';
-    const rows = await api('/api/admin/curriculum?grade=' + encodeURIComponent(grade));
-    if (!rows.length) { wrap.innerHTML = '<div class="empty">No chapters yet for ' + GRADE_LABELS[grade] + '. The curriculum for this grade has not been loaded yet.</div>'; return; }
-    wrap.innerHTML = '<div class="cur-list">' + rows.map(function(r, i){
-      return '<div class="cur-card"><div class="cur-num">Chapter ' + (i + 1) + '</div><h4>' + escapeHtml(r.title) + '</h4>' +
-        '<p>' + escapeHtml(r.content || '') + '</p>' + (r.assessment ? '<div class="cur-assess"><b>Assessment:</b> ' + escapeHtml(r.assessment) + '</div>' : '') +
-        '<div class="mini-actions" data-id="' + r.id + '">' +
-        '<button type="button" data-act="edit" data-title="' + escapeHtml(r.title) + '" data-content="' + escapeHtml(r.content || '') + '" data-assessment="' + escapeHtml(r.assessment || '') + '">Edit</button>' +
-        (i > 0 ? '<button type="button" data-act="up">&#8593;</button>' : '') +
-        (i < rows.length - 1 ? '<button type="button" data-act="down">&#8595;</button>' : '') +
-        '<button type="button" class="danger" data-act="del">Delete</button></div></div>';
-    }).join('') + '</div>';
+    const frame = document.getElementById('curFrame'), empty = document.getElementById('curEmpty');
+    const want = API_BASE + '/api/admin/curriculum-view/' + encodeURIComponent(grade) + '?token=' + encodeURIComponent(getToken());
+    document.getElementById('curFrameTitle').textContent = GRADE_LABELS[grade] + ' Curriculum';
+    let ok = false;
+    try { const r = await fetch(want, { method: 'HEAD' }); ok = r.ok; } catch (err) { ok = false; }
+    if (!ok) {
+      frame.classList.add('hidden'); frame.removeAttribute('src');
+      empty.textContent = 'The ' + GRADE_LABELS[grade] + ' curriculum has not been loaded yet.';
+      empty.classList.remove('hidden');
+      document.getElementById('curExpandBtn').disabled = true;
+      return;
+    }
+    empty.classList.add('hidden'); frame.classList.remove('hidden');
+    document.getElementById('curExpandBtn').disabled = false;
+    if (frame.getAttribute('data-grade') !== grade) { frame.src = want; frame.setAttribute('data-grade', grade); }
+  }
+  function setCurFull(on){
+    document.getElementById('curFrameBox').classList.toggle('full', on);
+    document.body.style.overflow = on ? 'hidden' : '';
   }
   document.getElementById('curGrade').addEventListener('change', loadCurriculum);
-  document.getElementById('curriculumWrap').addEventListener('click', async function(e){
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const id = btn.parentElement.getAttribute('data-id');
-    const act = btn.getAttribute('data-act');
-    try {
-      if (act === 'edit') {
-        chapterEditId = id;
-        document.getElementById('chapterModalTitle').textContent = 'Edit Chapter';
-        document.getElementById('chapterModalSub').textContent = GRADE_LABELS[document.getElementById('curGrade').value];
-        document.getElementById('chTitle').value = btn.getAttribute('data-title');
-        document.getElementById('chContent').value = btn.getAttribute('data-content');
-        document.getElementById('chAssessment').value = btn.getAttribute('data-assessment') || '';
-        document.getElementById('chapterError').textContent = '';
-        document.getElementById('chapterModal').classList.remove('hidden');
-        return;
-      }
-      if (act === 'del') {
-        if (!confirm('Delete this chapter?')) return;
-        await api('/api/admin/curriculum/' + id, { method: 'DELETE' });
-      } else {
-        await api('/api/admin/curriculum/' + id + '/move', { method: 'PUT', body: JSON.stringify({ direction: act }) });
-      }
-      await loadCurriculum();
-    } catch (err) { alert('Could not update the curriculum. Please try again.'); }
-  });
-  document.getElementById('chapterCancel').addEventListener('click', function(){ document.getElementById('chapterModal').classList.add('hidden'); });
-  document.getElementById('chapterSave').addEventListener('click', async function(){
-    const errEl = document.getElementById('chapterError');
-    errEl.textContent = '';
-    const title = document.getElementById('chTitle').value.trim();
-    if (!title) { errEl.textContent = 'Please enter a chapter title.'; return; }
-    const content = document.getElementById('chContent').value;
-    const btn = document.getElementById('chapterSave');
-    btn.disabled = true;
-    try {
-      const result = chapterEditId
-        ? await api('/api/admin/curriculum/' + chapterEditId, { method: 'PUT', body: JSON.stringify({ title: title, content: content, assessment: document.getElementById('chAssessment').value }) })
-        : await api('/api/admin/curriculum', { method: 'POST', body: JSON.stringify({ grade: document.getElementById('curGrade').value, title: title, content: content, assessment: document.getElementById('chAssessment').value }) });
-      if (result.error) { errEl.textContent = result.error; return; }
-      document.getElementById('chapterModal').classList.add('hidden');
-      await loadCurriculum();
-    } catch (err) { errEl.textContent = 'Could not save. Please try again.'; }
-    finally { btn.disabled = false; }
-  });
+  document.getElementById('curExpandBtn').addEventListener('click', function(){ setCurFull(true); });
+  document.getElementById('curCloseBtn').addEventListener('click', function(){ setCurFull(false); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && document.getElementById('curFrameBox').classList.contains('full')) setCurFull(false); });
 
   // ---- Student Report ----
   let reportsInit = false;
@@ -3503,7 +3460,11 @@ module.exports = `<!doctype html>
       document.getElementById('repDownloadBtn').addEventListener('click', function(){ submitReport(false); });
       document.getElementById('repHistoryWrap').addEventListener('click', function(e){
         const b = e.target.closest('button[data-pdf]');
-        if (b) window.open(API_BASE + '/api/admin/student-reports/' + b.getAttribute('data-pdf') + '/pdf?token=' + encodeURIComponent(getToken()));
+        if (b) { window.open(API_BASE + '/api/admin/student-reports/' + b.getAttribute('data-pdf') + '/pdf?token=' + encodeURIComponent(getToken())); return; }
+        const em = e.target.closest('button[data-email]');
+        if (em) { emailSavedReport(em); return; }
+        const dl = e.target.closest('button[data-del]');
+        if (dl) deleteSavedReport(dl);
       });
     }
     await loadReportChoices();
@@ -3557,8 +3518,29 @@ module.exports = `<!doctype html>
         return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (GRADE_LABELS[r.grade] || r.grade) + '</td><td>' + escapeHtml(r.month_label) + '</td><td>' +
           escapeHtml(r.chapter_title || '—') + '</td><td>' + escapeHtml(r.coach_name || '—') + '</td><td>' +
           (r.emailed_at ? escapeHtml(fmtDate(r.emailed_at)) + '<br><span style="color:#888">' + escapeHtml(r.parent_email || '') + '</span>' : 'Not emailed') +
-          '</td><td><button type="button" class="btn-export" style="cursor:pointer;" data-pdf="' + r.id + '">PDF</button></td></tr>';
+          '</td><td style="white-space:nowrap;"><button type="button" class="btn-export" style="cursor:pointer;" data-pdf="' + r.id + '">PDF</button> ' +
+          (r.emailed_at ? '' : '<button type="button" class="btn-export" style="cursor:pointer;" data-email="' + r.id + '">Send email</button> ') +
+          '<button type="button" class="btn-export" style="cursor:pointer;color:#a33;" data-del="' + r.id + '">Delete</button></td></tr>';
       }).join('') + '</tbody></table>';
+  }
+  async function emailSavedReport(btn){
+    btn.disabled = true; setStatus('repStatus', 'Sending…', true);
+    try {
+      const r = await api('/api/admin/student-reports/' + btn.getAttribute('data-email') + '/email', { method: 'POST' });
+      if (r.error) { setStatus('repStatus', r.error, false); btn.disabled = false; return; }
+      setStatus('repStatus', 'Report emailed to ' + r.to + ' as a PDF.', true);
+      await loadReportHistory();
+    } catch (err) { setStatus('repStatus', 'Something went wrong. Please try again.', false); btn.disabled = false; }
+  }
+  async function deleteSavedReport(btn){
+    if (!confirm('Delete this report? This cannot be undone.')) return;
+    btn.disabled = true;
+    try {
+      const r = await api('/api/admin/student-reports/' + btn.getAttribute('data-del'), { method: 'DELETE' });
+      if (r && r.error) { setStatus('repStatus', r.error, false); btn.disabled = false; return; }
+      setStatus('repStatus', 'Report deleted.', true);
+      await loadReportHistory();
+    } catch (err) { setStatus('repStatus', 'Could not delete. Please try again.', false); btn.disabled = false; }
   }
   async function submitReport(send){
     const playerId = document.getElementById('repChild').value;

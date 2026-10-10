@@ -24,6 +24,23 @@ function parseMonth(v) { // 'YYYY-MM' (or 'YYYY-MM-01'); defaults to this month 
 function monthLabel({ year, month }) { return `${MONTH_NAMES[month - 1]} ${year}`; }
 function monthKeyOf({ year, month }) { return `${year}-${String(month).padStart(2, '0')}`; }
 
+
+/* ---- The full curriculum pages (one HTML file per grade, shown in the admin inside a frame) ---- */
+const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html' };
+router.all('/admin/curriculum-view/:grade', requireAdmin, (req, res) => {
+  const file = CURRICULUM_FILES[req.params.grade];
+  if (!file) return res.status(404).json({ error: 'This curriculum has not been loaded yet.' });
+  try {
+    const html = require('fs').readFileSync(path.join(__dirname, file), 'utf8');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'no-store');
+    res.send(req.method === 'HEAD' ? '' : html);
+  } catch (err) {
+    console.error('Curriculum view error:', err);
+    res.status(404).json({ error: 'This curriculum has not been loaded yet.' });
+  }
+});
+
 /* ------------------------------ Curriculum ------------------------------ */
 
 router.get('/admin/curriculum', requireAdmin, async (req, res) => {
@@ -222,6 +239,42 @@ router.get('/admin/student-reports', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('List reports error:', err);
     res.status(500).json({ error: 'Could not load reports.' });
+  }
+});
+
+router.post('/admin/student-reports/:id/email', requireAdmin, async (req, res) => {
+  try {
+    const row = (await pool.query('SELECT * FROM student_reports WHERE id = $1', [req.params.id])).rows[0];
+    if (!row) return res.status(404).json({ error: 'Report not found.' });
+    let to = String(row.parent_email || '').trim(), parentName = row.parent_name || '';
+    if (row.player_id) {
+      const pl = (await pool.query('SELECT parent_email, parent_name FROM players WHERE id = $1', [row.player_id])).rows[0];
+      if (pl && String(pl.parent_email || '').trim()) { to = String(pl.parent_email).trim(); parentName = pl.parent_name || parentName; }
+    }
+    if (!to) return res.status(400).json({ error: 'This player has no parent email on file. Add one on the roster first.' });
+    const full = Object.assign({}, row, { parent_email: to, parent_name: parentName });
+    const pdf = await buildReportPdf(full);
+    const filename = `${row.player_name.replace(/[^a-z0-9]+/gi, '_')}_${row.month_key}_Report.pdf`;
+    const result = await sendStudentReportEmail({
+      to, parentName, childName: row.player_name, monthLabel: row.month_label,
+      chapterTitle: row.chapter_title, pdf, filename,
+    });
+    if (result && result.ok === false) return res.status(502).json({ error: 'The email could not be sent. Please try again.' });
+    await pool.query('UPDATE student_reports SET emailed_at = now(), parent_email = $2, parent_name = $3 WHERE id = $1', [row.id, to, parentName]);
+    res.json({ ok: true, to });
+  } catch (err) {
+    console.error('Email report error:', err);
+    res.status(500).json({ error: 'Could not email this report.' });
+  }
+});
+
+router.delete('/admin/student-reports/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM student_reports WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete report error:', err);
+    res.status(500).json({ error: 'Could not delete this report.' });
   }
 });
 

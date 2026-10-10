@@ -1,0 +1,1125 @@
+<title>RCH Pre-K Curriculum</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: fixed chapter index on the left, long-form coach's reference on the right; tactical boards are the visual centerpiece */
+:root{
+ --bg:#F2F5F3;--bg2:#FFFFFF;--bg3:#E8EEEA;--ink:#0D1C16;--mute:#52635B;--line:#D2DCD7;--accent:#0B7A49;--accent-ink:#FFFFFF;--hi:#D98E04;
+ --turf:#2C7A4D;--turf2:#318455;--tline:#ffffffd0;--ta:#2F6FDE;--tb:#E5484D;--tc:#F5B82E;--tk:#7B5EA7;--cone:#F28C28;
+ --c1:#0B7A49;--c2:#2F6FDE;--c3:#D98E04;--c4:#7B5EA7;--c5:#7B8C84;--c6:#E5484D;
+ --disp:'Barlow Condensed','Arial Narrow',sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1310;--bg2:#111D18;--bg3:#18271F;--ink:#E7EFEB;--mute:#93A59C;--line:#243830;--accent:#3FCB86;--accent-ink:#06130D;--hi:#F2B33D;--turf:#1F5E3B;--turf2:#236843;--c1:#3FCB86;--c2:#6B9BF0;--c3:#F2B33D;--c4:#A58BD6;--c5:#8DA096;--c6:#F2767A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0A1310;--bg2:#111D18;--bg3:#18271F;--ink:#E7EFEB;--mute:#93A59C;--line:#243830;--accent:#3FCB86;--accent-ink:#06130D;--hi:#F2B33D;--turf:#1F5E3B;--turf2:#236843;--c1:#3FCB86;--c2:#6B9BF0;--c3:#F2B33D;--c4:#A58BD6;--c5:#8DA096;--c6:#F2767A;color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.55 var(--body);margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
+aside{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;border-right:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;padding:20px 14px 14px;gap:16px;overflow:auto}
+.brand{display:flex;flex-direction:column;gap:2px;padding:0 6px}
+.brand small{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.brand b{font:700 26px/1.05 var(--disp);text-transform:uppercase}
+.brand span{font-size:12.5px;color:var(--mute)}
+.ng{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.ng h6{margin:0 0 4px 6px;font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.ng>a{font-size:14px;text-decoration:none;padding:6px 10px;border-radius:6px;color:var(--mute);border-left:3px solid transparent}
+.ng>a:hover{background:var(--bg3);color:var(--ink)}
+.ng>a.on{color:var(--ink);background:var(--bg3);border-left-color:var(--accent);font-weight:600}
+.cgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.cgrid a{display:grid;place-items:center;height:32px;border:1px solid var(--line);border-radius:6px;font:500 12px var(--mono);text-decoration:none;color:var(--mute);background:var(--bg)}
+.cgrid a:hover{border-color:var(--accent);color:var(--ink)}
+.cgrid a.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+#theme{margin-top:auto;font:500 12px var(--mono);padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);cursor:pointer}
+#theme:hover{border-color:var(--accent)}
+.topbar{display:none}
+main{padding:clamp(18px,3vw,40px) clamp(16px,3.5vw,48px) 60px;max-width:1240px;width:100%;min-width:0}
+.eyebrow{font:500 11.5px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+.ph{display:flex;gap:20px;align-items:end;padding-bottom:14px;margin-bottom:16px;border-bottom:2px solid var(--ink)}
+.ph>div{min-width:0}
+h2{font:700 clamp(30px,3.6vw,44px)/1 var(--disp);text-transform:uppercase;margin:6px 0 8px;text-wrap:balance}
+h3{font:700 22px var(--disp);text-transform:uppercase;letter-spacing:.02em;margin:0 0 10px}
+h4{font:600 12.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+.lead{font-size:16.5px;margin:0 0 8px;max-width:70ch;color:var(--mute)}
+.chh{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:end;margin-bottom:12px}
+.ch-no{font:700 64px/.85 var(--disp);color:var(--accent);display:flex;flex-direction:column}
+.ch-no span{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chips-l{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-right:4px}
+.chip{font:500 11.5px var(--mono);border:1px solid var(--line);padding:3px 8px;border-radius:99px;text-decoration:none;background:var(--bg2)}
+a.chip:hover{border-color:var(--accent);color:var(--accent)}.chip.plain{color:var(--mute)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:4px 0 18px;overflow-x:auto}
+.tabs a{padding:9px 14px;font:500 13px var(--mono);text-decoration:none;color:var(--mute);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.btn{font:500 12px var(--mono);border:1px solid var(--line);background:var(--bg2);color:var(--ink);padding:7px 12px;border-radius:6px;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}.btn.off{opacity:.4;pointer-events:none}
+.pbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card p{margin:0;font-size:14.5px;color:var(--mute)}
+.card ul{margin:0;padding-left:1.1em}.card li{margin:0 0 6px;font-size:14.5px}
+.why{border-left:3px solid var(--hi)}
+.pts{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:12px 16px 6px 32px;font-size:14.5px;margin:12px 0 0}
+.pts li{margin:0 0 6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg2);margin-bottom:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child>*{border-bottom:0}
+thead th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);background:var(--bg3)}
+.kc th[scope=row]{font-weight:600;width:34%}
+.grid-t td:first-child{font-weight:600}
+.lad td:first-child{white-space:nowrap;position:sticky;left:0;background:var(--bg2)}
+.lad{min-width:900px;font-size:13px}
+.asm td:nth-child(n+3){width:60px;border-left:1px solid var(--line)}
+.sp{margin-top:18px}
+.note{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+.check{margin:14px 0 0;padding:10px 16px;border-left:3px solid var(--hi);background:var(--bg2);border-radius:0 6px 6px 0;font-size:14px}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:center;margin-bottom:22px}
+.hero>div{min-width:0}
+.hero h1{font:700 clamp(36px,5vw,62px)/.95 var(--disp);text-transform:uppercase;margin:6px 0 12px}
+.hero p{color:var(--mute);margin:0 0 14px;max-width:54ch}
+.stats{display:flex;gap:22px;flex-wrap:wrap;font:500 11.5px var(--mono);color:var(--mute)}
+.stats b{display:block;font:700 28px var(--disp);color:var(--ink)}
+.rhythm{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.cyc{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.cyc a{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;min-width:84px;flex:1 1 84px;background:var(--bg)}
+.cyc a:hover{border-color:var(--accent)}
+.cyc b{font:700 18px var(--disp);color:var(--accent)}.cyc span{font-size:12px;color:var(--mute);line-height:1.25}
+.loop{flex:1 1 100%;font:500 11.5px var(--mono);color:var(--hi);margin-top:4px}
+/* year */
+.dateset{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:13px;color:var(--mute);flex-wrap:wrap}
+.dateset input{font:13px var(--mono);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg2);color:var(--ink)}
+.sp-grid{display:grid;gap:4px;overflow-x:auto;padding-bottom:4px}
+.sg-h,.sg-r{display:grid;grid-template-columns:96px repeat(11,minmax(52px,1fr));gap:4px;align-items:stretch;min-width:700px}
+.sg-h a{text-align:center;font:600 12px var(--mono);color:var(--mute);text-decoration:none}
+.sg-l{display:flex;flex-direction:column;justify-content:center}.sg-l b{font:700 18px var(--disp)}.sg-l span{font-size:11.5px;color:var(--mute)}
+.sg-c{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;border-radius:6px;text-decoration:none;color:var(--ink);border:1px solid transparent;background:color-mix(in srgb,var(--accent) calc(var(--l)*11%),var(--bg2))}
+.sg-c b{font:600 14px var(--mono)}.sg-c small{font:500 10px var(--mono);color:var(--mute)}
+.sg-c:hover{border-color:var(--ink)}
+.lv1{--l:1}.lv2{--l:2}.lv3{--l:3}.lv4{--l:4}.lv5{--l:5}.lv6{--l:6}
+.sg-f{min-width:700px;margin:2px 0}.sg-f a{display:block;text-align:center;padding:5px;font:500 12px var(--mono);border:1px dashed var(--hi);border-radius:6px;text-decoration:none;color:var(--hi)}
+.sg-f a:hover{background:color-mix(in srgb,var(--hi) 12%,transparent)}
+.weeks{margin-top:18px}.wk-l{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.wk-s{display:grid;grid-template-columns:repeat(40,minmax(0,1fr));gap:2px}
+.wk-s i{height:22px;border-radius:2px;display:grid;place-items:center;font-style:normal;background:var(--c1)}
+.wk-s b{font:500 8px var(--mono);color:#fff}
+.wk-s .t1{background:var(--c1)}.wk-s .t2{background:var(--c2)}.wk-s .t3{background:var(--c4)}.wk-s .f{background:var(--hi)}.wk-s .o{background:var(--bg3)}.wk-s .o b{color:var(--mute)}
+.k{display:inline-block;width:11px;height:11px;border-radius:2px;margin:0 4px 0 12px;vertical-align:-1px}.k.t1{background:var(--c1)}.k.t2{background:var(--c2)}.k.t3{background:var(--c4)}.k.f{background:var(--hi)}.k.o{background:var(--bg3);border:1px solid var(--line)}
+.lvh{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.lvh>div{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--mute)}.lvh b{display:block;font:600 12px var(--mono);color:var(--ink);margin-bottom:4px}
+/* practice */
+.ptl{display:flex;gap:3px;margin-bottom:14px}
+.seg{border:0;border-radius:4px;height:26px;cursor:pointer;opacity:.55;color:#fff;font:500 10px var(--mono);padding:0;min-width:0;overflow:hidden}
+.seg.on,.seg:hover{opacity:1}.seg span{white-space:nowrap}
+.seg.c0{background:var(--c1)}.seg.c1{background:var(--c2)}.seg.c2{background:var(--c3)}.seg.c3{background:var(--c4)}.seg.c4{background:var(--c6)}
+.pgrid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+.blist{display:flex;flex-direction:column;gap:6px}
+.bsel{display:grid;grid-template-columns:60px minmax(0,1fr);gap:8px;text-align:left;padding:10px 12px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:8px;cursor:pointer;font:inherit}
+.bsel:hover{border-color:var(--accent)}.bsel.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg2))}
+.bm{font:600 12px var(--mono);color:var(--accent)}.bn{font-size:13.5px;line-height:1.3}
+.eqp{font-size:12.5px;color:var(--mute);margin:6px 2px 0}
+.bpanel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.bd{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:4px 22px;align-items:start}.bd>.bd-h,.bd>.bd-how:not(:first-of-type){grid-column:1/-1}.bd>.scene{grid-column:2;grid-row:2/6}.bd>.bd-how,.bd>.bd-dl,.bd>.pts{grid-column:1}.bd-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}.bd-h h3{margin:0}
+.bt2{font:600 12px var(--mono);color:var(--accent);border:1px solid var(--line);padding:2px 8px;border-radius:99px}
+.bd-how{margin:10px 0}
+.bd-dl{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:0 0 12px}
+.bd-dl dt,.drill dt{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}.bd-dl dd,.drill dd{margin:0;font-size:14px}
+/* chapter pages */
+.notes h3{font-size:26px}
+.pager{display:flex;align-items:center;gap:14px;margin-bottom:10px;font:500 12px var(--mono);color:var(--mute);flex-wrap:wrap}
+.pager .dot{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:99px;text-decoration:none;color:var(--mute)}
+.pager>div:nth-child(2){display:flex;gap:6px}
+.pager .dot[aria-current=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pn{margin-left:auto;display:flex;gap:6px}
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:26px;align-items:start}
+.detail-grid:not(:has(.vis)){grid-template-columns:minmax(0,70ch)}
+.txt p{margin:0 0 12px}
+.vis{min-width:0}
+.faults td{font-size:14px}
+.prog{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+.stack{display:grid;gap:14px}
+.stairs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.stp{display:grid;grid-template-columns:34px 78px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 10px;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 18%,transparent) var(--w),transparent var(--w));border:1px solid var(--line);animation:fillx .6s both;animation-delay:var(--d);transform-origin:left;font-size:13.5px}
+.stp b{font:600 12px var(--mono);color:var(--accent)}.sn{font:500 11px var(--mono);color:var(--mute)}.sl{font:500 11px var(--mono);color:var(--accent);text-decoration:none;white-space:nowrap}
+.focus{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.focus li{display:grid;grid-template-columns:96px minmax(0,1fr) 34px;gap:10px;align-items:center;font-size:13.5px;padding:0!important;margin:0!important}
+.fb{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;display:block}.fb i{display:block;height:100%;background:var(--accent);animation:fillw .8s both}
+.focus b{font:500 11px var(--mono);color:var(--mute)}
+.drillpage{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start}
+.dlist{display:flex;flex-direction:column;gap:6px}
+.dsel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 8px;padding:10px 12px;border:1px solid var(--line);background:var(--bg2);border-radius:8px;text-decoration:none;font-size:14px}
+.dsel small{grid-column:2;font:500 11px var(--mono);color:var(--mute)}.dsel[aria-current=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg2))}
+.dn{font:500 11px var(--mono);background:var(--accent);color:var(--accent-ink);padding:2px 6px;border-radius:4px;align-self:start}
+.drill{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:12px}
+.drill header h3{margin:0 0 6px}
+.meta{display:flex;flex-wrap:wrap;gap:5px}.meta span{font:500 11px var(--mono);color:var(--mute);border:1px solid var(--line);padding:2px 7px;border-radius:99px}
+.drill dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.drill .scene{margin:0;max-width:640px}
+.gbody{max-width:1000px}
+/* scenes + charts */
+.scene{margin:0}
+.scene-wrap{position:relative;border-radius:10px;overflow:hidden;border:1px solid #0003}
+.scene svg{display:block;width:100%;height:auto}
+.scene figcaption,.chart figcaption{font-size:12.5px;color:var(--mute);margin-top:6px}
+.sc-t{font:600 13px var(--body);fill:#fff;paint-order:stroke;stroke:#0005;stroke-width:3px}
+.sc-t.big{font:700 34px var(--disp);letter-spacing:.04em;text-transform:uppercase}.sc-t.w{font-size:12px}
+.sc-n{font:600 12px var(--mono);fill:#fff}
+.pp{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:99px;border:0;background:#0009;color:#fff;cursor:pointer;display:grid;place-items:center}
+.i-pause{width:10px;height:12px;border-left:3px solid #fff;border-right:3px solid #fff}
+.pp.is .i-pause{width:0;height:0;border:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent;margin-left:3px}
+.chart{margin:0;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.ct{font:600 12.5px var(--mono);margin-bottom:8px}.ct span{color:var(--mute);font-weight:400}
+.chart svg{width:100%;height:auto;display:block}
+.grid{stroke:var(--line);stroke-width:1}.ax{font:11px var(--mono);fill:var(--mute)}
+.val{font:600 11px var(--mono);fill:var(--mute)}.val.hi{fill:var(--ink)}
+.bar{fill:var(--c2);opacity:.75;animation:grow .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d);transform-box:fill-box;transform-origin:bottom}.bar.hi{fill:var(--accent);opacity:1}
+@keyframes grow{from{transform:scaleY(0)}}@keyframes fillw{from{width:0}}@keyframes fillx{from{transform:scaleX(0)}}
+@media (max-width:900px){
+ .bd{grid-template-columns:minmax(0,1fr)}.bd>.scene{grid-column:1;grid-row:auto}
+ .app{grid-template-columns:minmax(0,1fr)}
+ .topbar{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg2);border-bottom:1px solid var(--line);padding:10px 16px}
+ .topbar b{font:700 18px var(--disp);text-transform:uppercase}
+ #menu{font:500 12px var(--mono);padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink)}
+ aside{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:7;height:100%;transform:translateX(-102%);transition:transform .2s;box-shadow:0 0 30px #0005}
+ body.menu aside{transform:none}
+ .hero,.cols3,.pgrid,.detail-grid,.prog,.drillpage,.bd-dl,.drill dl{grid-template-columns:minmax(0,1fr)}
+ .lvh{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .chh{grid-template-columns:minmax(0,1fr);gap:6px}.ch-no{flex-direction:row;align-items:baseline;gap:12px;font-size:52px}
+ .stp{grid-template-columns:30px minmax(0,1fr)}.stp .sn{display:none}.stp .sl{grid-column:2}
+ .blist{flex-direction:row;overflow-x:auto}.bsel{min-width:170px}
+ .dlist{flex-direction:row;overflow-x:auto}.dsel{min-width:150px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+.next{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 16px;margin-bottom:18px}.next b{font:700 20px var(--disp);text-transform:uppercase}.next span:not(.eyebrow){color:var(--mute);font-size:14px}.next .btn{margin-left:auto}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.btn.sq{padding:7px 11px;font-size:15px;line-height:1}
+.calw{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.calmain{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+.ctb{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.ctb h3{margin:0 8px;font:600 20px var(--body);text-transform:none;letter-spacing:0;flex:1;min-width:140px}.vsw{display:flex;gap:0}.vsw .btn:first-child{border-radius:6px 0 0 6px}.vsw .btn:last-child{border-radius:0 6px 6px 0;margin-left:-1px}
+.mg{overflow-x:auto}.mh,.mr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-width:640px}
+.mh span{padding:8px;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:center;border-bottom:1px solid var(--line)}
+.mc{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px;display:flex;flex-direction:column;gap:3px;min-width:0}.mc:nth-child(7n){border-right:0}
+.mc.oth{background:var(--bg3);opacity:.7}.dnum{font:500 12px var(--mono);color:var(--mute);align-self:flex-end;padding:1px 5px;border-radius:99px}
+.mc.today .dnum{background:var(--accent);color:var(--accent-ink)}.mc.skipped{background:repeating-linear-gradient(45deg,transparent 0 8px,color-mix(in srgb,var(--line) 60%,transparent) 8px 9px)}
+.ev{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:0;border-radius:5px;background:var(--c);color:#fff;padding:3px 6px;cursor:pointer;font:inherit;width:100%;min-width:0}
+.ev b{font:600 11.5px/1.25 var(--body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;word-break:break-word}.ev small{font:500 10px var(--mono);opacity:.85}.ev:hover{filter:brightness(1.12)}.ev.on{outline:2px solid var(--ink);outline-offset:1px}
+.nop{border:0;background:none;font:500 10px var(--mono);color:var(--mute);cursor:pointer;text-align:left;padding:2px}
+.ag{padding:6px 14px 14px;display:flex;flex-direction:column;gap:2px;max-height:72vh;overflow:auto}.agm{margin:14px 0 4px}
+.agr{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);padding:9px 6px;cursor:pointer;font:inherit}.agr:hover,.agr.on{background:var(--bg3)}.agr.past{opacity:.5}
+.agd{font:500 12px var(--mono);color:var(--mute)}.agc{display:grid;grid-template-columns:12px minmax(0,1fr);gap:0 8px;align-items:center}.agc i{width:12px;height:12px;border-radius:99px;background:var(--c)}.agc b{font-weight:600}.agc small{grid-column:2;color:var(--mute);font-size:12.5px}
+.caldet{position:sticky;top:16px}.dp{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.dp-bar{height:6px;margin:-16px -18px 10px}.dp h3{margin:0;font-size:22px}.dsub{margin:0;color:var(--mute);font-size:13px}.dp p{margin:4px 0;font-size:14px}.dp label{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:8px}
+.dp input,.dp select{font:13px var(--body);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.lnk{border:0;background:none;color:var(--accent);font:500 12px var(--mono);cursor:pointer;padding:0;text-align:left}
+.mini{list-style:none;margin:6px 0;padding:0;display:grid;gap:3px;font-size:13px}.mini span{font:500 11px var(--mono);color:var(--accent);display:inline-block;width:52px}
+.skl{margin:0;padding-left:1.1em;font-size:13px}
+.leg2{display:grid;gap:3px;font-size:12.5px}.leg2 a{text-decoration:none;display:flex;align-items:center;gap:8px}.leg2 i{width:10px;height:10px;border-radius:99px;display:inline-block}
+@media (max-width:900px){.calw{grid-template-columns:minmax(0,1fr)}.caldet{position:static}.agr{grid-template-columns:90px minmax(0,1fr)}}
+.calw{grid-template-columns:minmax(0,1fr)!important}.mc.has{cursor:pointer}.mc.has:hover{background:color-mix(in srgb,var(--accent) 6%,var(--bg2))}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:var(--bg);border-left:1px solid var(--line);box-shadow:-12px 0 40px #0004;z-index:9;overflow:auto;padding:0}
+.drawer[hidden]{display:none}
+.dcard,.drawer>.dp{padding:0 22px 28px;display:flex;flex-direction:column;gap:6px;position:relative}
+.drawer>.dp{padding-top:50px}
+.dcard .dp-bar{height:8px;margin:0 -22px 14px}
+.x{position:absolute;top:16px;right:14px;width:34px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;z-index:2}.x:hover{border-color:var(--accent)}
+.dcard h3{margin:2px 0 0;font-size:26px;padding-right:40px}.dcard .lvl{margin:4px 0 0;font-size:14px}
+.rems{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rem{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--hi);border-radius:8px;background:var(--bg2);text-decoration:none;font-size:12.5px;color:var(--mute);line-height:1.4}.rem b{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}.rem:hover{border-color:var(--accent)}
+.dcb{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.dch{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.dch h4{margin:0;font:600 14px var(--body);text-transform:none;letter-spacing:0}
+.dcb p{margin:0;font-size:13.5px}.dcf{color:var(--mute);font-size:12.5px!important}
+.dcb .scene{margin-top:4px}
+@media (max-width:600px){.rems{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="app">
+<aside id="side"><div class="brand"><small>RCH Elite Training</small><b>Pre-K Curriculum</b><span>Coaches' edition, ages 4 to 6</span></div><nav id="nav" aria-label="Pages"></nav><button id="theme" type="button">Light / Dark</button></aside>
+<div class="mainwrap" style="min-width:0"><div class="topbar"><button id="menu" type="button">Menu</button><b>Pre-K Curriculum</b></div><main id="page"></main></div>
+</div>
+<script>
+// Content for Pre-K / Kindergarten curriculum (original writing). Scenes are declarative, rendered by app.js
+const P = (x,y,team,n,path,dur,begin)=>({t:'p',x,y,team,n,path,dur,begin});
+const B = (x,y,path,dur,begin)=>({t:'ball',x,y,path,dur,begin});
+const C = (x,y,c)=>({t:'cone',x,y,c});
+
+window.CHAPTERS = [
+{
+ n:1, title:'The Game and the Environment', short:'Game & Environment',
+ lead:'Orientation. Players learn the field, the equipment, the routines and the people. Safety and belonging come before skill.',
+ builds:[], focus:{Technical:1,Physical:2,Psychological:4,Social:5},
+ objectives:['Name and point to the goal, sideline and middle of the field','Follow a simple routine: bag, shin guards, water, line up','Separate from parents and join the group within the first 10 minutes'],
+ outcomes:['Arrives ready to play with minimal prompting','Knows the names of coach and at least two teammates','Understands a stop signal (whistle, "freeze")'],
+ concepts:[
+  ['Coach term / child language',[['Field of play','"The big green space"'],['Touchline','"The sideline"'],['Goal','"The net we shoot at"'],['Equipment','"My soccer bag"'],['Stop signal','"Freeze like a statue"']]],
+ ],
+ details:[
+  {h:'Why orientation comes first',p:['Children aged 4 to 6 are still building trust in new adults and new groups. A child who feels safe will try new movements; a child who feels uncertain will hold back. Belonging is the first developmental task of the season.','Use the first sessions to set the routines that every later chapter depends on: a start ritual, a stop signal, a water break, and a closing circle. Consistency matters more than variety at this stage.'],pts:['Greet every child by name at arrival, at eye level','Use one stop signal for the whole season and practice it as a game','Keep instructions to one sentence and demonstrate rather than explain'],scene:'field'},
+  {h:'Space, size and safety',p:['Play on a small field so every child is near the action. A commonly used guide for the youngest ages is a field of roughly 30 by 20 yards with small goals; scale the area to the number of players and adjust to your national federation guidance.','Check the area before each session for holes, glass and unsecured goals. Use cones or flat markers, never hard objects, to mark boundaries.'],pts:['Anchor movable goals and never let children hang on them','Water break every 8 to 10 minutes, more often in heat','Keep first-aid kit and parent contact list on site']},
+  {h:'Practice structure for ages 4 to 6',p:['A typical session lasts 40 to 45 minutes and is built from short activities of 5 to 10 minutes, because attention at this age is brief. Most of the time should be playing, with every child having a ball whenever possible.','The suggested split below is a planning guide. Keep playing time high and waiting time close to zero.'],pts:['Warm-up game 5 to 8 minutes','Skill play 15 to 20 minutes','Small-sided game 10 to 15 minutes','Closing circle 3 to 5 minutes'],chart:'session'}
+ ],
+ drills:[
+  ['Field Tour',8,'All','Full field','Cones','Players hold hands in a line behind the coach and "tour" the field: touch the sideline, walk the center circle, stand in each goal.','Name each part as you touch it; ask children to repeat','Let children lead the tour in pairs','Rushing; skipping the naming'],
+  ['Cone Colors',10,'All','20 x 20 yd','4 colors of cones','Four cone corners with different colors. Coach calls a color; players run to it. Add "freeze" signal.','Praise listening; ask for the color name','Call two colors in a row; add animal movements','Everyone bunches at one corner: add more corners'],
+  ['Name Pass',10,'6 to 10','Circle 10 yd','1 ball per 6','In a circle, roll the ball to a player after saying their name. Receiver says thanks and passes on.','Look, say name, then roll','Two balls at once','Children grab the ball back: use a "wait for your name" rule'],
+  ['First Mini-Game',12,'4 v 4 max','25 x 15 yd','Small goals, bibs','Free play with no restrictions. Coach restarts play with a new ball if it leaves the field.','Watch more than you speak; note who is hesitant','Add a second ball','Coach over-instructing'],
+ ],
+ check:'Child can point to the goal and sideline and respond to the stop signal.'
+},
+{
+ n:2, title:'Movement Foundations', short:'Movement',
+ lead:'Fundamental movement skills are the base for every sport. Balance, running, stopping, jumping and hopping come before ball technique.',
+ builds:[1], focus:{Technical:2,Physical:5,Psychological:3,Social:2},
+ objectives:['Balance on one foot for about 5 seconds on each side','Run, change direction and stop on signal without falling','Jump with two feet and land softly with bent knees'],
+ outcomes:['Controlled stopping on a visual or sound cue','Hops on both feet, alternating','Confident running in a crowded space without contact'],
+ concepts:[['Coach term / child language',[['Static balance','"Flamingo"'],['Deceleration','"Brakes on"'],['Agility','"Change direction fast"'],['Landing','"Quiet like a cat"'],['Spatial awareness','"Bubble around me"']]]],
+ details:[
+  {h:'Fundamental movement skills first',p:['Research in motor development describes stability (balance), locomotor (run, jump, hop, skip) and manipulative skills (kick, throw, catch). Children who master the first two groups find ball skills easier.','At ages 4 to 6, most children are still developing mature running and jumping patterns. Use games that repeat the movement many times without making it feel like a drill.'],pts:['Teach one movement at a time','Demonstrate; then let children try; then add one cue','Celebrate effort and improvement, not perfection'],scene:'trafficlight'},
+  {h:'Balance and body control',p:['Balance supports every soccer action: a plant foot for a kick, a stop before a turn, a block before a tackle. Start with static balance, then add movement.','Use short repetitions. A challenge to hold a pose for five seconds works better than a long drill.'],pts:['Arms out, eyes on a fixed spot','Switch feet and compare: both sides matter','Add a ball in the hands, then at the foot'],chart:'balance'},
+  {h:'Stopping and landing',p:['Stopping safely requires bent knees and a low center of mass. Landing from a jump with soft knees protects joints and builds the base for later receiving skills.','Reinforce with the phrase "brakes on" for stops and "quiet landing" for jumps.'],pts:['Land on the balls of the feet with knees over toes','Avoid long jump challenges onto hard surfaces','Keep groups small so each child gets many repetitions']}
+ ],
+ drills:[
+  ['Traffic Lights',10,'All','20 x 20 yd','None','Coach calls green (run), yellow (walk) and red (freeze). Add a "puddle" call to jump.','Reward the first to freeze, then everyone who freezes; bent knees on red','Add change of direction on yellow','Players bump: widen the space'],
+  ['Flamingo Challenge',6,'All','Anywhere','None','Stand on one foot and count to 5. Switch. Add arm movements, then eyes closed for 2 seconds.','Eyes on a spot, arms out','Hold a beanbag on the head','Dropping the foot too soon: reduce the count'],
+  ['Animal Run',10,'All','25 x 15 yd','Cones','Run to the far line as a bear, frog, snake or rabbit. Combine with jump and hop.','Make each animal a different movement pattern','Race against a "coach monster"','Overlong lines: use several lanes'],
+  ['Hop and Land Circuit',10,'3 stations','10 x 10 yd each','Hoops or flat markers','Station 1 two-foot jumps, 2 hop on left, 3 hop on right. Rotate every 2 minutes.','Quiet landing, soft knees','Combine jump and stop on a signal','Fatigue: shorten work to 20 seconds']
+ ],
+ check:'Child balances 5 seconds on each foot and stops on signal within two steps.'
+},
+{
+ n:3, title:'Ball Familiarization', short:'Ball Familiarization',
+ lead:'The ball becomes familiar. Players learn the surfaces of the foot and make hundreds of touches in a short time.',
+ builds:[1,2], focus:{Technical:5,Physical:3,Psychological:3,Social:1},
+ objectives:['Name sole, inside and laces; use each deliberately','Perform toe taps and sole rolls with both feet','Keep the ball in a small area for several touches'],
+ outcomes:['Comfortable moving with a ball in a crowded space','Uses both feet in play','Starts to self-correct touch strength'],
+ concepts:[['Coach term / child language',[['Sole','"Bottom of my foot"'],['Inside of the foot','"Inside, near the big toe"'],['Laces','"Top of my foot"'],['Touch','"One tap"'],['Both feet','"Left and right"']]]],
+ details:[
+  {h:'Surfaces of the foot',p:['The inside is used for passing and controlled dribbling. The sole is used to stop and roll the ball. The laces are used to shoot and drive the ball. Start with the first two, which are the most reliable for young children.','Surface names should be consistent between coaches and the textbook so that children hear the same words all season.'],pts:['Touch the surface with a hand before the foot','Ask "which part of your foot touched the ball?"','Introduce the outside only after the inside is secure'],scene:'toetap'},
+  {h:'Touch volume and rhythm',p:['Skill at this age grows through large numbers of repetitions in a playful setting. Games where every child has a ball can deliver hundreds of touches in a ten-minute window.','Rhythm games (tap, tap, roll) help children link movements and develop coordination.'],pts:['One ball per child','Count touches in 30 seconds as a friendly personal challenge','Praise effort and improvement, not comparison'],chart:'touches'},
+  {h:'Left and right',p:['Early habits form quickly. If children only use their favored foot, the weaker foot will lag. Build both-foot play into every game from the start.','A simple rule helps: every second touch with the other foot.'],pts:['Alternate feet with the "tick tock" cue','Do not correct more than one thing at a time','Celebrate weaker-foot attempts']}
+ ],
+ drills:[
+  ['Toe Taps',8,'All','20 x 20 yd','1 ball each','Alternate tapping the top of the ball with each foot. 30-second rounds.','Quick light taps; eyes up at times','Add a move forward and back','Stepping on the ball: lower the pace'],
+  ['Sole Rolls',8,'All','20 x 20 yd','1 ball each','Roll the ball side to side and forward and back with the sole.','Soft sole, ball stays close','Roll into a space and stop','Heavy foot: ask for "feather" touches'],
+  ['Ball Shop',10,'All','20 x 20 yd','Balls, cones','Players dribble around "shopping" in cones that are the items; stop on call and touch a cone.','Look for space; keep the ball close','Different cone colors for different tasks','Collisions: define lanes'],
+  ['Touch Count Game',8,'All','20 x 20 yd','1 ball each','Count touches in 30 seconds with the inside only. Coach records the best score for each child.','Use quick, small touches','Beat a personal best','Counting out loud interferes: use fingers']
+ ],
+ check:'Child can name three foot surfaces and perform 20 toe taps in 30 seconds.'
+},
+{
+ n:4, title:'Dribbling and Awareness', short:'Dribbling',
+ lead:'Moving with the ball under control while seeing the environment. Head up, change of direction and use of space.',
+ builds:[2,3], focus:{Technical:5,Physical:3,Psychological:3,Social:2},
+ objectives:['Dribble with small touches in a straight line and around cones','Look up between touches to find space','Change direction with the inside and outside of the foot'],
+ outcomes:['Keeps the ball close at moderate pace','Avoids other players while dribbling','Chooses open space'],
+ concepts:[['Coach term / child language',[['Dribbling','"Run with the ball"'],['Close control','"Ball glued to feet"'],['Scanning','"Heads up"'],['Space','"Empty grass"'],['Change of direction','"Turn like a car"']]]],
+ details:[
+  {h:'Close control',p:['The ball should stay within about a step of the player. Small, frequent touches keep it close; large touches push it away and invite pressure.','Teach pace in stages: walk with the ball, jog with the ball, then run. The ball should always move with the player.'],pts:['Inside of the foot first','Touch every step if needed','Count how many cones in a row with no stray touch'],scene:'zigzag'},
+  {h:'Head up and scanning',p:['Beginner dribblers watch the ball. Encourage a quick glance up, then back down, then up again. Use a visual game: the coach holds up fingers, and players say the number while dribbling.','This is the first link between technical skill and decision making.'],pts:['Look up every 3 touches','Use the coach as the "spotter"','Make the ball slower so eyes can be lifted'],scene:'fingers'},
+  {h:'Space and direction',p:['Children learn that open space is where they can play freely. Introduce the concept with games that reward moving into empty areas and avoiding crowds.','Dribbling with a turn is the first tactical skill: change direction to escape pressure.'],pts:['Point out empty areas with a hand','Rotate groups to avoid crowding','Add gates to dribble through for variety'],chart:'dribble'}
+ ],
+ drills:[
+  ['Zigzag Dribble',10,'Groups of 4','15 yd lanes','5 cones, balls','Players dribble through a line of cones using inside touches. Return along the outside.','Small touches, change foot at each cone','Use only the weaker foot; add outside touches','Ball escapes: reduce speed'],
+  ['Gates Game',10,'All','20 x 20 yd','10 gates (2 cones each)','Dribble through as many gates as possible in 60 seconds. Count and try to beat the score.','Look for open gates','Only gates of a certain color','Same gate repeatedly: add a rule'],
+  ['Heads Up',8,'All','20 x 20 yd','1 ball each','Coach shows fingers, children call the number while dribbling.','Quick glance, then back to the ball','Add colors or shapes','Looking without moving the ball: ask for both'],
+  ['Shark Tank',10,'All','20 x 20 yd','Balls, a few bibs','Two players are "sharks" without a ball. Dribblers keep the ball away. If caught, they swap.','Use space and change direction','Increase the number of sharks','Frustration: keep roles rotating']
+ ],
+ check:'Child dribbles through 5 cones without losing the ball and glances up at least twice.'
+},
+{
+ n:5, title:'Receiving and Control', short:'Receiving',
+ lead:'Stopping and controlling the ball under pressure of time. Cushioning, positioning the body and first touch.',
+ builds:[3,4], focus:{Technical:5,Physical:2,Psychological:3,Social:3},
+ objectives:['Stop a rolled ball with the sole or the inside of the foot','Cushion the ball by relaxing the receiving foot','Drag the ball back and turn'],
+ outcomes:['Controls a rolled ball within one step','Positions the body behind the line of the ball','Starts to receive with the inside rather than the toe'],
+ concepts:[['Coach term / child language',[['Receiving','"Catching with your foot"'],['Cushioning','"Pillow foot"'],['First touch','"The first tap"'],['Drag back','"Pull it toward me"'],['Body shape','"Face the ball"']]]],
+ details:[
+  {h:'Cushioning',p:['A relaxed foot absorbs the ball energy. Children who tense the leg make the ball bounce away. Use the picture of a pillow or sponge to help.','Start with slow rolled balls, then add small speed.'],pts:['Foot slightly off the ground, toes up','Soft ankle','Eyes on the ball until it stops'],scene:'cushion'},
+  {h:'Body position',p:['The player should line up behind the ball and face the passer. Moving to the ball (not waiting) gives more time and control.','Introduce the idea of "show for the ball": step toward the passer when the ball comes.'],pts:['Feet shoulder-width apart','Knees slightly bent','Take one step toward the ball']},
+  {h:'Control and turn',p:['A drag back with the sole pulls the ball out of pressure and starts a change of direction. This is the first move combining control and turning.','Practice in a stationary form first, then in motion.'],pts:['Sole on top of the ball','Pull back and turn the body','Dribble away with the inside'],chart:'control'}
+ ],
+ drills:[
+  ['Pillow Foot',8,'Pairs','5 yd apart','1 ball per pair','Partners roll to each other. Receiver stops the ball under the sole and rolls back.','Relax the foot','Use the inside to stop','Ball bounces away: slow the roll'],
+  ['Stop and Go',10,'All','20 x 20 yd','1 ball each','Dribble and on the whistle stop the ball with the sole. Then go again.','Stop the ball, not only the feet','Stop with the inside','Overrunning the ball: slow the pace'],
+  ['Drag and Turn',10,'All','15 x 15 yd','Balls, cones','Drag back with the sole and turn to dribble to the next cone.','Pull with the sole, turn the body','Use both feet','Pushing instead of pulling: demonstrate'],
+  ['Catch the Roll',8,'Groups of 3','5 yd line','1 ball','Coach rolls to each child who stops the ball and passes it back.','Move to the ball','Increase roll speed','Waiting: step toward the ball']
+ ],
+ check:'Child stops 4 out of 5 slow rolled balls within one step.'
+},
+{
+ n:6, title:'Passing and Cooperation', short:'Passing',
+ lead:'The first team skill. Passing with the inside of the foot, calling for the ball and moving to a new position.',
+ builds:[3,5], focus:{Technical:4,Physical:2,Psychological:3,Social:5},
+ objectives:['Pass accurately to a partner 5 yards away using the inside of the foot','Call for the ball and make eye contact','Move after passing'],
+ outcomes:['Passes and receives in pairs and threes','Shares the ball in small groups','Understands "pass and move"'],
+ concepts:[['Coach term / child language',[['Pass','"Share the ball"'],['Inside of foot pass','"Pass with the inside"'],['Call','"Say my name"'],['Support','"Be a friend"'],['Pass and move','"Pass and run"']]]],
+ details:[
+  {h:'The inside foot pass',p:['The plant foot points toward the target and sits beside the ball. The kicking foot is turned out and the ankle locked. Contact is with the center of the ball and the follow through is toward the target.','Break into steps: plant, point, strike, follow.'],pts:['Look at the target before and after the pass','Ankle firm, toe up','Start with a standing ball'],scene:'pass'},
+  {h:'Communication and eye contact',p:['Passing is a social act. Children learn to call a teammate by name or say "here". This builds trust and the habit of cooperative play.','The simple rule is: look, call, pass.'],pts:['Praise good calling','Use partners who like to talk','Let children choose their partners'],scene:'triangle'},
+  {h:'Pass and move',p:['After passing, the player moves to a new space. This creates the basic structure of combination play and prepares for later concepts such as the triangle.','Use markers so children know where to run.'],pts:['Use cones for positions','Rotate positions after each pass','Add a second ball once the pattern is secure'],chart:'pass'}
+ ],
+ drills:[
+  ['Partner Pass',10,'Pairs','6 yd apart','1 ball per pair','Pass back and forth with the inside, trying to keep the ball moving.','Plant, point, strike','Move apart; use one touch','Wild passes: shorten distance'],
+  ['Triangle Pass',12,'Groups of 3','Triangle 6 yd','1 ball','Pass to the next player and move to the next cone.','Call, pass, move','Add a second ball','Players stop: use a count'],
+  ['Pass the Treasure',10,'3 v 1','10 x 10 yd','Ball','Three players keep the ball from one defender, who is passive at first.','Make yourself easy to pass to','Defender becomes active','Hogging the ball: rule of 2 touches max'],
+  ['Pass Through Gates',10,'Pairs','Several gates','Balls, cones','Pass through a gate to your partner.','Look at the gate and partner','Smaller gates','Passing too hard: practice speed']
+ ],
+ check:'Child makes 5 of 10 passes to a partner using the inside of the foot.'
+},
+{
+ n:7, title:'Shooting and Scoring', short:'Shooting',
+ lead:'Striking the ball with the laces toward a target, scoring goals and celebrating respectfully.',
+ builds:[3,4,6], focus:{Technical:5,Physical:3,Psychological:4,Social:2},
+ objectives:['Strike a ball with the laces toward a goal','Aim at corners and targets','Follow through with the kicking leg'],
+ outcomes:['Shoots after a short dribble','Shoots with either foot','Celebrates scoring without disrespect'],
+ concepts:[['Coach term / child language',[['Shot','"Kick it at the goal"'],['Laces','"The top of my shoe"'],['Plant foot','"Standing foot"'],['Follow through','"Swing through"'],['Target','"The corner"']]]],
+ details:[
+  {h:'Laces technique',p:['Laces shoot with power. The plant foot sits beside the ball, toes pointing at the target, and the kicking foot strikes through the center with the ankle locked and toes down.','Allow children to start with a still ball and short run.'],pts:['Eyes on the ball at contact','Knee over the ball','Swing the leg through the target'],scene:'shoot'},
+  {h:'Targets and accuracy',p:['Placing targets such as cones in the corners gives a clear challenge. Start with a very large goal and reduce size slowly.','Count goals and misses without penalty to maintain motivation.'],pts:['Use cones or bibs for targets','Reward hitting targets','Keep success rate high'],chart:'shoot'},
+  {h:'Attitude toward scoring',p:['Celebration is part of the joy of the game. Teach children to celebrate with their team and to greet the other team afterward.','Emphasize effort over outcome. A missed shot is a normal part of learning.'],pts:['Ask "what did you notice?" after a miss','Cheer for all attempts','Rotate shooters so all get turns']}
+ ],
+ drills:[
+  ['Stand and Strike',8,'Pairs','Goal 10 yd','Ball, small goal','Place the ball and strike with laces at a goal. Take 10 shots each.','Plant, laces, follow through','Move farther back','Toe poke: demonstrate laces'],
+  ['Corner Targets',10,'Groups of 4','Goal','Cones','Cones in corners; hit a cone to score extra.','Aim, then strike','Use the weaker foot','Frustration: lower difficulty'],
+  ['Dribble and Shoot',10,'Groups of 4','20 yd','Ball, goal','Dribble 3 touches then shoot.','Look up before the shot','Add a passive goalkeeper','Slow down before shooting'],
+  ['Goal Party',10,'All','Small field','Several small goals','Free play with many goals so everyone scores.','Encourage shots','Add team scores','No passing: introduce a pass rule']
+ ],
+ check:'Child hits the target area with 4 out of 10 shots from 8 yards.'
+},
+{
+ n:8, title:'Attacking and Defending in 1 v 1', short:'1 v 1',
+ lead:'The first duel. Attackers use simple moves to beat a defender; defenders stay between ball and goal and win the ball safely.',
+ builds:[4,5,7], focus:{Technical:4,Physical:3,Psychological:4,Social:3},
+ objectives:['Perform a simple fake and accelerate past a defender','Defend by staying goal-side and getting low','Switch roles at the moment possession changes'],
+ outcomes:['Attempts to beat a defender in 1 v 1','Presses and tries to poke the ball away without fouling','Moves from attack to defence quickly'],
+ concepts:[['Coach term / child language',[['Attack','"We have the ball"'],['Defend','"They have the ball"'],['Fake','"Pretend to go one way"'],['Goal-side','"Between the ball and my goal"'],['Transition','"Switch"']]]],
+ details:[
+  {h:'Beating a defender',p:['Introduce a basic fake: shift the body one way, then take the ball the other way and accelerate. Success depends on the change of pace as much as the fake.','Keep the first attempts simple and uncontested, then add a passive defender.'],pts:['Fake with the shoulders and eyes','Touch the ball into space','Accelerate for 3 steps'],scene:'fake'},
+  {h:'Defending basics',p:['Defending is introduced as a game of "winning the ball back". Teach the defender to approach, slow down and get low, keep eyes on the ball and poke it away when possible.','Avoid diving in. Staying on feet is the first defensive principle.'],pts:['Stay between ball and goal','Side-on stance','Use a toe poke, never grab or push'],scene:'goalside'},
+  {h:'Transitions',p:['Soccer constantly changes between attack and defense. The coach calls "attack" or "defend" and players switch behavior. This builds the basis for team shape later.','Reward players who react fastest.'],pts:['Use a clear signal','Switch roles often','Keep scoring simple']}
+ ],
+ drills:[
+  ['Fake and Go',10,'All','15 x 15 yd','Cones, balls','Dribble to a cone, fake, then accelerate away.','Fake, touch, speed','Use both sides','Fake too slow: increase tempo'],
+  ['1 v 1 to Gates',10,'Pairs','10 x 10 yd','Cones, balls','Attacker tries to dribble through a gate; defender tries to win the ball.','Staying low and patient','Add a second gate','Over-physical play: define contact rules'],
+  ['Shadow Defender',8,'Pairs','20 x 10 yd','None','One dribbles, the partner stays goal-side without tackling.','Side-on stance','Add a ball and light pressure','Chasing: slow the dribbler'],
+  ['Attack-Defend Switch',10,'All','20 x 20 yd','Balls','Coach calls switch; players change roles.','React quickly','Add scoring','Confusion: simplify the call']
+ ],
+ check:'Child attempts a fake in a 1 v 1 and stays on feet when defending.'
+},
+{
+ n:9, title:'Rules and Fair Play', short:'Rules & Fair Play',
+ lead:'Learning the basic laws through play and building the habits of sportsmanship, respect and listening.',
+ builds:[1,8], focus:{Technical:1,Physical:1,Psychological:4,Social:5},
+ objectives:['Respond to a whistle by stopping and listening','Perform a legal throw-in with two hands','Understand that only the goalkeeper uses hands'],
+ outcomes:['Respects the referee and coach','Shakes hands after the game','Takes turns and shares'],
+ concepts:[['Coach term / child language',[['Throw-in','"Throw it back in"'],['Handball','"No hands except the goalie"'],['Referee','"The game helper"'],['Fair play','"Play kindly"'],['Respect','"Be a good friend"']]]],
+ details:[
+  {h:'Rules as part of the game',p:['At this age, rules should arise naturally from play. Introduce one rule at a time when it matters, such as throw-ins when the ball leaves the field.','Adapt rules to the child level. For example, allow a second attempt at a throw-in to keep the game moving.'],pts:['Introduce rules in context','Use positive wording','Let children be the referee for a short time'],scene:'throwin'},
+  {h:'Fair play and character',p:['Sportsmanship is taught by modeling and repeated rituals. High fives, handshakes and helping a teammate up are simple, concrete behaviors.','Praise acts of fair play as strongly as goals.'],pts:['Recognise a "Fair Play" player each session','End every game with handshakes','Coaches model respect for officials']},
+  {h:'Listening and self control',p:['Waiting, listening and taking turns are skills as well. Use games that practice stopping and starting on signal.','These habits make later coaching more effective.'],pts:['Use the stop signal often','Wait for a quiet moment before instructions','Praise good listening']}
+ ],
+ drills:[
+  ['Whistle Freeze',8,'All','20 x 20 yd','Balls, whistle','Dribble; stop and freeze on whistle.','Instant reaction','Different signals','Ignoring signals: practice shorter games'],
+  ['Throw-In Practice',10,'Pairs','10 x 10 yd','Ball','Practice a two-hand throw over the head.','Both feet on ground, both hands','Throw to a target','One-handed throws: demonstrate'],
+  ['Referee for a Day',12,'Small teams','Small field','Whistle, bibs','Children take turns as referee for a short game.','Positive feedback','Add a second ref','Arguments: coach supports ref'],
+  ['Good Game Line',5,'All','Field edge','None','End of game handshake line.','Look and say good game','Pairs choose a compliment','Rushing: model it']
+ ],
+ check:'Child stops on whistle and performs a throw-in with two hands.'
+},
+{
+ n:10, title:'The Team Game', short:'Team Game',
+ lead:'Bringing it together in small-sided games. Basic roles, spreading out, shared spaces and team culture.',
+ builds:[1,2,3,4,5,6,7,8,9], focus:{Technical:3,Physical:3,Psychological:4,Social:5},
+ objectives:['Spread out to create space','Try different roles including goalkeeper','Play a complete small-sided game with simple rules'],
+ outcomes:['Moves into space without the ball','Passes, dribbles and shoots in a game setting','Enjoys playing with the team'],
+ concepts:[['Coach term / child language',[['Position','"My job"'],['Goalkeeper','"The one who guards the goal"'],['Spread out','"Not a beehive"'],['Team shape','"Our triangle"'],['Match day','"Game day"']]]],
+ details:[
+  {h:'Spread out',p:['Young players tend to swarm around the ball. Teach spacing with a simple picture: each player owns a patch of grass and stays out of others patches.','Use cone markers or colored zones as visual help.'],pts:['Ask "where is the empty space?"','Pause the game to show the shape','Reward players who spread'],scene:'spread'},
+  {h:'Trying roles',p:['At this stage there are no permanent positions. Children should try goalkeeper, defender and attacker roles so that they develop broadly and discover their preferences.','Set a simple rule: after each game everyone changes role.'],pts:['Introduce goalkeeper with hands inside the area','Avoid fixing roles','Celebrate each role']},
+  {h:'Team culture',p:['Teams develop when children enjoy time together. Rituals such as a team chant, a shared snack and a buddy system strengthen belonging.','Parents are part of this. Invite them to a match day celebration.'],pts:['Create a team name together','End each session with a circle','Keep results unimportant'],scene:'matchday'}
+ ],
+ drills:[
+  ['3 v 3 Spread Out',12,'3 v 3','25 x 15 yd','Small goals, bibs','Play 3 v 3 with a rule: every player must stay in their own zone.','Spread out','Remove the zones','Bunching: freeze and fix'],
+  ['Role Rotation',12,'Teams','Small field','Bibs','After each goal rotate roles including keeper.','Everyone tries each role','Add more keepers','Keeper hesitation: coach starts it'],
+  ['Mini Tournament',20,'Teams of 4','Several fields','Cones, bibs','Short games with no table, no standings.','Fun and effort','Parents join as supporters','Overcompetitive adults: set expectations'],
+  ['Team Celebration',10,'All','Field edge','Snacks','Closing circle, team chant, snacks.','Praise teamwork','Awards for effort','Skipping it: keep it every time']
+ ],
+ check:'Child plays in a small-sided game, spreads out and tries at least two roles.'
+}
+];
+</script>
+<script>
+// Depth additions: learning notes, faults and fixes, goalkeeper chapter, drill-scene mapping
+(function(){
+const CH=window.CHAPTERS;
+const WHY=[
+ 'Children aged 4 to 6 settle when the environment is predictable. Familiar routines reduce anxiety and free attention for learning, so the first chapter is about trust, not technique. Expect some children to cling to a parent or watch from the side for several sessions; invite, never force.',
+ 'Fundamental movement skills develop through practice, not through age alone. Balance, running, jumping and landing form the physical literacy that later sports skills sit on. Short, repeated, playful bouts work better than long drills because attention and muscular endurance are limited at this age.',
+ 'Learning at this age is mostly implicit: children improve by doing many varied touches, not by listening to explanations. A child with a ball at their feet for most of the session gets far more useful repetition than one waiting in a line. Aim for hundreds of touches per session.',
+ 'Young children focus on one thing at a time, usually the ball. The "head up" habit is built slowly by lowering the demand on the feet (slower ball, more space) so that attention can be spared to look around. Do not expect scanning before the ball is under control.',
+ 'Receiving requires the child to judge speed and direction of a moving object and coordinate a soft foot at the right moment. Eye-foot tracking is still maturing, so start with slow, rolled balls and keep success rates high before adding pace.',
+ 'Passing is a social behavior as much as a technical one. Four- to six-year-olds are often self-focused, and this is normal. Give them reasons to pass (games where passing earns points or opens goals) rather than instructions to share.',
+ 'Shooting is the most motivating action in the game. Use that: keep the number of shots high and success rates fair with large goals and short distances. Praise attempts, because fear of missing is the main thing that stops young players from shooting.',
+ 'One-versus-one duels introduce competition. Some children enjoy it immediately and others find it stressful. Keep contact rules clear, rotate partners so that results are balanced, and make the first duels about learning moves, not winning.',
+ 'Rules are understood best when met in context. A child who has just seen the ball roll out understands a throw-in better than one who has been told about it in advance. Keep the explanations short and give children a chance to act as referees.',
+ 'Team concepts such as spacing and roles are early in development at this age. Children may still prefer to chase the ball in a pack. Visual markers, small groups and frequent rotation are more effective than tactical explanations.',
+ 'Goalkeeping can be exciting or frightening. Fear of the ball is common, so start with rolled balls and soft balls, celebrate brave attempts and let every child try. Permanent goalkeepers are not appropriate at this age.'
+];
+const FAULTS=[
+ [['Child will not leave the parent','Unfamiliar place and people','Let the parent stay close at first; give the child a job (carry a cone) and a buddy'],['Children ignore the stop signal','Signal not practiced or unclear','Turn the signal into a game and use only one signal all year'],['Long explanations lose the group','Attention span is short','One sentence, one demonstration, then play']],
+ [['Falls on landing','Stiff legs or too much height','Reduce height; cue "quiet landing, soft knees"'],['Cannot hold balance','Looking around or arms down','Eyes on a spot, arms out; shorten the hold'],['Collisions when running','Space too small or too many players','Enlarge the area or split into two groups']],
+ [['Steps on the ball','Too fast or looking away','Slow down; ask for "feather" taps'],['Only uses the favorite foot','Habit and comfort','Alternate-foot rule: every second touch with the other foot'],['Kicks the ball far away','Touch too hard','Reduce the area; reward touches that stay in the zone']],
+ [['Ball always far from feet','Large touches','Walk with the ball first; count touches per step'],['Head stays down','Needs all attention for the ball','Slower pace and bigger space before asking for looks'],['Dribbles into crowds','Not scanning for space','Use colored zones; ask "where is the empty grass?"']],
+ [['Ball bounces off the foot','Stiff ankle','Pillow-foot cue; slower roll'],['Waits for the ball to arrive','Passive stance','Step toward the ball as it arrives'],['Stops the ball with the toe','Poor foot angle','Use the sole or inside; demonstrate flat foot']],
+ [['Passes go wide','Plant foot points elsewhere','Plant foot toward the target; shorten distance'],['Passes with the toe','Habit from kicking','Inside-of-foot cue; "kick with the side"'],['Hogs the ball','Wants to keep control','Use games that reward passing, such as 3 v 1 with a pass requirement']],
+ [['Toe poke','Habit and nerves','Laces cue; demonstrate the foot shape'],['Plant foot too far away','Misjudged distance','Mark a spot beside the ball with a cone'],['Does not follow through','Stops the leg at contact','Cue "swing through the goal"']],
+ [['Fake too slow','Not committing','Exaggerate the shoulder drop; add a change of pace'],['Defender dives in','Excitement','Cue "stay on your feet, get low"'],['Fouls or pushes','Frustration','Set clear contact rules; rotate pairs']],
+ [['Ignores the whistle','Distracted','Practice freeze games; reward the first to freeze'],['One-handed throw-in','Does not know the rule','Hold the ball with two hands on a model throw'],['Arguments over decisions','Competition','Coach supports the child referee; keep games short']],
+ [['All players cluster','Chasing the ball','Pause and point to empty areas; use zone markers'],['Refuses a role','Fear or preference','Offer an alternative role for a short time and rotate'],['Overcompetitive parents','High adult emphasis on results','Set expectations before the season; no table or standings']],
+ [['Flinches from the ball','Fear of being hit','Use soft or deflated balls; start from rolls'],['Stays rooted on the line','Unsure what to do','Cue "come to the ball" and give a simple task'],['Throws the ball away after saving','No plan for distribution','Teach rolling out to a target cone']]
+];
+const GK={
+ n:11,title:'Goalkeeper Basics',short:'Goalkeeper',
+ lead:'A first, playful introduction to goalkeeping. Every child tries it. Ready position, stopping rolled balls, picking the ball up and rolling it out.',
+ builds:[2,5,7,8],focus:{Technical:4,Physical:3,Psychological:5,Social:3},
+ objectives:['Take a ready position with hands in front and knees bent','Stop and pick up a rolled ball with both hands','Roll the ball out to a teammate or target'],
+ outcomes:['Tries the goalkeeper role without fear','Uses hands only inside the goal area','Calls "keeper" or "mine" when taking the ball'],
+ concepts:[['Coach term / child language',[['Ready position','"Ready like a spider"'],['Scoop','"Pick it up like a shovel"'],['Goal area','"The keeper house"'],['Roll out','"Roll it to a friend"'],['Call','"Mine!"']]]],
+ details:[
+  {h:'Ready position and brave attitude',p:['The ready position is balanced, with feet shoulder-width apart, knees bent, weight on the balls of the feet and hands out in front. It links directly to the balance work in Chapter 2.','Confidence is the main theme at this age. Celebrate every attempt, not only saves. A child who tries is progressing.'],pts:['Hands out in front, palms facing the ball','Eyes on the ball','Small bouncy steps rather than standing still'],scene:'keeper'},
+  {h:'Stopping and scooping',p:['Begin with slow rolled balls straight at the child. The child gets behind the ball, kneels or bends, and scoops it into the chest with both hands. A soft ball reduces fear.','Gradually add small angles and a little more speed once the straight ball is secure.'],pts:['Get the body behind the ball','Scoop with both hands under the ball','Hug the ball into the chest']},
+  {h:'Distribution and communication',p:['After the save, the keeper rolls the ball out to a teammate or a target cone. Rolling out is easier and safer than throwing at this age.','Keepers call "mine" or "keeper" to show they are taking the ball. This builds the habit of communication from the beginning.'],pts:['Roll low and along the ground','Aim for a cone or a teammate','Say "mine" loudly when taking the ball']}
+ ],
+ drills:[
+  ['Spider Ready',6,'All','10 x 10 yd','None','Players take the ready position when the coach says "spider" and move with small steps around the area.','Knees bent, hands forward','Add a ball in the hands','Standing flat-footed: demonstrate the bounce'],
+  ['Roll and Scoop',10,'Pairs','5 yd apart','Soft ball per pair','A partner rolls the ball; the keeper scoops it with both hands.','Behind the ball, hug it','Add a small angle','Fear of the ball: use softer balls'],
+  ['Save and Roll Out',10,'Groups of 3','Small goal','Balls, small goal, cones','A shooter rolls a ball at the goal; keeper stops it and rolls it to a target cone.','Mine! Then roll low','Slightly faster shots','Throwing too high: cue "roll like a bowling ball"'],
+  ['Keeper Rotation Game',12,'3 v 3','Small field','Small goals, bibs','Play a short game; after each goal the scored-on team picks a new keeper.','Everyone gets a turn','Add a second goal','Child refuses: allow a trial for 1 minute']
+ ],
+ check:'Child takes a ready position and stops a slow rolled ball with both hands, then rolls it out.'
+};
+CH.forEach((c,i)=>{c.why=WHY[i];c.faults=FAULTS[i];});
+GK.why=WHY[10];GK.faults=FAULTS[10];
+CH.push(GK);
+// drill scene mapping: [template, caption]
+window.DSCENE={
+ 1:[['tour','Players follow the coach around the field and touch each part as it is named.'],['colors','Coach calls a color; players run to that corner. Freeze on the signal.'],['circle','The ball is rolled to the named player in the circle.'],['smallgame','Free play with no restrictions; the coach watches.']],
+ 2:[['trafficlight','Green run, yellow walk, red freeze.'],['balance','Hold one foot for five seconds, then switch.'],['lanes','Move along lanes as different animals.'],['stations','Three stations: jump, hop left, hop right. Rotate every two minutes.']],
+ 3:[['free','Alternate toe taps on the ball in a personal square.'],['free','Roll the ball side to side with the sole.'],['gates','Dribble around the shop and stop at a cone on the call.'],['free','Count touches in 30 seconds with the inside of the foot.']],
+ 4:[['zigzag','Inside touches around the cones; return outside.'],['gates','Score points for each gate dribbled through.'],['fingers','Call the coach\'s number while dribbling.'],['shark','Sharks try to win the ball; dribblers use space.']],
+ 5:[['cushion','Receiver relaxes the foot and stops the ball.'],['free','Dribble, stop on the whistle with the sole, go again.'],['lanes','Drag back, turn and dribble to the next cone.'],['pairs','Coach rolls to each child who stops and returns.']],
+ 6:[['pairs','Pass back and forth with the inside of the foot.'],['triangle','Pass and move to the next cone.'],['smallgame','3 v 1 keep-away with a passive defender.'],['gates','Pass through a gate to your partner.']],
+ 7:[['shoot','Stand and strike, plant foot beside the ball.'],['shoot','Hit the corner targets for bonus points.'],['shoot','Dribble three touches, then shoot.'],['smallgame','Many small goals; everyone scores.']],
+ 8:[['fake','Fake at the cone, then accelerate.'],['gates','1 v 1 to a gate: attacker dribbles, defender tries to win.'],['goalside','Shadow the dribbler staying goal-side.'],['colors','Switch attack and defense on the coach call.']],
+ 9:[['freeze','Dribble; freeze when the whistle blows.'],['throwin','Throw-in with two hands over the head.'],['smallgame','Children take turns refereeing a short game.'],['circle','Line up and say "good game" to each player.']],
+ 10:[['smallgame','3 v 3 where each player stays in a zone.'],['smallgame','Rotate roles after every goal.'],['smallgame','Short mini-games without a table.'],['circle','Team chant and snack to close.']],
+ 11:[['balance','Ready position, then move with small steps.'],['pairs','A rolled ball is scooped and hugged.'],['keeper','Stop the shot, call mine, roll out to the cone.'],['smallgame','Rotate the keeper after every goal.']]
+};
+})();
+</script>
+<script>
+// Animated tactical-board scenes (SVG + SMIL). Coordinates in a 600 x 340 board.
+(function(){
+const W=600,H=340;
+const rel=(x,y,pts)=>'M0,0 '+pts.map(p=>'L'+(p[0]-x)+','+(p[1]-y)).join(' ');
+const loop=(x,y,pts)=>rel(x,y,pts.concat([[x,y]]));
+const pl=(x,y,team,n,pts,dur,o={})=>({t:'p',x,y,team,n,pts,dur,...o});
+const bl=(x,y,pts,dur,o={})=>({t:'ball',x,y,pts,dur,...o});
+const cn=(x,y,c)=>({t:'cone',x,y,c});
+const lb=(x,y,text,o={})=>({t:'label',x,y,text,...o});
+
+function pitch(lines){
+  let s=`<rect width="${W}" height="${H}" fill="var(--turf)"/>`;
+  for(let i=0;i<10;i++) if(i%2) s+=`<rect x="${i*60}" y="0" width="60" height="${H}" fill="var(--turf2)"/>`;
+  if(lines!==false) s+=`<rect x="16" y="16" width="${W-32}" height="${H-32}" fill="none" stroke="var(--line)" stroke-width="2"/>`;
+  return s;
+}
+function motion(o,x,y){
+  if(!o.pts) return '';
+  const path=o.loop===false?rel(x,y,o.pts):loop(x,y,o.pts);
+  const kp=o.kp?` keyPoints="${o.kp}" keyTimes="${o.kt}" calcMode="${o.spl?'spline':'linear'}"${o.spl?` keySplines="${o.spl}"`:''}`:'';
+  return `<animateMotion dur="${o.dur}s" begin="${o.begin||0}s" repeatCount="indefinite" path="${path}"${kp}/>`;
+}
+const TEAM={a:'var(--ta)',b:'var(--tb)',k:'var(--tk)',c:'var(--tc)'};
+function item(o){
+  switch(o.t){
+   case 'cone': return `<g transform="translate(${o.x},${o.y})"><path d="M-7,6 L0,-8 L7,6 Z" fill="${o.c||'var(--cone)'}" stroke="#0006" stroke-width="1"/></g>`;
+   case 'goal': return `<g transform="translate(${o.x},${o.y})"><rect x="${-o.w/2}" y="${-o.h/2}" width="${o.w}" height="${o.h}" fill="#ffffff22" stroke="#fff" stroke-width="3"/><path d="M${-o.w/2},${-o.h/2} L${o.w/2},${o.h/2} M${o.w/2},${-o.h/2} L${-o.w/2},${o.h/2}" stroke="#fff5" stroke-width="1"/></g>`;
+   case 'zone': return `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="4" fill="${o.fill||'none'}" stroke="${o.stroke||'#fff8'}" stroke-width="2" stroke-dasharray="${o.dash||'6 5'}">${o.pulse?'<animate attributeName="opacity" values="1;.25;1" dur="1.6s" repeatCount="indefinite"/>':''}</rect>`+(o.label?`<text x="${o.x+o.w/2}" y="${o.y+o.h/2+4}" class="sc-t" text-anchor="middle">${o.label}</text>`:'');
+   case 'circle': return `<circle cx="${o.x}" cy="${o.y}" r="${o.r}" fill="${o.fill||'none'}" stroke="${o.stroke||'var(--line)'}" stroke-width="2" ${o.dash?`stroke-dasharray="${o.dash}"`:''}/>`;
+   case 'line': return `<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="${o.stroke||'var(--line)'}" stroke-width="${o.w||2}" ${o.dash?`stroke-dasharray="${o.dash}"`:''}/>`;
+   case 'label': return `<text x="${o.x}" y="${o.y}" class="sc-t ${o.cls||''}" text-anchor="${o.anchor||'middle'}">${o.text}</text>`;
+   case 'link': {
+      const xs=o.pts.map(p=>p[0]).concat([o.pts[0][0]]).join(';'), ys=o.pts.map(p=>p[1]).concat([o.pts[0][1]]).join(';');
+      const kt=o.kt?` keyTimes="${o.kt}"`:'';
+      return `<line x1="${o.x1}" y1="${o.y1}" x2="${o.pts[0][0]}" y2="${o.pts[0][1]}" stroke="#fff" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="x2" values="${xs}" dur="${o.dur}s" repeatCount="indefinite"${kt}/><animate attributeName="y2" values="${ys}" dur="${o.dur}s" repeatCount="indefinite"${kt}/></line>`;
+   }
+   case 'light': {
+      const c=['#e5484d','#f5b82e','#2fa35b']; const d=o.dur;
+      let s=`<g transform="translate(${o.x},${o.y})"><rect x="-16" y="-44" width="32" height="88" rx="8" fill="#111c"/>`;
+      c.forEach((col,i)=>{const v=[0,0,0];v[i]=1;
+        s+=`<circle cx="0" cy="${-26+i*26}" r="9" fill="${col}"><animate attributeName="opacity" values="${i==0?'1;.15;.15':i==1?'.15;1;.15':'.15;.15;1'}" keyTimes="0;.5;1" dur="${d}s" repeatCount="indefinite" calcMode="discrete"/></circle>`;});
+      return s+'</g>';
+   }
+   case 'flash': return `<text x="${o.x}" y="${o.y}" class="sc-t big" text-anchor="middle" opacity="0">${o.text}<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="${o.kt||'0;.3;.35;.7;.75'}" dur="${o.dur}s" repeatCount="indefinite"/></text>`;
+   case 'wedge': return `<g transform="translate(${o.x},${o.y})">${motion(o,o.x,o.y)}<polygon points="14,0 90,-34 90,34" fill="#fff"><animate attributeName="opacity" values=".42;.08;.42" dur="1.6s" repeatCount="indefinite"/></polygon></g>`;
+   case 'p': {
+      const col=TEAM[o.team||'a'];
+      return `<g transform="translate(${o.x},${o.y})">${motion(o,o.x,o.y)}<circle r="13" fill="${col}" stroke="#fff" stroke-width="2.5"/><text y="4.5" class="sc-n" text-anchor="middle">${o.n??''}</text></g>`;
+   }
+   case 'ball': return `<g transform="translate(${o.x},${o.y})">${motion(o,o.x,o.y)}<circle r="6.5" fill="#fff" stroke="#111" stroke-width="1.6"/><circle r="2.4" fill="#111"/></g>`;
+  }
+  return '';
+}
+const S={};
+// 1. Field and orientation tour
+S.field={cap:'Field orientation. The coach leads a walking tour: sideline, center, then each goal.',items:[
+  {t:'raw',svg:`<line x1="300" y1="16" x2="300" y2="${H-16}" stroke="var(--line)" stroke-width="2"/><circle cx="300" cy="170" r="42" fill="none" stroke="var(--line)" stroke-width="2"/><circle cx="300" cy="170" r="3" fill="var(--line)"/>`},
+  {t:'goal',x:16,y:170,w:16,h:90},{t:'goal',x:584,y:170,w:16,h:90},
+  lb(70,40,'Goal',{cls:'w'}),lb(300,34,'Touchline',{cls:'w'}),lb(300,112,'Center circle',{cls:'w'}),lb(530,300,'Goal',{cls:'w'}),
+  pl(40,50,'c','C',[[560,50],[560,290],[40,290]],16),
+  pl(120,210,'a','1',[[170,220],[120,210]],4),pl(150,260,'a','2',[[200,250],[150,260]],5),pl(450,120,'b','3',[[500,130],[450,120]],4.5)]};
+// 2. Traffic lights
+S.trafficlight={cap:'Traffic Lights. Green: run. Yellow: walk. Red: freeze with soft knees.',items:[
+  {t:'light',x:555,y:170,dur:6},
+  pl(60,90,'a','1',[[420,90],[420,90],[60,90]],6,{kp:'0;.5;.5;1',kt:'0;.4;.7;1'}),
+  pl(60,150,'b','2',[[460,150],[460,150],[60,150]],6,{kp:'0;.5;.5;1',kt:'0;.45;.7;1'}),
+  pl(60,210,'a','3',[[400,210],[400,210],[60,210]],6,{kp:'0;.5;.5;1',kt:'0;.4;.75;1'}),
+  pl(60,270,'b','4',[[440,270],[440,270],[60,270]],6,{kp:'0;.5;.5;1',kt:'0;.42;.72;1'}),
+  {t:'flash',x:300,y:316,text:'Freeze',dur:6,kt:'0;.4;.45;.75;.8'}]};
+// 3. Toe taps
+S.toetap={cap:'Toe taps. Alternate feet tapping the top of the ball; keep the ball in a small zone.',items:[
+  ...[110,300,490].map((x,i)=>({t:'zone',x:x-60,y:90,w:120,h:160,stroke:'#fff7'})),
+  ...[110,300,490].flatMap((x,i)=>[pl(x-10,170,['a','b','c'][i],'',[[x-10,176],[x-10,170]],0.8+i*.1),bl(x+14,170,[[x+14,164],[x+14,172]],0.6+i*.1)]),
+  lb(110,278,'Sole',{cls:'w'}),lb(300,278,'Inside',{cls:'w'}),lb(490,278,'Laces',{cls:'w'})]};
+// 4. Zigzag
+(function(){const cones=[120,200,280,360,440].map((x,i)=>[x,i%2?190:150]);
+ const route=[[60,170],[120,196],[200,144],[280,196],[360,144],[440,196],[530,170]];
+ S.zigzag={cap:'Zigzag dribble. Small inside touches; the ball stays within one stride.',items:[
+   ...cones.map(c=>cn(c[0],c[1])),
+   lb(300,300,'Inside touch, change foot at each cone',{cls:'w'}),
+   pl(60,170,'a','1',route,7),bl(78,172,route.map(p=>[p[0]+18,p[1]+2]),7)]};})();
+// 5. Fingers / heads up
+S.fingers={cap:'Heads up. The shaded view cone lifts as the dribbler glances up and calls the coach\'s number.',items:[
+  pl(300,60,'c','C',[[300,60]],1),
+  {t:'flash',x:300,y:112,text:'3',dur:6,kt:'0;.05;.1;.3;.35'},
+  {t:'flash',x:300,y:112,text:'5',dur:6,kt:'0;.4;.45;.6;.65'},
+  {t:'flash',x:300,y:112,text:'2',dur:6,kt:'0;.75;.8;.95;1'},
+  {t:'wedge',x:90,y:250,pts:[[500,250],[90,250]],dur:9},
+  pl(90,250,'a','1',[[500,250],[90,250]],9),bl(110,252,[[520,252],[110,252]],9),
+  lb(300,314,'Glance up between touches, call the number',{cls:'w'})]};
+// 6. Cushion
+S.cushion={cap:'Cushioning. The ball slows into the relaxed foot, which gives back as it arrives.',items:[
+  pl(90,170,'a','1',[[90,170]],1),
+  pl(470,170,'b','2',[[470,170]],1),
+  {t:'ball',x:112,y:170,pts:[[430,170]],dur:5,loop:false,kp:'0;1;1',kt:'0;.6;1',spl:'0.1 0.6 0.3 1;0 0 1 1'},
+  {t:'ball',x:441,y:196,pts:[[432,196]],dur:5,loop:false,kp:'0;0;1;1',kt:'0;.38;.6;1'},
+  {t:'line',x1:150,y1:230,x2:420,y2:230,stroke:'#fff8',w:2,dash:'3 6'},
+  lb(180,254,'fast',{cls:'w'}),lb(380,254,'slow',{cls:'w'}),
+  lb(300,92,'Relax the foot like a pillow',{cls:'w'})]};
+// 7. Pass
+S.pass={cap:'Inside-foot pass. Look, call, pass; the partner receives and returns.',items:[
+  pl(120,170,'a','1',[[130,170],[120,170]],4),pl(480,170,'b','2',[[470,170],[480,170]],4,{begin:2}),
+  bl(140,170,[[460,170],[140,170]],4),
+  lb(300,100,'Plant foot beside the ball',{cls:'w'})]};
+S.triangle={cap:'Triangle passing. Pass, then move to the next cone and repeat.',items:[
+  cn(300,60),cn(150,270),cn(450,270),
+  {t:'line',x1:300,y1:70,x2:158,y2:262,dash:'6 6',stroke:'#fff6'},{t:'line',x1:158,y1:270,x2:442,y2:270,dash:'6 6',stroke:'#fff6'},{t:'line',x1:442,y1:262,x2:300,y2:70,dash:'6 6',stroke:'#fff6'},
+  pl(300,78,'a','1',[[300,78]],1),pl(156,262,'b','2',[[156,262]],1),pl(444,262,'c','3',[[444,262]],1),
+  bl(300,100,[[168,248],[432,262],[312,98]],6)]};
+// 8. Shoot
+S.shoot={cap:'Dribble and shoot. Plant foot beside the ball, laces through the middle; aim at the corners.',items:[
+  {t:'goal',x:560,y:170,w:20,h:120},
+  {t:'zone',x:540,y:110,w:36,h:36,fill:'#f5b82e55',stroke:'#f5b82e',pulse:true},{t:'zone',x:540,y:194,w:36,h:36,fill:'#f5b82e55',stroke:'#f5b82e',pulse:true},
+  pl(70,170,'a','1',[[300,170],[330,172],[70,170]],6.5,{kp:'0;.4;.5;1',kt:'0;.4;.7;1'}),
+  bl(92,170,[[340,170],[548,128],[92,170]],6.5,{kp:'0;.35;.5;1',kt:'0;.5;.7;1'}),
+  lb(300,300,'Four steps: eyes, plant, laces, follow through',{cls:'w'})]};
+// 9. Fake
+S.fake={cap:'Fake and go. The attacker shows the shoulder left, then accelerates right.',items:[
+  pl(80,170,'b','D',[[330,170],[340,176],[80,170]],6,{kp:'0;.5;.6;1',kt:'0;.5;.75;1'}),
+  pl(70,170,'a','A',[[250,170],[270,190],[480,150],[70,170]],6),
+  bl(92,172,[[272,172],[290,200],[500,152],[92,172]],6),
+  lb(300,300,'Fake, touch into space, accelerate',{cls:'w'})]};
+(function(){const gx=60,gy=170;
+ const bpts=[[420,90],[470,170],[420,250],[360,170],[300,100]]; // ball track
+ const dpts=bpts.map(p=>[gx+(p[0]-gx)*0.55,gy+(p[1]-gy)*0.55]);
+ S.goalside={cap:'Goal-side. The defender stays on the line between the ball and the goal.',items:[
+  {t:'goal',x:gx,y:gy,w:16,h:90},
+  {t:'link',x1:gx+8,y1:gy,pts:bpts,dur:9},
+  pl(dpts[0][0],dpts[0][1],'b','D',dpts.slice(1),9),
+  pl(bpts[0][0],bpts[0][1],'a','A',bpts.slice(1),9),bl(bpts[0][0]+16,bpts[0][1],bpts.slice(1).map(p=>[p[0]+16,p[1]]),9),
+  lb(300,314,'Stay between ball and goal; get low',{cls:'w'})]};})();
+// 12. throw-in
+S.throwin={cap:'Throw-in. Ball over the touchline: both feet on the ground, both hands over the head.',items:[
+  {t:'line',x1:16,y1:100,x2:584,y2:100,stroke:'#fff',w:4},
+  lb(70,88,'Touchline',{cls:'w'}),lb(70,125,'Inside',{cls:'w'}),lb(70,70,'Out',{cls:'w'}),
+  pl(200,60,'a','1',[[200,60]],1),pl(420,170,'b','2',[[430,175],[420,170]],4),
+  bl(320,180,[[320,80],[320,60],[320,80],[420,168],[320,180]],8,{kp:'0;.2;.3;.6;1',kt:'0;.25;.35;.75;1'})]};
+// 13. spread
+S.spread={cap:'Spread out. Bunched players move to separate patches of grass.',items:[
+  pl(290,170,'a','1',[[100,100],[100,100],[290,170]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  pl(310,160,'a','2',[[260,260],[260,260],[310,160]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  pl(315,185,'a','3',[[330,50],[330,50],[315,185]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  pl(330,175,'b','4',[[520,110],[520,110],[330,175]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  pl(280,190,'b','5',[[500,260],[500,260],[280,190]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  pl(300,200,'b','6',[[420,180],[420,180],[300,200]],8,{kp:'0;.4;.7;1',kt:'0;.35;.7;1'}),
+  {t:'flash',x:300,y:316,text:'Find your patch of grass',dur:8,kt:'0;.4;.45;.7;.75'}]};
+S.matchday={cap:'Match day routine. Circle up, team chant, then play.',items:[
+  {t:'circle',x:300,y:170,r:80,dash:'4 6'},
+  ...[0,1,2,3,4,5].map(i=>{const a=i*Math.PI/3;const x=300+80*Math.cos(a),y=170+80*Math.sin(a);return pl(x,y,i%2?'b':'a',i+1,[[x+(300-x)*.08,y+(170-y)*.08]],1.4+i*.1);}),
+  bl(300,170,[[300,164],[300,176]],1,{}),
+  lb(300,300,'Team chant, high fives, then play',{cls:'w'})]};
+
+// ----- drill templates -----
+S.tour=S.field;
+S.colors={cap:'Colored corners. The coach calls a color and players run to it.',items:[
+  cn(60,60,'#e5484d'),cn(540,60,'#2f6fde'),cn(60,280,'#f5b82e'),cn(540,280,'#2fa35b'),
+  lb(60,92,'Red',{cls:'w'}),lb(540,92,'Blue',{cls:'w'}),lb(60,312,'Yellow',{cls:'w'}),lb(540,312,'Green',{cls:'w'}),
+  pl(300,170,'a','1',[[70,70],[70,70],[300,170]],6,{kp:'0;.4;.6;1',kt:'0;.3;.6;1'}),
+  pl(280,190,'b','2',[[530,70],[530,70],[280,190]],6,{kp:'0;.4;.6;1',kt:'0;.3;.6;1'}),
+  pl(320,190,'a','3',[[70,270],[70,270],[320,190]],6,{kp:'0;.4;.6;1',kt:'0;.3;.6;1'}),
+  pl(300,150,'b','4',[[530,270],[530,270],[300,150]],6,{kp:'0;.4;.6;1',kt:'0;.3;.6;1'})]};
+(function(){const pts=[0,1,2,3,4,5].map(i=>{const a=i*Math.PI/3-Math.PI/2;return [300+100*Math.cos(a),170+100*Math.sin(a)];});
+ S.circle={cap:'Circle passing. The ball moves around the circle as each player is named.',items:[
+  {t:'circle',x:300,y:170,r:100,dash:'4 6'},
+  ...pts.map((p,i)=>pl(p[0],p[1],i%2?'b':'a',i+1,[[p[0],p[1]]],1)),
+  bl(pts[0][0],pts[0][1],pts.slice(1).concat([pts[0]]).map(p=>[p[0],p[1]]),9,{loop:false})]};})();
+S.smallgame={cap:'Small-sided game. Teams spread out; the ball moves between players.',items:[
+  {t:'goal',x:16,y:170,w:16,h:80},{t:'goal',x:584,y:170,w:16,h:80},
+  pl(160,110,'a','1',[[200,100],[220,150],[160,110]],7),pl(160,240,'a','2',[[230,250],[200,200],[160,240]],7,{begin:1}),pl(250,170,'a','3',[[300,150],[330,190],[250,170]],7,{begin:.5}),
+  pl(450,110,'b','4',[[410,120],[380,150],[450,110]],7),pl(450,240,'b','5',[[400,240],[370,200],[450,240]],7,{begin:1}),pl(350,170,'b','6',[[330,160],[310,190],[350,170]],7,{begin:.5}),
+  bl(172,112,[[236,160],[262,172],[330,190],[540,170],[172,112]],7)]};
+S.balance={cap:'Balance. Players hold one foot with arms out, then switch.',items:[
+  ...[100,230,360,490].map((x,i)=>({t:'p',x,y:170,team:['a','b','c','a'][i],n:'',pts:[[x+2,172],[x-2,168],[x,170]],dur:1.2+i*.2})),
+  ...[100,230,360,490].map((x,i)=>({t:'ball',x:x+20,y:186,pts:[[x+20,182]],dur:1+i*.2})),
+  ...[100,230,360,490].map(x=>({t:'circle',x,y:170,r:42,dash:'3 5'})),
+  lb(300,300,'Arms out, eyes on a spot, switch feet',{cls:'w'})]};
+S.lanes={cap:'Lanes. Players move down lanes one after another.',items:[
+  ...[70,130,190,250,310].map(y=>({t:'line',x1:40,y1:y,x2:560,y2:y,stroke:'#fff4',w:1})),
+  ...[[100,70],[100,130],[100,190],[100,250]].map((p,i)=>pl(p[0],p[1],['a','b','c','a'][i],i+1,[[500,p[1]]],4+i*.4,{begin:i*.3})),
+  cn(500,70),cn(500,130),cn(500,190),cn(500,250),
+  lb(300,314,'Go, turn at the cone, come back',{cls:'w'})]};
+S.stations={cap:'Stations. Three groups rotate between stations on the whistle.',items:[
+  {t:'zone',x:30,y:90,w:160,h:160,label:'1',stroke:'#fff'},{t:'zone',x:220,y:90,w:160,h:160,label:'2',stroke:'#fff'},{t:'zone',x:410,y:90,w:160,h:160,label:'3',stroke:'#fff'},
+  pl(70,170,'a','A',[[260,170],[450,170],[70,170]],9,{kp:'0;.33;.66;1',kt:'0;.33;.66;1'}),
+  pl(260,170,'b','B',[[450,170],[70,170],[260,170]],9),
+  pl(450,170,'c','C',[[70,170],[260,170],[450,170]],9)]};
+S.free={cap:'Free ball work. Every player has a ball in their own square.',items:[
+  ...[[110,100],[300,100],[490,100],[110,240],[300,240],[490,240]].flatMap((p,i)=>[{t:'zone',x:p[0]-60,y:p[1]-52,w:120,h:104,stroke:'#fff5'},pl(p[0]-14,p[1],['a','b','c'][i%3],'',[[p[0]-10,p[1]+8],[p[0]-18,p[1]-6]],1+i*.12),bl(p[0]+12,p[1],[[p[0]+12,p[1]-8],[p[0]+14,p[1]+8]],.9+i*.1)])]};
+S.gates={cap:'Gates. Dribble through as many gates as you can.',items:[
+  ...[[120,100],[260,240],[400,100],[500,230],[200,150],[340,170]].flatMap(g=>[cn(g[0]-14,g[1]),cn(g[0]+14,g[1],'#2f6fde')]),
+  pl(60,170,'a','1',[[120,100],[200,150],[260,240],[340,170],[400,100],[500,230],[60,170]],10),
+  bl(76,172,[[136,102],[216,152],[276,242],[356,172],[416,102],[516,232],[76,172]],10)]};
+S.shark={cap:'Shark tank. Sharks try to win the ball; dribblers use space and change direction.',items:[
+  {t:'zone',x:40,y:40,w:520,h:260,stroke:'#fff8'},
+  pl(120,100,'a','1',[[260,120],[300,220],[120,100]],8),bl(136,102,[[276,122],[316,222],[136,102]],8),
+  pl(450,200,'a','2',[[360,110],[250,80],[450,200]],8),bl(466,202,[[376,112],[266,82],[466,202]],8),
+  pl(300,270,'b','S',[[220,160],[360,230],[300,270]],6),pl(200,60,'b','S',[[420,180],[340,100],[200,60]],7)]};
+S.freeze={cap:'Whistle freeze. Players dribble, then freeze when the whistle blows.',items:[
+  ...[[80,90],[80,150],[80,210],[80,270]].map((p,i)=>pl(p[0],p[1],['a','b','c','a'][i],i+1,[[440+i*10,p[1]],[440+i*10,p[1]],[p[0],p[1]]],6,{kp:'0;.45;.65;1',kt:'0;.45;.7;1'})),
+  {t:'flash',x:300,y:310,text:'Freeze',dur:6,kt:'0;.4;.45;.7;.75'}]};
+S.keeper={cap:'Save and roll out. The keeper gets behind the ball, scoops it, calls mine and rolls to the cone.',items:[
+  {t:'goal',x:40,y:170,w:20,h:120},
+  pl(60,170,'k','K',[[78,150],[78,170],[78,190],[70,170]],6),
+  pl(300,170,'a','S',[[300,170]],1),
+  bl(320,170,[[90,152],[78,152],[78,152],[300,70],[320,170]],6,{kp:'0;.35;.45;.75;1',kt:'0;.3;.45;.75;1'}),
+  cn(300,60),lb(300,40,'Target',{cls:'w'}),
+  {t:'flash',x:200,y:130,text:'Mine!',dur:6,kt:'0;.35;.4;.6;.65'}]};
+
+S.laps={cap:'Laps around the field. Everyone runs the perimeter together.',items:[
+  {t:'raw',svg:'<rect x="40" y="40" width="520" height="260" fill="none" stroke="#fff6" stroke-width="2" stroke-dasharray="6 8"/>'},
+  pl(300,40,'a','1',[[560,40],[560,300],[40,300],[40,40]],12),
+  pl(560,170,'b','2',[[560,300],[40,300],[40,40],[560,40]],12),
+  pl(300,300,'c','3',[[40,300],[40,40],[560,40],[560,300]],12),
+  pl(40,170,'a','4',[[40,40],[560,40],[560,300],[40,300]],12),
+  pl(430,40,'b','5',[[560,40],[560,300],[40,300],[40,40]],12),
+  pl(170,300,'c','6',[[40,300],[40,40],[560,40],[560,300]],12),
+  lb(300,175,'Run around the field',{cls:'w'})]};
+(function(){const zs=[[40,40],[320,40],[40,190],[320,190]];
+ S.duel={cap:'1 v 1 finale. Pairs duel in small grids and rotate opponents.',items:[
+  ...zs.flatMap((z,i)=>{const x=z[0],y=z[1],gx=x+230,gy=y+60;const a=['a','b'][i%2],d=['b','a'][i%2];
+   return [{t:'zone',x,y,w:240,h:120,stroke:'#fff8'},cn(gx,y+40),cn(gx,y+80),
+    pl(x+30,y+60,a,'A',[[x+120,y+30],[x+190,y+70],[x+30,y+60]],6,{begin:i*.4}),
+    pl(x+60,y+60,d,'D',[[x+140,y+50],[x+190,y+60],[x+60,y+60]],6,{begin:i*.4}),
+    bl(x+46,y+60,[[x+136,y+32],[x+206,y+70],[x+46,y+60]],6,{begin:i*.4})];}),
+  lb(300,330,'Rotate opponents every 2 minutes',{cls:'w'})]};})();
+window.SCENES=S;
+window.renderScene=function(name,id,capOverride){
+  const sc=S[name]; if(!sc) return '';
+  const cap=capOverride||sc.cap;
+  let body=pitch();
+  sc.items.forEach(o=>{ body+= o.t==='raw'?o.svg:item(o); });
+  return `<figure class="scene" id="${id}"><div class="scene-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${cap}">${body}</svg><button class="pp" type="button" aria-label="Pause animation" data-for="${id}"><span class="i-pause"></span></button></div><figcaption>${cap}</figcaption></figure>`;
+};
+})();
+</script>
+<script>
+// Interleaved plan: Tuesday + Thursday, 75-minute practices, one chapter per session, cycling through all chapters, then again at the next level.
+(function(){
+const CH=window.CHAPTERS, N=CH.length; // 11
+const LEVELS=[
+ ['Introduce','Slow pace, big space, no pressure. Everyone succeeds.'],
+ ['Practice','More repetitions, both feet, steady rhythm.'],
+ ['Develop','More tempo and a smaller space, fewer pauses.'],
+ ['Challenge','Light passive pressure or a decision to make.'],
+ ['Combine','Mix with skills from earlier chapters inside games.'],
+ ['Perform','Small-sided games with scoring. Players lead; the coach watches.']
+];
+const LT={
+ 1:['Names the parts of the field and follows the start routine','Packs own kit and joins the circle without prompting','Knows the team name, chant and two teammates by name','Follows the stop signal and group instructions during games','Helps set up cones and balls','Leads the warm-up routine for the group'],
+ 2:['Balances 3 s on each foot; stops on signal','Balances 5 s; jumps with two feet and lands softly','Hops on each foot; runs and changes direction','Balances while holding a ball; stops within two steps','Combines run, jump and stop in a circuit','Moves with agility in a crowded space without contact'],
+ 3:['Names sole, inside, laces; 10 toe taps','20 toe taps; rolls the ball with the sole using both feet','30 touches in 30 s with the inside of the foot','Keeps the ball inside a small zone for 20 s','Mixes sole, inside and laces on call','Touches with both feet at pace with eyes up'],
+ 4:['Walks with the ball under control','Dribbles through 3 cones','Dribbles 5 cones and looks up twice','Dribbles through gates in a crowd','Changes direction to escape a shark','Dribbles at pace and picks open space'],
+ 5:['Stops a slow rolled ball with the sole','Controls 5 of 10 slow rolls','Cushions with the inside of the foot','Receives and drags back to turn','Controls a ball played at medium pace','Receives while moving and plays on'],
+ 6:['Rolls a pass to a partner 3 yards away','5 of 10 inside-foot passes at 5 yards','Calls the name and looks before passing','Passes and moves in a triangle','Passes in 3 v 1 under light pressure','Chooses to pass in a small game'],
+ 7:['Strikes a still ball with the laces at a big goal','Plants the foot beside the ball and follows through','Hits corner targets 3 of 10','Shoots with the weaker foot','Dribbles three touches, then shoots','Shoots in a game without hesitation'],
+ 8:['Plays chase games: attackers run, defenders follow','Fakes at a cone, then accelerates','Stays goal-side in a shadow game','Pokes a still ball away with the toe','Attempts a fake in a live 1 v 1','Switches from attack to defense fast in 2 v 2'],
+ 9:['Stops and listens on the whistle','Throws in with two hands over the head','Knows hands are for the goalkeeper only','Understands out of bounds and restarts','Shows fair play: handshake, helps a friend up','Referees a short game'],
+ 10:['Joins a small game','Spreads out when reminded','Spreads out without prompts','Tries a second role','Plays one role through a full game','Shows team shape and spirit in a 4 v 4'],
+ 11:['Takes the ready position','Scoops a slow rolled ball with both hands','Stops soft shots and hugs the ball','Calls "mine" before taking the ball','Rolls out to a cone after a save','Saves, calls and distributes in a game']
+};
+// Every practice starts by running around the field.
+const LAPS=[
+ '2 easy laps. Jog the long sides and walk the corners if needed.',
+ '3 easy laps. Skip or gallop the short sides.',
+ '3 laps with a fast stride (about 20 yards) on each long side.',
+ '4 laps. Sprint the long sides, jog the short sides.',
+ '4 laps in pairs, matching each other\'s pace and calling the pace changes.',
+ '4 laps led by a player who sets the pace and calls the changes.'
+];
+// Every practice ends with 1 v 1. Chapter-specific twist: [name, rule]
+const DUEL={
+ 1:['Duel to the gate','Attacker dribbles through a gate inside the boundary; defender tries to stop them.'],
+ 2:['Duel with a freeze','On the coach whistle both players freeze, then play on.'],
+ 3:['Duel with three touches','Score only after three touches that include the sole.'],
+ 4:['Duel through three gates','Attacker scores by dribbling through any of three gates.'],
+ 5:['Duel on the roll','Coach rolls a ball in; first player to control it attacks.'],
+ 6:['Duel with a wall','Attacker may play a pass off a cone wall and receive it back.'],
+ 7:['Duel to the goal','Attacker shoots at a small goal; defender starts a step behind.'],
+ 8:['Pure 1 v 1','Fake and beat the defender; defender stays goal-side and pokes the ball away.'],
+ 9:['Fair-play duel','No hands, shake hands after each duel, say "good game".'],
+ 10:['Team duel','Each win scores a point for the team; the team spreads out around the grids.'],
+ 11:['Duel with a keeper','Attacker shoots; the defender plays goalkeeper when the shot comes.']
+};
+const DUELPROG=['Defender is passive (walks) and the attacker succeeds often.','Defender jogs and may poke the ball away.','Defender is active but no contact; short 30-second duels.','Real 1 v 1; keep score by gate or goal.','First to three points; winners move to the next grid.','Ladder: winners move up, losers move down; players run the rotation.'];
+const LVLTXT=l=>LEVELS[l-1][0]+': '+LEVELS[l-1][1];
+// ---- slots ----
+const TEACH=66, WEEKS=40;
+function slot(s){const week=Math.ceil(s/2)+Math.floor((s-1)/22);const day=s%2?'Tuesday':'Thursday';const ch=(s-1)%N+1;const level=Math.floor((s-1)/N)+1;return {s,week,day,ch,level};}
+const FEST=[{k:1,week:12},{k:2,week:24},{k:3,week:36}];
+function prevOf(ch,level){return ch===1?{ch:N,level:Math.max(1,level-1)}:{ch:ch-1,level};}
+function ref(n,i){const a=(window.DSCENE||{})[n];return a&&a[i]?[a[i][0],a[i][1]]:null;}
+function drillBlock(c,i,level,time,label){
+ const d=c.drills[i];
+ return {min:time||15,name:label+': '+d[0],how:d[5]+' Setup: '+d[3]+', '+d[2]+'. Equipment: '+d[4]+'.',focus:d[6],prog:level===1?'Start simple: slow pace and a big space.':d[7]+' (Level focus: '+LEVELS[level-1][1]+')',watch:d[8],scene:ref(c.n,i)};
+}
+function session(s){
+ const o=slot(s),c=CH[o.ch-1],l=o.level,r=(l-1)%3;
+ const pr=prevOf(o.ch,l),pc=CH[pr.ch-1];
+ const skillA=[0,1,2][r], skillB=[1,2,0][r];
+ const blocks=[];
+ blocks.push({min:5,name:'Arrival and circle',how:'Greet each child by name, quick team chant, check shin guards and water. Tell the group the one idea for today: '+c.objectives[0].toLowerCase()+'.',focus:'Belonging and clarity',prog:'',watch:'Late arrivals: let them join the run start',scene:['circle','Circle up, greet, share the idea of the day.']});
+ blocks.push({min:10,short:LAPS[l-1].replace(/\.$/,'')+'. Then 2 min dynamic moves.',name:'Run start: laps around the field',how:'Always start by running around the field. '+LAPS[l-1]+' Finish with 2 min dynamic moves: high knees, heel flicks, side shuffles, bunny hops.',focus:'Raise the heart rate; tall posture, bent arms, light feet',prog:'Level '+l+' running: '+LAPS[l-1],watch:'Children tire at different rates: allow walking. Never use running as punishment.',scene:['laps','Everyone runs around the field.']});
+ blocks.push({min:5,name:'Water and one idea',how:'Water break. Then demonstrate today\'s skill for two minutes and give one cue. Key words: '+c.concepts[0][1].map(k=>k[0]).slice(0,3).join(', ')+'.',focus:'One idea, one cue',prog:'',watch:'Keep the talk to two minutes',scene:null});
+ blocks.push(drillBlock(c,skillA,l,15,'Skill play 1'));
+ blocks.push(drillBlock(c,skillB,l,10,'Skill play 2'));
+ const g=drillBlock(c,3,l,10,'Game');g.how=g.how+' Water at the halfway point. Today\'s level target: '+LT[o.ch][l-1]+'.';blocks.push(g);
+ const du=DUEL[o.ch];
+ blocks.push({min:10,name:'1 v 1 finale: '+du[0],how:'Every practice ends with 1 v 1. Pairs of similar size duel in small grids (about 8 x 5 yards) with a gate or small goal. Rotate opponents every 2 minutes. Chapter twist: '+du[1],focus:'Compete bravely and kindly; try today\'s skill under duel conditions',prog:DUELPROG[l-1],watch:'Match pairs by size and confidence. No sliding, grabbing or pushing. Keep score light and praise effort.',scene:["duel",du[0]+'. '+du[1]]});
+ const rd=pc.drills[0];
+ blocks.push({min:10,name:'Review and close',how:'5 min review of Chapter '+pc.n+' ('+pc.short+') at level '+pr.level+': '+rd[0]+'. '+rd[5]+' Then 5 min closing circle: ask what they learned, praise effort, team chant, remind the group when the next practice is.',focus:'Spiral review and praise',prog:'',watch:'Keep the review light and playful',scene:ref(pc.n,0)});
+ let t=0;blocks.forEach(b=>{b.t=t+'-'+(t+b.min);t+=b.min;});
+ const eq=[...new Set(blocks.slice(3,6).map(b=>(b.how.match(/Equipment: ([^.]*)\./)||[])[1]).concat([(rd[4])]).filter(Boolean).join(', ').split(',').map(x=>x.trim().toLowerCase()).filter(x=>x&&x!=='none'))].join(', ')||'balls and cones';
+ return {...o,chapter:c,target:LT[o.ch][l-1],levelName:LVLTXT(l),blocks,equip:eq,check:'Check: '+c.check,total:t,prev:pc};
+}
+function festival(k,day){
+ const w=FEST[k-1].week,term=k;
+ const blocks=[];
+ const run=(min)=>({min,name:'Run start: laps around the field',how:'Always start by running around the field: 4 easy laps together, then 2 min dynamic moves.',focus:'Enthusiasm and teamwork',prog:'',watch:'Let slower runners walk the corners',scene:['laps','Everyone runs around the field.']});
+ if(day==='Tuesday'){
+  blocks.push({min:5,name:'Arrival and circle',how:'Greet by name. Explain that today is about showing what we can do, not a test.',focus:'Calm and welcome',prog:'',watch:'Nervous children: pair with a buddy',scene:['circle','Circle up and greet.']});
+  blocks.push({...run(10)});
+  blocks.push({min:5,name:'Water and instructions',how:'Water break. Explain the stations and how groups rotate.',focus:'Clarity',prog:'',watch:'',scene:null});
+  const half=Math.ceil(N/2);
+  blocks.push({min:25,name:'Assessment stations A (chapters 1 to '+half+')',how:'One station per chapter, groups of 3 or 4, about 4 minutes each. A coach observes and ticks the sheet. Keep it as a game.',focus:'Observe, do not correct',prog:'',watch:'Do not rank children',scene:['stations','Groups rotate between stations on the whistle.'],list:CH.slice(0,half).map(c=>c.n+'. '+c.short+': '+c.check)});
+  blocks.push({min:20,name:'Assessment stations B (chapters '+(half+1)+' to '+N+')',how:'Continue the rotation through the remaining stations.',focus:'Observe, do not correct',prog:'',watch:'Allow a retry; this is a snapshot, not a verdict',scene:['stations','Groups rotate between stations on the whistle.'],list:CH.slice(half).map(c=>c.n+'. '+c.short+': '+c.check)});
+  blocks.push({min:10,name:'Close',how:'Circle, praise effort, thank the children, say what next week holds.',focus:'Positive finish',prog:'',watch:'',scene:null});
+ } else {
+  blocks.push({min:5,name:'Arrival and circle',how:'Greet children and families. Quick team chant.',focus:'Belonging',prog:'',watch:'',scene:['circle','Circle up and chant.']});
+  blocks.push({...run(10)});
+  blocks.push({min:5,name:'Water',how:'Water break and short explanation of the games.',focus:'Rest',prog:'',watch:'',scene:null});
+  blocks.push({min:30,name:'Festival games',how:'Short 3 v 3 and 4 v 4 games on small fields, rotating teams every 6 minutes. No scores are kept.',focus:'Effort and fun',prog:'',watch:'Over-excited adults: remind them to cheer for everyone',scene:['smallgame','Mini games, rotating teams.']});
+  blocks.push({min:15,name:'Parent and child game',how:'Parents join in simple games with their child: toe taps, pass the treasure, and a scoring game.',focus:'Pride and connection',prog:'',watch:'Parents: encourage, do not coach',scene:['pairs','Parent and child pass.']});
+  blocks.push({min:10,name:'Awards and snack',how:'Give every child a certificate for something they did well. Team chant, then a shared snack.',focus:'Celebration',prog:'',watch:'Every child gets praise',scene:['circle','Team circle.']});
+ }
+ let t=0;blocks.forEach(b=>{b.t=t+'-'+(t+b.min);t+=b.min;});
+ return {s:'F'+k,festival:true,k,week:w,day,total:t,blocks,equip:'Cones, balls, bibs, assessment sheets, whistle, certificates',check:'Check: record Yes, Almost or Not yet for each skill.',chapter:null,term};
+}
+function toText(p){
+ const head=p.festival?`Festival ${p.k}, week ${p.week}, ${p.day}`:`Session ${p.s}, week ${p.week}, ${p.day}. Chapter ${p.ch}: ${p.chapter.title}. Level ${p.level} (${p.levelName}). Target: ${p.target}`;
+ let s=head+'\n\nEquipment: '+p.equip+'\n\n';
+ p.blocks.forEach(b=>{s+=b.t+' min  '+b.name+'\n  '+b.how+'\n  Focus: '+b.focus+(b.prog?'\n  Progression: '+b.prog:'')+(b.watch?'\n  Watch for: '+b.watch:'')+'\n';});
+ return s+'\n'+p.check;
+}
+window.PLAN={LEVELS,LT,LAPS,DUEL,DUELPROG,TEACH,WEEKS,FEST,slot,session,festival,toText,N};
+})();
+</script>
+<script>
+(function(){
+const CH=window.CHAPTERS, PL=window.PLAN, N=CH.length, LV=PL.LEVELS, LT=PL.LT;
+const $=s=>document.querySelector(s);
+const CORNERS=['Technical','Physical','Psychological','Social'];
+let uid=0;const nid=()=>'x'+(++uid);
+
+/* ---------- settings + schedule ---------- */
+const DEF_START='2026-10-13';
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+const getStart=()=>lsGet('rch-start',DEF_START), getFirst=()=>Math.min(N,Math.max(1,+lsGet('rch-first',2)||2));
+const getSkip=()=>{try{return JSON.parse(lsGet('rch-skip','[]'));}catch(e){return [];}};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parseD=s=>new Date(s+'T12:00:00');
+let SCH=[];
+function buildSchedule(){
+ const first=getFirst(),skip=new Set(getSkip()),seq=[];
+ for(let s=first;s<=PL.TEACH;s++){seq.push({kind:'p',s});if(s%22===0){const k=s/22;seq.push({kind:'f',k,day:'Tuesday'},{kind:'f',k,day:'Thursday'});}}
+ const st=parseD(getStart());let d=new Date(st),i=0,g=0;const out=[];
+ while(i<seq.length&&g++<900){const wd=d.getDay();if((wd===2||wd===4)&&!skip.has(iso(d))){out.push({...seq[i],date:new Date(d),iso:iso(d)});i++;}d.setDate(d.getDate()+1);}
+ out.forEach(e=>{e.week=Math.floor((e.date-st)/(7*864e5))+1;e.dayName=e.date.toLocaleDateString('en-US',{weekday:'long'});e.dstr=e.date.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});});
+ SCH=out;
+}
+const evP=s=>SCH.find(e=>e.kind==='p'&&e.s===s);
+const evF=(k,day)=>SCH.find(e=>e.kind==='f'&&e.k===k&&e.day===day);
+const chOf=e=>e.kind==='p'?CH[PL.slot(e.s).ch-1]:null;
+const evColor=e=>e.kind==='p'?`hsl(${(PL.slot(e.s).ch-1)*33+8} 52% 38%)`:'hsl(34 88% 38%)';
+const evTitle=e=>e.kind==='p'?`Ch ${chOf(e).n} ${chOf(e).short}`:(e.day==='Tuesday'?'Festival '+e.k+': assessment':'Festival '+e.k+': games');
+const evLevel=e=>e.kind==='p'?PL.slot(e.s).level:0;
+
+/* ---------- charts ---------- */
+const CHARTS={
+ balance:['Planning target: single-leg balance','seconds',[2,3,3,4,5,5],'Illustrative targets for tracking a child against their own earlier results. Not age norms.'],
+ touches:['Planning target: touches in 30 seconds','touches',[10,16,22,28,34,40],'Use for self-comparison only. Do not rank children.'],
+ dribble:['Planning target: cones cleared with no stray touch','cones',[1,2,3,4,5,5],'Five-cone zigzag, 1 yard apart.'],
+ control:['Planning target: rolled balls controlled out of 10','of 10',[2,4,5,6,7,8],'Slow roll from 5 yards, controlled within one step.'],
+ pass:['Planning target: accurate partner passes out of 10','of 10',[2,4,5,6,7,8],'Partner 5 yards away, inside-foot pass.'],
+ shoot:['Planning target: shots on target out of 10','of 10',[1,2,3,4,5,6],'Large goal at 8 yards, still ball, either foot.'],
+ session:['Planning target: minutes of actual playing time','min',[40,44,48,52,54,56],'Out of a 75-minute practice; most of it should be play.']
+};
+function chartHTML(key){
+ const c=CHARTS[key];if(!c)return '';
+ const labels=['L1','L2','L3','L4','L5','L6'],vals=c[2];
+ const W=520,H=210,L=40,B=30,T=14,R=10,max=Math.ceil(Math.max(...vals)*1.15/2)*2;
+ const bw=(W-L-R)/vals.length,y=v=>T+(H-T-B)*(1-v/max);let s='';
+ for(let g=0;g<=4;g++){const v=max/4*g;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" class="ax">${Math.round(v)}</text>`;}
+ vals.forEach((v,i)=>{const x=L+i*bw+bw*.2,w=bw*.6,last=i===vals.length-1;
+  s+=`<rect x="${x}" y="${y(v)}" width="${w}" height="${y(0)-y(v)}" rx="3" class="bar${last?' hi':''}" style="--d:${i*70}ms"/><text x="${x+w/2}" y="${y(v)-6}" text-anchor="middle" class="val${last?' hi':''}">${v}</text><text x="${x+w/2}" y="${H-10}" text-anchor="middle" class="ax">${labels[i]}</text>`;});
+ return `<figure class="chart in"><div class="ct">${c[0]}<span> (${c[1]})</span></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${c[0]}">${s}</svg><figcaption>${c[3]}</figcaption></figure>`;
+}
+
+/* ---------- small helpers ---------- */
+const head=(eyebrow,title,lead,extra)=>`<header class="ph"><div><div class="eyebrow">${eyebrow}</div><h2>${title}</h2>${lead?`<p class="lead">${lead}</p>`:''}${extra||''}</div></header>`;
+const tabsHTML=(items,active,base)=>`<nav class="tabs" role="tablist">${items.map(t=>`<a role="tab" href="${base}/${t[0]}" aria-selected="${t[0]===active}">${t[1]}</a>`).join('')}</nav>`;
+const ul=a=>`<ul class="pts">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+const tbl=(head,rows,cls='grid-t')=>`<div class="tablewrap"><table class="${cls}"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const sessionNo=(ch,level)=>(level-1)*N+ch;
+
+/* ---------- overview ---------- */
+function overview(){
+ buildSchedule();
+ const t=iso(new Date()),nx=SCH.find(e=>e.iso>=t),nxt=nx?`<div class="next"><span class="eyebrow">Next practice</span><b>${nx.dstr}</b><span>${evTitle(nx)}${nx.kind==='p'?', Level '+evLevel(nx):''}</span><a class="btn pri" href="${nx.kind==='p'?'#/session/'+nx.s:'#/festival/'+nx.k+'/'+nx.day}">Open</a></div>`:'';
+ return nxt+`<div class="hero"><div><div class="eyebrow">RCH Elite Training · Pre-K and Kindergarten</div><h1>Foundations of the Game</h1><p>Eleven chapters taught in rotation, starting now at chapter 2. Every Tuesday and Thursday practice moves one chapter forward by a small step. After all eleven, the cycle returns to chapter 1 at a higher level.</p><div class="stats"><div><b>11</b>chapters</div><div><b>6</b>levels</div><div><b>66</b>practices</div><div><b>75</b>min each</div></div></div><div id="hero-scene">${window.renderScene('triangle',nid())}</div></div>
+ <div class="cols3"><div class="card"><h4>Always start by running</h4><p>Every practice opens with running around the field and ends with 1 v 1.</p></div><div class="card"><h4>Mixed, not blocked</h4><p>No month of only dribbling. Each practice teaches one chapter, and the next practice teaches the next chapter.</p></div><div class="card"><h4>Six passes through the book</h4><p>Level 1 introduces each chapter. Levels 2 to 6 repeat it with more speed, less space, pressure and game play.</p></div></div>
+ <div class="rhythm"><h4>The cycle</h4><div class="cyc" aria-label="Chapter rotation">${CH.map(c=>`<a href="#/ch/${c.n}" title="${c.title}"><b>${c.n}</b><span>${c.short}</span></a>`).join('')}<i class="loop">back to 1, one level higher</i></div></div>`;
+}
+
+/* ---------- calendar ---------- */
+let CAL=null;
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function initCal(){
+ const t=new Date();const f=SCH[0]?SCH[0].date:t,l=SCH.length?SCH[SCH.length-1].date:t;
+ const ref=(t>=f&&t<=l)?t:f;
+ CAL={y:ref.getFullYear(),m:ref.getMonth(),view:'month',sel:null,panel:null};
+}
+function chip(e,idx){const o=e.kind==='p'?`Ch ${chOf(e).n} ${chOf(e).short}`:evTitle(e);return `<button type="button" class="ev${CAL.sel===idx?' on':''}" data-act="ev" data-k="${idx}" style="--c:${evColor(e)}" title="${o}"><b>${o}</b>${e.kind==='p'?`<small>Level ${evLevel(e)}</small>`:''}</button>`;}
+function monthGrid(){
+ const {y,m}=CAL,first=new Date(y,m,1),off=first.getDay(),days=new Date(y,m+1,0).getDate(),rows=Math.ceil((off+days)/7);
+ const skip=new Set(getSkip()),today=iso(new Date());
+ let h='<div class="mg"><div class="mh">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<span>${d}</span>`).join('')+'</div>';
+ for(let r=0;r<rows;r++){h+='<div class="mr">';for(let c=0;c<7;c++){
+  const d=new Date(y,m,r*7+c-off+1),k=iso(d),oth=d.getMonth()!==m;
+  const evs=SCH.map((e,i)=>e.iso===k?chip(e,i):'').join('');
+  const ei=SCH.findIndex(e=>e.iso===k);h+=`<div class="mc${oth?' oth':''}${k===today?' today':''}${skip.has(k)?' skipped':''}${ei>=0?' has':''}"${ei>=0?` data-act="ev" data-k="${ei}"`:''}><span class="dnum">${d.getDate()===1?MONTHS[d.getMonth()].slice(0,3)+' ':''}${d.getDate()}</span>${evs}${skip.has(k)?`<button type="button" class="nop" data-act="unskip" data-iso="${k}">No practice (restore)</button>`:''}</div>`;}
+  h+='</div>';}
+ return h+'</div>';
+}
+function agenda(){
+ let h='<div class="ag">',last='';const today=iso(new Date());
+ SCH.forEach((e,i)=>{const mk=e.date.getFullYear()+'-'+e.date.getMonth();if(mk!==last){last=mk;h+=`<h4 class="agm">${MONTHS[e.date.getMonth()]} ${e.date.getFullYear()}</h4>`;}
+  h+=`<button type="button" class="agr${e.iso<today?' past':''}${CAL.sel===i?' on':''}" data-act="ev" data-k="${i}" style="--c:${evColor(e)}"><span class="agd">${e.date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span><span class="agc"><i></i><b>${evTitle(e)}</b>${e.kind==='p'?`<small>Level ${evLevel(e)} ${LV[evLevel(e)-1][0]} · ${LT[chOf(e).n][evLevel(e)-1]}</small>`:''}</span></button>`;});
+ return h+'</div>';
+}
+function calMain(){
+ const title=CAL.view==='month'?`${MONTHS[CAL.m]} ${CAL.y}`:'All practices';
+ return `<div class="ctb"><button type="button" class="btn" data-act="today">Today</button>${CAL.view==='month'?'<button type="button" class="btn sq" data-act="prev" aria-label="Previous month">&lsaquo;</button><button type="button" class="btn sq" data-act="next" aria-label="Next month">&rsaquo;</button>':''}<h3>${title}</h3><button type="button" class="btn" data-act="settings">Settings</button><div class="vsw"><button type="button" class="btn${CAL.view==='month'?' on':''}" data-act="vm">Month</button><button type="button" class="btn${CAL.view==='agenda'?' on':''}" data-act="va">Agenda</button></div></div>${CAL.view==='month'?monthGrid():agenda()}`;
+}
+function legend(){return `<div class="leg2">${CH.map(c=>`<a href="#/ch/${c.n}"><i style="background:hsl(${(c.n-1)*33+8} 52% 38%)"></i>${c.n}. ${c.short}</a>`).join('')}<a href="#/festival/1"><i style="background:hsl(34 88% 38%)"></i>Festival weeks</a></div>`;}
+function settingsPanel(){
+ const skip=getSkip();
+ return `<div class="dp"><h4>Schedule settings</h4><label for="startd">First practice date</label><input type="date" id="startd" value="${getStart()}"><label for="firstch">Currently on chapter</label><select id="firstch">${CH.map(c=>`<option value="${c.n}"${c.n===getFirst()?' selected':''}>${c.n}. ${c.title}</option>`).join('')}</select><p class="note">Practices run on Tuesdays and Thursdays. The group already knows the field, so the cycle starts at chapter ${getFirst()}; earlier chapters return at the next level.</p>${skip.length?`<h4 class="sp">Skipped days</h4><ul class="skl">${skip.sort().map(d=>`<li>${parseD(d).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} <button type="button" class="lnk" data-act="unskip" data-iso="${d}">restore</button></li>`).join('')}</ul>`:''}<h4 class="sp">Legend</h4>${legend()}</div>`;
+}
+const REM=[['Run start','Always start by running around the field, then dynamic moves.','run'],['75-minute practice','Water at minute 15 and mid-game. Always finish with 1 v 1. A ball for everyone in half the practice.','structure'],['Psychology','Praise effort, not talent. Offer small choices. One-sentence instructions.','psych'],['Safety','Check field and goals. Allow walking breaks. No heading. Watch heat and hydration.','safety']];
+const firstSent=t=>t.split(/(?<=\.)\s/)[0];
+function dayCard(e){
+ const col=evColor(e),p=e.kind==='p'?PL.session(e.s):PL.festival(e.k,e.day),l=e.kind==='p'?p.level:0;
+ const blocks=p.blocks.filter(b=>b.name.indexOf('Arrival')!==0);
+ const head=e.kind==='p'?`<span class="eyebrow">Practice ${e.s} of ${PL.TEACH} · Week ${e.week} · 75 min</span><h3>Chapter ${p.ch}: ${p.chapter.title}</h3><p class="dsub">${e.dstr}</p><p class="lvl"><b>Level ${l}, ${LV[l-1][0]}.</b> Target: ${p.target}.</p>`:`<span class="eyebrow">Festival ${e.k} · Week ${e.week} · 75 min</span><h3>${e.day==='Tuesday'?'Assessment stations':'Festival games'}</h3><p class="dsub">${e.dstr}</p>`;
+ const rem=`<div class="rems">${REM.map(r=>`<a href="#/g/${r[2]}" class="rem"><b>${r[0]}</b><span>${r[1]}</span></a>`).join('')}</div>`;
+ const bl=blocks.map(b=>{const sid=nid();return `<section class="dcb"><div class="dch"><span class="bt2">${b.t} min</span><h4>${b.name}</h4></div><p>${b.short||firstSent(b.how)}</p>${b.focus?`<p class="dcf"><b>Focus:</b> ${b.focus}${b.watch?` · <b>Watch:</b> ${b.watch}`:''}</p>`:''}${b.scene?window.renderScene(b.scene[0],sid,b.scene[1]):''}</section>`;}).join('');
+ const open=e.kind==='p'?`#/session/${e.s}`:`#/festival/${e.k}/${e.day}`;
+ return `<div class="dcard"><div class="dp-bar" style="background:${col}"></div><button type="button" class="x" data-act="back" aria-label="Close">&times;</button>${head}<div class="pbar"><a class="btn pri" href="${open}">Open full practice</a><button type="button" class="btn" data-act="skip" data-iso="${e.iso}">Skip this day</button></div><h4 class="sp">Reminders</h4>${rem}<h4 class="sp">Running to the end</h4><p class="dsub">Before the run start: 0 to 5 min arrival and circle.</p>${bl}</div>`;
+}
+function renderCal(){
+ $('#calmain').innerHTML=calMain();const d=$('#drawer');
+ if(CAL.sel!==null&&SCH[CAL.sel]){d.hidden=false;d.innerHTML=dayCard(SCH[CAL.sel]);}
+ else if(CAL.panel==='settings'){d.hidden=false;d.innerHTML='<button type="button" class="x" data-act="back" aria-label="Close">&times;</button>'+settingsPanel();}
+ else{d.hidden=true;d.innerHTML='';}
+}
+function yearPage(){
+ buildSchedule();if(!CAL)initCal();
+ const last=SCH[SCH.length-1];
+ return head('Calendar · Tuesdays and Thursdays','Practice Calendar',`${PL.TEACH-getFirst()+1} practices and 3 festival weeks, ${SCH[0]?SCH[0].date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''} to ${last?last.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''}.`)+`<div class="calw"><div id="calmain" class="calmain"></div></div><div id="drawer" class="drawer" hidden></div>`;
+}
+function calAfter(){if($('#calmain'))renderCal();}
+
+/* ---------- session page ---------- */
+let CUR=null;
+function blockDetail(b,id){
+ return `<div class="bd"><div class="bd-h"><span class="bt2">${b.t} min</span><h3>${b.name}</h3></div><p class="bd-how">${b.how}</p>${b.list?`<ul class="pts">${b.list.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}<dl class="bd-dl"><div><dt>Coaching focus</dt><dd>${b.focus}</dd></div>${b.prog?`<div><dt>Progression</dt><dd>${b.prog}</dd></div>`:''}${b.watch?`<div><dt>Watch for</dt><dd>${b.watch}</dd></div>`:''}</dl>${b.scene?window.renderScene(b.scene[0],id,b.scene[1]):''}</div>`;
+}
+function planPage(p,back){
+ const total=p.total;
+ const segs=p.blocks.map((b,i)=>`<button type="button" class="seg c${i%5}${i===0?' on':''}" style="flex:${b.min}" data-i="${i}" title="${b.name}"><span>${b.t}</span></button>`).join('');
+ const list=p.blocks.map((b,i)=>`<button type="button" class="bsel${i===0?' on':''}" data-i="${i}"><span class="bm">${b.t}</span><span class="bn">${b.name}</span></button>`).join('');
+ CUR={p,id:nid()};
+ return `<div class="pbody"><div class="ptl" role="group" aria-label="Practice timeline">${segs}</div><div class="pgrid"><div class="blist">${list}<p class="eqp"><b>Equipment:</b> ${p.equip}</p></div><div class="bpanel" id="bpanel">${blockDetail(p.blocks[0],CUR.id+'0')}</div></div><p class="check"><b>${p.check.split(':')[0]}.</b>${p.check.slice(p.check.indexOf(':')+1)}</p></div>`;
+}
+function sessionPage(s){
+ const fs=getFirst();s=Math.min(Math.max(fs,s),PL.TEACH);
+ const p=PL.session(s),ev=evP(s);
+ const prev=s>fs?`<a class="btn" href="#/session/${s-1}">Previous</a>`:'<span class="btn off">Previous</span>';
+ const next=s<PL.TEACH?`<a class="btn" href="#/session/${s+1}">Next</a>`:'<span class="btn off">Next</span>';
+ const title=`Chapter ${p.ch}: ${p.chapter.title}`;
+ return head(`Practice ${s} of ${PL.TEACH}${ev?' · '+ev.dstr+' · Week '+ev.week:''} · 75 min`,title,`Level ${p.level} (${LV[p.level-1][0]}). Target: ${p.target}.`,`<div class="pbar"><a class="btn" href="#/year">Calendar</a>${prev}${next}<button type="button" class="btn" id="copyp">Copy plan</button><a class="btn" href="#/ch/${p.ch}">Open chapter</a></div>`)+planPage(p);
+}
+function festivalPage(k,day){
+ k=Math.min(3,Math.max(1,k));day=day==='Thursday'?'Thursday':'Tuesday';
+ const p=PL.festival(k,day);const ev=evF(k,day);
+ const tabs=`<nav class="tabs"><a href="#/festival/${k}/Tuesday" aria-selected="${day==='Tuesday'}">Day 1: assessment</a><a href="#/festival/${k}/Thursday" aria-selected="${day==='Thursday'}">Day 2: festival games</a></nav>`;
+ return head(`Festival ${k}${ev?' · '+ev.dstr+' · Week '+ev.week:''} · 75 min`,'Festival Week',k===1?'End of Term 1. Level 1 and 2 skills are shown.':k===2?'End of Term 2. Level 3 and 4 skills are shown.':'End of the year. Level 5 and 6 skills are shown.',`<div class="pbar"><a class="btn" href="#/year">Calendar</a><button type="button" class="btn" id="copyp">Copy plan</button></div>`)+tabs+planPage(p);
+}
+
+/* ---------- levels ---------- */
+function levelsPage(){
+ return head('Progression','Level Ladder','The same eleven chapters are taught six times. Move a child or group up only when the target at the current level is met.')+
+ `<div class="lvh">${LV.map((l,i)=>`<div><b>L${i+1} ${l[0]}</b><span>${l[1]}</span></div>`).join('')}</div>`+
+ tbl(['Chapter',...LV.map((l,i)=>'L'+(i+1))],CH.map(c=>[`<a href="#/ch/${c.n}">${c.n}. ${c.short}</a>`,...LT[c.n]]),'grid-t lad');
+}
+
+/* ---------- chapter page ---------- */
+const CTABS=[['preview','Preview'],['concepts','Key concepts'],['notes','Teaching notes'],['faults','Faults and fixes'],['progress','Progress'],['drills','Exercises']];
+function chapterPage(n,tab,idx){
+ n=Math.min(Math.max(1,n),N);const c=CH[n-1];if(!CTABS.some(t=>t[0]===tab))tab='preview';
+ const b=c.builds.length?c.builds.map(x=>`<a href="#/ch/${x}" class="chip">Ch ${x} ${CH[x-1].short}</a>`).join(''):'<span class="chip plain">Starting point</span>';
+ let body='';
+ if(tab==='preview'){
+  body=`<div class="cols3"><div class="card"><h4>Objectives</h4>${ul(c.objectives)}</div><div class="card"><h4>Expected outcomes</h4>${ul(c.outcomes)}</div><div class="card why"><h4>How children aged 4 to 6 learn this</h4><p>${c.why}</p></div></div>`;
+ }else if(tab==='concepts'){
+  body=`<div class="tablewrap"><table class="kc"><thead><tr><th>Coach term</th><th>Say it to the child</th></tr></thead><tbody>${c.concepts[0][1].map(k=>`<tr><th scope="row">${k[0]}</th><td>${k[1]}</td></tr>`).join('')}</tbody></table></div>`;
+ }else if(tab==='notes'){
+  const i=Math.min(Math.max(0,idx),c.details.length-1),d=c.details[i];
+  const vis=d.scene?window.renderScene(d.scene,nid()):d.chart?chartHTML(d.chart):'';
+  const dots=c.details.map((x,j)=>`<a href="#/ch/${n}/notes/${j}" class="dot" aria-current="${j===i}" title="${x.h}">${j+1}</a>`).join('');
+  body=`<div class="notes"><div class="pager"><span>${i+1} of ${c.details.length}</span><div>${dots}</div><div class="pn">${i>0?`<a class="btn" href="#/ch/${n}/notes/${i-1}">Back</a>`:''}${i<c.details.length-1?`<a class="btn" href="#/ch/${n}/notes/${i+1}">Next</a>`:''}</div></div><h3>${d.h}</h3><div class="detail-grid"><div class="txt">${d.p.map(p=>`<p>${p}</p>`).join('')}${ul(d.pts)}</div>${vis?`<div class="vis">${vis}</div>`:''}</div></div>`;
+ }else if(tab==='faults'){
+  body=tbl(['What you see','Likely cause','What to do'],c.faults,'grid-t faults');
+ }else if(tab==='progress'){
+  const steps=LT[n].map((t,i)=>`<li style="--w:${(i+1)/6*100}%;--d:${i*80}ms" class="stp"><b>L${i+1}</b><span class="sn">${LV[i][0]}</span><span class="st">${t}</span><a href="#/session/${sessionNo(n,i+1)}" class="sl">Practice ${sessionNo(n,i+1)}</a></li>`).join('');
+  const fc=CORNERS.map(k=>`<li><span>${k}</span><span class="fb"><i style="width:${c.focus[k]*20}%"></i></span><b>${c.focus[k]}/5</b></li>`).join('');
+  const key=(c.details.find(d=>d.chart)||{}).chart;
+  body=`<div class="prog"><div class="card"><h4>Six levels across the year</h4><ol class="stairs">${steps}</ol></div><div class="stack"><div class="card"><h4>Emphasis in this chapter</h4><ul class="focus">${fc}</ul></div>${key?chartHTML(key):''}</div></div>`;
+ }else{
+  const i=Math.min(Math.max(0,idx),c.drills.length-1),d=c.drills[i];
+  const ds=(window.DSCENE||{})[n]&&window.DSCENE[n][i];
+  const lst=c.drills.map((x,j)=>`<a href="#/ch/${n}/drills/${j}" class="dsel" aria-current="${j===i}"><span class="dn">D${j+1}</span><span>${x[0]}</span><small>${x[1]} min</small></a>`).join('');
+  body=`<div class="drillpage"><div class="dlist">${lst}</div><article class="drill"><header><h3>${d[0]}</h3><div class="meta"><span>${d[1]} min</span><span>${d[2]}</span><span>${d[3]}</span><span>${d[4]}</span></div></header>${ds?window.renderScene(ds[0],nid(),ds[1]):''}<dl><div><dt>Organisation</dt><dd>${d[5]}</dd></div><div><dt>Coaching points</dt><dd>${d[6]}</dd></div><div><dt>Progression</dt><dd>${d[7]}</dd></div><div><dt>Common issue</dt><dd>${d[8]}</dd></div></dl></article></div><p class="check"><b>Check for learning.</b> ${c.check}</p>`;
+ }
+ return `<header class="ph chh"><div class="ch-no"><span>Chapter</span>${String(n).padStart(2,'0')}</div><div><h2>${c.title}</h2><p class="lead">${c.lead}</p><div class="chips"><span class="chips-l">Builds on</span>${b}</div></div></header>${tabsHTML(CTABS,tab,'#/ch/'+n)}<div class="pbody2">${body}</div>`;
+}
+
+/* ---------- guide ---------- */
+const WEEKEXP=[['Weeks 1 to 2','Team name, chant, buddy system','Parent welcome meeting; share the year plan and the Tuesday and Thursday schedule'],['Week 12','Festival 1 (end of Term 1)','Parent showcase; share first progress sheet'],['Weeks 13 to 14','Rebuild routines after the break','Short note about the next term'],['Week 24','Festival 2 (end of Term 2)','Family fun day; mid-year feedback'],['Weeks 25 to 26','Raise the challenge in games','Invite parents to watch one practice'],['Week 36','Festival 3 and graduation','Certificates, final report, photos'],['Weeks 37 to 40','Off-season: optional free play','Home challenge cards; registration; handover to Grade 1']];
+const GUIDE={
+ run:['Always Start by Running','Every practice opens by running around the field. It warms the body, burns off arrival energy and builds stamina and coordination.',()=>`<div class="cols3"><div class="card"><h4>Minutes 5 to 13</h4><p>Laps around the field. Pace and number of laps follow the level (below).</p></div><div class="card"><h4>Minutes 13 to 15</h4><p>Dynamic moves: high knees, heel flicks, side shuffles, bunny hops.</p></div><div class="card"><h4>Then</h4><p>Water, then one idea and the first skill drill.</p></div></div><h4 class="sp">Laps by level</h4>`+tbl(['Level','Laps and pace'],LV.map((l,i)=>[`Level ${i+1} ${l[0]}`,PL.LAPS[i]]))+ul(['Allow walking for tired children; never use running as punishment','Keep the whole group moving in the same direction','Traffic Lights is a chapter 2 exercise, not the run start'])],
+ structure:['The 75-Minute Practice','A fixed structure so children know what happens next. The practice repeats on Tuesdays and Thursdays.',()=>tbl(['Minutes','Part','What happens'],[['0 to 5','Arrival and circle','Greet by name, team chant, kit and water check, one idea for the day'],['5 to 15','Run start','Always. Laps around the field, then dynamic moves'],['15 to 20','Water and one idea','Short demonstration of the skill with one cue'],['20 to 35','Skill play 1','Chapter drill at the current level'],['35 to 45','Skill play 2','Second chapter drill with progression'],['45 to 55','Game','Small-sided game applying the idea'],['55 to 65','1 v 1 finale','Always. Duels in small grids with a chapter twist'],['65 to 75','Review and close','5 minutes reviewing the previous chapter, 5 minutes closing circle']])+ul(['Change activity if children lose focus','Water at minute 15, between the game and the 1 v 1, and at the end','If energy is low, shorten skill play 2 and keep the 1 v 1 finale','Everyone has a ball in at least half of the practice','Rotate groups so each child plays with different teammates'])],
+ psych:['Child Psychology and Motivation','Three ideas guide coaching behavior at this age.',()=>`<div class="cols3"><div class="card"><h4>Competence</h4><p>Design tasks so that most attempts succeed. Reduce difficulty if success falls below about half; add challenge when it is routine.</p></div><div class="card"><h4>Autonomy</h4><p>Offer small choices: which ball, which cone color, which game.</p></div><div class="card"><h4>Belonging</h4><p>Names, rituals, buddies and a team identity. This is the strongest source of retention.</p></div></div>`+ul(['Praise effort and strategy ("you kept your head up"), not talent','Use "not yet" language to support a growth mindset','Expect egocentric play; teach sharing through game design','If a child is upset, give a calm job and let them rejoin when ready','Seventy-five minutes is long for this age: keep activities short and varied'])],
+ safety:['Physical Development and Safety','Practice twice a week with a strong running start. Protect joints and manage heat.',()=>ul(['Emphasise fundamental movement skills: balance, running, jumping, hopping, throwing, catching','Short running bouts with rests; allow walking','Monitor heat and hydration; shorten the run start in hot weather','No heading practice at this age','Check the field and anchor all goals before each practice','Keep a first-aid kit, emergency contacts and an injury plan on site','Children grow at different rates: do not compare or group by size'])],
+ team:['Team Chemistry and Extra-Curricular','Run these across the year so belonging keeps growing.',()=>tbl(['Activity','Purpose','When'],[['Team name and chant','Identity and belonging','Weeks 1 to 2'],['Buddy of the week','Friendships across the group','Weekly'],['Shared snack','Social bonding off the field','After festivals'],['Team banner art day','Creative ownership','Mid-year'],['Family fun day','Parents and children play together','Week 24'],['Fair play recognition','Models respect and kindness','Each practice']])],
+ parents:['Working with Parents','Clear communication with families all year.',()=>tbl(['When','Team culture','Parents'],WEEKEXP)+ul(['Ask parents to encourage effort and avoid coaching from the sideline','Share one small home activity each week (toe taps, balance)','Report progress using the level targets in positive, specific language'])],
+ assess:['Assessment','Record Yes, Almost or Not yet at each festival (weeks 12, 24 and 36), plus a baseline in week 1. Assess inside normal games and do not rank children.',()=>tbl(['Chapter','Check','Wk 1','Wk 12','Wk 24','Wk 36'],CH.map(c=>[c.n+'. '+c.short,c.check,'','','','']),'grid-t asm')],
+ next:['Looking Ahead to 1st Grade','The first-grade curriculum extends this base.',()=>`<p>It adds simple passing patterns, more dribbling moves, first goalkeeper skills and a clearer understanding of the rules. Use the level ladder to see which chapters need more time before the group moves on.</p>`],
+ sources:['Frameworks and Sources','The content is original writing informed by the frameworks below. It has not been checked against the original documents. Verify any specific figure or quotation before using it publicly.',()=>tbl(['Source','Used for'],[['FIFA','Grassroots coaching and Football for Schools materials'],['US Soccer','Player development guidelines and best practices for coaching youth soccer'],['The FA (England)','Youth development framework and the four-corner model'],['KNVB / Coerver','Technical development approach for young players'],['Balyi, I. et al.','Long-term athlete development model'],['Gallahue, D.','Understanding Motor Development: fundamental movement skills'],['Ryan, R. and Deci, E. (2000)','Self-determination theory'],['Dweck, C. (2006)','Mindset: growth versus fixed mindset']])]
+};
+const GORDER=[['run','Run start'],['structure','75-minute practice'],['psych','Psychology'],['safety','Safety'],['team','Team chemistry'],['parents','Parents'],['assess','Assessment'],['next','Next grade'],['sources','Sources']];
+function guidePage(id){const g=GUIDE[id]||GUIDE.run;return head('Coaching guide',g[0],g[1])+`<div class="gbody">${g[2]()}</div>`;}
+
+/* ---------- shell ---------- */
+$('#nav').innerHTML=`<div class="ng"><h6>Program</h6><a href="#/" data-k="/">Overview</a><a href="#/year" data-k="/year">Calendar</a><a href="#/levels" data-k="/levels">Level ladder</a></div><div class="ng"><h6>Chapters</h6><div class="cgrid">${CH.map(c=>`<a href="#/ch/${c.n}" data-k="/ch/${c.n}" title="${c.title}">${c.n}</a>`).join('')}</div></div><div class="ng"><h6>Coaching guide</h6>${GORDER.map(g=>`<a href="#/g/${g[0]}" data-k="/g/${g[0]}">${g[1]}</a>`).join('')}</div>`;
+function route(){
+ const h=(location.hash||'#/').slice(2).split('/').filter(Boolean);let html='';
+ CUR=null;buildSchedule();
+ if(!h.length)html=overview();
+ else if(h[0]==='year')html=yearPage();
+ else if(h[0]==='levels')html=levelsPage();
+ else if(h[0]==='ch')html=chapterPage(+h[1]||1,h[2]||'preview',+h[3]||0);
+ else if(h[0]==='session')html=sessionPage(+h[1]||1);
+ else if(h[0]==='festival')html=festivalPage(+h[1]||1,h[2]);
+ else if(h[0]==='g')html=guidePage(h[1]);
+ else html=overview();
+ $('#page').innerHTML=html;calAfter();
+ $('#page').scrollTop=0;window.scrollTo(0,0);
+ const path='/'+h.slice(0,h[0]==='ch'?2:h[0]==='g'?2:1).join('/');
+ document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.k===(path==='/'?'/':path)||(h[0]==='session'||h[0]==='festival')&&a.dataset.k==='/year'));
+ document.body.classList.remove('menu');
+ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('.scene svg').forEach(s=>s.pauseAnimations&&s.pauseAnimations());
+}
+document.addEventListener('click',e=>{
+ const ac=e.target.closest('[data-act]');
+ if(ac&&CAL){const act=ac.dataset.act;
+  if(act==='prev'||act==='next'){CAL.m+=act==='next'?1:-1;if(CAL.m<0){CAL.m=11;CAL.y--;}if(CAL.m>11){CAL.m=0;CAL.y++;}renderCal();return;}
+  if(act==='today'){const t=new Date();CAL.y=t.getFullYear();CAL.m=t.getMonth();CAL.view='month';renderCal();return;}
+  if(act==='vm'){CAL.view='month';renderCal();return;}if(act==='va'){CAL.view='agenda';renderCal();return;}
+  if(act==='ev'){CAL.sel=+ac.dataset.k;CAL.panel=null;const ev=SCH[CAL.sel];if(ev&&CAL.view==='month'){CAL.y=ev.date.getFullYear();CAL.m=ev.date.getMonth();}renderCal();return;}
+  if(act==='back'){CAL.sel=null;CAL.panel=null;renderCal();return;}
+  if(act==='settings'){CAL.sel=null;CAL.panel='settings';renderCal();return;}
+  if(act==='skip'||act==='unskip'){const a=new Set(getSkip());act==='skip'?a.add(ac.dataset.iso):a.delete(ac.dataset.iso);lsSet('rch-skip',JSON.stringify([...a]));buildSchedule();CAL.sel=null;renderCal();return;}
+ }
+ const pp=e.target.closest('.pp');
+ if(pp){const sv=document.getElementById(pp.dataset.for).querySelector('svg');if(sv.animationsPaused()){sv.unpauseAnimations();pp.classList.remove('is');}else{sv.pauseAnimations();pp.classList.add('is');}return;}
+ const bs=e.target.closest('.bsel,.seg');
+ if(bs&&CUR){const i=+bs.dataset.i;document.querySelectorAll('.bsel,.seg').forEach(x=>x.classList.toggle('on',+x.dataset.i===i));$('#bpanel').innerHTML=blockDetail(CUR.p.blocks[i],CUR.id+i);return;}
+ if(e.target.id==='copyp'&&CUR){const t=PL.toText(CUR.p),b=e.target;const ok=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy plan',1400);};if(navigator.clipboard)navigator.clipboard.writeText(t).then(ok,()=>{});return;}
+ if(e.target.closest('#menu'))document.body.classList.toggle('menu');
+});
+document.addEventListener('change',e=>{
+ if(e.target.id==='startd'&&e.target.value){lsSet('rch-start',e.target.value);buildSchedule();CAL=null;initCal();renderCal();}
+ if(e.target.id==='firstch'){lsSet('rch-first',e.target.value);buildSchedule();CAL=null;initCal();renderCal();}
+});
+window.addEventListener('hashchange',route);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CAL&&(CAL.sel!==null||CAL.panel)){CAL.sel=null;CAL.panel=null;if($('#drawer'))renderCal();}});
+const th=$('#theme');
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('rch-theme',t);}catch(e){}}
+th.addEventListener('click',()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');setTheme(cur==='dark'?'light':'dark');});
+try{const t=localStorage.getItem('rch-theme');if(t)setTheme(t);}catch(e){}
+route();
+})();
+</script>
