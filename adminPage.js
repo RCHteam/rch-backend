@@ -1461,6 +1461,16 @@ module.exports = `<!doctype html>
     document.getElementById('sectionNav').value = 'registrations';
     showSection('registrations');
     loadAll();
+    // After a refresh, go back to the section (and Coaches sub-tab) you were on.
+    setTimeout(function(){
+      let sec = '', sub = '';
+      try { sec = sessionStorage.getItem('rch_admin_section') || ''; sub = sessionStorage.getItem('rch_admin_coachsub') || ''; } catch (e) {}
+      const nav = document.getElementById('sectionNav');
+      if (sec && sec !== 'registrations' && nav.querySelector('option[value="' + sec + '"]')) {
+        nav.value = sec; nav.dispatchEvent(new Event('change'));
+        if (sec === 'coaches' && COACH_SUBS.indexOf(sub) > -1) showCoachSub(sub);
+      }
+    }, 0);
   }
 
   document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -3410,6 +3420,7 @@ module.exports = `<!doctype html>
   // ===================== Coaches subtabs =====================
   const COACH_SUBS = ['coaches', 'curriculum', 'reports', 'documents', 'calendar'];
   function showCoachSub(name){
+    try { sessionStorage.setItem('rch_admin_coachsub', name); } catch (e) {}
     COACH_SUBS.forEach(function(s){ document.getElementById('coachSub-' + s).classList.toggle('hidden', s !== name); });
     document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-sub') === name); });
     if (name === 'curriculum') loadCurriculum();
@@ -4050,6 +4061,7 @@ module.exports = `<!doctype html>
   }
   document.getElementById('sectionNav').addEventListener('change', async (e) => {
     const name = e.target.value;
+    try { sessionStorage.setItem('rch_admin_section', name); } catch (err) {}
     showSection(name);
     if (name === 'finances') await loadFinancesExtras();
     if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
@@ -4218,6 +4230,7 @@ module.exports = `<!doctype html>
   function goDashboard(e){
     if (e) e.preventDefault();
     document.getElementById('sectionNav').value = 'registrations';
+    try { sessionStorage.setItem('rch_admin_section', 'registrations'); } catch (err) {}
     showSection('registrations');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

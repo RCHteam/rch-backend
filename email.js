@@ -124,8 +124,8 @@ async function sendPaymentLinkEmail({ to, parentName, childName, programLabel, l
       <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Complete Payment</a></p>
       <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
       <p>${coverageHtml}</p>
-      <p>This link is unique to your family — please don't share it. If you have any questions, just reply to this email.</p>`),
-    text: `Hi ${firstName},\n\n${childName} is ready to start ${programLabel}. To finish registering, please complete payment using this link:\n${link}\n\n${coverageText}\n\nThis link is unique to your family — please don't share it. If you have any questions, just reply to this email.\n\nRCH Elite Training`,
+      <p>This link is unique to your family — please don't share it.</p>`),
+    text: `Hi ${firstName},\n\n${childName} is ready to start ${programLabel}. To finish registering, please complete payment using this link:\n${link}\n\n${coverageText}\n\nThis link is unique to your family — please don't share it.\n\nRCH Elite Training`,
   });
 }
 
@@ -147,8 +147,8 @@ async function sendOneTimePaymentEmail({ to, parentName, childName, title, descr
       ${descHtml}
       <p style="text-align:center; margin:24px 0;"><a href="${link}" style="background:#164a30; color:#fff; padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">Complete Payment</a></p>
       <p style="font-size:0.85rem; color:#666;">Or copy this link: <a href="${link}">${link}</a></p>
-      <p>This link is unique to your family — please don't share it. If you have any questions, just reply to this email.</p>`),
-    text: `Hi ${firstName},\n\n${title} ${who} — ${amountStr}.\n\n${descText}Pay using this link:\n${link}\n\nThis link is unique to your family — please don't share it. If you have any questions, just reply to this email.\n\nRCH Elite Training`,
+      <p>This link is unique to your family — please don't share it.</p>`),
+    text: `Hi ${firstName},\n\n${title} ${who} — ${amountStr}.\n\n${descText}Pay using this link:\n${link}\n\nThis link is unique to your family — please don't share it.\n\nRCH Elite Training`,
   });
 }
 
@@ -245,8 +245,8 @@ async function sendStudentReportEmail({ to, parentName, childName, monthLabel, c
   const chapterLine = chapterTitle ? ` on <b>${escHtml(chapterTitle)}</b>` : '';
   const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
     <p>Attached is ${escHtml(childName)}'s progress report for <b>${escHtml(monthLabel)}</b>${chapterLine}, written by their coach.</p>
-    <p>Thank you for being part of RCH Elite Training. If you have any questions, just reply to this email.</p>`);
-  const text = `Hi ${firstName},\n\nAttached is ${childName}'s progress report for ${monthLabel}${chapterTitle ? ' on ' + chapterTitle : ''}, written by their coach.\n\nThank you for being part of RCH Elite Training. If you have any questions, just reply to this email.`;
+    <p>Thank you for being part of RCH Elite Training.</p>`);
+  const text = `Hi ${firstName},\n\nAttached is ${childName}'s progress report for ${monthLabel}${chapterTitle ? ' on ' + chapterTitle : ''}, written by their coach.\n\nThank you for being part of RCH Elite Training.`;
   return sendEmail({ to, subject, html, text, attachments: [{ filename, content: pdf.toString('base64') }] });
 }
 
