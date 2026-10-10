@@ -101,7 +101,7 @@ app.get('/sw.js', (req, res) => {
     "self.addEventListener('fetch',function(){});"
   );
 });
-['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'].forEach((f) => {
+['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'coach-uniform.jpg'].forEach((f) => {
   app.get('/assets/' + f, (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.sendFile(path.join(__dirname, 'assets', f));

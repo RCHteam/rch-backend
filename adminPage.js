@@ -273,6 +273,34 @@ module.exports = `<!doctype html>
   .cur-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .cur-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:16px 18px; border-top:4px solid var(--acc); }
   .cur-num{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--pitch); }
+  .resp-hero{ background:var(--pitch-deep); color:var(--chalk); border-radius:6px 6px 0 0; padding:16px 22px; display:flex; align-items:center; gap:16px; border-bottom:3px solid var(--acc); }
+  .resp-hero img{ height:38px; width:auto; display:block; }
+  .resp-hero .rh-t{ font-family:'Anton',sans-serif; letter-spacing:0.03em; font-size:1.5rem; line-height:1; }
+  .resp-hero .rh-s{ font-family:'Space Mono',monospace; font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold-bright); margin-top:5px; }
+  .resp-uniform{ background:#fff; border-radius:0 0 6px 6px; box-shadow:var(--shadow); padding:22px; margin-bottom:22px; display:grid; grid-template-columns:minmax(0,420px) 1fr; gap:28px; align-items:center; }
+  .resp-uniform img.fig{ width:100%; height:auto; display:block; border-radius:6px; border:1px solid var(--line); }
+  .resp-list{ list-style:none; margin:0; padding:0; }
+  .resp-list li{ padding:11px 0 11px 18px; border-bottom:1px solid var(--line); position:relative; font-size:0.95rem; }
+  .resp-list li:last-child{ border-bottom:0; }
+  .resp-list li:before{ content:''; position:absolute; left:0; top:18px; width:8px; height:8px; background:var(--gold); border-radius:50%; }
+  .resp-list b{ font-weight:700; color:var(--pitch-deep); }
+  .resp-h{ font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--pitch); margin:26px 0 12px; display:flex; align-items:center; gap:12px; }
+  .resp-h:after{ content:''; flex:1; height:1px; background:var(--line); }
+  .val-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+  .val-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:18px 18px 20px; border-top:4px solid var(--gold); }
+  .val-card .vn{ font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--turf); letter-spacing:0.12em; }
+  .val-card h4{ font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.03em; margin:6px 0 6px; color:var(--pitch-deep); }
+  .val-card p{ margin:0; font-size:0.88rem; color:#44504a; line-height:1.5; }
+  .flow{ display:flex; flex-direction:column; align-items:stretch; }
+  .flow-step{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:14px 18px; display:flex; gap:16px; align-items:flex-start; border-left:4px solid var(--acc); }
+  .flow-step .fn{ flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:var(--pitch-deep); color:var(--gold-bright); font-family:'Anton',sans-serif; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
+  .flow-step h4{ margin:0 0 3px; font-family:'Work Sans',sans-serif; font-weight:700; font-size:1rem; color:var(--pitch-deep); }
+  .flow-step p{ margin:0; font-size:0.88rem; color:#44504a; line-height:1.5; }
+  .flow-step .tag{ display:inline-block; margin-top:6px; font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; background:var(--chalk); border:1px solid var(--line); border-radius:3px; padding:2px 7px; color:var(--pitch); }
+  .flow-arrow{ text-align:center; color:var(--turf); font-size:1.5rem; line-height:1; padding:5px 0; }
+  .flow-step.end{ border-left-color:var(--gold); }
+  @media (max-width: 860px){ .resp-uniform{ grid-template-columns:1fr; } .val-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 520px){ .val-grid{ grid-template-columns:1fr; } }
   .cur-frame-box{ position:relative; background:#fff; border:1px solid #d8d4c4; border-radius:8px; overflow:hidden; }
   .cur-frame-box iframe{ display:block; width:100%; height:78vh; min-height:520px; border:0; }
   .cur-frame-bar{ display:none; }
@@ -583,6 +611,7 @@ module.exports = `<!doctype html>
     <div id="section-coaches" class="hidden">
       <div class="subtabs" id="coachSubtabs">
         <button type="button" class="subtab active" data-sub="coaches">Our Coaches</button>
+        <button type="button" class="subtab" data-sub="responsibilities">Responsibilities</button>
         <button type="button" class="subtab" data-sub="curriculum">Our Curriculum</button>
         <button type="button" class="subtab" data-sub="reports">Student Report</button>
         <button type="button" class="subtab" data-sub="documents">Documents</button>
@@ -607,6 +636,62 @@ module.exports = `<!doctype html>
       <div class="coach-role-head role-volunteer"><span class="dot"></span><h3>Volunteers</h3></div>
       <div id="coachesTableWrap_volunteer"></div>
       </div><!-- /coachSub-coaches -->
+
+      <div id="coachSub-responsibilities" class="hidden">
+        <div class="section-head"><h2>Responsibilities</h2></div>
+
+        <div class="resp-hero"><img src="/assets/logo.png" alt="RCH Elite Training"><div><div class="rh-t">Coach Uniform</div><div class="rh-s">What must be worn at every practice</div></div></div>
+        <div class="resp-uniform">
+          <img class="fig" src="/assets/coach-uniform.jpg" alt="Coach uniform: RCH and Sultans jacket, white polo, black track pants with green stripes, whistle, sport watch, hardboard clipboard and running shoes">
+          <ul class="resp-list">
+            <li><b>Jacket and polo.</b> RCH Elite Training jacket over the white RCH polo.</li>
+            <li><b>Track pants.</b> Black pants with the green side stripes.</li>
+            <li><b>Whistle.</b> Worn around the neck on the red lanyard.</li>
+            <li><b>Sport watch.</b> To keep time during practice.</li>
+            <li><b>Hardboard clipboard.</b> For attendance and your coaching summary.</li>
+            <li><b>Running shoes.</b> Clean, white, and ready to move.</li>
+          </ul>
+        </div>
+
+        <div class="resp-h">Coaching Values</div>
+        <div class="val-grid">
+          <div class="val-card"><div class="vn">01</div><h4>Passion</h4><p>Bring energy and love for the game to every practice.</p></div>
+          <div class="val-card"><div class="vn">02</div><h4>Discipline</h4><p>Be on time, prepared, and consistent in everything you do.</p></div>
+          <div class="val-card"><div class="vn">03</div><h4>Follow the Curriculum</h4><p>Teach the plan as written, in order, every practice.</p></div>
+          <div class="val-card"><div class="vn">04</div><h4>Connect</h4><p>Build a real connection with the child and with the parent.</p></div>
+        </div>
+
+        <div class="resp-h">Coaching Responsibilities: every practice</div>
+        <div class="flow">
+            <div class="flow-step"><div class="fn">1</div><div><h4>Take attendance</h4><p>Taken at the very start of practice.</p><span class="tag">Start of practice</span></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">2</div><div><h4>Running</h4><p>Every practice opens with running, as laid out in the curriculum.</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">3</div><div><h4>Circle the players</h4><p>Bring the players into a circle and summarize what will be done today (see the curriculum).</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">4</div><div><h4>Follow the curriculum</h4><p>Run the curriculum exercises and coaching steps. Follow your coaching summary, available in the Calendar.</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">5</div><div><h4>Finish with 1 v 1</h4><p>End the main work with 1 v 1, as laid out in the curriculum.</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">6</div><div><h4>Review, praise and conclude</h4><p>Review the practice, praise the players, and wrap up (see the curriculum).</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step"><div class="fn">7</div><div><h4>Connect with the parents</h4><p>Speak with the parents, as laid out in the curriculum.</p></div></div>
+            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
+            <div class="flow-step end"><div class="fn">8</div><div><h4>Take attendance</h4><p>Taken again at the end of practice.</p><span class="tag">End of practice</span></div></div>
+        </div>
+
+        <div class="resp-h">Beyond practice</div>
+        <div class="card-box">
+          <ul class="resp-list">
+            <li><b>Term reports.</b> At the end of each term, write a report on each child.</li>
+            <li><b>Players' outside activities.</b> Attend your players' outside activities.</li>
+            <li><b>Parents' outside activities.</b> Attend the parents' outside activities.</li>
+            <li><b>Camps.</b> Attend camps if needed.</li>
+            <li><b>Full-time coaches.</b> Attend their one-to-one and school coaching (currently unavailable).</li>
+            <li><b>Coaches meeting.</b> Attend the coaches meeting with Coach Ismail.</li>
+          </ul>
+        </div>
+      </div>
 
       <div id="coachSub-curriculum" class="hidden">
         <div class="section-head">
@@ -3432,7 +3517,7 @@ module.exports = `<!doctype html>
   fillMonthYear('attMonth', 'attYear');
 
   // ===================== Coaches subtabs =====================
-  const COACH_SUBS = ['coaches', 'curriculum', 'reports', 'documents', 'calendar'];
+  const COACH_SUBS = ['coaches', 'responsibilities', 'curriculum', 'reports', 'documents', 'calendar'];
   function showCoachSub(name){
     rememberPlace('coaches', name);
     COACH_SUBS.forEach(function(s){ document.getElementById('coachSub-' + s).classList.toggle('hidden', s !== name); });
