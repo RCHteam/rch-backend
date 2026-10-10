@@ -312,6 +312,9 @@ module.exports = `<!doctype html>
   .badge{ display:inline-block; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:20px; background:#eee; color:#555; margin-right:4px; }
   .badge.warn{ background:#f6dcd4; color:#8a3b27; }
   .img-slots{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px; }
+  .img-slots.one{ grid-template-columns:repeat(2,1fr); max-width:340px; }
+  .photo-panel{ background:#fff; border:1px solid #e3dfd0; border-radius:10px; padding:16px 18px 18px; margin:0 0 20px; }
+  .photo-panel h3{ margin:0 0 4px; font-size:1.05rem; } .photo-panel p{ color:#666; font-size:.84rem; margin:0 0 10px; } .photo-panel label{ display:block; font-weight:700; font-size:.82rem; margin-top:12px; }
   .img-slot{ position:relative; aspect-ratio:1/1; border:2px dashed #cfc8b3; border-radius:8px; background:#faf8f1 center/cover no-repeat; display:flex; align-items:center; justify-content:center; text-align:center; font-size:0.68rem; color:#8a846f; cursor:pointer; padding:4px; }
   .img-slot.cover{ border-color:var(--gold); }
   .img-slot.drag{ background-color:#eef7ef; border-color:var(--acc); }
@@ -677,6 +680,15 @@ module.exports = `<!doctype html>
         </div>
       </div>
       <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Draft shop: no payments are connected yet. When the switch is off, the website's Shop tab says the shop is currently unavailable. While it is on but you have not added products, the website shows clearly marked sample products.</p>
+      <div class="photo-panel">
+        <h3>Page photos</h3>
+        <p>These photos decorate the website Shop page. Each product also has its own photos (up to 8) when you add or edit it.</p>
+        <label>Banner photo (the big picture at the top of the page)</label>
+        <div class="img-slots one" id="shopHeroImgs"></div>
+        <label>Lookbook photos (up to 6, shown in a photo wall under the products)</label>
+        <div class="img-slots" id="shopGalleryImgs"></div>
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;"><button type="button" class="btn-add" id="shopPhotosSave">Save page photos</button><span id="shopPhotosMsg" style="font-size:.85rem;color:#555;"></span></div>
+      </div>
       <div id="shopGrid"></div>
     </div><!-- /section-shop -->
 
@@ -693,6 +705,15 @@ module.exports = `<!doctype html>
         </div>
       </div>
       <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Add a summer or winter camp when it is ready. When the switch is off, the website's Camp tab says camps are currently unavailable. Registration and payment are not connected yet.</p>
+      <div class="photo-panel">
+        <h3>Page photos</h3>
+        <p>These photos decorate the website Camp page. Each camp also has its own photos (up to 8) when you add or edit it.</p>
+        <label>Banner photo (the big picture at the top of the page)</label>
+        <div class="img-slots one" id="campHeroImgs"></div>
+        <label>Camp life photos (up to 8, shown in a scrolling photo strip)</label>
+        <div class="img-slots" id="campGalleryImgs"></div>
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;"><button type="button" class="btn-add" id="campPhotosSave">Save page photos</button><span id="campPhotosMsg" style="font-size:.85rem;color:#555;"></span></div>
+      </div>
       <div id="campGrid"></div>
     </div><!-- /section-camp -->
 
@@ -834,7 +855,7 @@ module.exports = `<!doctype html>
     <input type="text" id="spSizes" placeholder="e.g. YS, YM, YL, S, M, L">
     <label for="spDesc">Description</label>
     <textarea id="spDesc" style="min-height:90px;"></textarea>
-    <label>Photos (the first is the cover; click or drop up to 4)</label>
+    <label>Photos (the first is the cover; click or drop up to 8)</label>
     <div class="img-slots" id="spImages"></div>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="spInStock" checked><label for="spInStock">In stock</label></div>
@@ -872,7 +893,7 @@ module.exports = `<!doctype html>
     </div>
     <label for="cpDesc">Description</label>
     <textarea id="cpDesc" style="min-height:90px;"></textarea>
-    <label>Photos (the first is the cover; click or drop up to 4)</label>
+    <label>Photos (the first is the cover; click or drop up to 8)</label>
     <div class="img-slots" id="cpImages"></div>
     <div class="checkbox-row"><input type="checkbox" id="cpVisible" checked><label for="cpVisible">Show on website</label></div>
     <p class="modal-error" id="campError"></p>
@@ -3702,12 +3723,13 @@ module.exports = `<!doctype html>
     reader.onerror = function(){ cb(null); };
     reader.readAsDataURL(file);
   }
-  function buildImageSlots(boxId){
+  function buildImageSlots(boxId, max, firstLabel){
+    max = max || 8; firstLabel = firstLabel || 'Cover photo: click or drop';
     const box = document.getElementById(boxId);
     let imgs = [];
     function draw(){
       box.innerHTML = '';
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < max; i++) {
         const slot = document.createElement('div');
         slot.className = 'img-slot' + (i === 0 ? ' cover' : '');
         if (imgs[i]) {
@@ -3717,7 +3739,7 @@ module.exports = `<!doctype html>
           rm.addEventListener('click', function(ev){ ev.stopPropagation(); imgs.splice(i, 1); draw(); });
           slot.appendChild(rm);
         } else {
-          slot.textContent = i === 0 ? 'Cover photo: click or drop' : 'Add photo';
+          slot.textContent = i === 0 ? firstLabel : 'Add photo';
           const input = document.createElement('input');
           input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
           input.addEventListener('change', function(){ if (input.files && input.files[0]) addFile(input.files[0]); });
@@ -3731,14 +3753,31 @@ module.exports = `<!doctype html>
       }
     }
     function addFile(file){
-      if (imgs.length >= 4) return;
+      if (imgs.length >= max) return;
       resizeImage(file, function(data){ if (data) { imgs.push(data); draw(); } else alert('That file could not be read as an image.'); });
     }
     draw();
-    return { get: function(){ return imgs.slice(); }, set: function(arr){ imgs = (arr || []).slice(0, 4); draw(); } };
+    return { get: function(){ return imgs.slice(); }, set: function(arr){ imgs = (arr || []).slice(0, max); draw(); } };
   }
-  const productSlots = buildImageSlots('spImages');
-  const campSlots = buildImageSlots('cpImages');
+  const productSlots = buildImageSlots('spImages', 8);
+  const campSlots = buildImageSlots('cpImages', 8);
+  const shopHeroSlots = buildImageSlots('shopHeroImgs', 1, 'Banner photo: click or drop');
+  const shopGallerySlots = buildImageSlots('shopGalleryImgs', 6, 'Lookbook photo: click or drop');
+  const campHeroSlots = buildImageSlots('campHeroImgs', 1, 'Banner photo: click or drop');
+  const campGallerySlots = buildImageSlots('campGalleryImgs', 8, 'Camp life photo: click or drop');
+  function wirePagePhotos(kind, heroSlots, gallerySlots){
+    document.getElementById(kind + 'PhotosSave').addEventListener('click', async function(){
+      const btn = this, msg = document.getElementById(kind + 'PhotosMsg');
+      btn.disabled = true; msg.textContent = 'Saving…';
+      try {
+        const r = await api('/api/admin/' + kind + '/page-images', { method: 'POST', body: JSON.stringify({ hero: heroSlots.get(), gallery: gallerySlots.get() }) });
+        msg.textContent = r && r.ok ? 'Saved. The website is updated.' : 'Could not save.';
+      } catch (err) { msg.textContent = 'Could not save. Try fewer or smaller photos.'; }
+      btn.disabled = false;
+    });
+  }
+  wirePagePhotos('shop', shopHeroSlots, shopGallerySlots);
+  wirePagePhotos('camp', campHeroSlots, campGallerySlots);
 
   function imgStyle(arr){ return arr && arr[0] ? ' style="background-image:url(' + arr[0] + ')"' : ''; }
 
@@ -3747,6 +3786,7 @@ module.exports = `<!doctype html>
   let productEditId = null;
   async function loadShopAdmin(){
     shopData = await api('/api/admin/shop');
+    shopHeroSlots.set(shopData.pageImages ? shopData.pageImages.hero : []); shopGallerySlots.set(shopData.pageImages ? shopData.pageImages.gallery : []);
     document.getElementById('shopOpenToggle').checked = !!shopData.open;
     document.getElementById('shopOpenLabel').textContent = shopData.open ? 'Shop open' : 'Shop closed';
     const grid = document.getElementById('shopGrid');
@@ -3817,6 +3857,7 @@ module.exports = `<!doctype html>
   function fmtCampDates(c){ return c.startDate ? fmtDay(c.startDate) + (c.endDate ? ' – ' + fmtDay(c.endDate) : '') : 'Dates to be announced'; }
   async function loadCampAdmin(){
     campData = await api('/api/admin/camp');
+    campHeroSlots.set(campData.pageImages ? campData.pageImages.hero : []); campGallerySlots.set(campData.pageImages ? campData.pageImages.gallery : []);
     document.getElementById('campOpenToggle').checked = !!campData.open;
     document.getElementById('campOpenLabel').textContent = campData.open ? 'Camps open' : 'Camps closed';
     const grid = document.getElementById('campGrid');

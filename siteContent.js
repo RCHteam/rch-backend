@@ -5,20 +5,34 @@ const { getSetting, setSetting } = require('./settings');
 
 const router = express.Router();
 
-const MAX_IMAGES = 4;
+const MAX_IMAGES = 8;
+const PAGE_LIMITS = { shop: { hero: 1, gallery: 6 }, camp: { hero: 1, gallery: 8 } };
 const MAX_IMAGE_CHARS = 2000000; // a resized JPEG as a data URL is ~100-300 KB; this is a generous ceiling
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const SEASONS = new Set(['summer', 'winter', 'spring', 'fall', 'other']);
 
 // Images arrive as an array of data: URLs (or https URLs). Anything else is dropped.
-function cleanImages(v) {
+function cleanImages(v, max = MAX_IMAGES) {
   if (!Array.isArray(v)) return [];
   return v
     .filter((x) => typeof x === 'string' && x.length <= MAX_IMAGE_CHARS && (/^data:image\/(png|jpe?g|webp|gif);base64,/.test(x) || /^https:\/\//.test(x)))
-    .slice(0, MAX_IMAGES);
+    .slice(0, max);
 }
 function parseImages(s) {
   try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+// Page-level photos (hero banner + gallery) kept in settings as JSON.
+async function getPageImages(kind) {
+  const lim = PAGE_LIMITS[kind];
+  let o = {};
+  try { o = JSON.parse(await getSetting(kind + '_page_images', '{}')) || {}; } catch (e) { o = {}; }
+  return { hero: cleanImages(o.hero, lim.hero), gallery: cleanImages(o.gallery, lim.gallery) };
+}
+async function savePageImages(kind, body) {
+  const lim = PAGE_LIMITS[kind];
+  const v = { hero: cleanImages(body && body.hero, lim.hero), gallery: cleanImages(body && body.gallery, lim.gallery) };
+  await setSetting(kind + '_page_images', JSON.stringify(v));
+  return v;
 }
 function cents(v) {
   const n = Math.round(Number(v));
@@ -40,11 +54,12 @@ const campOut = (r) => ({
 
 router.get('/admin/shop', requireAdmin, async (req, res) => {
   try {
-    const [open, rows] = await Promise.all([
+    const [open, rows, pageImages] = await Promise.all([
       getSetting('shop_open', 'false'),
       pool.query('SELECT * FROM shop_products ORDER BY position, id'),
+      getPageImages('shop'),
     ]);
-    res.json({ open: open === 'true', products: rows.rows.map(shopOut) });
+    res.json({ open: open === 'true', products: rows.rows.map(shopOut), pageImages });
   } catch (err) {
     console.error('Admin shop error:', err);
     res.status(500).json({ error: 'Could not load the shop.' });
@@ -120,9 +135,9 @@ router.delete('/admin/shop/products/:id', requireAdmin, async (req, res) => {
 router.get('/shop', async (req, res) => {
   try {
     const open = (await getSetting('shop_open', 'false')) === 'true';
-    if (!open) return res.json({ open: false, products: [] });
+    if (!open) return res.json({ open: false, products: [], pageImages: { hero: [], gallery: [] } });
     const r = await pool.query('SELECT * FROM shop_products WHERE visible = true ORDER BY position, id');
-    res.json({ open: true, products: r.rows.map(shopOut) });
+    res.json({ open: true, products: r.rows.map(shopOut), pageImages: await getPageImages('shop') });
   } catch (err) {
     console.error('Public shop error:', err);
     res.status(500).json({ error: 'Could not load the shop.' });
@@ -133,11 +148,12 @@ router.get('/shop', async (req, res) => {
 
 router.get('/admin/camp', requireAdmin, async (req, res) => {
   try {
-    const [open, rows] = await Promise.all([
+    const [open, rows, pageImages] = await Promise.all([
       getSetting('camp_open', 'false'),
       pool.query('SELECT * FROM camps ORDER BY position, id'),
+      getPageImages('camp'),
     ]);
-    res.json({ open: open === 'true', camps: rows.rows.map(campOut) });
+    res.json({ open: open === 'true', camps: rows.rows.map(campOut), pageImages });
   } catch (err) {
     console.error('Admin camp error:', err);
     res.status(500).json({ error: 'Could not load the camps.' });
@@ -218,13 +234,24 @@ router.delete('/admin/camp/camps/:id', requireAdmin, async (req, res) => {
 router.get('/camps', async (req, res) => {
   try {
     const open = (await getSetting('camp_open', 'false')) === 'true';
-    if (!open) return res.json({ open: false, camps: [] });
+    if (!open) return res.json({ open: false, camps: [], pageImages: { hero: [], gallery: [] } });
     const r = await pool.query('SELECT * FROM camps WHERE visible = true ORDER BY position, id');
-    res.json({ open: true, camps: r.rows.map(campOut) });
+    res.json({ open: true, camps: r.rows.map(campOut), pageImages: await getPageImages('camp') });
   } catch (err) {
     console.error('Public camps error:', err);
     res.status(500).json({ error: 'Could not load the camps.' });
   }
+});
+
+['shop', 'camp'].forEach((kind) => {
+  router.post('/admin/' + kind + '/page-images', requireAdmin, async (req, res) => {
+    try {
+      res.json({ ok: true, pageImages: await savePageImages(kind, req.body) });
+    } catch (err) {
+      console.error('Page images error:', err);
+      res.status(500).json({ error: 'Could not save the photos.' });
+    }
+  });
 });
 
 module.exports = router;
