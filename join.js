@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('./pool');
 const { sendJoinRegistrationEmails } = require('./email');
 const { getSetting } = require('./settings');
+const { normalizeSize, normalizeDay } = require('./sizes');
 
 const router = express.Router();
 
@@ -77,7 +78,7 @@ router.post('/join/:ageGroup', async (req, res) => {
 
   const {
     childName, dob, motivation, experience, availability,
-    parentName, email, phone, emName, emPhone, medical, sessionType, siblingDiscount,
+    parentName, email, phone, emName, emPhone, medical, sessionType, siblingDiscount, shirtSize, sessionDay,
   } = req.body || {};
 
   const errors = {};
@@ -91,6 +92,9 @@ router.post('/join/:ageGroup', async (req, res) => {
   if (!emPhone || !PHONE_RE.test(String(emPhone).trim())) errors.emPhone = 'Please enter a valid emergency contact number as +1 followed by 10 digits.';
   if (!medical || !String(medical).trim()) errors.medical = 'Please answer this field.';
   if (!sessionType || !VALID_SESSION_TYPES.has(sessionType)) errors.sessionType = 'Please select a sessions-per-week option.';
+
+  if (!normalizeSize(shirtSize)) errors.shirtSize = 'Please select a uniform size.';
+  if (sessionType === 'one' && !normalizeDay(sessionDay, 'one')) errors.sessionDay = 'Please choose Tuesdays or Thursdays.';
 
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
@@ -115,13 +119,14 @@ router.post('/join/:ageGroup', async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
-         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type, sibling_discount)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16::int
+         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type, sibling_discount, shirt_size, session_day)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16::int,$17,$18
        WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
        parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey,
-       sessionType, capacity, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0]
+       sessionType, capacity, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0,
+       normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
     );
 
     if (!insertRes.rows[0]) {

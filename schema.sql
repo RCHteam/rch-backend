@@ -343,3 +343,100 @@ CREATE INDEX IF NOT EXISTS idx_payment_links_reg ON payment_links(registration_t
 CREATE INDEX IF NOT EXISTS idx_players_archived ON players(archived_at);
 CREATE INDEX IF NOT EXISTS idx_skills_moved ON skills_registrations(moved_at);
 CREATE INDEX IF NOT EXISTS idx_join_moved ON join_registrations(moved_at);
+
+-- Uniform size (SGS size chart) and, for one-session players, which day they
+-- train (Tuesday or Thursday) — captured on both public forms and kept on the
+-- roster. Used by the attendance sheets.
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS shirt_size TEXT;
+ALTER TABLE skills_registrations ADD COLUMN IF NOT EXISTS session_day TEXT;
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS shirt_size TEXT;
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS session_day TEXT;
+ALTER TABLE players ADD COLUMN IF NOT EXISTS shirt_size TEXT;
+ALTER TABLE players ADD COLUMN IF NOT EXISTS session_day TEXT;
+
+-- Review requests ("thank you, rate us") and service-feedback requests
+-- ("what can we change?") emailed to families. One row per email sent; the
+-- family answers on their personal /feedback/:token page.
+CREATE TABLE IF NOT EXISTS outreach_requests (
+  id            SERIAL PRIMARY KEY,
+  kind          TEXT NOT NULL CHECK (kind IN ('review', 'feedback')),
+  token         TEXT UNIQUE NOT NULL,
+  player_id     INTEGER,
+  child_names   TEXT,
+  parent_name   TEXT,
+  email         TEXT NOT NULL,
+  grade         TEXT,
+  audience      TEXT,
+  sent_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  responded_at  TIMESTAMPTZ,
+  rating        INTEGER,
+  comment       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_outreach_kind ON outreach_requests(kind, sent_at DESC);
+
+-- Curriculum: chapters per grade, entered under Coaches > Our Curriculum.
+CREATE TABLE IF NOT EXISTS curriculum_chapters (
+  id          SERIAL PRIMARY KEY,
+  grade       TEXT NOT NULL,
+  position    INTEGER NOT NULL DEFAULT 0,
+  title       TEXT NOT NULL,
+  content     TEXT NOT NULL DEFAULT '',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_curriculum_grade ON curriculum_chapters(grade, position);
+
+-- Student progress reports written by coaches and emailed to parents as PDF.
+CREATE TABLE IF NOT EXISTS student_reports (
+  id             SERIAL PRIMARY KEY,
+  player_id      INTEGER,
+  player_name    TEXT NOT NULL,
+  grade          TEXT NOT NULL,
+  chapter_id     INTEGER,
+  chapter_title  TEXT,
+  month_key      TEXT NOT NULL,
+  month_label    TEXT NOT NULL,
+  coach_name     TEXT,
+  body           TEXT NOT NULL,
+  parent_name    TEXT,
+  parent_email   TEXT,
+  emailed_at     TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_student_reports_player ON student_reports(player_id, created_at DESC);
+
+-- Website Shop and Camp pages (draft: no payments connected). Closed by
+-- default; opened from the admin Shop / Camp tabs.
+INSERT INTO site_settings (key, value) VALUES ('shop_open', 'false') ON CONFLICT (key) DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('camp_open', 'false') ON CONFLICT (key) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS shop_products (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT NOT NULL,
+  category    TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  price_cents INTEGER NOT NULL DEFAULT 0,
+  sizes       TEXT NOT NULL DEFAULT '',
+  images      TEXT NOT NULL DEFAULT '[]',
+  in_stock    BOOLEAN NOT NULL DEFAULT true,
+  visible     BOOLEAN NOT NULL DEFAULT true,
+  position    INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS camps (
+  id          SERIAL PRIMARY KEY,
+  title       TEXT NOT NULL,
+  season      TEXT NOT NULL DEFAULT 'summer',
+  start_date  TEXT,
+  end_date    TEXT,
+  schedule    TEXT NOT NULL DEFAULT '',
+  location    TEXT NOT NULL DEFAULT '',
+  ages        TEXT NOT NULL DEFAULT '',
+  price_cents INTEGER NOT NULL DEFAULT 0,
+  spots       INTEGER,
+  description TEXT NOT NULL DEFAULT '',
+  images      TEXT NOT NULL DEFAULT '[]',
+  visible     BOOLEAN NOT NULL DEFAULT true,
+  position    INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

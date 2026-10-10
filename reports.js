@@ -3,6 +3,7 @@ const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
 const { effectiveDiscountCents, getMonthlyRates } = require('./discounts');
+const { getProrationAdjustments } = require('./proration');
 const { gatherMonthlyReportData, buildMonthlyReportPdf, monthKeyFromDate, monthLabelFromKey } = require('./monthlyReport');
 const { sendMonthlyReportEmail } = require('./email');
 
@@ -53,6 +54,9 @@ async function generateSnapshot(monthDate) {
     const rate = rates[p.session_type] ?? rates.one;
     totalRevenueCents += Math.max(0, rate - (p.discount_cents || 0));
   }
+  // Late joiners only paid for the practices left after their link went out.
+  const proration = await getProrationAdjustments(month);
+  Object.values(proration.byGrade).forEach((g) => { totalRevenueCents -= g.reductionCents; });
 
   const chargesRes = await pool.query(
     `SELECT * FROM charges WHERE kind = 'recurring' OR charge_month = $1::date`,
@@ -185,7 +189,7 @@ router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT p.id, p.grade, p.player_name, p.dob, p.parent_name, p.parent_phone, p.parent_email,
-              p.session_type, p.rch, p.sultans, p.discount_cents, p.sibling_discount,
+              p.session_type, p.session_day, p.shirt_size, p.rch, p.sultans, p.discount_cents, p.sibling_discount,
               pl.status AS payment_status, pl.last_payment_status, pl.paused_until
        FROM players p
        LEFT JOIN LATERAL (

@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('./pool');
 const { sendSkillsRegistrationEmails } = require('./email');
 const { getSetting } = require('./settings');
+const { normalizeSize, normalizeDay } = require('./sizes');
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 
-  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType, siblingDiscount } = req.body || {};
+  const { fullName, parentName, dob, email, phone, team, experience, notes, grade, sessionType, siblingDiscount, shirtSize, sessionDay } = req.body || {};
 
   if (grade && VALID_GRADES.has(grade)) {
     try {
@@ -63,6 +64,9 @@ router.post('/register', async (req, res) => {
   if (!grade || !VALID_GRADES.has(grade)) errors.grade = "Please select the player's grade.";
   if (!sessionType || !VALID_SESSION_TYPES.has(sessionType)) errors.sessionType = 'Please select a sessions-per-week option.';
 
+  if (!normalizeSize(shirtSize)) errors.shirtSize = 'Please select a uniform size.';
+  if (sessionType === 'one' && !normalizeDay(sessionDay, 'one')) errors.sessionDay = 'Please choose Tuesdays or Thursdays.';
+
   if (Object.keys(errors).length) {
     return res.status(400).json({ error: 'Validation failed', fields: errors });
   }
@@ -73,10 +77,10 @@ router.post('/register', async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO skills_registrations
-        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type, sibling_discount)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type, sibling_discount, shirt_size, session_day)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
-      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0]
+      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0, normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
     );
 
     const entry = insertRes.rows[0];

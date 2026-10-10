@@ -1,6 +1,7 @@
 const pool = require('./pool');
 const { getSetting } = require('./settings');
 const { getMonthlyRates, effectiveDiscountSql } = require('./discounts');
+const { getProrationAdjustments } = require('./proration');
 const PDFDocument = require('pdfkit');
 
 const GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
@@ -41,6 +42,7 @@ function money(cents) {
 async function gatherMonthlyReportData(monthKey) {
   const monthShort = monthKey.slice(0, 7); // 'YYYY-MM'
   const discountRates = await getMonthlyRates();
+  const proration = await getProrationAdjustments(monthKey);
 
   const [
     potentialRch,
@@ -88,12 +90,17 @@ async function gatherMonthlyReportData(monthKey) {
   const priceTwoCents = parseInt(pricingTwo, 10);
   const priceOnlineCents = parseInt(pricingOnline, 10);
 
-  const overviewByGrade = Object.fromEntries(GRADES.map((g) => [g, { totalPlayers: 0, totalOne: 0, totalTwo: 0, totalOnline: 0, totalDiscountCents: 0 }]));
+  const overviewByGrade = Object.fromEntries(GRADES.map((g) => [g, { totalPlayers: 0, totalOne: 0, totalTwo: 0, totalOnline: 0, totalDiscountCents: 0, prorationReductionCents: 0, lateJoiners: 0 }]));
   overviewRows.rows.forEach((r) => {
     overviewByGrade[r.grade] = {
       totalPlayers: r.total_players, totalOne: r.total_one, totalTwo: r.total_two, totalOnline: r.total_online,
       totalDiscountCents: r.total_discount_cents,
+      prorationReductionCents: 0, lateJoiners: 0,
     };
+  });
+  GRADES.forEach((g) => {
+    const adj = proration.byGrade[g];
+    if (adj) { overviewByGrade[g].prorationReductionCents = adj.reductionCents; overviewByGrade[g].lateJoiners = adj.lateJoiners; }
   });
 
   // Revenue + Stripe fee estimate, grade by grade — mirrors renderRevenueTable
@@ -105,16 +112,17 @@ async function gatherMonthlyReportData(monthKey) {
     const revTwo = o.totalTwo * priceTwoCents;
     const revOnline = o.totalOnline * priceOnlineCents;
     const disc = o.totalDiscountCents || 0;
-    const total = revOne + revTwo + revOnline - disc;
+    const prorationCents = o.prorationReductionCents || 0;
+    const total = revOne + revTwo + revOnline - disc - prorationCents;
     const fee = Math.round(total * (STRIPE_PCT + STRIPE_BILLING_PCT)) + ((o.totalOne + o.totalTwo + o.totalOnline) * STRIPE_FIXED_CENTS);
     const net = total - fee;
-    return { grade: g, label: GRADE_LABELS[g], totalOne: o.totalOne, totalTwo: o.totalTwo, totalOnline: o.totalOnline, revOne, revTwo, revOnline, disc, total, fee, net };
+    return { grade: g, label: GRADE_LABELS[g], totalOne: o.totalOne, totalTwo: o.totalTwo, totalOnline: o.totalOnline, revOne, revTwo, revOnline, disc, prorationCents, lateJoiners: o.lateJoiners || 0, total, fee, net };
   });
   const revenueTotals = revenueByGrade.reduce((acc, r) => ({
     totalOne: acc.totalOne + r.totalOne, totalTwo: acc.totalTwo + r.totalTwo, totalOnline: acc.totalOnline + r.totalOnline,
-    revOne: acc.revOne + r.revOne, revTwo: acc.revTwo + r.revTwo, revOnline: acc.revOnline + r.revOnline, disc: acc.disc + r.disc,
+    revOne: acc.revOne + r.revOne, revTwo: acc.revTwo + r.revTwo, revOnline: acc.revOnline + r.revOnline, disc: acc.disc + r.disc, prorationCents: acc.prorationCents + r.prorationCents, lateJoiners: acc.lateJoiners + r.lateJoiners,
     total: acc.total + r.total, fee: acc.fee + r.fee, net: acc.net + r.net,
-  }), { totalOne: 0, totalTwo: 0, totalOnline: 0, revOne: 0, revTwo: 0, revOnline: 0, disc: 0, total: 0, fee: 0, net: 0 });
+  }), { totalOne: 0, totalTwo: 0, totalOnline: 0, revOne: 0, revTwo: 0, revOnline: 0, disc: 0, prorationCents: 0, lateJoiners: 0, total: 0, fee: 0, net: 0 });
 
   const businessChargesCents = chargesRows.rows.reduce((sum, c) => sum + c.amount_cents, 0);
   const finalNetRevenueCents = revenueTotals.net - businessChargesCents;
@@ -195,6 +203,7 @@ function buildMonthlyReportPdf(data) {
       });
       doc.moveDown(0.3);
       doc.font('Helvetica-Bold');
+      if (data.revenueTotals.prorationCents > 0) drawRow(doc, `Late-joiner proration (${data.revenueTotals.lateJoiners} players, partial first month)`, '-' + money(data.revenueTotals.prorationCents));
       drawRow(doc, 'Total Revenue (gross)', money(data.revenueTotals.total));
       drawRow(doc, 'Est. Stripe Fees', '-' + money(data.revenueTotals.fee));
       drawRow(doc, 'Business Charges This Month', '-' + money(data.businessChargesCents));

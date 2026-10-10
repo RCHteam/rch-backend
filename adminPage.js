@@ -257,6 +257,67 @@ module.exports = `<!doctype html>
   .cc-contact{ font-size:0.7rem; color:#555; line-height:1.35; word-break:break-all; }
   .cc-actions{ display:flex; gap:6px; }
   table tfoot td, table tr.grand-total td{ font-weight:700; background:#f3e6c4; }
+  /* ---- Coaches subtabs, curriculum, calendar, shop/camp ---- */
+  .subtabs{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 20px; border-bottom:2px solid var(--chalk-dim); }
+  .subtab{ background:none; border:none; padding:11px 16px; font-family:inherit; font-size:0.9rem; font-weight:700; color:#6b756d; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; }
+  .subtab:hover{ color:var(--pitch); }
+  .subtab.active{ color:var(--pitch); border-bottom-color:var(--gold); }
+  .tool-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+  .tool-row .grow{ flex:1 1 200px; min-width:160px; }
+  .tool-row label{ display:block; font-size:0.78rem; font-weight:600; color:#444; margin-bottom:5px; }
+  .tool-row select, .tool-row input, .tool-row textarea, .big-textarea{ width:100%; padding:9px 10px; border:1px solid #ddd; border-radius:6px; font-size:0.92rem; font-family:inherit; background:#fff; }
+  .big-textarea{ min-height:220px; resize:vertical; line-height:1.5; }
+  .card-box{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:20px 22px; margin-bottom:18px; border-left:4px solid var(--gold); }
+  .card-box h3{ margin:0 0 4px; font-size:1.15rem; }
+  .card-box p.hint{ color:#666; font-size:0.85rem; margin:0 0 14px; }
+  .cur-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .cur-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:16px 18px; border-top:4px solid var(--acc); }
+  .cur-num{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--pitch); }
+  .cur-card h4{ margin:4px 0 8px; font-size:1.05rem; }
+  .cur-card p{ margin:0 0 12px; color:#555; font-size:0.86rem; white-space:pre-wrap; max-height:7.5em; overflow:hidden; }
+  .mini-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .mini-actions button{ background:#eee; border:none; border-radius:4px; padding:6px 10px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  .mini-actions button.danger{ background:#f6dcd4; color:#8a3b27; }
+  .status-msg{ font-size:0.88rem; margin-top:10px; min-height:1.2em; }
+  .status-msg.ok{ color:#1e7a45; } .status-msg.bad{ color:#b5482f; }
+  /* calendar */
+  .cal-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .cal-head h3{ margin:0; font-size:1.5rem; font-family:'Anton',sans-serif; letter-spacing:0.02em; flex:1 1 auto; }
+  .cal-btn{ background:#fff; border:1px solid #d6d6d6; border-radius:6px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
+  .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
+  .cal-wrap{ background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden; border:1px solid #e3e3e3; }
+  .cal-dow, .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .cal-dow div{ padding:10px 6px; text-align:center; font-size:0.74rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6b756d; border-bottom:1px solid #e3e3e3; background:#fafaf6; }
+  .cal-cell{ min-height:clamp(96px,15vh,150px); border-right:1px solid #ececec; border-bottom:1px solid #ececec; padding:6px 8px; cursor:pointer; background:#fff; }
+  .cal-cell:nth-child(7n){ border-right:none; }
+  .cal-cell:hover{ background:#f7faf5; }
+  .cal-cell.other{ background:#fafafa; color:#aaa; }
+  .cal-num{ display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:0.85rem; font-weight:600; }
+  .cal-cell.today .cal-num{ background:var(--pitch); color:#fff; }
+  .wk{ display:grid; grid-template-columns:56px repeat(7,minmax(0,1fr)); }
+  .wk .wk-h{ padding:8px 4px; text-align:center; border-bottom:1px solid #e3e3e3; background:#fafaf6; font-size:0.78rem; font-weight:700; color:#6b756d; }
+  .wk .wk-h.today{ color:var(--pitch); } .wk .wk-h .cal-num{ margin-top:2px; }
+  .wk .wk-h.today .cal-num{ background:var(--pitch); color:#fff; }
+  .wk .hr{ height:52px; border-bottom:1px solid #f0f0f0; border-right:1px solid #ececec; font-size:0.68rem; color:#999; text-align:right; padding:2px 6px; }
+  .wk .slot{ height:52px; border-bottom:1px solid #f0f0f0; border-right:1px solid #ececec; }
+  .wk .slot.today{ background:#f4faf6; }
+  /* shop / camp admin */
+  .item-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+  .item-card{ background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; }
+  .item-img{ aspect-ratio:4/3; background:#e9e2d0 center/cover no-repeat; display:flex; align-items:center; justify-content:center; color:#9a937e; font-size:0.8rem; }
+  .item-body{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .item-body h4{ margin:0; font-size:1.05rem; }
+  .item-meta{ color:#666; font-size:0.82rem; }
+  .item-price{ font-weight:800; color:var(--pitch); font-size:1.05rem; }
+  .badge{ display:inline-block; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:20px; background:#eee; color:#555; margin-right:4px; }
+  .badge.warn{ background:#f6dcd4; color:#8a3b27; }
+  .img-slots{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px; }
+  .img-slot{ position:relative; aspect-ratio:1/1; border:2px dashed #cfc8b3; border-radius:8px; background:#faf8f1 center/cover no-repeat; display:flex; align-items:center; justify-content:center; text-align:center; font-size:0.68rem; color:#8a846f; cursor:pointer; padding:4px; }
+  .img-slot.cover{ border-color:var(--gold); }
+  .img-slot.drag{ background-color:#eef7ef; border-color:var(--acc); }
+  .img-slot .rm{ position:absolute; top:3px; right:3px; background:rgba(0,0,0,0.65); color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; font-size:0.8rem; line-height:1; }
+  .modal.wide{ max-width:560px; }
+  @media (max-width:820px){ .cal-cell{ min-height:70px; padding:4px; } .img-slots{ grid-template-columns:repeat(2,1fr); } }
 </style>
 </head>
 <body>
@@ -290,6 +351,8 @@ module.exports = `<!doctype html>
         <option value="finances">Finances</option>
         <option value="charges">Charges</option>
         <option value="coaches">Coaches</option>
+        <option value="shop">Shop</option>
+        <option value="camp">Camp</option>
         <option value="data">Data</option>
       </select>
       <button id="logoutBtn">Log out</button>
@@ -504,8 +567,17 @@ module.exports = `<!doctype html>
     </div><!-- /section-charges -->
 
     <div id="section-coaches" class="hidden">
+      <div class="subtabs" id="coachSubtabs">
+        <button type="button" class="subtab active" data-sub="coaches">Our Coaches</button>
+        <button type="button" class="subtab" data-sub="curriculum">Our Curriculum</button>
+        <button type="button" class="subtab" data-sub="reports">Student Report</button>
+        <button type="button" class="subtab" data-sub="documents">Documents</button>
+        <button type="button" class="subtab" data-sub="calendar">RCH Calendar</button>
+      </div>
+
+      <div id="coachSub-coaches">
       <div class="section-head">
-        <h2>Coaches</h2>
+        <h2>Our Coaches</h2>
         <button type="button" class="btn-add" id="addCoachBtn">+ Add Coach</button>
       </div>
 
@@ -520,7 +592,110 @@ module.exports = `<!doctype html>
 
       <div class="coach-role-head role-volunteer"><span class="dot"></span><h3>Volunteers</h3></div>
       <div id="coachesTableWrap_volunteer"></div>
+      </div><!-- /coachSub-coaches -->
+
+      <div id="coachSub-curriculum" class="hidden">
+        <div class="section-head">
+          <h2>Our Curriculum</h2>
+          <button type="button" class="btn-add" id="addChapterBtn">+ Add Chapter</button>
+        </div>
+        <div class="tool-row">
+          <div class="grow"><label for="curGrade">Grade</label><select id="curGrade" data-grades></select></div>
+        </div>
+        <div id="curriculumWrap"></div>
+      </div>
+
+      <div id="coachSub-reports" class="hidden">
+        <div class="section-head"><h2>Student Report</h2></div>
+        <div class="card-box">
+          <h3>Write a report for a parent</h3>
+          <p class="hint">Pick the grade, the child and the chapter, write the report, and it is emailed to the parent as a PDF with the child's name, the month and the year.</p>
+          <div class="tool-row">
+            <div class="grow"><label for="repGrade">Grade</label><select id="repGrade" data-grades></select></div>
+            <div class="grow"><label for="repChild">Child</label><select id="repChild"></select></div>
+            <div class="grow"><label for="repChapter">Chapter</label><select id="repChapter"></select></div>
+          </div>
+          <div class="tool-row">
+            <div class="grow"><label for="repMonth">Month</label><select id="repMonth"></select></div>
+            <div class="grow"><label for="repYear">Year</label><select id="repYear"></select></div>
+            <div class="grow"><label for="repCoach">Coach name</label><input type="text" id="repCoach" placeholder="e.g. Coach Yahya"></div>
+          </div>
+          <label for="repBody" style="display:block; font-size:0.78rem; font-weight:600; color:#444; margin-bottom:5px;">Report to the parent</label>
+          <textarea id="repBody" class="big-textarea" placeholder="Write how the child is doing, what they worked on in this chapter, and what to practice at home…"></textarea>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+            <button type="button" class="btn-add" id="repSendBtn">Email PDF to Parent</button>
+            <button type="button" class="btn-export" id="repDownloadBtn" style="cursor:pointer;">Save &amp; Download PDF Only</button>
+          </div>
+          <div class="status-msg" id="repStatus"></div>
+        </div>
+        <div class="card-box">
+          <h3>Recent reports</h3>
+          <div id="repHistoryWrap"></div>
+        </div>
+      </div>
+
+      <div id="coachSub-documents" class="hidden">
+        <div class="section-head"><h2>Documents</h2></div>
+        <details class="panel" open>
+          <summary><span class="panel-title">Attendance</span><span class="panel-hint">Monthly practice sheets, PDF</span><span class="panel-chev" aria-hidden="true"></span></summary>
+          <div class="panel-body">
+            <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">One page per grade for the month, listing every Tuesday and Thursday practice. Each player gets an open box on each day they train: two boxes a week for two-session players, one box a week (their Tuesday or Thursday) for one-session players. Days a player does not train are greyed out. Online-course players show with all days greyed.</p>
+            <div class="tool-row">
+              <div class="grow"><label for="attGrade">Grade</label><select id="attGrade" data-grades data-all="1"></select></div>
+              <div class="grow"><label for="attMonth">Month</label><select id="attMonth"></select></div>
+              <div class="grow"><label for="attYear">Year</label><select id="attYear"></select></div>
+              <div><button type="button" class="btn-add" id="attDownloadBtn">Download Attendance PDF</button></div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div id="coachSub-calendar" class="hidden">
+        <div class="section-head"><h2>RCH Calendar</h2></div>
+        <div class="cal-head">
+          <button type="button" class="cal-btn" id="calToday">Today</button>
+          <button type="button" class="cal-btn" id="calPrev" aria-label="Previous">&#8249;</button>
+          <button type="button" class="cal-btn" id="calNext" aria-label="Next">&#8250;</button>
+          <h3 id="calTitle"></h3>
+          <button type="button" class="cal-btn on" id="calViewMonth">Month</button>
+          <button type="button" class="cal-btn" id="calViewWeek">Week</button>
+        </div>
+        <div class="cal-wrap" id="calBody"></div>
+      </div>
     </div><!-- /section-coaches -->
+
+    <div id="section-shop" class="hidden">
+      <div class="section-head">
+        <h2>Shop</h2>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <label class="switch-row">
+            <input type="checkbox" id="shopOpenToggle">
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+            <span id="shopOpenLabel">Shop closed</span>
+          </label>
+          <button type="button" class="btn-add" id="addProductBtn">+ Add Product</button>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Draft shop: no payments are connected yet. When the switch is off, the website's Shop tab says the shop is currently unavailable. While it is on but you have not added products, the website shows clearly marked sample products.</p>
+      <div id="shopGrid"></div>
+    </div><!-- /section-shop -->
+
+    <div id="section-camp" class="hidden">
+      <div class="section-head">
+        <h2>Camp</h2>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <label class="switch-row">
+            <input type="checkbox" id="campOpenToggle">
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+            <span id="campOpenLabel">Camps closed</span>
+          </label>
+          <button type="button" class="btn-add" id="addCampBtn">+ Add Camp</button>
+        </div>
+      </div>
+      <p style="color:#666; font-size:0.85rem; margin:-4px 0 16px;">Add a summer or winter camp when it is ready. When the switch is off, the website's Camp tab says camps are currently unavailable. Registration and payment are not connected yet.</p>
+      <div id="campGrid"></div>
+    </div><!-- /section-camp -->
+
 
     <div id="section-data" class="hidden">
     <div class="panel-tools"><button type="button" class="panel-tool" data-panels="expand">Expand all</button><button type="button" class="panel-tool" data-panels="collapse">Collapse all</button></div>
@@ -556,6 +731,26 @@ module.exports = `<!doctype html>
       </div>
     </details>
 
+    <details class="panel" id="panelReviews">
+      <summary><span class="panel-title">Reviews</span><span class="panel-hint">Ask families for a star rating</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+        <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails a thank-you for trusting RCH Elite Training and asks for a 1 to 5 star rating plus a comment. Send it to one player, a whole grade, RCH only, Sultans only, or everyone. Families with several children get one email.</p>
+        <div class="panel-actions"><button type="button" class="btn-add" id="sendReviewBtn">Send Review Request…</button></div>
+        <div id="reviewsSummary" style="margin:6px 0 10px; font-size:0.9rem;"></div>
+        <div id="reviewsTableWrap"></div>
+      </div>
+    </details>
+
+    <details class="panel" id="panelFeedback">
+      <summary><span class="panel-title">What Can We Change?</span><span class="panel-hint">Ask families for service feedback</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+        <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails families asking what we should change in our services. Works the same way as Reviews: pick who gets it, and their answers show up here.</p>
+        <div class="panel-actions"><button type="button" class="btn-add" id="sendFeedbackBtn">Send "What Can We Change?"…</button></div>
+        <div id="feedbackSummary" style="margin:6px 0 10px; font-size:0.9rem;"></div>
+        <div id="feedbackTableWrap"></div>
+      </div>
+    </details>
+
     <details class="panel">
       <summary><span class="panel-title">Unsubscribed Players</span><span class="panel-hint">Archived players who quit</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
@@ -577,6 +772,115 @@ module.exports = `<!doctype html>
     </div><!-- /section-data -->
 
   </main>
+</div>
+
+<div class="modal-overlay hidden" id="chapterModal">
+  <div class="modal wide">
+    <h3 id="chapterModalTitle">Add Chapter</h3>
+    <p class="modal-sub" id="chapterModalSub"></p>
+    <label for="chTitle">Chapter title</label>
+    <input type="text" id="chTitle" placeholder="e.g. Dribbling basics">
+    <label for="chContent">What this chapter covers</label>
+    <textarea id="chContent" style="min-height:180px;" placeholder="Goals, drills, skills, what the kids should be able to do by the end…"></textarea>
+    <p class="modal-error" id="chapterError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="chapterCancel">Cancel</button>
+      <button type="button" class="btn-send" id="chapterSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="outreachModal">
+  <div class="modal">
+    <h3 id="outreachTitle">Send</h3>
+    <div id="outreachStep1">
+      <p class="modal-sub" id="outreachIntro"></p>
+      <label for="osScope">Send to</label>
+      <select id="osScope"></select>
+      <div id="osIndividualWrap" class="hidden">
+        <label for="osIndividualSearch">Search player</label>
+        <input type="text" id="osIndividualSearch" placeholder="Type a player or parent name…">
+        <label for="osIndividual">Player</label>
+        <select id="osIndividual"></select>
+      </div>
+      <p class="modal-error" id="outreachErr1"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="outreachCancel1">Cancel</button>
+        <button type="button" class="btn-send" id="outreachPreviewBtn">Preview Recipients</button>
+      </div>
+    </div>
+    <div id="outreachStep2" class="hidden">
+      <p class="modal-sub" id="outreachSummary"></p>
+      <div id="outreachList" style="max-height:240px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:10px 12px; margin-bottom:6px; font-size:0.85rem;"></div>
+      <p class="modal-error" id="outreachErr2"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="outreachBack">Back</button>
+        <button type="button" class="btn-send" id="outreachSendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="productModal">
+  <div class="modal wide">
+    <h3 id="productModalTitle">Add Product</h3>
+    <label for="spName">Product name</label>
+    <input type="text" id="spName" placeholder="e.g. RCH Training Jersey">
+    <div class="two-col">
+      <div><label for="spCategory">Category</label><input type="text" id="spCategory" placeholder="Apparel, Gear…"></div>
+      <div><label for="spPrice">Price ($)</label><input type="number" id="spPrice" min="0" step="0.01" value="0"></div>
+    </div>
+    <label for="spSizes">Sizes / options (optional)</label>
+    <input type="text" id="spSizes" placeholder="e.g. YS, YM, YL, S, M, L">
+    <label for="spDesc">Description</label>
+    <textarea id="spDesc" style="min-height:90px;"></textarea>
+    <label>Photos (the first is the cover; click or drop up to 4)</label>
+    <div class="img-slots" id="spImages"></div>
+    <div class="two-col">
+      <div class="checkbox-row"><input type="checkbox" id="spInStock" checked><label for="spInStock">In stock</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="spVisible" checked><label for="spVisible">Show on website</label></div>
+    </div>
+    <p class="modal-error" id="productError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="productCancel">Cancel</button>
+      <button type="button" class="btn-send" id="productSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="campModal">
+  <div class="modal wide">
+    <h3 id="campModalTitle">Add Camp</h3>
+    <label for="cpTitle">Camp title</label>
+    <input type="text" id="cpTitle" placeholder="e.g. RCH Summer Soccer Camp">
+    <div class="two-col">
+      <div><label for="cpSeason">Season</label>
+        <select id="cpSeason"><option value="summer">Summer</option><option value="winter">Winter</option><option value="spring">Spring</option><option value="fall">Fall</option><option value="other">Other</option></select></div>
+      <div><label for="cpAges">Ages / grades</label><input type="text" id="cpAges" placeholder="e.g. Pre-K to 6th grade"></div>
+    </div>
+    <div class="two-col">
+      <div><label for="cpStart">Start date</label><input type="text" data-datemask id="cpStart"></div>
+      <div><label for="cpEnd">End date</label><input type="text" data-datemask id="cpEnd"></div>
+    </div>
+    <div class="two-col">
+      <div><label for="cpSchedule">Daily schedule</label><input type="text" id="cpSchedule" placeholder="e.g. Mon-Fri, 9am-3pm"></div>
+      <div><label for="cpLocation">Location</label><input type="text" id="cpLocation" placeholder="Field / address"></div>
+    </div>
+    <div class="two-col">
+      <div><label for="cpPrice">Price ($)</label><input type="number" id="cpPrice" min="0" step="0.01" value="0"></div>
+      <div><label for="cpSpots">Spots available (optional)</label><input type="number" id="cpSpots" min="0" step="1"></div>
+    </div>
+    <label for="cpDesc">Description</label>
+    <textarea id="cpDesc" style="min-height:90px;"></textarea>
+    <label>Photos (the first is the cover; click or drop up to 4)</label>
+    <div class="img-slots" id="cpImages"></div>
+    <div class="checkbox-row"><input type="checkbox" id="cpVisible" checked><label for="cpVisible">Show on website</label></div>
+    <p class="modal-error" id="campError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="campCancel">Cancel</button>
+      <button type="button" class="btn-send" id="campSave">Save</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay hidden" id="addPlayerModal">
@@ -609,6 +913,12 @@ module.exports = `<!doctype html>
       <option value="two">Two</option>
       <option value="online">Online Course</option>
     </select>
+    <div id="apDayWrap" class="hidden">
+      <label for="apDay">Training day (one session)</label>
+      <select id="apDay"><option value="tuesday">Tuesdays</option><option value="thursday">Thursdays</option></select>
+    </div>
+    <label for="apSize">Uniform size</label>
+    <select id="apSize" data-size></select>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="apRch"><label for="apRch">RCH</label></div>
       <div class="checkbox-row"><input type="checkbox" id="apSultans"><label for="apSultans">Sultans</label></div>
@@ -659,6 +969,12 @@ module.exports = `<!doctype html>
       <option value="two">Two</option>
       <option value="online">Online Course</option>
     </select>
+    <div id="epDayWrap" class="hidden">
+      <label for="epDay">Training day (one session)</label>
+      <select id="epDay"><option value="tuesday">Tuesdays</option><option value="thursday">Thursdays</option></select>
+    </div>
+    <label for="epSize">Uniform size</label>
+    <select id="epSize" data-size></select>
     <div class="two-col">
       <div class="checkbox-row"><input type="checkbox" id="epRch"><label for="epRch">RCH</label></div>
       <div class="checkbox-row"><input type="checkbox" id="epSultans"><label for="epSultans">Sultans</label></div>
@@ -764,6 +1080,12 @@ module.exports = `<!doctype html>
       <option value="two">Two</option>
       <option value="online">Online Course</option>
     </select>
+    <div id="moveDayWrap" class="hidden">
+      <label for="moveDay">Training day (one session)</label>
+      <select id="moveDay"><option value="tuesday">Tuesdays</option><option value="thursday">Thursdays</option></select>
+    </div>
+    <label for="moveSize">Uniform size</label>
+    <select id="moveSize" data-size></select>
     <label for="moveSibling">Sibling discount</label>
     <select id="moveSibling">
       <option value="0">None</option>
@@ -812,6 +1134,8 @@ module.exports = `<!doctype html>
       <option value="15">15% off — 3 siblings</option>
       <option value="20">20% off — 4 siblings</option>
     </select>
+    <label for="dollarDiscountInput">Or a dollar discount per month (overrides sibling %)</label>
+    <input type="text" inputmode="decimal" id="dollarDiscountInput" placeholder="e.g. 10">
     <div class="checkbox-row">
       <input type="checkbox" id="includeKitFee">
       <label for="includeKitFee" id="includeKitFeeLabel">Include kit fee</label>
@@ -1139,6 +1463,29 @@ module.exports = `<!doctype html>
     return html;
   }
 
+  // ---- Uniform size + Tuesday/Thursday day (modals) ----
+  const SIZE_GROUPS = [
+    ['Toddler', [['2T','2T (age 1-2)'],['3T','3T (age 2-3)'],['4T','4T (age 3-4)']]],
+    ['Youth', [['YXS','Youth XS (6/7)'],['YS','Youth S (7/8)'],['YM','Youth M (10/12)'],['YL','Youth L (14/16)'],['YXL','Youth XL (18/20)']]],
+    ['Adult (Men)', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
+    ['Adult (Women)', [['WXS','Women XS'],['WS','Women S'],['WM','Women M'],['WL','Women L'],['WXL','Women XL'],['W2XL','Women 2XL'],['W3XL','Women 3XL']]],
+  ];
+  const SIZE_OPTIONS_HTML = '<option value="">— not set —</option>' + SIZE_GROUPS.map(function(g){
+    return '<optgroup label="' + g[0] + '">' + g[1].map(function(s){ return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
+  document.querySelectorAll('select[data-size]').forEach(function(sel){ sel.innerHTML = SIZE_OPTIONS_HTML; });
+
+  // The Tuesday/Thursday choice only applies to one-session players.
+  function wireDayToggle(sessId, wrapId){
+    const sync = function(){ document.getElementById(wrapId).classList.toggle('hidden', document.getElementById(sessId).value !== 'one'); };
+    document.getElementById(sessId).addEventListener('change', sync);
+    return sync;
+  }
+  const syncApDay = wireDayToggle('apSessions', 'apDayWrap');
+  const syncEpDay = wireDayToggle('epSessions', 'epDayWrap');
+  const syncMoveDay = wireDayToggle('moveSessionType', 'moveDayWrap');
+  function dayValue(sessId, dayId){ return document.getElementById(sessId).value === 'one' ? document.getElementById(dayId).value : null; }
+
   // ---- Move to Roster (Skills Training / Join Sultans FC → Players Roster) ----
 
   let moveModalCtx = null;
@@ -1153,6 +1500,9 @@ module.exports = `<!doctype html>
     document.getElementById('moveGrade').value = row.grade || row.age_group || 'pre-k';
     document.getElementById('moveSessionType').value = row.session_type || 'one';
     document.getElementById('moveSibling').value = String(row.sibling_discount || 0);
+    document.getElementById('moveSize').value = row.shirt_size || '';
+    document.getElementById('moveDay').value = row.session_day || 'tuesday';
+    syncMoveDay();
     document.getElementById('moveRch').checked = true;
     // Skills Training applicants default to RCH-only, but the admin can still
     // check Sultans too if this player is also joining that squad. Join
@@ -1195,6 +1545,8 @@ module.exports = `<!doctype html>
       grade: document.getElementById('moveGrade').value,
       sessionType: document.getElementById('moveSessionType').value,
       siblingDiscount: Number(document.getElementById('moveSibling').value) || 0,
+      shirtSize: document.getElementById('moveSize').value,
+      sessionDay: dayValue('moveSessionType', 'moveDay'),
       rch: document.getElementById('moveRch').checked,
       sultans: document.getElementById('moveSultans').checked,
       parentName: document.getElementById('moveParentName').value.trim(),
@@ -1306,12 +1658,19 @@ module.exports = `<!doctype html>
 
   let paymentModalCtx = null;
 
+  function modalMonthly(tier){
+    const sibPct = Number(document.getElementById('siblingDiscountSelect').value) || 0;
+    const dollars = Math.round((parseFloat(document.getElementById('dollarDiscountInput').value) || 0) * 100);
+    if (dollars > 0) return { amount: Math.max(tier.monthly - dollars, 0), label: '$' + (dollars / 100).toFixed(2) + ' discount', dollars: dollars, sibPct: 0 };
+    return { amount: Math.round(tier.monthly * (100 - sibPct) / 100), label: sibPct + '% sibling discount', dollars: 0, sibPct: sibPct };
+  }
+
   function updateModalAmounts(){
     const tier = currentTiers()[document.getElementById('tierSelect').value];
-    const sibPct = Number(document.getElementById('siblingDiscountSelect').value) || 0;
-    const discounted = Math.round(tier.monthly * (100 - sibPct) / 100);
-    const monthlyText = sibPct
-      ? '<s>$' + (tier.monthly / 100).toFixed(2) + '</s> <b>$' + (discounted / 100).toFixed(2) + '/mo</b> (' + sibPct + '% sibling discount)'
+    const m = modalMonthly(tier);
+    const discounted = m.amount;
+    const monthlyText = (m.dollars || m.sibPct)
+      ? '<s>$' + (tier.monthly / 100).toFixed(2) + '</s> <b>$' + (discounted / 100).toFixed(2) + '/mo</b> (' + m.label + ')'
       : '$' + (tier.monthly / 100).toFixed(2) + '/mo';
     const includeKit = document.getElementById('includeKitFee').checked;
     const kitText = includeKit ? 'Kit fee (one-time): $' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + '<br>' : '';
@@ -1340,6 +1699,7 @@ module.exports = `<!doctype html>
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
     document.getElementById('includeKitFee').checked = false;
+    document.getElementById('dollarDiscountInput').value = '';
     document.getElementById('siblingDiscountSelect').value = (sibling === '15' || sibling === '20') ? sibling : '0';
     document.getElementById('includeKitFeeLabel').textContent = 'Include kit fee ($' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + ')';
     document.getElementById('paymentModalError').textContent = '';
@@ -1355,6 +1715,7 @@ module.exports = `<!doctype html>
   document.getElementById('tierSelect').addEventListener('change', updateModalAmounts);
   document.getElementById('includeKitFee').addEventListener('change', updateModalAmounts);
   document.getElementById('siblingDiscountSelect').addEventListener('change', updateModalAmounts);
+  document.getElementById('dollarDiscountInput').addEventListener('input', updateModalAmounts);
   document.getElementById('seasonSelect').addEventListener('change', (e) => {
     document.getElementById('seasonEndInput').value = computeSeasonEndDate(e.target.value);
   });
@@ -1372,9 +1733,9 @@ module.exports = `<!doctype html>
     const tierKey = document.getElementById('tierSelect').value;
     const tier = currentTiers()[tierKey];
     const seasonKey = document.getElementById('seasonSelect').value;
-    const sibPct = Number(document.getElementById('siblingDiscountSelect').value) || 0;
-    const monthlyAmount = Math.round(tier.monthly * (100 - sibPct) / 100);
-    const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey] + (sibPct ? ' (' + sibPct + '% sibling discount)' : '');
+    const mm = modalMonthly(tier);
+    const monthlyAmount = mm.amount;
+    const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey] + ((mm.dollars || mm.sibPct) ? ' (' + mm.label + ')' : '');
     const includeKit = document.getElementById('includeKitFee').checked;
     const ctx = paymentModalCtx;
 
@@ -2094,7 +2455,9 @@ module.exports = `<!doctype html>
       '<button type="button" class="btn-copy-email" data-copy="' + e + '">Copy</button></div></details>';
   }
   function fmtDay(v){ const p = String(v || '').slice(0, 10).split('-'); return p.length === 3 ? p[1] + '/' + p[2] + '/' + p[0] : ''; }
-  function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—' }; }
+  const DAY_LABELS = { tuesday:'Tue', thursday:'Thu' };
+  function sessionsLabel(type, day){ const base = type === 'two' ? 'Two' : type === 'online' ? 'Online' : 'One'; return type === 'one' && day ? base + ' (' + (DAY_LABELS[day] || day) + ')' : base; }
+  function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—', sessions_label: r.session_type ? sessionsLabel(r.session_type, r.session_day) : '—', size_label: r.shirt_size || '—' }; }
 
   async function loadSkills(){
     const rows = (await api('/api/admin/skills-registrations')).map(addSiblingLabel);
@@ -2105,6 +2468,8 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'team', label:'Team' },
+      { key:'sessions_label', label:'Sessions' },
+      { key:'size_label', label:'Size' },
       { key:'sibling_label', label:'Sibling' },
       { key:'experience', label:'Experience' },
       { key:'submitted_at', label:'Submitted' },
@@ -2135,6 +2500,8 @@ module.exports = `<!doctype html>
       { key:'email', label:'Email' },
       { key:'phone', label:'Phone' },
       { key:'availability', label:'Availability' },
+      { key:'sessions_label', label:'Sessions' },
+      { key:'size_label', label:'Size' },
       { key:'sibling_label', label:'Sibling' },
       { key:'submitted_at', label:'Submitted' },
     ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name', ridPrefix: 'join-' });
@@ -2180,7 +2547,7 @@ module.exports = `<!doctype html>
     if (!rows.length) return '<div class="empty">No players yet.</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
+      '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
@@ -2190,7 +2557,8 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
         '<td>' + emailDropdown(r.parent_email) + '</td>' +
-        '<td>' + (r.session_type === 'two' ? 'Two' : r.session_type === 'online' ? 'Online' : 'One') + '</td>' +
+        '<td>' + sessionsLabel(r.session_type, r.session_day) + '</td>' +
+        '<td>' + (r.shirt_size || '—') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         '<td>$' + ((r.effective_discount_cents != null ? r.effective_discount_cents : r.discount_cents) / 100).toFixed(2) + (r.effective_discount_cents > 0 ? (r.discount_is_manual ? ' <span style="color:#888; font-size:0.72rem;">(manual)</span>' : ' <span style="color:#888; font-size:0.72rem;">(sibling)</span>') : '') + '</td>' +
@@ -2236,6 +2604,9 @@ module.exports = `<!doctype html>
     document.getElementById('epSultans').checked = !!player.sultans;
     document.getElementById('epDiscount').value = (player.discount_cents / 100).toFixed(2);
     document.getElementById('epSibling').value = String(player.sibling_discount || 0);
+    document.getElementById('epSize').value = player.shirt_size || '';
+    document.getElementById('epDay').value = player.session_day || 'tuesday';
+    syncEpDay();
     document.getElementById('editPlayerError').textContent = '';
     document.getElementById('editPlayerModal').classList.remove('hidden');
   }
@@ -2259,6 +2630,8 @@ module.exports = `<!doctype html>
       sultans: document.getElementById('epSultans').checked,
       discountCents: Math.round(parseFloat(document.getElementById('epDiscount').value || '0') * 100),
       siblingDiscount: Number(document.getElementById('epSibling').value) || 0,
+      shirtSize: document.getElementById('epSize').value,
+      sessionDay: dayValue('epSessions', 'epDay'),
     };
     if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
     const btn = document.getElementById('editPlayerSubmit');
@@ -2430,9 +2803,9 @@ module.exports = `<!doctype html>
 
   function renderRevenueTable(overview, pricing, chargesCents){
     let html = '<table><thead><tr><th>Grade</th><th>One-Session Players</th><th>Two-Session Players</th><th>Online Players</th>' +
-      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Revenue (Online)</th><th>Discounts</th><th>Total Revenue</th>' +
+      '<th>Revenue (One)</th><th>Revenue (Two)</th><th>Revenue (Online)</th><th>Discounts</th><th>Late-Joiner Proration</th><th>Total Revenue</th>' +
       '<th>Est. Stripe Fees</th><th>Net After Stripe</th></tr></thead><tbody>';
-    const totals = { one:0, two:0, online:0, revOne:0, revTwo:0, revOnline:0, disc:0, total:0, fee:0, net:0 };
+    const totals = { one:0, two:0, online:0, revOne:0, revTwo:0, revOnline:0, disc:0, pror:0, late:0, total:0, fee:0, net:0 };
     const money = (c) => '$' + (c/100).toFixed(2);
     GRADES.forEach((g) => {
       const o = overview[g] || { totalOne:0, totalTwo:0, totalOnline:0, totalDiscountCents:0 };
@@ -2441,22 +2814,23 @@ module.exports = `<!doctype html>
       const revTwo = o.totalTwo * pricing.priceTwoCents;
       const revOnline = online * (pricing.priceOnlineCents || 0);
       const disc = o.totalDiscountCents || 0;
-      const total = revOne + revTwo + revOnline - disc;
+      const pror = o.prorationReductionCents || 0;
+      const total = revOne + revTwo + revOnline - disc - pror;
       // Each player is charged separately (its own subscription), so the
       // $0.30 fixed fee applies per player, not once per grade.
       const fee = stripeFeeCents(total, o.totalOne + o.totalTwo + online);
       const net = total - fee;
       totals.one += o.totalOne; totals.two += o.totalTwo; totals.online += online;
       totals.revOne += revOne; totals.revTwo += revTwo; totals.revOnline += revOnline;
-      totals.disc += disc; totals.total += total; totals.fee += fee; totals.net += net;
+      totals.disc += disc; totals.pror += pror; totals.late += (o.lateJoiners || 0); totals.total += total; totals.fee += fee; totals.net += net;
       html += '<tr><td>' + GRADE_LABELS[g] + '</td><td>' + o.totalOne + '</td><td>' + o.totalTwo + '</td><td>' + online + '</td>' +
         '<td>' + money(revOne) + '</td><td>' + money(revTwo) + '</td><td>' + money(revOnline) + '</td>' +
-        '<td>' + money(disc) + '</td><td>' + money(total) + '</td>' +
+        '<td>' + money(disc) + '</td><td>' + (pror ? '-' + money(pror) + ' <span style="color:#888">(' + (o.lateJoiners || 0) + ')</span>' : '$0.00') + '</td><td>' + money(total) + '</td>' +
         '<td>' + money(fee) + '</td><td>' + money(net) + '</td></tr>';
     });
     html += '<tr class="grand-total"><td>TOTAL WON (Revenue)</td><td>' + totals.one + '</td><td>' + totals.two + '</td><td>' + totals.online + '</td>' +
       '<td>' + money(totals.revOne) + '</td><td>' + money(totals.revTwo) + '</td><td>' + money(totals.revOnline) + '</td>' +
-      '<td>' + money(totals.disc) + '</td><td>' + money(totals.total) + '</td>' +
+      '<td>' + money(totals.disc) + '</td><td>' + (totals.pror ? '-' + money(totals.pror) + ' (' + totals.late + ')' : '$0.00') + '</td><td>' + money(totals.total) + '</td>' +
       '<td>' + money(totals.fee) + '</td><td>' + money(totals.net) + '</td></tr>';
     html += '</tbody></table>';
 
@@ -2468,7 +2842,7 @@ module.exports = `<!doctype html>
       '<tr><td>Business Charges This Month</td><td>-$' + (charges/100).toFixed(2) + '</td></tr>' +
       '<tr class="grand-total"><td>Final Net Revenue</td><td>$' + (finalNet/100).toFixed(2) + '</td></tr>' +
       '</tbody></table>';
-    html += '<p style="color:#666; font-size:0.8rem; margin-top:8px;">Stripe fees are estimated at 2.9% + $0.30 per player charge (standard payments rate) plus 0.7% billing fee on subscriptions — actual fees may vary slightly. Business Charges This Month pulls live from the Charges list below: every Recurring charge, plus any One-time charge dated this month.</p>';
+    html += '<p style="color:#666; font-size:0.8rem; margin-top:8px;">Late-Joiner Proration: families whose first payment link went out partway through this month only pay for the practices (Tuesdays + Thursdays) left on that day, so their first month is counted at that reduced amount (number of players in brackets). Stripe fees are estimated at 2.9% + $0.30 per player charge (standard payments rate) plus 0.7% billing fee on subscriptions — actual fees may vary slightly. Business Charges This Month pulls live from the Charges list below: every Recurring charge, plus any One-time charge dated this month.</p>';
     return html;
   }
 
@@ -2876,6 +3250,9 @@ module.exports = `<!doctype html>
     document.getElementById('apSultans').checked = false;
     document.getElementById('apDiscount').value = '0';
     document.getElementById('apSibling').value = '0';
+    document.getElementById('apSize').value = '';
+    document.getElementById('apDay').value = 'tuesday';
+    syncApDay();
     document.getElementById('addPlayerError').textContent = '';
     document.getElementById('addPlayerModal').classList.remove('hidden');
   });
@@ -2898,6 +3275,8 @@ module.exports = `<!doctype html>
       sultans: document.getElementById('apSultans').checked,
       discountCents: Math.round(parseFloat(document.getElementById('apDiscount').value || '0') * 100),
       siblingDiscount: Number(document.getElementById('apSibling').value) || 0,
+      shirtSize: document.getElementById('apSize').value,
+      sessionDay: dayValue('apSessions', 'apDay'),
     };
     if (!payload.playerName) { errEl.textContent = "Please enter the player's name."; return; }
     const btn = document.getElementById('addPlayerSubmit');
@@ -2941,9 +3320,578 @@ module.exports = `<!doctype html>
     });
   }
 
+  // ===================== New tabs: helpers =====================
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function fillMonthYear(mId, yId){
+    const now = new Date();
+    const m = document.getElementById(mId), y = document.getElementById(yId);
+    m.innerHTML = MONTH_NAMES.map(function(n, i){ return '<option value="' + (i + 1) + '">' + n + '</option>'; }).join('');
+    let ys = '';
+    for (let k = now.getFullYear() - 1; k <= now.getFullYear() + 1; k++) ys += '<option value="' + k + '">' + k + '</option>';
+    y.innerHTML = ys;
+    m.value = String(now.getMonth() + 1);
+    y.value = String(now.getFullYear());
+  }
+  function monthValue(mId, yId){
+    const m = document.getElementById(mId).value;
+    return document.getElementById(yId).value + '-' + (m.length < 2 ? '0' + m : m);
+  }
+  function money(c){ return '$' + ((c || 0) / 100).toFixed(2); }
+  function setStatus(id, text, ok){
+    const el = document.getElementById(id);
+    el.textContent = text || '';
+    el.className = 'status-msg' + (text ? (ok ? ' ok' : ' bad') : '');
+  }
+  document.querySelectorAll('select[data-grades]').forEach(function(sel){
+    let html = sel.hasAttribute('data-all') ? '<option value="all">All grades (one page each)</option>' : '';
+    html += GRADES.map(function(g){ return '<option value="' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('');
+    sel.innerHTML = html;
+  });
+  fillMonthYear('repMonth', 'repYear');
+  fillMonthYear('attMonth', 'attYear');
+
+  // ===================== Coaches subtabs =====================
+  const COACH_SUBS = ['coaches', 'curriculum', 'reports', 'documents', 'calendar'];
+  function showCoachSub(name){
+    COACH_SUBS.forEach(function(s){ document.getElementById('coachSub-' + s).classList.toggle('hidden', s !== name); });
+    document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-sub') === name); });
+    if (name === 'curriculum') loadCurriculum();
+    if (name === 'reports') initReports();
+    if (name === 'calendar') renderCalendar();
+  }
+  document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){
+    b.addEventListener('click', function(){ showCoachSub(b.getAttribute('data-sub')); });
+  });
+
+  // ---- Our Curriculum ----
+  let chapterEditId = null;
+  async function loadCurriculum(){
+    const grade = document.getElementById('curGrade').value;
+    const wrap = document.getElementById('curriculumWrap');
+    wrap.innerHTML = '<div class="empty">Loading…</div>';
+    const rows = await api('/api/admin/curriculum?grade=' + encodeURIComponent(grade));
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">No chapters yet for ' + GRADE_LABELS[grade] + '. Click + Add Chapter.</div>'; return; }
+    wrap.innerHTML = '<div class="cur-list">' + rows.map(function(r, i){
+      return '<div class="cur-card"><div class="cur-num">Chapter ' + (i + 1) + '</div><h4>' + escapeHtml(r.title) + '</h4>' +
+        '<p>' + escapeHtml(r.content || '') + '</p>' +
+        '<div class="mini-actions" data-id="' + r.id + '">' +
+        '<button type="button" data-act="edit" data-title="' + escapeHtml(r.title) + '" data-content="' + escapeHtml(r.content || '') + '">Edit</button>' +
+        (i > 0 ? '<button type="button" data-act="up">&#8593;</button>' : '') +
+        (i < rows.length - 1 ? '<button type="button" data-act="down">&#8595;</button>' : '') +
+        '<button type="button" class="danger" data-act="del">Delete</button></div></div>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('curGrade').addEventListener('change', loadCurriculum);
+  document.getElementById('curriculumWrap').addEventListener('click', async function(e){
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.parentElement.getAttribute('data-id');
+    const act = btn.getAttribute('data-act');
+    try {
+      if (act === 'edit') {
+        chapterEditId = id;
+        document.getElementById('chapterModalTitle').textContent = 'Edit Chapter';
+        document.getElementById('chapterModalSub').textContent = GRADE_LABELS[document.getElementById('curGrade').value];
+        document.getElementById('chTitle').value = btn.getAttribute('data-title');
+        document.getElementById('chContent').value = btn.getAttribute('data-content');
+        document.getElementById('chapterError').textContent = '';
+        document.getElementById('chapterModal').classList.remove('hidden');
+        return;
+      }
+      if (act === 'del') {
+        if (!confirm('Delete this chapter?')) return;
+        await api('/api/admin/curriculum/' + id, { method: 'DELETE' });
+      } else {
+        await api('/api/admin/curriculum/' + id + '/move', { method: 'PUT', body: JSON.stringify({ direction: act }) });
+      }
+      await loadCurriculum();
+    } catch (err) { alert('Could not update the curriculum. Please try again.'); }
+  });
+  document.getElementById('addChapterBtn').addEventListener('click', function(){
+    chapterEditId = null;
+    document.getElementById('chapterModalTitle').textContent = 'Add Chapter';
+    document.getElementById('chapterModalSub').textContent = GRADE_LABELS[document.getElementById('curGrade').value];
+    document.getElementById('chTitle').value = '';
+    document.getElementById('chContent').value = '';
+    document.getElementById('chapterError').textContent = '';
+    document.getElementById('chapterModal').classList.remove('hidden');
+  });
+  document.getElementById('chapterCancel').addEventListener('click', function(){ document.getElementById('chapterModal').classList.add('hidden'); });
+  document.getElementById('chapterSave').addEventListener('click', async function(){
+    const errEl = document.getElementById('chapterError');
+    errEl.textContent = '';
+    const title = document.getElementById('chTitle').value.trim();
+    if (!title) { errEl.textContent = 'Please enter a chapter title.'; return; }
+    const content = document.getElementById('chContent').value;
+    const btn = document.getElementById('chapterSave');
+    btn.disabled = true;
+    try {
+      const result = chapterEditId
+        ? await api('/api/admin/curriculum/' + chapterEditId, { method: 'PUT', body: JSON.stringify({ title: title, content: content }) })
+        : await api('/api/admin/curriculum', { method: 'POST', body: JSON.stringify({ grade: document.getElementById('curGrade').value, title: title, content: content }) });
+      if (result.error) { errEl.textContent = result.error; return; }
+      document.getElementById('chapterModal').classList.add('hidden');
+      await loadCurriculum();
+    } catch (err) { errEl.textContent = 'Could not save. Please try again.'; }
+    finally { btn.disabled = false; }
+  });
+
+  // ---- Student Report ----
+  let reportsInit = false;
+  async function initReports(){
+    if (!reportsInit) {
+      reportsInit = true;
+      document.getElementById('repGrade').addEventListener('change', loadReportChoices);
+      document.getElementById('repSendBtn').addEventListener('click', function(){ submitReport(true); });
+      document.getElementById('repDownloadBtn').addEventListener('click', function(){ submitReport(false); });
+      document.getElementById('repHistoryWrap').addEventListener('click', function(e){
+        const b = e.target.closest('button[data-pdf]');
+        if (b) window.open(API_BASE + '/api/admin/student-reports/' + b.getAttribute('data-pdf') + '/pdf?token=' + encodeURIComponent(getToken()));
+      });
+    }
+    await loadReportChoices();
+    await loadReportHistory();
+  }
+  async function loadReportChoices(){
+    const grade = document.getElementById('repGrade').value;
+    const childSel = document.getElementById('repChild');
+    const chapSel = document.getElementById('repChapter');
+    childSel.innerHTML = '<option value="">Loading…</option>';
+    const results = await Promise.all([api('/api/admin/players?grade=' + encodeURIComponent(grade)), api('/api/admin/curriculum?grade=' + encodeURIComponent(grade))]);
+    const players = results[0], chapters = results[1];
+    childSel.innerHTML = players.length
+      ? players.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + '</option>'; }).join('')
+      : '<option value="">No players in this grade</option>';
+    chapSel.innerHTML = '<option value="">— No chapter —</option>' + chapters.map(function(c, i){
+      return '<option value="' + c.id + '">Chapter ' + (i + 1) + ': ' + escapeHtml(c.title) + '</option>';
+    }).join('');
+  }
+  async function loadReportHistory(){
+    const rows = await api('/api/admin/student-reports');
+    const wrap = document.getElementById('repHistoryWrap');
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">No reports yet.</div>'; return; }
+    wrap.innerHTML = '<table><thead><tr><th>Child</th><th>Grade</th><th>Month</th><th>Chapter</th><th>Coach</th><th>Emailed</th><th></th></tr></thead><tbody>' +
+      rows.map(function(r){
+        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (GRADE_LABELS[r.grade] || r.grade) + '</td><td>' + escapeHtml(r.month_label) + '</td><td>' +
+          escapeHtml(r.chapter_title || '—') + '</td><td>' + escapeHtml(r.coach_name || '—') + '</td><td>' +
+          (r.emailed_at ? escapeHtml(fmtDate(r.emailed_at)) + '<br><span style="color:#888">' + escapeHtml(r.parent_email || '') + '</span>' : 'Not emailed') +
+          '</td><td><button type="button" class="btn-export" style="cursor:pointer;" data-pdf="' + r.id + '">PDF</button></td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  async function submitReport(send){
+    const playerId = document.getElementById('repChild').value;
+    const body = document.getElementById('repBody').value.trim();
+    if (!playerId) { setStatus('repStatus', 'Please choose a child.', false); return; }
+    if (!body) { setStatus('repStatus', 'Please write the report first.', false); return; }
+    const sendBtn = document.getElementById('repSendBtn'), dlBtn = document.getElementById('repDownloadBtn');
+    sendBtn.disabled = true; dlBtn.disabled = true;
+    setStatus('repStatus', send ? 'Sending…' : 'Saving…', true);
+    try {
+      const result = await api('/api/admin/student-reports', { method: 'POST', body: JSON.stringify({
+        playerId: playerId, chapterId: document.getElementById('repChapter').value || null,
+        coachName: document.getElementById('repCoach').value, body: body,
+        month: monthValue('repMonth', 'repYear'), send: send,
+      }) });
+      if (result.error) { setStatus('repStatus', result.error, false); return; }
+      if (send) setStatus('repStatus', 'Report emailed to ' + result.to + ' as a PDF.', true);
+      else { setStatus('repStatus', 'Saved. Your PDF is downloading.', true); window.open(API_BASE + '/api/admin/student-reports/' + result.id + '/pdf?token=' + encodeURIComponent(getToken())); }
+      document.getElementById('repBody').value = '';
+      await loadReportHistory();
+    } catch (err) { setStatus('repStatus', 'Something went wrong. Please try again.', false); }
+    finally { sendBtn.disabled = false; dlBtn.disabled = false; }
+  }
+
+  // ---- Documents > Attendance ----
+  document.getElementById('attDownloadBtn').addEventListener('click', function(){
+    window.open(API_BASE + '/api/admin/attendance/pdf?grade=' + encodeURIComponent(document.getElementById('attGrade').value) +
+      '&month=' + monthValue('attMonth', 'attYear') + '&token=' + encodeURIComponent(getToken()));
+  });
+
+  // ---- RCH Calendar (a big Google-style month / week view; events come later) ----
+  let calView = 'month';
+  let calDate = new Date();
+  calDate.setHours(0, 0, 0, 0);
+  function sameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function renderCalendar(){
+    const body = document.getElementById('calBody');
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    document.getElementById('calViewMonth').classList.toggle('on', calView === 'month');
+    document.getElementById('calViewWeek').classList.toggle('on', calView === 'week');
+    if (calView === 'month') {
+      document.getElementById('calTitle').textContent = MONTH_NAMES[calDate.getMonth()] + ' ' + calDate.getFullYear();
+      const first = new Date(calDate.getFullYear(), calDate.getMonth(), 1);
+      const start = new Date(first); start.setDate(1 - first.getDay());
+      const weeks = Math.ceil((first.getDay() + new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate()) / 7);
+      let html = '<div class="cal-dow">' + dows.map(function(d){ return '<div>' + d + '</div>'; }).join('') + '</div><div class="cal-grid">';
+      for (let i = 0; i < weeks * 7; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        const cls = 'cal-cell' + (d.getMonth() !== calDate.getMonth() ? ' other' : '') + (sameDay(d, today) ? ' today' : '');
+        html += '<div class="' + cls + '" data-ts="' + d.getTime() + '"><span class="cal-num">' + d.getDate() + '</span></div>';
+      }
+      body.innerHTML = html + '</div>';
+    } else {
+      const start = new Date(calDate); start.setDate(calDate.getDate() - calDate.getDay());
+      const end = new Date(start); end.setDate(start.getDate() + 6);
+      document.getElementById('calTitle').textContent = MONTH_NAMES[start.getMonth()].slice(0, 3) + ' ' + start.getDate() + ' – ' +
+        (start.getMonth() !== end.getMonth() ? MONTH_NAMES[end.getMonth()].slice(0, 3) + ' ' : '') + end.getDate() + ', ' + end.getFullYear();
+      let html = '<div class="wk"><div class="wk-h"></div>';
+      const days = [];
+      for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); days.push(d); }
+      days.forEach(function(d){ html += '<div class="wk-h' + (sameDay(d, today) ? ' today' : '') + '">' + dows[d.getDay()] + '<br><span class="cal-num">' + d.getDate() + '</span></div>'; });
+      for (let h = 6; h <= 21; h++) {
+        const label = (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? ' AM' : ' PM');
+        html += '<div class="hr">' + label + '</div>';
+        days.forEach(function(d){ html += '<div class="slot' + (sameDay(d, today) ? ' today' : '') + '"></div>'; });
+      }
+      body.innerHTML = html + '</div>';
+    }
+  }
+  function calStep(dir){
+    if (calView === 'month') calDate = new Date(calDate.getFullYear(), calDate.getMonth() + dir, 1);
+    else { calDate = new Date(calDate); calDate.setDate(calDate.getDate() + 7 * dir); }
+    renderCalendar();
+  }
+  document.getElementById('calPrev').addEventListener('click', function(){ calStep(-1); });
+  document.getElementById('calNext').addEventListener('click', function(){ calStep(1); });
+  document.getElementById('calToday').addEventListener('click', function(){ calDate = new Date(); calDate.setHours(0, 0, 0, 0); renderCalendar(); });
+  document.getElementById('calViewMonth').addEventListener('click', function(){ calView = 'month'; renderCalendar(); });
+  document.getElementById('calViewWeek').addEventListener('click', function(){ calView = 'week'; renderCalendar(); });
+  document.getElementById('calBody').addEventListener('click', function(e){
+    const cell = e.target.closest('.cal-cell');
+    if (cell) { calDate = new Date(Number(cell.getAttribute('data-ts'))); calView = 'week'; renderCalendar(); }
+  });
+
+  // ===================== Reviews and "What can we change?" (Data tab) =====================
+  let outreachKind = 'review';
+  let outreachPlayers = [];
+  function buildOutreachScopes(){
+    let html = '<option value="all">Everyone (all families)</option><option value="all_rch">All RCH Elite Training</option><option value="all_sultans">All Sultans FC</option>';
+    html += '<optgroup label="A Specific Grade (any program)">' + GRADES.map(function(g){ return '<option value="grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += '<optgroup label="RCH — Specific Grade">' + GRADES.map(function(g){ return '<option value="rch_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += '<optgroup label="Sultans — Specific Grade">' + GRADES.map(function(g){ return '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += '<option value="individual">Individual player…</option>';
+    document.getElementById('osScope').innerHTML = html;
+  }
+  function renderOutreachPlayers(q){
+    const sel = document.getElementById('osIndividual');
+    const t = (q || '').trim().toLowerCase();
+    const list = !t ? outreachPlayers : outreachPlayers.filter(function(p){ return (p.player_name || '').toLowerCase().indexOf(t) !== -1 || (p.parent_name || '').toLowerCase().indexOf(t) !== -1; });
+    sel.innerHTML = list.length ? list.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + ' — ' + (GRADE_LABELS[p.grade] || p.grade) + (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</option>'; }).join('') : '<option value="">No players match</option>';
+  }
+  function parseScope(v){
+    const i = v.indexOf(':');
+    return i === -1 ? { scope: v, grade: null } : { scope: v.slice(0, i), grade: v.slice(i + 1) };
+  }
+  async function openOutreach(kind){
+    outreachKind = kind;
+    document.getElementById('outreachTitle').textContent = kind === 'review' ? 'Send Review Request' : 'Send "What Can We Change?"';
+    document.getElementById('outreachIntro').textContent = kind === 'review'
+      ? 'Thanks families for their trust and asks for a star rating and a comment.'
+      : 'Asks families what we should change in our services.';
+    buildOutreachScopes();
+    document.getElementById('osIndividualWrap').classList.add('hidden');
+    document.getElementById('outreachErr1').textContent = '';
+    document.getElementById('outreachErr2').textContent = '';
+    document.getElementById('outreachStep1').classList.remove('hidden');
+    document.getElementById('outreachStep2').classList.add('hidden');
+    document.getElementById('outreachSendBtn').disabled = false;
+    document.getElementById('outreachSendBtn').textContent = 'Send';
+    document.getElementById('outreachModal').classList.remove('hidden');
+    document.getElementById('osIndividualSearch').value = '';
+    try { outreachPlayers = await api('/api/admin/players'); } catch (e) { outreachPlayers = []; }
+    renderOutreachPlayers('');
+  }
+  document.getElementById('sendReviewBtn').addEventListener('click', function(){ openOutreach('review'); });
+  document.getElementById('sendFeedbackBtn').addEventListener('click', function(){ openOutreach('feedback'); });
+  document.getElementById('osScope').addEventListener('change', function(){
+    document.getElementById('osIndividualWrap').classList.toggle('hidden', document.getElementById('osScope').value !== 'individual');
+  });
+  document.getElementById('osIndividualSearch').addEventListener('input', function(e){ renderOutreachPlayers(e.target.value); });
+  document.getElementById('outreachCancel1').addEventListener('click', function(){ document.getElementById('outreachModal').classList.add('hidden'); });
+  document.getElementById('outreachBack').addEventListener('click', function(){
+    document.getElementById('outreachStep2').classList.add('hidden');
+    document.getElementById('outreachStep1').classList.remove('hidden');
+  });
+  function outreachParams(){
+    const p = parseScope(document.getElementById('osScope').value);
+    const params = new URLSearchParams({ scope: p.scope });
+    if (p.grade) params.set('grade', p.grade);
+    if (p.scope === 'individual') params.set('playerId', document.getElementById('osIndividual').value);
+    return { p: p, params: params };
+  }
+  document.getElementById('outreachPreviewBtn').addEventListener('click', async function(){
+    const errEl = document.getElementById('outreachErr1');
+    errEl.textContent = '';
+    const q = outreachParams();
+    if (q.p.scope === 'individual' && !document.getElementById('osIndividual').value) { errEl.textContent = 'Please choose a player.'; return; }
+    const btn = document.getElementById('outreachPreviewBtn');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    try {
+      const result = await api('/api/admin/outreach/recipients?' + q.params.toString());
+      if (result.error) { errEl.textContent = result.error; return; }
+      document.getElementById('outreachSummary').textContent = result.sendableCount
+        ? 'This will email ' + result.sendableCount + (result.sendableCount === 1 ? ' family' : ' families') + (result.skipped.length ? ' (' + result.skipped.length + ' skipped, no email on file)' : '') + '.'
+        : 'No family with an email matches this selection.';
+      document.getElementById('outreachList').innerHTML = result.families.map(function(f){
+        return '<div style="padding:4px 0; border-bottom:1px solid #f2f2f2;">' + escapeHtml(f.children.join(', ')) + ' <span style="color:#888;">(' + escapeHtml(f.email) + ')</span></div>';
+      }).join('') + result.skipped.map(function(n){ return '<div style="padding:4px 0; color:#b5482f;">' + escapeHtml(n) + ': no parent email, skipped</div>'; }).join('');
+      document.getElementById('outreachSendBtn').disabled = !result.sendableCount;
+      document.getElementById('outreachStep1').classList.add('hidden');
+      document.getElementById('outreachStep2').classList.remove('hidden');
+    } catch (e) { errEl.textContent = 'Could not load recipients. Please try again.'; }
+    finally { btn.disabled = false; btn.textContent = 'Preview Recipients'; }
+  });
+  document.getElementById('outreachSendBtn').addEventListener('click', async function(){
+    const errEl = document.getElementById('outreachErr2');
+    errEl.textContent = '';
+    const q = outreachParams();
+    const btn = document.getElementById('outreachSendBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const result = await api('/api/admin/outreach/send', { method: 'POST', body: JSON.stringify({
+        kind: outreachKind, scope: q.p.scope, grade: q.p.grade, playerId: q.p.scope === 'individual' ? document.getElementById('osIndividual').value : null,
+      }) });
+      if (result.error) { errEl.textContent = result.error; btn.disabled = false; btn.textContent = 'Send'; return; }
+      document.getElementById('outreachModal').classList.add('hidden');
+      alert('Sent to ' + result.sentCount + (result.sentCount === 1 ? ' family.' : ' families.') + (result.failed.length ? ' ' + result.failed.length + ' could not be sent.' : ''));
+      await loadOutreach(outreachKind);
+    } catch (e) { errEl.textContent = 'Could not send. Please try again.'; btn.disabled = false; btn.textContent = 'Send'; }
+  });
+  function stars(n){ let s = ''; for (let i = 1; i <= 5; i++) s += i <= n ? '★' : '☆'; return s; }
+  async function loadOutreach(kind){
+    const prefix = kind === 'review' ? 'reviews' : 'feedback';
+    const data = await api('/api/admin/outreach?kind=' + kind);
+    const sm = data.summary;
+    document.getElementById(prefix + 'Summary').innerHTML = '<b>' + sm.sent + '</b> sent &middot; <b>' + sm.responded + '</b> answered' +
+      (kind === 'review' && sm.averageRating != null ? ' &middot; average <b>' + sm.averageRating + ' / 5</b> ' + stars(Math.round(sm.averageRating)) : '');
+    const wrap = document.getElementById(prefix + 'TableWrap');
+    if (!data.rows.length) { wrap.innerHTML = '<div class="empty">Nothing sent yet.</div>'; return; }
+    wrap.innerHTML = '<table><thead><tr><th>Sent</th><th>Family</th><th>Grade</th>' + (kind === 'review' ? '<th>Rating</th>' : '') + '<th>' + (kind === 'review' ? 'Comment' : 'Their answer') + '</th><th></th></tr></thead><tbody>' +
+      data.rows.map(function(r){
+        return '<tr><td>' + escapeHtml(fmtDate(r.sent_at)) + '</td><td>' + escapeHtml(r.child_names || '') + '<br><span style="color:#888">' + escapeHtml(r.parent_name || '') + '</span></td><td>' + (GRADE_LABELS[r.grade] || '') + '</td>' +
+          (kind === 'review' ? '<td>' + (r.rating != null ? '<span style="color:#d9a441; letter-spacing:2px;">' + stars(r.rating) + '</span>' : '<span style="color:#999">Waiting</span>') + '</td>' : '') +
+          '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? escapeHtml(r.comment || '—') : (kind === 'review' ? '' : '<span style="color:#999">Waiting</span>')) + '</td>' +
+          '<td><button type="button" class="btn-delete-row" data-oid="' + r.id + '">Delete</button></td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  ['reviewsTableWrap', 'feedbackTableWrap'].forEach(function(id){
+    document.getElementById(id).addEventListener('click', async function(e){
+      const b = e.target.closest('button[data-oid]');
+      if (!b || !confirm('Delete this entry?')) return;
+      try { await api('/api/admin/outreach/' + b.getAttribute('data-oid'), { method: 'DELETE' }); await loadOutreach(id === 'reviewsTableWrap' ? 'review' : 'feedback'); }
+      catch (err) { alert('Could not delete. Please try again.'); }
+    });
+  });
+
+  // ===================== Shop and Camp (admin) =====================
+  // Photos are resized in the browser (max 900px, JPEG) before upload so pages stay fast.
+  function resizeImage(file, cb){
+    const reader = new FileReader();
+    reader.onload = function(){
+      const img = new Image();
+      img.onload = function(){
+        const s = Math.min(1, 900 / Math.max(img.width, img.height));
+        const w = Math.round(img.width * s), h = Math.round(img.height * s);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function(){ cb(null); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ cb(null); };
+    reader.readAsDataURL(file);
+  }
+  function buildImageSlots(boxId){
+    const box = document.getElementById(boxId);
+    let imgs = [];
+    function draw(){
+      box.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'img-slot' + (i === 0 ? ' cover' : '');
+        if (imgs[i]) {
+          slot.style.backgroundImage = 'url("' + imgs[i] + '")';
+          const rm = document.createElement('button');
+          rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×'; rm.title = 'Remove';
+          rm.addEventListener('click', function(ev){ ev.stopPropagation(); imgs.splice(i, 1); draw(); });
+          slot.appendChild(rm);
+        } else {
+          slot.textContent = i === 0 ? 'Cover photo: click or drop' : 'Add photo';
+          const input = document.createElement('input');
+          input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
+          input.addEventListener('change', function(){ if (input.files && input.files[0]) addFile(input.files[0]); });
+          slot.appendChild(input);
+          slot.addEventListener('click', function(){ input.click(); });
+          slot.addEventListener('dragover', function(ev){ ev.preventDefault(); slot.classList.add('drag'); });
+          slot.addEventListener('dragleave', function(){ slot.classList.remove('drag'); });
+          slot.addEventListener('drop', function(ev){ ev.preventDefault(); slot.classList.remove('drag'); if (ev.dataTransfer.files && ev.dataTransfer.files[0]) addFile(ev.dataTransfer.files[0]); });
+        }
+        box.appendChild(slot);
+      }
+    }
+    function addFile(file){
+      if (imgs.length >= 4) return;
+      resizeImage(file, function(data){ if (data) { imgs.push(data); draw(); } else alert('That file could not be read as an image.'); });
+    }
+    draw();
+    return { get: function(){ return imgs.slice(); }, set: function(arr){ imgs = (arr || []).slice(0, 4); draw(); } };
+  }
+  const productSlots = buildImageSlots('spImages');
+  const campSlots = buildImageSlots('cpImages');
+
+  function imgStyle(arr){ return arr && arr[0] ? ' style="background-image:url(' + arr[0] + ')"' : ''; }
+
+  // ---- Shop ----
+  let shopData = { open: false, products: [] };
+  let productEditId = null;
+  async function loadShopAdmin(){
+    shopData = await api('/api/admin/shop');
+    document.getElementById('shopOpenToggle').checked = !!shopData.open;
+    document.getElementById('shopOpenLabel').textContent = shopData.open ? 'Shop open' : 'Shop closed';
+    const grid = document.getElementById('shopGrid');
+    if (!shopData.products.length) { grid.innerHTML = '<div class="empty">No products yet. Click + Add Product.</div>'; return; }
+    grid.innerHTML = '<div class="item-grid">' + shopData.products.map(function(p){
+      return '<div class="item-card"><div class="item-img"' + imgStyle(p.images) + '>' + (p.images.length ? '' : 'No photo yet') + '</div><div class="item-body">' +
+        '<h4>' + escapeHtml(p.name) + '</h4><div class="item-meta">' + escapeHtml(p.category || 'Uncategorized') + (p.sizes ? ' &middot; ' + escapeHtml(p.sizes) : '') + '</div>' +
+        '<div class="item-price">' + money(p.priceCents) + '</div><div>' + (p.inStock ? '' : '<span class="badge warn">Sold out</span>') + (p.visible ? '' : '<span class="badge">Hidden</span>') + '</div>' +
+        '<div class="mini-actions" style="margin-top:auto;" data-id="' + p.id + '"><button type="button" data-act="edit">Edit</button><button type="button" class="danger" data-act="del">Delete</button></div></div></div>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('shopOpenToggle').addEventListener('change', async function(e){
+    const t = e.target; const want = t.checked; t.disabled = true;
+    try { const r = await api('/api/admin/shop/availability', { method: 'POST', body: JSON.stringify({ open: want }) }); shopData.open = !!r.open; }
+    catch (err) { alert('Could not update the shop. Please try again.'); }
+    t.checked = !!shopData.open; t.disabled = false;
+    document.getElementById('shopOpenLabel').textContent = shopData.open ? 'Shop open' : 'Shop closed';
+  });
+  function openProductModal(p){
+    productEditId = p ? p.id : null;
+    document.getElementById('productModalTitle').textContent = p ? 'Edit Product' : 'Add Product';
+    document.getElementById('spName').value = p ? p.name : '';
+    document.getElementById('spCategory').value = p ? p.category : '';
+    document.getElementById('spPrice').value = p ? (p.priceCents / 100).toFixed(2) : '0';
+    document.getElementById('spSizes').value = p ? p.sizes : '';
+    document.getElementById('spDesc').value = p ? p.description : '';
+    document.getElementById('spInStock').checked = p ? p.inStock : true;
+    document.getElementById('spVisible').checked = p ? p.visible : true;
+    productSlots.set(p ? p.images : []);
+    document.getElementById('productError').textContent = '';
+    document.getElementById('productModal').classList.remove('hidden');
+  }
+  document.getElementById('addProductBtn').addEventListener('click', function(){ openProductModal(null); });
+  document.getElementById('productCancel').addEventListener('click', function(){ document.getElementById('productModal').classList.add('hidden'); });
+  document.getElementById('shopGrid').addEventListener('click', async function(e){
+    const b = e.target.closest('button[data-act]');
+    if (!b) return;
+    const id = Number(b.parentElement.getAttribute('data-id'));
+    if (b.getAttribute('data-act') === 'edit') { openProductModal(shopData.products.find(function(p){ return p.id === id; })); return; }
+    if (!confirm('Delete this product?')) return;
+    try { await api('/api/admin/shop/products/' + id, { method: 'DELETE' }); await loadShopAdmin(); } catch (err) { alert('Could not delete. Please try again.'); }
+  });
+  document.getElementById('productSave').addEventListener('click', async function(){
+    const errEl = document.getElementById('productError');
+    errEl.textContent = '';
+    const payload = {
+      name: document.getElementById('spName').value.trim(), category: document.getElementById('spCategory').value.trim(),
+      priceCents: Math.round(parseFloat(document.getElementById('spPrice').value || '0') * 100), sizes: document.getElementById('spSizes').value.trim(),
+      description: document.getElementById('spDesc').value.trim(), images: productSlots.get(),
+      inStock: document.getElementById('spInStock').checked, visible: document.getElementById('spVisible').checked,
+    };
+    if (!payload.name) { errEl.textContent = 'Please enter a product name.'; return; }
+    const btn = document.getElementById('productSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const result = productEditId
+        ? await api('/api/admin/shop/products/' + productEditId, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/api/admin/shop/products', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) { errEl.textContent = result.error; return; }
+      document.getElementById('productModal').classList.add('hidden');
+      await loadShopAdmin();
+    } catch (err) { errEl.textContent = 'Could not save. Please try again.'; }
+    finally { btn.disabled = false; btn.textContent = 'Save'; }
+  });
+
+  // ---- Camp ----
+  let campData = { open: false, camps: [] };
+  let campEditId = null;
+  function fmtCampDates(c){ return c.startDate ? fmtDay(c.startDate) + (c.endDate ? ' – ' + fmtDay(c.endDate) : '') : 'Dates to be announced'; }
+  async function loadCampAdmin(){
+    campData = await api('/api/admin/camp');
+    document.getElementById('campOpenToggle').checked = !!campData.open;
+    document.getElementById('campOpenLabel').textContent = campData.open ? 'Camps open' : 'Camps closed';
+    const grid = document.getElementById('campGrid');
+    if (!campData.camps.length) { grid.innerHTML = '<div class="empty">No camps yet. Click + Add Camp.</div>'; return; }
+    grid.innerHTML = '<div class="item-grid">' + campData.camps.map(function(c){
+      return '<div class="item-card"><div class="item-img"' + imgStyle(c.images) + '>' + (c.images.length ? '' : 'No photo yet') + '</div><div class="item-body">' +
+        '<h4>' + escapeHtml(c.title) + '</h4><div class="item-meta">' + escapeHtml(c.season.charAt(0).toUpperCase() + c.season.slice(1)) + ' camp &middot; ' + escapeHtml(fmtCampDates(c)) + '</div>' +
+        '<div class="item-meta">' + escapeHtml(c.location || '') + (c.ages ? ' &middot; ' + escapeHtml(c.ages) : '') + '</div>' +
+        '<div class="item-price">' + money(c.priceCents) + '</div><div>' + (c.visible ? '' : '<span class="badge">Hidden</span>') + (c.spots != null ? '<span class="badge">' + c.spots + ' spots</span>' : '') + '</div>' +
+        '<div class="mini-actions" style="margin-top:auto;" data-id="' + c.id + '"><button type="button" data-act="edit">Edit</button><button type="button" class="danger" data-act="del">Delete</button></div></div></div>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('campOpenToggle').addEventListener('change', async function(e){
+    const t = e.target; const want = t.checked; t.disabled = true;
+    try { const r = await api('/api/admin/camp/availability', { method: 'POST', body: JSON.stringify({ open: want }) }); campData.open = !!r.open; }
+    catch (err) { alert('Could not update the camps. Please try again.'); }
+    t.checked = !!campData.open; t.disabled = false;
+    document.getElementById('campOpenLabel').textContent = campData.open ? 'Camps open' : 'Camps closed';
+  });
+  function openCampModal(c){
+    campEditId = c ? c.id : null;
+    document.getElementById('campModalTitle').textContent = c ? 'Edit Camp' : 'Add Camp';
+    document.getElementById('cpTitle').value = c ? c.title : '';
+    document.getElementById('cpSeason').value = c ? c.season : 'summer';
+    document.getElementById('cpAges').value = c ? c.ages : '';
+    document.getElementById('cpStart').value = c && c.startDate ? c.startDate : '';
+    document.getElementById('cpEnd').value = c && c.endDate ? c.endDate : '';
+    document.getElementById('cpSchedule').value = c ? c.schedule : '';
+    document.getElementById('cpLocation').value = c ? c.location : '';
+    document.getElementById('cpPrice').value = c ? (c.priceCents / 100).toFixed(2) : '0';
+    document.getElementById('cpSpots').value = c && c.spots != null ? c.spots : '';
+    document.getElementById('cpDesc').value = c ? c.description : '';
+    document.getElementById('cpVisible').checked = c ? c.visible : true;
+    campSlots.set(c ? c.images : []);
+    document.getElementById('campError').textContent = '';
+    document.getElementById('campModal').classList.remove('hidden');
+  }
+  document.getElementById('addCampBtn').addEventListener('click', function(){ openCampModal(null); });
+  document.getElementById('campCancel').addEventListener('click', function(){ document.getElementById('campModal').classList.add('hidden'); });
+  document.getElementById('campGrid').addEventListener('click', async function(e){
+    const b = e.target.closest('button[data-act]');
+    if (!b) return;
+    const id = Number(b.parentElement.getAttribute('data-id'));
+    if (b.getAttribute('data-act') === 'edit') { openCampModal(campData.camps.find(function(c){ return c.id === id; })); return; }
+    if (!confirm('Delete this camp?')) return;
+    try { await api('/api/admin/camp/camps/' + id, { method: 'DELETE' }); await loadCampAdmin(); } catch (err) { alert('Could not delete. Please try again.'); }
+  });
+  document.getElementById('campSave').addEventListener('click', async function(){
+    const errEl = document.getElementById('campError');
+    errEl.textContent = '';
+    const startEl = document.getElementById('cpStart'), endEl = document.getElementById('cpEnd');
+    if (startEl.classList.contains('date-bad') || endEl.classList.contains('date-bad')) { errEl.textContent = 'Please enter dates as MM/DD/YYYY.'; return; }
+    const payload = {
+      title: document.getElementById('cpTitle').value.trim(), season: document.getElementById('cpSeason').value, ages: document.getElementById('cpAges').value.trim(),
+      startDate: startEl.value, endDate: endEl.value, schedule: document.getElementById('cpSchedule').value.trim(), location: document.getElementById('cpLocation').value.trim(),
+      priceCents: Math.round(parseFloat(document.getElementById('cpPrice').value || '0') * 100), spots: document.getElementById('cpSpots').value,
+      description: document.getElementById('cpDesc').value.trim(), images: campSlots.get(), visible: document.getElementById('cpVisible').checked,
+    };
+    if (!payload.title) { errEl.textContent = 'Please enter a camp title.'; return; }
+    const btn = document.getElementById('campSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const result = campEditId
+        ? await api('/api/admin/camp/camps/' + campEditId, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/api/admin/camp/camps', { method: 'POST', body: JSON.stringify(payload) });
+      if (result.error) { errEl.textContent = result.error; return; }
+      document.getElementById('campModal').classList.add('hidden');
+      await loadCampAdmin();
+    } catch (err) { errEl.textContent = 'Could not save. Please try again.'; }
+    finally { btn.disabled = false; btn.textContent = 'Save'; }
+  });
+
   // ---- Section navigation (Registrations / Finances / Charges / Coaches / Data) ----
 
-  const SECTION_IDS = ['registrations', 'finances', 'charges', 'coaches', 'data'];
+  const SECTION_IDS = ['registrations', 'finances', 'charges', 'coaches', 'shop', 'camp', 'data'];
   function showSection(name){
     // The count cards belong to the dashboard (Registrations) only.
     document.getElementById('summary').classList.toggle('hidden', name !== 'registrations');
@@ -2957,7 +3905,9 @@ module.exports = `<!doctype html>
     if (name === 'finances') await loadFinancesExtras();
     if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
     if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
-    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements()]); }
+    if (name === 'shop') await loadShopAdmin();
+    if (name === 'camp') await loadCampAdmin();
+    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements(), loadOutreach('review'), loadOutreach('feedback')]); }
   });
   let chargesLoaded = false;
   let coachesLoaded = false;

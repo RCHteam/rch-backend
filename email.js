@@ -207,7 +207,52 @@ async function sendSignedAgreementEmails({ to, parentName, childName, pdf }) {
   }
 }
 
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// "Thank you for your trust — leave a star rating + comment" (kind 'review')
+// or "What can we change in our services?" (kind 'feedback'). Both link to a
+// personal /feedback/:token page.
+async function sendOutreachEmail({ to, parentName, childNames, kind, link }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  const kids = childNames && childNames.length ? childNames.join(' & ') : 'your child';
+  const safeKids = escHtml(kids);
+  const btn = (label) => `<p style="text-align:center; margin:26px 0;"><a href="${link}" style="background:#164a30; color:#ffffff; text-decoration:none; padding:14px 26px; border-radius:8px; font-weight:700; display:inline-block;">${label}</a></p>`;
+  if (kind === 'feedback') {
+    const subject = 'What can we change? We want your honest feedback — RCH Elite Training';
+    const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
+      <p>We are always looking to make RCH Elite Training better for ${safeKids} and every family. What should we change, add or do differently in our services?</p>
+      <p>Your honest answer takes about a minute and goes straight to us.</p>${btn('Share your feedback')}
+      <p style="color:#777; font-size:0.85rem;">If the button doesn't work, copy this link: ${link}</p>`);
+    const text = `Hi ${firstName},\n\nWe are always looking to make RCH Elite Training better for ${kids} and every family. What should we change, add or do differently in our services?\n\nShare your feedback (about a minute): ${link}\n\nThank you,\nRCH Elite Training`;
+    return sendEmail({ to, subject, html, text });
+  }
+  const subject = 'Thank you for trusting RCH Elite Training — how are we doing?';
+  const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
+    <p>Thank you for trusting us with ${safeKids}'s soccer development. It truly means a lot to our whole team.</p>
+    <p>Would you take a minute to rate your experience from 1 to 5 stars and leave us a short comment?</p>${btn('Leave a review')}
+    <p style="color:#777; font-size:0.85rem;">If the button doesn't work, copy this link: ${link}</p>`);
+  const text = `Hi ${firstName},\n\nThank you for trusting us with ${kids}'s soccer development. It truly means a lot to our whole team.\n\nWould you take a minute to rate your experience (1-5 stars) and leave a short comment?\n${link}\n\nThank you,\nRCH Elite Training`;
+  return sendEmail({ to, subject, html, text });
+}
+
+// Coach's written report to the parent, with the PDF attached. Name, month
+// and year are in both the subject and the body.
+async function sendStudentReportEmail({ to, parentName, childName, monthLabel, chapterTitle, pdf, filename }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  const subject = `${childName} — Progress Report, ${monthLabel} — RCH Elite Training`;
+  const chapterLine = chapterTitle ? ` on <b>${escHtml(chapterTitle)}</b>` : '';
+  const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
+    <p>Attached is ${escHtml(childName)}'s progress report for <b>${escHtml(monthLabel)}</b>${chapterLine}, written by their coach.</p>
+    <p>Thank you for being part of RCH Elite Training. If you have any questions, just reply to this email.</p>`);
+  const text = `Hi ${firstName},\n\nAttached is ${childName}'s progress report for ${monthLabel}${chapterTitle ? ' on ' + chapterTitle : ''}, written by their coach.\n\nThank you for being part of RCH Elite Training. If you have any questions, just reply to this email.`;
+  return sendEmail({ to, subject, html, text, attachments: [{ filename, content: pdf.toString('base64') }] });
+}
+
 module.exports = {
+  sendOutreachEmail,
+  sendStudentReportEmail,
   sendAgreementEmail,
   sendSignedAgreementEmails,
   sendSkillsRegistrationEmails,

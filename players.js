@@ -2,7 +2,9 @@ const express = require('express');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
+const { normalizeSize, normalizeDay } = require('./sizes');
 const { getMonthlyRates, effectiveDiscountCents, effectiveDiscountSql } = require('./discounts');
+const { getProrationAdjustments, centralDateParts } = require('./proration');
 
 const router = express.Router();
 
@@ -84,7 +86,7 @@ router.get('/admin/players', requireAdmin, async (req, res) => {
 router.post('/admin/players', requireAdmin, async (req, res) => {
   const {
     grade, playerName, dob, parentName, parentPhone, parentEmail,
-    sessionType, rch, sultans, discountCents, siblingDiscount,
+    sessionType, rch, sultans, discountCents, siblingDiscount, shirtSize, sessionDay,
   } = req.body || {};
 
   if (!VALID_GRADES.has(grade)) {
@@ -98,11 +100,12 @@ router.post('/admin/players', requireAdmin, async (req, res) => {
   try {
     const insertRes = await pool.query(
       `INSERT INTO players
-        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [grade, playerName.trim(), dob || null, parentName || '', parentPhone || '', parentEmail || '',
-       session, !!rch, !!sultans, Number(discountCents) || 0, normalizeSibling(siblingDiscount)]
+       session, !!rch, !!sultans, Number(discountCents) || 0, normalizeSibling(siblingDiscount),
+       normalizeSize(shirtSize), normalizeDay(sessionDay, session)]
     );
     res.status(201).json({ ok: true, entry: insertRes.rows[0] });
   } catch (err) {
@@ -123,7 +126,7 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
 
     const {
       grade, playerName, dob, parentName, parentPhone, parentEmail,
-      sessionType, rch, sultans, discountCents, siblingDiscount,
+      sessionType, rch, sultans, discountCents, siblingDiscount, shirtSize, sessionDay,
     } = req.body || {};
 
     if (grade !== undefined && !VALID_GRADES.has(grade)) {
@@ -145,16 +148,20 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
       sultans: sultans !== undefined ? !!sultans : existing.sultans,
       discountCents: discountCents !== undefined ? (Number(discountCents) || 0) : existing.discount_cents,
       siblingDiscount: siblingDiscount !== undefined ? normalizeSibling(siblingDiscount) : existing.sibling_discount,
+      shirtSize: shirtSize !== undefined ? normalizeSize(shirtSize) : existing.shirt_size,
+      sessionDay: sessionDay !== undefined ? sessionDay : existing.session_day,
     };
+    // The day only applies to one-session players.
+    merged.sessionDay = normalizeDay(merged.sessionDay, merged.sessionType);
 
     const updateRes = await pool.query(
       `UPDATE players SET
          grade = $1, player_name = $2, dob = $3, parent_name = $4, parent_phone = $5,
-         parent_email = $6, session_type = $7, rch = $8, sultans = $9, discount_cents = $10, sibling_discount = $11
-       WHERE id = $12
+         parent_email = $6, session_type = $7, rch = $8, sultans = $9, discount_cents = $10, sibling_discount = $11, shirt_size = $12, session_day = $13
+       WHERE id = $14
        RETURNING *`,
       [merged.grade, merged.playerName, merged.dob, merged.parentName, merged.parentPhone,
-       merged.parentEmail, merged.sessionType, merged.rch, merged.sultans, merged.discountCents, merged.siblingDiscount, id]
+       merged.parentEmail, merged.sessionType, merged.rch, merged.sultans, merged.discountCents, merged.siblingDiscount, merged.shirtSize, merged.sessionDay, id]
     );
     res.json({ ok: true, entry: updateRes.rows[0] });
   } catch (err) {
@@ -275,7 +282,7 @@ router.put('/admin/players/:id/unarchive', requireAdmin, async (req, res) => {
 router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   const {
     sourceType, sourceId, grade, sessionType,
-    rch, sultans, parentName, parentPhone, parentEmail, discountCents, siblingDiscount: siblingOverride,
+    rch, sultans, parentName, parentPhone, parentEmail, discountCents, siblingDiscount: siblingOverride, shirtSize: sizeOverride, sessionDay: dayOverride,
   } = req.body || {};
 
   if (!['skills', 'join'].includes(sourceType)) {
@@ -294,7 +301,7 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   const isRch = isSultans ? true : !!rch; // Sultans always implies RCH
 
   try {
-    let sourceTable, playerName, dob, siblingDiscount = 0;
+    let sourceTable, playerName, dob, siblingDiscount = 0, srcSize = null, srcDay = null;
     if (sourceType === 'skills') {
       const r = await pool.query('SELECT * FROM skills_registrations WHERE id = $1', [sourceId]);
       if (!r.rows[0]) return res.status(404).json({ error: 'Registration not found.' });
@@ -302,6 +309,8 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
       sourceTable = 'skills_registrations';
       playerName = r.rows[0].full_name;
       siblingDiscount = r.rows[0].sibling_discount || 0;
+      srcSize = r.rows[0].shirt_size || null;
+      srcDay = r.rows[0].session_day || null;
       dob = r.rows[0].dob;
     } else {
       const r = await pool.query('SELECT * FROM join_registrations WHERE id = $1', [sourceId]);
@@ -310,17 +319,21 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
       sourceTable = 'join_registrations';
       playerName = r.rows[0].child_name;
       siblingDiscount = r.rows[0].sibling_discount || 0;
+      srcSize = r.rows[0].shirt_size || null;
+      srcDay = r.rows[0].session_day || null;
       dob = r.rows[0].dob;
     }
 
     const insertRes = await pool.query(
       `INSERT INTO players
-        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [grade, playerName, dob || null, parentName || '', parentPhone || '', parentEmail || '',
        normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0,
-       siblingOverride !== undefined ? normalizeSibling(siblingOverride) : normalizeSibling(siblingDiscount)]
+       siblingOverride !== undefined ? normalizeSibling(siblingOverride) : normalizeSibling(siblingDiscount),
+       normalizeSize(sizeOverride !== undefined ? sizeOverride : srcSize),
+       normalizeDay(dayOverride !== undefined ? dayOverride : srcDay, normalizeSessionType(sessionType))]
     );
 
     await pool.query(`UPDATE ${sourceTable} SET moved_at = now() WHERE id = $1`, [sourceId]);
@@ -339,6 +352,9 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
 router.get('/admin/players-overview', requireAdmin, async (req, res) => {
   try {
     const rates = await getMonthlyRates();
+    const nowC = centralDateParts(new Date());
+    const monthKey = `${nowC.year}-${String(nowC.month).padStart(2, '0')}-01`;
+    const proration = await getProrationAdjustments(monthKey);
     const result = await pool.query(`
       SELECT grade,
         COUNT(*)::int AS total_players,
@@ -370,6 +386,9 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
       if (!byGrade[g]) {
         byGrade[g] = { totalPlayers: 0, totalRch: 0, totalSultans: 0, totalBoth: 0, totalOne: 0, totalTwo: 0, totalOnline: 0, totalDiscountCents: 0 };
       }
+      const adj = proration.byGrade[g] || { reductionCents: 0, lateJoiners: 0 };
+      byGrade[g].prorationReductionCents = adj.reductionCents;
+      byGrade[g].lateJoiners = adj.lateJoiners;
     });
     res.json(byGrade);
   } catch (err) {

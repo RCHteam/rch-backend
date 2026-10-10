@@ -19,6 +19,10 @@ const coachesRoutes = require('./coaches');
 const { router: agreementsRoutes, assetPath } = require('./agreements');
 const signPageHtml = fs.readFileSync(path.join(__dirname, 'signPage.html'), 'utf8');
 const { router: reportsRoutes, runMonthEndCheckIfDue } = require('./reports');
+const outreachRoutes = require('./outreach');
+const reviewPageHtml = require('./reviewPage');
+const coachToolsRoutes = require('./coachTools');
+const siteContentRoutes = require('./siteContent');
 
 const app = express();
 
@@ -42,11 +46,13 @@ app.use(cors({
 // signatures — this MUST be mounted before express.json() below.
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
-app.use(express.json());
+// Shop/Camp images are uploaded as (resized) data URLs, so allow a larger body.
+app.use(express.json({ limit: '6mb' }));
 
 const formLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 app.use('/api/register', formLimiter);
 app.use('/api/join', formLimiter);
+app.use('/api/outreach', formLimiter);
 
 app.use('/api', registerRoutes);
 app.use('/api', joinRoutes);
@@ -57,6 +63,9 @@ app.use('/api', chargesRoutes);
 app.use('/api', coachesRoutes);
 app.use('/api', reportsRoutes);
 app.use('/api', agreementsRoutes);
+app.use('/api', outreachRoutes);
+app.use('/api', coachToolsRoutes);
+app.use('/api', siteContentRoutes);
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
@@ -120,6 +129,11 @@ app.get('/pay/one-time/:token/success', (req, res) => {
 app.get('/assets/logo.png', (req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
   res.sendFile(path.join(__dirname, 'assets', 'logo.png'));
+});
+
+// Review / "what can we change" page a family lands on from the emailed link
+app.get('/feedback/:token', (req, res) => {
+  res.type('html').send(reviewPageHtml);
 });
 
 // E-sign page a family lands on from the emailed agreement link
