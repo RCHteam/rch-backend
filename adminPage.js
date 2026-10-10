@@ -3,7 +3,14 @@ module.exports = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <title>RCH Elite Training — Admin</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0c2a1c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RCH Admin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -63,6 +70,7 @@ module.exports = `<!doctype html>
   .sum-cards{ display:grid; gap:12px; }
   .sum-reg{ --gc:#9aa39b; } .sum-reg .sum-cards{ grid-template-columns:repeat(2,minmax(130px,1fr)); }
   .sum-rch{ --gc:#3fcf7a; } .sum-rch .sum-cards{ grid-template-columns:minmax(150px,1fr); }
+  header{ padding-top:max(12px, env(safe-area-inset-top)); } body{ padding-bottom:env(safe-area-inset-bottom); }
   .sum-sul{ --gc:#d98a76; flex:1 1 520px; } .sum-sul .sum-cards{ grid-template-columns:repeat(4,minmax(110px,1fr)); }
   .sum-reg .card{ background:#fff; }
   .sum-rch .card{ background:#dff3e4; border-top-color:#3fcf7a; }
@@ -3215,6 +3223,7 @@ module.exports = `<!doctype html>
 
   wireExportLinks();
   if (getToken()) showApp(); else showLogin();
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }
 </script>
 </body>
 </html>

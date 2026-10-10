@@ -63,6 +63,41 @@ app.get('/admin', (req, res) => {
   res.type('html').send(adminPageHtml);
 });
 
+// Installable-app (PWA) files for the admin dashboard: manifest, icons and a
+// minimal service worker. The worker deliberately caches nothing — the admin
+// always loads live data and the newest uploaded code.
+app.get('/manifest.webmanifest', (req, res) => {
+  res.type('application/manifest+json').set('Cache-Control', 'public, max-age=3600').json({
+    name: 'RCH Admin',
+    short_name: 'RCH Admin',
+    description: 'RCH Elite Training admin dashboard',
+    start_url: '/admin',
+    scope: '/',
+    display: 'standalone',
+    orientation: 'any',
+    background_color: '#0c2a1c',
+    theme_color: '#0c2a1c',
+    icons: [
+      { src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  });
+});
+app.get('/sw.js', (req, res) => {
+  res.type('application/javascript').set('Cache-Control', 'no-cache').send(
+    "self.addEventListener('install',function(){self.skipWaiting();});" +
+    "self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});" +
+    "self.addEventListener('fetch',function(){});"
+  );
+});
+['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'].forEach((f) => {
+  app.get('/assets/' + f, (req, res) => {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.sendFile(path.join(__dirname, 'assets', f));
+  });
+});
+
 // Payment page a family lands on after you send their unique link
 app.get('/pay/:token', (req, res) => {
   res.type('html').send(paymentPageHtml);
