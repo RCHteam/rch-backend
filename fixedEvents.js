@@ -140,12 +140,24 @@ function termDays() {
       ].join('\n'),
     });
     out.push({
+      id: 'fx-feedback-' + t.date, fixed: true, title: 'Send Reviews and "What Can We Change?"', date: t.date,
+      startTime: '16:45', endTime: '17:30', location: '', color: 'red',
+      notes: [
+        'End of ' + t.name + '. Send the parents both requests, right after their child\'s report has been emailed.',
+        '',
+        'Data > Reviews: send the review request (star rating).',
+        'Data > What Can We Change?: send the service feedback request.',
+        '',
+        'Over the next weeks, read the answers and write down the changes we can make to our services, to discuss at the next term\'s coaches meeting.',
+      ].join('\n'),
+    });
+    out.push({
       id: 'fx-meeting-' + t.date, fixed: true, title: 'Coaches Meeting with Coach Ismail', date: t.date,
       startTime: '15:30', endTime: '16:30', location: '', color: 'red',
       notes: [
         'End of ' + t.name + '. All coaches attend, right after the term reports are done.',
         '',
-        'Agenda: how the term went, curriculum progress and assessment results, attendance, parent feedback, and the plan for the next term.',
+        'Agenda: how the term went, curriculum progress and assessment results, attendance, the changes to our services from the last round of "What Can We Change?" answers, and the plan for the next term.',
       ].join('\n'),
     });
   });
