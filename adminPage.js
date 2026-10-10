@@ -1467,8 +1467,7 @@ module.exports = `<!doctype html>
   const SIZE_GROUPS = [
     ['Toddler', [['2T','2T (age 1-2)'],['3T','3T (age 2-3)'],['4T','4T (age 3-4)']]],
     ['Youth', [['YXS','Youth XS (6/7)'],['YS','Youth S (7/8)'],['YM','Youth M (10/12)'],['YL','Youth L (14/16)'],['YXL','Youth XL (18/20)']]],
-    ['Adult (Men)', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
-    ['Adult (Women)', [['WXS','Women XS'],['WS','Women S'],['WM','Women M'],['WL','Women L'],['WXL','Women XL'],['W2XL','Women 2XL'],['W3XL','Women 3XL']]],
+    ['Adult', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
   ];
   const SIZE_OPTIONS_HTML = '<option value="">— not set —</option>' + SIZE_GROUPS.map(function(g){
     return '<optgroup label="' + g[0] + '">' + g[1].map(function(s){ return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</optgroup>';
