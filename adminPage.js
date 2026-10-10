@@ -3455,7 +3455,7 @@ module.exports = `<!doctype html>
     let ok = false;
     try { const r = await fetch(want, { method: 'HEAD' }); ok = r.ok; } catch (err) { ok = false; }
     if (!ok) {
-      frame.classList.add('hidden'); frame.removeAttribute('src');
+      frame.classList.add('hidden'); frame.removeAttribute('src'); frame.removeAttribute('data-grade');
       empty.textContent = 'The ' + GRADE_LABELS[grade] + ' curriculum has not been loaded yet.';
       empty.classList.remove('hidden');
       document.getElementById('curExpandBtn').disabled = true;
@@ -3463,7 +3463,7 @@ module.exports = `<!doctype html>
     }
     empty.classList.add('hidden'); frame.classList.remove('hidden');
     document.getElementById('curExpandBtn').disabled = false;
-    if (frame.getAttribute('data-grade') !== grade) { frame.src = want; frame.setAttribute('data-grade', grade); }
+    if (frame.getAttribute('data-grade') !== grade || !frame.getAttribute('src')) { frame.src = want; frame.setAttribute('data-grade', grade); }
   }
   function setCurFull(on){
     document.getElementById('curFrameBox').classList.toggle('full', on);
