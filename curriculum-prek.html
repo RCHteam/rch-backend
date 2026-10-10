@@ -987,7 +987,7 @@ function renderCal(){
 function yearPage(){
  buildSchedule();if(!CAL)initCal();
  const last=SCH[SCH.length-1];
- return head('Calendar · Tuesdays and Thursdays','Practice Calendar',`${PL.TEACH-getFirst()+1} practices and 3 festival weeks, ${SCH[0]?SCH[0].date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''} to ${last?last.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''}.`)+`<div class="calw"><div id="calmain" class="calmain"></div></div><div id="drawer" class="drawer" hidden></div>`;
+ return head('Pre-K Calendar · Tuesdays and Thursdays','Practice Calendar',`${PL.TEACH-getFirst()+1} practices and 3 festival weeks, ${SCH[0]?SCH[0].date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''} to ${last?last.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):''}.`)+`<div class="calw"><div id="calmain" class="calmain"></div></div><div id="drawer" class="drawer" hidden></div>`;
 }
 function calAfter(){if($('#calmain'))renderCal();}
 
@@ -1073,7 +1073,7 @@ const GORDER=[['run','Run start'],['structure','75-minute practice'],['psych','P
 function guidePage(id){const g=GUIDE[id]||GUIDE.run;return head('Coaching guide',g[0],g[1])+`<div class="gbody">${g[2]()}</div>`;}
 
 /* ---------- shell ---------- */
-$('#nav').innerHTML=`<div class="ng"><h6>Program</h6><a href="#/" data-k="/">Overview</a><a href="#/year" data-k="/year">Calendar</a><a href="#/levels" data-k="/levels">Level ladder</a></div><div class="ng"><h6>Chapters</h6><div class="cgrid">${CH.map(c=>`<a href="#/ch/${c.n}" data-k="/ch/${c.n}" title="${c.title}">${c.n}</a>`).join('')}</div></div><div class="ng"><h6>Coaching guide</h6>${GORDER.map(g=>`<a href="#/g/${g[0]}" data-k="/g/${g[0]}">${g[1]}</a>`).join('')}</div>`;
+$('#nav').innerHTML=`<div class="ng"><h6>Program</h6><a href="#/" data-k="/">Overview</a><a href="#/year" data-k="/year">Pre-K Calendar</a><a href="#/levels" data-k="/levels">Level ladder</a></div><div class="ng"><h6>Chapters</h6><div class="cgrid">${CH.map(c=>`<a href="#/ch/${c.n}" data-k="/ch/${c.n}" title="${c.title}">${c.n}</a>`).join('')}</div></div><div class="ng"><h6>Coaching guide</h6>${GORDER.map(g=>`<a href="#/g/${g[0]}" data-k="/g/${g[0]}">${g[1]}</a>`).join('')}</div>`;
 function route(){
  const h=(location.hash||'#/').slice(2).split('/').filter(Boolean);let html='';
  CUR=null;buildSchedule();
