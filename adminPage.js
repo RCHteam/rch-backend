@@ -277,7 +277,7 @@ module.exports = `<!doctype html>
   .resp-hero img{ height:38px; width:auto; display:block; }
   .resp-hero .rh-t{ font-family:'Anton',sans-serif; letter-spacing:0.03em; font-size:1.5rem; line-height:1; }
   .resp-hero .rh-s{ font-family:'Space Mono',monospace; font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold-bright); margin-top:5px; }
-  .resp-uniform{ background:#fff; border-radius:0 0 6px 6px; box-shadow:var(--shadow); padding:22px; margin-bottom:22px; display:grid; grid-template-columns:minmax(0,420px) 1fr; gap:28px; align-items:center; }
+  .resp-uniform{ background:#fff; border-radius:0 0 6px 6px; box-shadow:var(--shadow); padding:22px; margin-bottom:22px; display:grid; grid-template-columns:minmax(0,420px) 1fr; gap:28px; align-items:start; }
   .resp-uniform img.fig{ width:100%; height:auto; display:block; border-radius:6px; border:1px solid var(--line); }
   .resp-list{ list-style:none; margin:0; padding:0; }
   .resp-list li{ padding:11px 0 11px 18px; border-bottom:1px solid var(--line); position:relative; font-size:0.95rem; }
@@ -286,21 +286,23 @@ module.exports = `<!doctype html>
   .resp-list b{ font-weight:700; color:var(--pitch-deep); }
   .resp-h{ font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--pitch); margin:26px 0 12px; display:flex; align-items:center; gap:12px; }
   .resp-h:after{ content:''; flex:1; height:1px; background:var(--line); }
-  .val-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-  .val-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:18px 18px 20px; border-top:4px solid var(--gold); }
-  .val-card .vn{ font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--turf); letter-spacing:0.12em; }
-  .val-card h4{ font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.03em; margin:6px 0 6px; color:var(--pitch-deep); }
-  .val-card p{ margin:0; font-size:0.88rem; color:#44504a; line-height:1.5; }
-  .flow{ display:flex; flex-direction:column; align-items:stretch; }
-  .flow-step{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:14px 18px; display:flex; gap:16px; align-items:flex-start; border-left:4px solid var(--acc); }
-  .flow-step .fn{ flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:var(--pitch-deep); color:var(--gold-bright); font-family:'Anton',sans-serif; display:flex; align-items:center; justify-content:center; font-size:1.05rem; }
-  .flow-step h4{ margin:0 0 3px; font-family:'Work Sans',sans-serif; font-weight:700; font-size:1rem; color:var(--pitch-deep); }
-  .flow-step p{ margin:0; font-size:0.88rem; color:#44504a; line-height:1.5; }
-  .flow-step .tag{ display:inline-block; margin-top:6px; font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; background:var(--chalk); border:1px solid var(--line); border-radius:3px; padding:2px 7px; color:var(--pitch); }
-  .flow-arrow{ text-align:center; color:var(--turf); font-size:1.5rem; line-height:1; padding:5px 0; }
-  .flow-step.end{ border-left-color:var(--gold); }
-  @media (max-width: 860px){ .resp-uniform{ grid-template-columns:1fr; } .val-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media (max-width: 520px){ .val-grid{ grid-template-columns:1fr; } }
+  .val-stack{ display:flex; flex-direction:column; gap:10px; }
+  .val-card{ background:var(--chalk); border-left:4px solid var(--gold); border-radius:4px; padding:12px 16px; display:flex; gap:14px; align-items:flex-start; }
+  .val-card .vn{ font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--turf); letter-spacing:0.12em; padding-top:5px; }
+  .val-card h4{ font-family:'Anton',sans-serif; font-weight:400; font-size:1.2rem; letter-spacing:0.03em; margin:0 0 2px; color:var(--pitch-deep); }
+  .val-card p{ margin:0; font-size:0.88rem; color:#44504a; line-height:1.45; }
+  .chev-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:26px 0; margin-bottom:6px; }
+  .chev-cell{ padding-right:4px; }
+  .chev-n{ font-family:'Anton',sans-serif; font-size:2rem; line-height:1; color:var(--chalk-dim); margin:0 0 4px 22px; }
+  .chev-cell.att .chev-n{ color:var(--gold); }
+  .chev{ position:relative; height:76px; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 34px; margin-left:-14px; color:#fff; font-weight:700; font-size:0.95rem; line-height:1.2;
+    background:linear-gradient(180deg,var(--turf),var(--pitch)); clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%,26px 50%); }
+  .chev.first{ margin-left:0; padding-left:20px; clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%); border-radius:6px 0 0 6px; }
+  .chev-cell.att .chev{ background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:var(--pitch-deep); }
+  .chev-cell p{ margin:10px 12px 0 22px; font-size:0.86rem; color:#44504a; line-height:1.5; }
+  .chev-cell .tag{ display:inline-block; margin:8px 0 0 22px; font-family:'Space Mono',monospace; font-size:0.64rem; letter-spacing:0.1em; text-transform:uppercase; background:var(--chalk); border:1px solid var(--line); border-radius:3px; padding:2px 7px; color:var(--pitch); }
+  @media (max-width: 960px){ .resp-uniform{ grid-template-columns:1fr; } .chev-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } .chev-cell:nth-child(2n+1) .chev{ margin-left:0; padding-left:20px; clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%); border-radius:6px 0 0 6px; } }
+  @media (max-width: 520px){ .chev-grid{ grid-template-columns:1fr; } .chev-cell .chev{ margin-left:0; padding-left:20px; clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%); border-radius:6px 0 0 6px; } }
   .cur-frame-box{ position:relative; background:#fff; border:1px solid #d8d4c4; border-radius:8px; overflow:hidden; }
   .cur-frame-box iframe{ display:block; width:100%; height:78vh; min-height:520px; border:0; }
   .cur-frame-bar{ display:none; }
@@ -643,7 +645,7 @@ module.exports = `<!doctype html>
         <div class="resp-hero"><img src="/assets/logo.png" alt="RCH Elite Training"><div><div class="rh-t">Coach Uniform</div><div class="rh-s">What must be worn at every practice</div></div></div>
         <div class="resp-uniform">
           <img class="fig" src="/assets/coach-uniform.jpg" alt="Coach uniform: RCH and Sultans jacket, white polo, black track pants with green stripes, whistle, sport watch, hardboard clipboard and running shoes">
-          <ul class="resp-list">
+          <div class="resp-right"><ul class="resp-list">
             <li><b>Jacket and polo.</b> RCH Elite Training jacket over the white RCH polo.</li>
             <li><b>Track pants.</b> Black pants with the green side stripes.</li>
             <li><b>Whistle.</b> Worn around the neck on the red lanyard.</li>
@@ -651,33 +653,25 @@ module.exports = `<!doctype html>
             <li><b>Hardboard clipboard.</b> For attendance and your coaching summary.</li>
             <li><b>Running shoes.</b> Clean, white, and ready to move.</li>
           </ul>
-        </div>
-
-        <div class="resp-h">Coaching Values</div>
-        <div class="val-grid">
-          <div class="val-card"><div class="vn">01</div><h4>Passion</h4><p>Bring energy and love for the game to every practice.</p></div>
-          <div class="val-card"><div class="vn">02</div><h4>Discipline</h4><p>Be on time, prepared, and consistent in everything you do.</p></div>
-          <div class="val-card"><div class="vn">03</div><h4>Follow the Curriculum</h4><p>Teach the plan as written, in order, every practice.</p></div>
-          <div class="val-card"><div class="vn">04</div><h4>Connect</h4><p>Build a real connection with the child and with the parent.</p></div>
+          <div class="resp-h" style="margin-top:22px;">Coaching Values</div>
+          <div class="val-stack">
+            <div class="val-card"><div class="vn">01</div><div><h4>Passion</h4><p>Bring energy and love for the game to every practice.</p></div></div>
+            <div class="val-card"><div class="vn">02</div><div><h4>Discipline</h4><p>Be on time, prepared, and consistent in everything you do.</p></div></div>
+            <div class="val-card"><div class="vn">03</div><div><h4>Follow the Curriculum</h4><p>Teach the plan as written, in order, every practice.</p></div></div>
+            <div class="val-card"><div class="vn">04</div><div><h4>Connect</h4><p>Build a real connection with the child and with the parent.</p></div></div>
+          </div></div>
         </div>
 
         <div class="resp-h">Coaching Responsibilities: every practice</div>
-        <div class="flow">
-            <div class="flow-step"><div class="fn">1</div><div><h4>Take attendance</h4><p>Taken at the very start of practice.</p><span class="tag">Start of practice</span></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">2</div><div><h4>Running</h4><p>Every practice opens with running, as laid out in the curriculum.</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">3</div><div><h4>Circle the players</h4><p>Bring the players into a circle and summarize what will be done today (see the curriculum).</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">4</div><div><h4>Follow the curriculum</h4><p>Run the curriculum exercises and coaching steps. Follow your coaching summary, available in the Calendar.</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">5</div><div><h4>Finish with 1 v 1</h4><p>End the main work with 1 v 1, as laid out in the curriculum.</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">6</div><div><h4>Review, praise and conclude</h4><p>Review the practice, praise the players, and wrap up (see the curriculum).</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step"><div class="fn">7</div><div><h4>Connect with the parents</h4><p>Speak with the parents, as laid out in the curriculum.</p></div></div>
-            <div class="flow-arrow" aria-hidden="true">&#8595;</div>
-            <div class="flow-step end"><div class="fn">8</div><div><h4>Take attendance</h4><p>Taken again at the end of practice.</p><span class="tag">End of practice</span></div></div>
+        <div class="chev-grid">
+          <div class="chev-cell att"><div class="chev-n">01</div><div class="chev first">Take attendance</div><p>Taken at the very start of practice.</p><span class="tag">Start of practice</span></div>
+          <div class="chev-cell"><div class="chev-n">02</div><div class="chev">Running</div><p>Every practice opens with running, as laid out in the curriculum.</p></div>
+          <div class="chev-cell"><div class="chev-n">03</div><div class="chev">Circle the players</div><p>Circle the players and summarize what will be done today (see the curriculum).</p></div>
+          <div class="chev-cell"><div class="chev-n">04</div><div class="chev">Follow the curriculum</div><p>Run the curriculum exercises and coaching steps. Follow your coaching summary, available in the Calendar.</p></div>
+          <div class="chev-cell"><div class="chev-n">05</div><div class="chev first">Finish with 1 v 1</div><p>End the main work with 1 v 1, as laid out in the curriculum.</p></div>
+          <div class="chev-cell"><div class="chev-n">06</div><div class="chev">Review, praise, conclude</div><p>Review the practice, praise the players, and wrap up (see the curriculum).</p></div>
+          <div class="chev-cell"><div class="chev-n">07</div><div class="chev">Connect with parents</div><p>Speak with the parents, as laid out in the curriculum.</p></div>
+          <div class="chev-cell att"><div class="chev-n">08</div><div class="chev">Take attendance</div><p>Taken again at the end of practice.</p><span class="tag">End of practice</span></div>
         </div>
 
         <div class="resp-h">Beyond practice</div>
