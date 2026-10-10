@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const { seedPrekCurriculum } = require('./curriculumSeed');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -157,6 +158,7 @@ async function ensureSchema() {
   const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   await pool.query(sql);
   console.log('✅ Database schema is ready.');
+  try { if (await seedPrekCurriculum(pool)) console.log('✅ Pre-K curriculum loaded.'); } catch (e) { console.error('Pre-K curriculum seed failed:', e); }
 }
 
 ensureSchema()

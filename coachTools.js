@@ -41,15 +41,15 @@ router.get('/admin/curriculum', requireAdmin, async (req, res) => {
 });
 
 router.post('/admin/curriculum', requireAdmin, async (req, res) => {
-  const { grade, title, content } = req.body || {};
+  const { grade, title, content, assessment } = req.body || {};
   if (!GRADES.includes(grade)) return res.status(400).json({ error: 'Please choose a grade.' });
   if (!title || !String(title).trim()) return res.status(400).json({ error: 'Please enter a chapter title.' });
   try {
     const r = await pool.query(
-      `INSERT INTO curriculum_chapters (grade, position, title, content)
-       VALUES ($1, COALESCE((SELECT MAX(position) FROM curriculum_chapters WHERE grade = $1), 0) + 1, $2, $3)
+      `INSERT INTO curriculum_chapters (grade, position, title, content, assessment)
+       VALUES ($1, COALESCE((SELECT MAX(position) FROM curriculum_chapters WHERE grade = $1), 0) + 1, $2, $3, $4)
        RETURNING *`,
-      [grade, String(title).trim(), String(content || '')]
+      [grade, String(title).trim(), String(content || ''), String(assessment || '')]
     );
     res.status(201).json({ ok: true, entry: r.rows[0] });
   } catch (err) {
@@ -59,12 +59,12 @@ router.post('/admin/curriculum', requireAdmin, async (req, res) => {
 });
 
 router.put('/admin/curriculum/:id', requireAdmin, async (req, res) => {
-  const { title, content } = req.body || {};
+  const { title, content, assessment } = req.body || {};
   if (title !== undefined && !String(title).trim()) return res.status(400).json({ error: 'Title can not be empty.' });
   try {
     const r = await pool.query(
-      `UPDATE curriculum_chapters SET title = COALESCE($1, title), content = COALESCE($2, content) WHERE id = $3 RETURNING *`,
-      [title !== undefined ? String(title).trim() : null, content !== undefined ? String(content) : null, req.params.id]
+      `UPDATE curriculum_chapters SET title = COALESCE($1, title), content = COALESCE($2, content), assessment = COALESCE($3, assessment) WHERE id = $4 RETURNING *`,
+      [title !== undefined ? String(title).trim() : null, content !== undefined ? String(content) : null, assessment !== undefined ? String(assessment) : null, req.params.id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Chapter not found.' });
     res.json({ ok: true, entry: r.rows[0] });
@@ -109,6 +109,8 @@ router.delete('/admin/curriculum/:id', requireAdmin, async (req, res) => {
 
 /* ---------------------------- Student reports ---------------------------- */
 
+const ASSESSMENT_LABELS = { yes: 'Yes (skill achieved)', almost: 'Almost there', not_yet: 'Not yet' };
+
 function buildReportPdf(r) {
   return new Promise((resolve, reject) => {
     try {
@@ -135,6 +137,22 @@ function buildReportPdf(r) {
       if (r.parent_name) doc.font('Helvetica').fontSize(11).fillColor('#000000').text(`Dear ${r.parent_name},`).moveDown(0.6);
       doc.font('Helvetica').fontSize(11).fillColor('#000000').text(String(r.body || ''), { align: 'left', lineGap: 3 });
 
+      if (r.assessment_check) {
+        doc.moveDown(1.2);
+        const boxX = 54, boxW = 504;
+        const label = ASSESSMENT_LABELS[r.assessment_result] || '';
+        const textH = doc.font('Helvetica').fontSize(10.5).heightOfString(r.assessment_check, { width: boxW - 28 });
+        const boxH = 30 + textH + (label ? 24 : 6);
+        if (doc.y + boxH > 720) doc.addPage();
+        const top = doc.y;
+        doc.rect(boxX, top, boxW, boxH).fill('#f3efe3');
+        doc.rect(boxX, top, 4, boxH).fill('#d9a441');
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#0c2a1c').text('Assessment', boxX + 14, top + 9, { width: boxW - 28 });
+        doc.font('Helvetica').fontSize(10.5).fillColor('#222222').text(r.assessment_check, boxX + 14, top + 26, { width: boxW - 28 });
+        if (label) doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#0c2a1c').text('Result: ' + label, boxX + 14, top + 28 + textH, { width: boxW - 28 });
+        doc.y = top + boxH; doc.x = 54;
+      }
+
       doc.moveDown(2);
       doc.font('Helvetica-Bold').fontSize(11).fillColor('#0c2a1c').text(r.coach_name ? `Coach ${r.coach_name}` : 'RCH Elite Training coaching staff');
       doc.font('Helvetica').fontSize(10).fillColor('#666666').text('RCH Elite Training');
@@ -144,7 +162,7 @@ function buildReportPdf(r) {
 }
 
 router.post('/admin/student-reports', requireAdmin, async (req, res) => {
-  const { playerId, chapterId, coachName, body, month, send } = req.body || {};
+  const { playerId, chapterId, coachName, body, month, send, assessmentResult } = req.body || {};
   if (!playerId) return res.status(400).json({ error: 'Please choose a child.' });
   if (!body || !String(body).trim()) return res.status(400).json({ error: 'Please write the report.' });
   try {
@@ -163,6 +181,8 @@ router.post('/admin/student-reports', requireAdmin, async (req, res) => {
       month_key: monthKeyOf(m), month_label: monthLabel(m),
       coach_name: String(coachName || '').trim(), body: String(body).trim(),
       parent_name: player.parent_name || '', parent_email: player.parent_email || '',
+      assessment_check: chapter ? String(chapter.assessment || '') : '',
+      assessment_result: chapter && chapter.assessment && ASSESSMENT_LABELS[assessmentResult] ? assessmentResult : '',
     };
     const pdf = await buildReportPdf(row);
     const filename = `${row.player_name.replace(/[^a-z0-9]+/gi, '_')}_${MONTH_NAMES[m.month - 1]}_${m.year}_Report.pdf`;
@@ -177,11 +197,11 @@ router.post('/admin/student-reports', requireAdmin, async (req, res) => {
     }
     const ins = await pool.query(
       `INSERT INTO student_reports
-        (player_id, player_name, grade, chapter_id, chapter_title, month_key, month_label, coach_name, body, parent_name, parent_email, emailed_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, ${emailed ? 'now()' : 'NULL'})
+        (player_id, player_name, grade, chapter_id, chapter_title, month_key, month_label, coach_name, body, parent_name, parent_email, assessment_check, assessment_result, emailed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, ${emailed ? 'now()' : 'NULL'})
        RETURNING id`,
       [row.player_id, row.player_name, row.grade, row.chapter_id, row.chapter_title, row.month_key, row.month_label,
-       row.coach_name, row.body, row.parent_name, row.parent_email]
+       row.coach_name, row.body, row.parent_name, row.parent_email, row.assessment_check, row.assessment_result]
     );
     res.status(201).json({ ok: true, id: ins.rows[0].id, emailed, to: emailed ? row.parent_email : null });
   } catch (err) {
@@ -335,6 +355,72 @@ router.get('/admin/attendance/pdf', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Attendance PDF error:', err);
     res.status(500).json({ error: 'Could not build the attendance sheet.' });
+  }
+});
+
+/* ---------------------------- RCH Calendar ---------------------------- */
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const EVENT_COLORS = new Set(['green', 'gold', 'red', 'blue']);
+const eventOut = (r) => ({ id: r.id, title: r.title, date: r.event_date, startTime: r.start_time, endTime: r.end_time, location: r.location, notes: r.notes, color: r.color });
+function eventFields(b) {
+  const title = String((b && b.title) || '').trim().slice(0, 160);
+  if (!title) return { error: 'Please enter an event title.' };
+  if (!ISO_DATE.test(String(b.date || ''))) return { error: 'Please enter a valid date.' };
+  const startTime = String(b.startTime || '').trim();
+  const endTime = String(b.endTime || '').trim();
+  if (startTime && !TIME_RE.test(startTime)) return { error: 'Please enter a valid start time.' };
+  if (endTime && !TIME_RE.test(endTime)) return { error: 'Please enter a valid end time.' };
+  if (startTime && endTime && endTime <= startTime) return { error: 'The end time must be after the start time.' };
+  return { values: [title, b.date, startTime, endTime, String(b.location || '').trim().slice(0, 200), String(b.notes || '').trim().slice(0, 4000), EVENT_COLORS.has(b.color) ? b.color : 'green'] };
+}
+
+router.get('/admin/calendar-events', requireAdmin, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM calendar_events ORDER BY event_date, start_time, id');
+    res.json(r.rows.map(eventOut));
+  } catch (err) {
+    console.error('List events error:', err);
+    res.status(500).json({ error: 'Could not load the calendar.' });
+  }
+});
+
+router.post('/admin/calendar-events', requireAdmin, async (req, res) => {
+  const f = eventFields(req.body);
+  if (f.error) return res.status(400).json({ error: f.error });
+  try {
+    const r = await pool.query(
+      'INSERT INTO calendar_events (title, event_date, start_time, end_time, location, notes, color) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', f.values);
+    res.status(201).json(eventOut(r.rows[0]));
+  } catch (err) {
+    console.error('Add event error:', err);
+    res.status(500).json({ error: 'Could not save the event.' });
+  }
+});
+
+router.put('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
+  const f = eventFields(req.body);
+  if (f.error) return res.status(400).json({ error: f.error });
+  try {
+    const r = await pool.query(
+      'UPDATE calendar_events SET title=$1, event_date=$2, start_time=$3, end_time=$4, location=$5, notes=$6, color=$7 WHERE id=$8 RETURNING *',
+      [...f.values, req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Event not found.' });
+    res.json(eventOut(r.rows[0]));
+  } catch (err) {
+    console.error('Update event error:', err);
+    res.status(500).json({ error: 'Could not save the event.' });
+  }
+});
+
+router.delete('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM calendar_events WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete event error:', err);
+    res.status(500).json({ error: 'Could not delete the event.' });
   }
 });
 

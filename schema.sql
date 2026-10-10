@@ -440,3 +440,22 @@ CREATE TABLE IF NOT EXISTS camps (
   position    INTEGER NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- RCH Calendar events, added under Coaches > RCH Calendar > Add event.
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id          SERIAL PRIMARY KEY,
+  title       TEXT NOT NULL,
+  event_date  TEXT NOT NULL,
+  start_time  TEXT NOT NULL DEFAULT '',
+  end_time    TEXT NOT NULL DEFAULT '',
+  location    TEXT NOT NULL DEFAULT '',
+  notes       TEXT NOT NULL DEFAULT '',
+  color       TEXT NOT NULL DEFAULT 'green',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(event_date);
+
+-- Assessment check per curriculum chapter, and the assessment shown in student reports.
+ALTER TABLE curriculum_chapters ADD COLUMN IF NOT EXISTS assessment TEXT NOT NULL DEFAULT '';
+ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS assessment_check TEXT NOT NULL DEFAULT '';
+ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS assessment_result TEXT NOT NULL DEFAULT '';

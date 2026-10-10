@@ -273,8 +273,9 @@ module.exports = `<!doctype html>
   .cur-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .cur-card{ background:#fff; border-radius:6px; box-shadow:var(--shadow); padding:16px 18px; border-top:4px solid var(--acc); }
   .cur-num{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--pitch); }
+  .cur-assess{ background:#f3efe3; border-left:4px solid var(--gold); padding:8px 10px; font-size:0.8rem; color:#333; margin:0 0 12px; border-radius:3px; }
   .cur-card h4{ margin:4px 0 8px; font-size:1.05rem; }
-  .cur-card p{ margin:0 0 12px; color:#555; font-size:0.86rem; white-space:pre-wrap; max-height:7.5em; overflow:hidden; }
+  .cur-card p{ margin:0 0 12px; color:#555; font-size:0.86rem; white-space:pre-wrap; max-height:11em; overflow:auto; }
   .mini-actions{ display:flex; gap:6px; flex-wrap:wrap; }
   .mini-actions button{ background:#eee; border:none; border-radius:4px; padding:6px 10px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
   .mini-actions button.danger{ background:#f6dcd4; color:#8a3b27; }
@@ -284,6 +285,9 @@ module.exports = `<!doctype html>
   .cal-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
   .cal-head h3{ margin:0; font-size:1.5rem; font-family:'Anton',sans-serif; letter-spacing:0.02em; flex:1 1 auto; }
   .cal-btn{ background:#fff; border:1px solid #d6d6d6; border-radius:6px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; border:none; width:100%; font-family:inherit; }
+  .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; }
   .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
   .cal-wrap{ background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden; border:1px solid #e3e3e3; }
   .cal-dow, .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
@@ -600,7 +604,6 @@ module.exports = `<!doctype html>
       <div id="coachSub-curriculum" class="hidden">
         <div class="section-head">
           <h2>Our Curriculum</h2>
-          <button type="button" class="btn-add" id="addChapterBtn">+ Add Chapter</button>
         </div>
         <div class="tool-row">
           <div class="grow"><label for="curGrade">Grade</label><select id="curGrade" data-grades></select></div>
@@ -617,6 +620,12 @@ module.exports = `<!doctype html>
             <div class="grow"><label for="repGrade">Grade</label><select id="repGrade" data-grades></select></div>
             <div class="grow"><label for="repChild">Child</label><select id="repChild"></select></div>
             <div class="grow"><label for="repChapter">Chapter</label><select id="repChapter"></select></div>
+          </div>
+          <div id="repAssessBox" class="hidden" style="background:#f3efe3;border-left:4px solid var(--gold);padding:10px 12px;margin:0 0 14px;border-radius:3px;">
+            <div style="font-size:0.78rem;font-weight:700;color:#444;margin-bottom:4px;">Assessment for this chapter (printed under your comment in the PDF)</div>
+            <div id="repAssessText" style="font-size:0.88rem;color:#222;margin-bottom:8px;"></div>
+            <label for="repAssessResult" style="font-size:0.78rem;font-weight:600;color:#444;">Result for this child</label>
+            <select id="repAssessResult"><option value="">Not recorded</option><option value="yes">Yes (skill achieved)</option><option value="almost">Almost there</option><option value="not_yet">Not yet</option></select>
           </div>
           <div class="tool-row">
             <div class="grow"><label for="repMonth">Month</label><select id="repMonth"></select></div>
@@ -655,6 +664,11 @@ module.exports = `<!doctype html>
 
       <div id="coachSub-calendar" class="hidden">
         <div class="section-head"><h2>RCH Calendar</h2></div>
+        <div class="subtabs" id="calSubtabs">
+          <button type="button" class="subtab active" data-csub="view">Calendar</button>
+          <button type="button" class="subtab" data-csub="add" id="calAddTab">Add event</button>
+        </div>
+        <div id="calSub-view">
         <div class="cal-head">
           <button type="button" class="cal-btn" id="calToday">Today</button>
           <button type="button" class="cal-btn" id="calPrev" aria-label="Previous">&#8249;</button>
@@ -664,6 +678,33 @@ module.exports = `<!doctype html>
           <button type="button" class="cal-btn" id="calViewWeek">Week</button>
         </div>
         <div class="cal-wrap" id="calBody"></div>
+        </div>
+        <div id="calSub-add" class="hidden">
+          <div style="max-width:640px;background:#fff;border:1px solid #e3e3e3;border-radius:8px;padding:18px 20px;">
+            <h3 id="evFormTitle" style="margin:0 0 12px;">Add event</h3>
+            <label for="evTitle">Event title</label>
+            <input type="text" id="evTitle" maxlength="160" placeholder="e.g. Coaches meeting">
+            <div class="row2">
+              <div><label for="evDate">Date</label><input type="text" data-datemask id="evDate"></div>
+              <div><label for="evColor">Color</label>
+                <select id="evColor"><option value="green">Green</option><option value="gold">Gold</option><option value="red">Red</option><option value="blue">Blue</option></select></div>
+            </div>
+            <div class="row2">
+              <div><label for="evStart">Start time (optional)</label><input type="time" id="evStart"></div>
+              <div><label for="evEnd">End time (optional)</label><input type="time" id="evEnd"></div>
+            </div>
+            <label for="evLocation">Location (optional)</label>
+            <input type="text" id="evLocation" maxlength="200">
+            <label for="evNotes">Notes (optional)</label>
+            <textarea id="evNotes" rows="3"></textarea>
+            <p id="evError" style="color:#b5482f;font-size:0.85rem;margin:10px 0 0;min-height:1.1em;"></p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+              <button type="button" class="btn-add" id="evSave">Save event</button>
+              <button type="button" class="cal-btn" id="evCancel">Cancel</button>
+              <button type="button" class="cal-btn" id="evDelete" style="display:none;color:#a33;">Delete event</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div><!-- /section-coaches -->
 
@@ -795,12 +836,14 @@ module.exports = `<!doctype html>
 
 <div class="modal-overlay hidden" id="chapterModal">
   <div class="modal wide">
-    <h3 id="chapterModalTitle">Add Chapter</h3>
+    <h3 id="chapterModalTitle">Edit Chapter</h3>
     <p class="modal-sub" id="chapterModalSub"></p>
     <label for="chTitle">Chapter title</label>
     <input type="text" id="chTitle" placeholder="e.g. Dribbling basics">
     <label for="chContent">What this chapter covers</label>
     <textarea id="chContent" style="min-height:180px;" placeholder="Goals, drills, skills, what the kids should be able to do by the end…"></textarea>
+    <label for="chAssessment">Assessment (shown under the coach's comment in the student report)</label>
+    <textarea id="chAssessment" style="min-height:70px;" placeholder="e.g. Child can pass 5 of 10 balls to a partner with the inside of the foot."></textarea>
     <p class="modal-error" id="chapterError"></p>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="chapterCancel">Cancel</button>
@@ -3365,6 +3408,8 @@ module.exports = `<!doctype html>
     html += GRADES.map(function(g){ return '<option value="' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('');
     sel.innerHTML = html;
   });
+  document.getElementById('repGrade').insertAdjacentHTML('afterbegin', '<option value="">All grades</option>');
+  document.getElementById('repGrade').value = '';
   fillMonthYear('repMonth', 'repYear');
   fillMonthYear('attMonth', 'attYear');
 
@@ -3375,7 +3420,7 @@ module.exports = `<!doctype html>
     document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-sub') === name); });
     if (name === 'curriculum') loadCurriculum();
     if (name === 'reports') initReports();
-    if (name === 'calendar') renderCalendar();
+    if (name === 'calendar') { showCalSub('view'); loadCalEvents(); }
   }
   document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){
     b.addEventListener('click', function(){ showCoachSub(b.getAttribute('data-sub')); });
@@ -3388,12 +3433,12 @@ module.exports = `<!doctype html>
     const wrap = document.getElementById('curriculumWrap');
     wrap.innerHTML = '<div class="empty">Loading…</div>';
     const rows = await api('/api/admin/curriculum?grade=' + encodeURIComponent(grade));
-    if (!rows.length) { wrap.innerHTML = '<div class="empty">No chapters yet for ' + GRADE_LABELS[grade] + '. Click + Add Chapter.</div>'; return; }
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">No chapters yet for ' + GRADE_LABELS[grade] + '. The curriculum for this grade has not been loaded yet.</div>'; return; }
     wrap.innerHTML = '<div class="cur-list">' + rows.map(function(r, i){
       return '<div class="cur-card"><div class="cur-num">Chapter ' + (i + 1) + '</div><h4>' + escapeHtml(r.title) + '</h4>' +
-        '<p>' + escapeHtml(r.content || '') + '</p>' +
+        '<p>' + escapeHtml(r.content || '') + '</p>' + (r.assessment ? '<div class="cur-assess"><b>Assessment:</b> ' + escapeHtml(r.assessment) + '</div>' : '') +
         '<div class="mini-actions" data-id="' + r.id + '">' +
-        '<button type="button" data-act="edit" data-title="' + escapeHtml(r.title) + '" data-content="' + escapeHtml(r.content || '') + '">Edit</button>' +
+        '<button type="button" data-act="edit" data-title="' + escapeHtml(r.title) + '" data-content="' + escapeHtml(r.content || '') + '" data-assessment="' + escapeHtml(r.assessment || '') + '">Edit</button>' +
         (i > 0 ? '<button type="button" data-act="up">&#8593;</button>' : '') +
         (i < rows.length - 1 ? '<button type="button" data-act="down">&#8595;</button>' : '') +
         '<button type="button" class="danger" data-act="del">Delete</button></div></div>';
@@ -3412,6 +3457,7 @@ module.exports = `<!doctype html>
         document.getElementById('chapterModalSub').textContent = GRADE_LABELS[document.getElementById('curGrade').value];
         document.getElementById('chTitle').value = btn.getAttribute('data-title');
         document.getElementById('chContent').value = btn.getAttribute('data-content');
+        document.getElementById('chAssessment').value = btn.getAttribute('data-assessment') || '';
         document.getElementById('chapterError').textContent = '';
         document.getElementById('chapterModal').classList.remove('hidden');
         return;
@@ -3425,15 +3471,6 @@ module.exports = `<!doctype html>
       await loadCurriculum();
     } catch (err) { alert('Could not update the curriculum. Please try again.'); }
   });
-  document.getElementById('addChapterBtn').addEventListener('click', function(){
-    chapterEditId = null;
-    document.getElementById('chapterModalTitle').textContent = 'Add Chapter';
-    document.getElementById('chapterModalSub').textContent = GRADE_LABELS[document.getElementById('curGrade').value];
-    document.getElementById('chTitle').value = '';
-    document.getElementById('chContent').value = '';
-    document.getElementById('chapterError').textContent = '';
-    document.getElementById('chapterModal').classList.remove('hidden');
-  });
   document.getElementById('chapterCancel').addEventListener('click', function(){ document.getElementById('chapterModal').classList.add('hidden'); });
   document.getElementById('chapterSave').addEventListener('click', async function(){
     const errEl = document.getElementById('chapterError');
@@ -3445,8 +3482,8 @@ module.exports = `<!doctype html>
     btn.disabled = true;
     try {
       const result = chapterEditId
-        ? await api('/api/admin/curriculum/' + chapterEditId, { method: 'PUT', body: JSON.stringify({ title: title, content: content }) })
-        : await api('/api/admin/curriculum', { method: 'POST', body: JSON.stringify({ grade: document.getElementById('curGrade').value, title: title, content: content }) });
+        ? await api('/api/admin/curriculum/' + chapterEditId, { method: 'PUT', body: JSON.stringify({ title: title, content: content, assessment: document.getElementById('chAssessment').value }) })
+        : await api('/api/admin/curriculum', { method: 'POST', body: JSON.stringify({ grade: document.getElementById('curGrade').value, title: title, content: content, assessment: document.getElementById('chAssessment').value }) });
       if (result.error) { errEl.textContent = result.error; return; }
       document.getElementById('chapterModal').classList.add('hidden');
       await loadCurriculum();
@@ -3460,6 +3497,8 @@ module.exports = `<!doctype html>
     if (!reportsInit) {
       reportsInit = true;
       document.getElementById('repGrade').addEventListener('change', loadReportChoices);
+      document.getElementById('repChapter').addEventListener('change', showRepAssessment);
+      document.getElementById('repChild').addEventListener('change', onRepChildChange);
       document.getElementById('repSendBtn').addEventListener('click', function(){ submitReport(true); });
       document.getElementById('repDownloadBtn').addEventListener('click', function(){ submitReport(false); });
       document.getElementById('repHistoryWrap').addEventListener('click', function(e){
@@ -3470,19 +3509,44 @@ module.exports = `<!doctype html>
     await loadReportChoices();
     await loadReportHistory();
   }
+  let repChapters = [];
+  function showRepAssessment(){
+    const id = document.getElementById('repChapter').value;
+    const ch = repChapters.find(function(c){ return String(c.id) === String(id); });
+    const box = document.getElementById('repAssessBox');
+    if (ch && ch.assessment) { document.getElementById('repAssessText').textContent = ch.assessment; box.classList.remove('hidden'); }
+    else { box.classList.add('hidden'); }
+    document.getElementById('repAssessResult').value = '';
+  }
+  let repPlayers = [];
+  async function loadRepChapters(grade){
+    const chapSel = document.getElementById('repChapter');
+    let chapters = [];
+    if (grade) { try { chapters = await api('/api/admin/curriculum?grade=' + encodeURIComponent(grade)); } catch (e) { chapters = []; } }
+    repChapters = Array.isArray(chapters) ? chapters : [];
+    chapSel.innerHTML = '<option value="">' + (grade ? (repChapters.length ? '— Choose a chapter —' : '— No chapters for this grade yet —') : '— Choose a child first —') + '</option>' + repChapters.map(function(c, i){
+      return '<option value="' + c.id + '">Chapter ' + (i + 1) + ': ' + escapeHtml(c.title) + '</option>';
+    }).join('');
+    showRepAssessment();
+  }
   async function loadReportChoices(){
     const grade = document.getElementById('repGrade').value;
     const childSel = document.getElementById('repChild');
-    const chapSel = document.getElementById('repChapter');
     childSel.innerHTML = '<option value="">Loading…</option>';
-    const results = await Promise.all([api('/api/admin/players?grade=' + encodeURIComponent(grade)), api('/api/admin/curriculum?grade=' + encodeURIComponent(grade))]);
-    const players = results[0], chapters = results[1];
-    childSel.innerHTML = players.length
-      ? players.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + '</option>'; }).join('')
+    const players = await api('/api/admin/players' + (grade ? '?grade=' + encodeURIComponent(grade) : ''));
+    repPlayers = Array.isArray(players) ? players : [];
+    childSel.innerHTML = repPlayers.length
+      ? '<option value="">— Choose a child —</option>' + repPlayers.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + (grade ? '' : ' — ' + (GRADE_LABELS[p.grade] || p.grade)) + '</option>'; }).join('')
       : '<option value="">No players in this grade</option>';
-    chapSel.innerHTML = '<option value="">— No chapter —</option>' + chapters.map(function(c, i){
-      return '<option value="' + c.id + '">Chapter ' + (i + 1) + ': ' + escapeHtml(c.title) + '</option>';
-    }).join('');
+    await loadRepChapters(grade);
+  }
+  // Choosing a child fills in his grade and shows that grade's curriculum chapters automatically.
+  async function onRepChildChange(){
+    const id = document.getElementById('repChild').value;
+    const p = repPlayers.find(function(x){ return String(x.id) === String(id); });
+    if (!p) { return; }
+    document.getElementById('repGrade').value = p.grade;
+    await loadRepChapters(p.grade);
   }
   async function loadReportHistory(){
     const rows = await api('/api/admin/student-reports');
@@ -3507,7 +3571,7 @@ module.exports = `<!doctype html>
     try {
       const result = await api('/api/admin/student-reports', { method: 'POST', body: JSON.stringify({
         playerId: playerId, chapterId: document.getElementById('repChapter').value || null,
-        coachName: document.getElementById('repCoach').value, body: body,
+        coachName: document.getElementById('repCoach').value, body: body, assessmentResult: document.getElementById('repAssessResult').value,
         month: monthValue('repMonth', 'repYear'), send: send,
       }) });
       if (result.error) { setStatus('repStatus', result.error, false); return; }
@@ -3530,6 +3594,70 @@ module.exports = `<!doctype html>
   let calDate = new Date();
   calDate.setHours(0, 0, 0, 0);
   function sameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  let calEvents = [];
+  let evEditId = null;
+  function isoOf(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function evTimeLabel(t){ if (!t) return ''; const p = t.split(':'); const h = Number(p[0]); return (h % 12 === 0 ? 12 : h % 12) + ':' + p[1] + (h < 12 ? 'a' : 'p'); }
+  // hour === null: month cell (all events that day); otherwise the week slot for that hour (all-day events show in the 6 AM slot)
+  function eventsHtml(iso, hour){
+    return calEvents.filter(function(ev){
+      if (ev.date !== iso) return false;
+      if (hour === null) return true;
+      const sh = ev.startTime ? Number(ev.startTime.split(':')[0]) : 6;
+      return Math.min(Math.max(sh, 6), 21) === hour;
+    }).map(function(ev){
+      return '<button type="button" class="cal-ev ' + escapeHtml(ev.color) + '" data-evid="' + ev.id + '" title="' + escapeHtml(ev.title) + '">' + (ev.startTime ? evTimeLabel(ev.startTime) + ' ' : '') + escapeHtml(ev.title) + '</button>';
+    }).join('');
+  }
+  async function loadCalEvents(){
+    try { const rows = await api('/api/admin/calendar-events'); calEvents = Array.isArray(rows) ? rows : []; } catch (err) { calEvents = []; }
+    renderCalendar();
+  }
+  function showCalSub(name){
+    document.getElementById('calSub-view').classList.toggle('hidden', name !== 'view');
+    document.getElementById('calSub-add').classList.toggle('hidden', name !== 'add');
+    document.querySelectorAll('#calSubtabs .subtab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-csub') === name); });
+  }
+  function openEventForm(ev, isoDate){
+    evEditId = ev ? ev.id : null;
+    document.getElementById('evFormTitle').textContent = ev ? 'Edit event' : 'Add event';
+    document.getElementById('evTitle').value = ev ? ev.title : '';
+    document.getElementById('evDate').value = ev ? fmtDay(ev.date) : (isoDate ? fmtDay(isoDate) : '');
+    document.getElementById('evColor').value = ev ? ev.color : 'green';
+    document.getElementById('evStart').value = ev ? ev.startTime : '';
+    document.getElementById('evEnd').value = ev ? ev.endTime : '';
+    document.getElementById('evLocation').value = ev ? ev.location : '';
+    document.getElementById('evNotes').value = ev ? ev.notes : '';
+    document.getElementById('evError').textContent = '';
+    document.getElementById('evDelete').style.display = ev ? '' : 'none';
+    showCalSub('add');
+  }
+  document.querySelectorAll('#calSubtabs .subtab').forEach(function(b){
+    b.addEventListener('click', function(){ if (b.getAttribute('data-csub') === 'add') openEventForm(null); else showCalSub('view'); });
+  });
+  document.getElementById('evCancel').addEventListener('click', function(){ showCalSub('view'); });
+  document.getElementById('evSave').addEventListener('click', async function(){
+    const err = document.getElementById('evError'); err.textContent = '';
+    const dateEl = document.getElementById('evDate');
+    const iso = dateEl.value;
+    if (!iso) { err.textContent = 'Please enter a valid date as MM/DD/YYYY.'; return; }
+    const payload = { title: document.getElementById('evTitle').value, date: iso, color: document.getElementById('evColor').value,
+      startTime: document.getElementById('evStart').value, endTime: document.getElementById('evEnd').value,
+      location: document.getElementById('evLocation').value, notes: document.getElementById('evNotes').value };
+    const btn = this; btn.disabled = true;
+    try {
+      const r = await api('/api/admin/calendar-events' + (evEditId ? '/' + evEditId : ''), { method: evEditId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+      if (r.error) { err.textContent = r.error; return; }
+      const d = new Date(r.date + 'T00:00:00'); calDate = d; calView = 'month';
+      await loadCalEvents(); showCalSub('view');
+    } catch (e2) { err.textContent = 'Could not save the event. Please try again.'; }
+    finally { btn.disabled = false; }
+  });
+  document.getElementById('evDelete').addEventListener('click', async function(){
+    if (!evEditId || !confirm('Delete this event?')) return;
+    try { await api('/api/admin/calendar-events/' + evEditId, { method: 'DELETE' }); await loadCalEvents(); showCalSub('view'); }
+    catch (e2) { document.getElementById('evError').textContent = 'Could not delete. Please try again.'; }
+  });
   function renderCalendar(){
     const body = document.getElementById('calBody');
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -3545,7 +3673,7 @@ module.exports = `<!doctype html>
       for (let i = 0; i < weeks * 7; i++) {
         const d = new Date(start); d.setDate(start.getDate() + i);
         const cls = 'cal-cell' + (d.getMonth() !== calDate.getMonth() ? ' other' : '') + (sameDay(d, today) ? ' today' : '');
-        html += '<div class="' + cls + '" data-ts="' + d.getTime() + '"><span class="cal-num">' + d.getDate() + '</span></div>';
+        html += '<div class="' + cls + '" data-ts="' + d.getTime() + '"><span class="cal-num">' + d.getDate() + '</span>' + eventsHtml(isoOf(d), null) + '</div>';
       }
       body.innerHTML = html + '</div>';
     } else {
@@ -3560,7 +3688,7 @@ module.exports = `<!doctype html>
       for (let h = 6; h <= 21; h++) {
         const label = (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? ' AM' : ' PM');
         html += '<div class="hr">' + label + '</div>';
-        days.forEach(function(d){ html += '<div class="slot' + (sameDay(d, today) ? ' today' : '') + '"></div>'; });
+        days.forEach(function(d){ html += '<div class="slot' + (sameDay(d, today) ? ' today' : '') + '">' + eventsHtml(isoOf(d), h) + '</div>'; });
       }
       body.innerHTML = html + '</div>';
     }
@@ -3576,6 +3704,8 @@ module.exports = `<!doctype html>
   document.getElementById('calViewMonth').addEventListener('click', function(){ calView = 'month'; renderCalendar(); });
   document.getElementById('calViewWeek').addEventListener('click', function(){ calView = 'week'; renderCalendar(); });
   document.getElementById('calBody').addEventListener('click', function(e){
+    const evBtn = e.target.closest('.cal-ev');
+    if (evBtn) { const ev = calEvents.find(function(x){ return String(x.id) === evBtn.getAttribute('data-evid'); }); if (ev) openEventForm(ev); return; }
     const cell = e.target.closest('.cal-cell');
     if (cell) { calDate = new Date(Number(cell.getAttribute('data-ts'))); calView = 'week'; renderCalendar(); }
   });
