@@ -618,8 +618,7 @@ module.exports = `<!doctype html>
         </div>
         <div id="curFrameBox" class="cur-frame-box">
           <div class="cur-frame-bar"><span id="curFrameTitle"></span><button type="button" id="curCloseBtn">&#10005; Close full screen</button></div>
-          <iframe id="curFrame" title="Curriculum"></iframe>
-          <div id="curEmpty" class="empty hidden"></div>
+          <div id="curEmpty" class="empty" style="display:none;"></div>
         </div>
       </div>
 
@@ -3447,23 +3446,32 @@ module.exports = `<!doctype html>
   });
 
   // ---- Our Curriculum: the full curriculum app, shown inside the page, with a full-screen Expand button ----
+  let curLoadSeq = 0;
   async function loadCurriculum(){
+    const seq = ++curLoadSeq;
     const grade = document.getElementById('curGrade').value;
-    const frame = document.getElementById('curFrame'), empty = document.getElementById('curEmpty');
-    const want = API_BASE + '/api/admin/curriculum-view/' + encodeURIComponent(grade) + '?token=' + encodeURIComponent(getToken());
+    const box = document.getElementById('curFrameBox'), empty = document.getElementById('curEmpty');
+    const base = API_BASE + '/api/admin/curriculum-view/' + encodeURIComponent(grade) + '?token=' + encodeURIComponent(getToken());
     document.getElementById('curFrameTitle').textContent = GRADE_LABELS[grade] + ' Curriculum';
+    // Always start clean: remove any old frame so a grade with no file never leaves a blank white box behind.
+    const old = document.getElementById('curFrame');
+    if (old) old.remove();
+    empty.style.display = 'none';
     let ok = false;
-    try { const r = await fetch(want, { method: 'HEAD' }); ok = r.ok; } catch (err) { ok = false; }
+    try { const r = await fetch(base, { method: 'HEAD' }); ok = r.ok; } catch (err) { ok = false; }
+    if (seq !== curLoadSeq) return;
     if (!ok) {
-      frame.classList.add('hidden'); frame.removeAttribute('src'); frame.removeAttribute('data-grade');
       empty.textContent = 'The ' + GRADE_LABELS[grade] + ' curriculum has not been loaded yet.';
-      empty.classList.remove('hidden');
+      empty.style.display = 'block';
       document.getElementById('curExpandBtn').disabled = true;
+      setCurFull(false);
       return;
     }
-    empty.classList.add('hidden'); frame.classList.remove('hidden');
     document.getElementById('curExpandBtn').disabled = false;
-    if (frame.getAttribute('data-grade') !== grade || !frame.getAttribute('src')) { frame.src = want; frame.setAttribute('data-grade', grade); }
+    const frame = document.createElement('iframe');
+    frame.id = 'curFrame'; frame.title = 'Curriculum';
+    frame.src = base + '&t=' + Date.now();
+    box.appendChild(frame);
   }
   function setCurFull(on){
     document.getElementById('curFrameBox').classList.toggle('full', on);
