@@ -239,14 +239,14 @@ async function sendOutreachEmail({ to, parentName, childNames, kind, link }) {
 
 // Coach's written report to the parent, with the PDF attached. Name, month
 // and year are in both the subject and the body.
-async function sendStudentReportEmail({ to, parentName, childName, monthLabel, chapterTitle, pdf, filename }) {
+async function sendStudentReportEmail({ to, parentName, childName, monthLabel, chapterTitle, term, pdf, filename }) {
   const firstName = (parentName || '').split(' ')[0] || 'there';
   const subject = `${childName} — Progress Report, ${monthLabel} — RCH Elite Training`;
-  const chapterLine = chapterTitle ? ` on <b>${escHtml(chapterTitle)}</b>` : '';
+  const chapterLine = (term ? ` for <b>${escHtml(term)}</b>` : '') + (chapterTitle ? ` on <b>${escHtml(chapterTitle)}</b>` : '');
   const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
     <p>Attached is ${escHtml(childName)}'s progress report for <b>${escHtml(monthLabel)}</b>${chapterLine}, written by their coach.</p>
     <p>Thank you for being part of RCH Elite Training.</p>`);
-  const text = `Hi ${firstName},\n\nAttached is ${childName}'s progress report for ${monthLabel}${chapterTitle ? ' on ' + chapterTitle : ''}, written by their coach.\n\nThank you for being part of RCH Elite Training.`;
+  const text = `Hi ${firstName},\n\nAttached is ${childName}'s progress report for ${monthLabel}${term ? ' for ' + term : ''}${chapterTitle ? ' on ' + chapterTitle : ''}, written by their coach.\n\nThank you for being part of RCH Elite Training.`;
   return sendEmail({ to, subject, html, text, attachments: [{ filename, content: pdf.toString('base64') }] });
 }
 

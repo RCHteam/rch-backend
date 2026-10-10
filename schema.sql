@@ -459,3 +459,6 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(event_dat
 ALTER TABLE curriculum_chapters ADD COLUMN IF NOT EXISTS assessment TEXT NOT NULL DEFAULT '';
 ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS assessment_check TEXT NOT NULL DEFAULT '';
 ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS assessment_result TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS term TEXT NOT NULL DEFAULT '';
+ALTER TABLE student_reports ADD COLUMN IF NOT EXISTS chapters_json TEXT NOT NULL DEFAULT '[]';

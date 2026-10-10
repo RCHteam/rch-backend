@@ -627,25 +627,27 @@ module.exports = `<!doctype html>
         <div class="section-head"><h2>Student Report</h2></div>
         <div class="card-box">
           <h3>Write a report for a parent</h3>
-          <p class="hint">Pick the grade, the child and the chapter, write the report, and it is emailed to the parent as a PDF with the child's name, the month and the year.</p>
+          <p class="hint">Pick the grade, the child, the term and the chapters, write the report, and it is emailed to the parent as a PDF with the child's name, the month and the year.</p>
           <div class="tool-row">
             <div class="grow"><label for="repGrade">Grade</label><select id="repGrade" data-grades></select></div>
             <div class="grow"><label for="repChild">Child</label><select id="repChild"></select></div>
-            <div class="grow"><label for="repChapter">Chapter</label><select id="repChapter"></select></div>
+            <div class="grow"><label for="repTerm">Term</label><select id="repTerm"><option value="">— Choose a term —</option><optgroup label="Fall Season"><option>Fall Term 1</option><option>Fall Term 2</option></optgroup><optgroup label="Spring Season"><option>Spring Term 1</option><option>Spring Term 2</option></optgroup></select></div>
           </div>
-          <div id="repAssessBox" class="hidden" style="background:#f3efe3;border-left:4px solid var(--gold);padding:10px 12px;margin:0 0 14px;border-radius:3px;">
-            <div style="font-size:0.78rem;font-weight:700;color:#444;margin-bottom:4px;">Assessment for this chapter (printed under your comment in the PDF)</div>
-            <div id="repAssessText" style="font-size:0.88rem;color:#222;margin-bottom:8px;"></div>
-            <label for="repAssessResult" style="font-size:0.78rem;font-weight:600;color:#444;">Result for this child</label>
-            <select id="repAssessResult"><option value="">Not recorded</option><option value="yes">Yes (skill achieved)</option><option value="almost">Almost there</option><option value="not_yet">Not yet</option></select>
+          <div style="margin:0 0 14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+              <label style="font-size:0.78rem;font-weight:600;color:#444;margin:0;">Chapters <span style="font-weight:400;color:#777;">(select all applicable)</span></label>
+              <label style="font-size:0.78rem;color:#444;cursor:pointer;margin:0;"><input type="checkbox" id="repChapAll"> Select all</label>
+            </div>
+            <div id="repChapList" style="border:1px solid #ddd;border-radius:3px;padding:8px 12px;background:#fff;max-height:240px;overflow:auto;"></div>
           </div>
+          <div id="repAssessList"></div>
           <div class="tool-row">
             <div class="grow"><label for="repMonth">Month</label><select id="repMonth"></select></div>
             <div class="grow"><label for="repYear">Year</label><select id="repYear"></select></div>
             <div class="grow"><label for="repCoach">Coach name</label><input type="text" id="repCoach" placeholder="e.g. Coach Yahya"></div>
           </div>
           <label for="repBody" style="display:block; font-size:0.78rem; font-weight:600; color:#444; margin-bottom:5px;">Report to the parent</label>
-          <textarea id="repBody" class="big-textarea" placeholder="Write how the child is doing, what they worked on in this chapter, and what to practice at home…"></textarea>
+          <textarea id="repBody" class="big-textarea" placeholder="Write how the child is doing, what they worked on this term, and what to practice at home…"></textarea>
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
             <button type="button" class="btn-add" id="repSendBtn">Email PDF to Parent</button>
             <button type="button" class="btn-export" id="repDownloadBtn" style="cursor:pointer;">Save &amp; Download PDF Only</button>
@@ -1434,6 +1436,17 @@ module.exports = `<!doctype html>
   const pwInput = document.getElementById('pw');
   const loginError = document.getElementById('login-error');
 
+  // Remember the section (and Coaches sub-tab) in the address and in browser storage, so a refresh returns here.
+  function rememberPlace(sec, sub){
+    try {
+      sessionStorage.setItem('rch_admin_section', sec); localStorage.setItem('rch_admin_section', sec);
+      if (sec === 'coaches' && sub) { sessionStorage.setItem('rch_admin_coachsub', sub); localStorage.setItem('rch_admin_coachsub', sub); }
+    } catch (e) {}
+    try {
+      const h = sec === 'registrations' ? '' : '#' + sec + (sec === 'coaches' && sub ? '/' + sub : '');
+      history.replaceState(null, '', location.pathname + location.search + h);
+    } catch (e) {}
+  }
   function getToken(){ return sessionStorage.getItem('rch_admin_token'); }
   function setToken(t){ sessionStorage.setItem('rch_admin_token', t); }
   function clearToken(){ sessionStorage.removeItem('rch_admin_token'); }
@@ -1464,7 +1477,9 @@ module.exports = `<!doctype html>
     // After a refresh, go back to the section (and Coaches sub-tab) you were on.
     setTimeout(function(){
       let sec = '', sub = '';
-      try { sec = sessionStorage.getItem('rch_admin_section') || ''; sub = sessionStorage.getItem('rch_admin_coachsub') || ''; } catch (e) {}
+      try { sec = sessionStorage.getItem('rch_admin_section') || localStorage.getItem('rch_admin_section') || ''; sub = sessionStorage.getItem('rch_admin_coachsub') || localStorage.getItem('rch_admin_coachsub') || ''; } catch (e) {}
+      const hp = (location.hash || '').replace('#', '').split('/');
+      if (hp[0]) { sec = hp[0]; sub = hp[1] || ''; }
       const nav = document.getElementById('sectionNav');
       if (sec && sec !== 'registrations' && nav.querySelector('option[value="' + sec + '"]')) {
         nav.value = sec; nav.dispatchEvent(new Event('change'));
@@ -3420,7 +3435,7 @@ module.exports = `<!doctype html>
   // ===================== Coaches subtabs =====================
   const COACH_SUBS = ['coaches', 'curriculum', 'reports', 'documents', 'calendar'];
   function showCoachSub(name){
-    try { sessionStorage.setItem('rch_admin_coachsub', name); } catch (e) {}
+    rememberPlace('coaches', name);
     COACH_SUBS.forEach(function(s){ document.getElementById('coachSub-' + s).classList.toggle('hidden', s !== name); });
     document.querySelectorAll('#coachSubtabs .subtab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-sub') === name); });
     if (name === 'curriculum') loadCurriculum();
@@ -3465,7 +3480,11 @@ module.exports = `<!doctype html>
     if (!reportsInit) {
       reportsInit = true;
       document.getElementById('repGrade').addEventListener('change', loadReportChoices);
-      document.getElementById('repChapter').addEventListener('change', showRepAssessment);
+      document.getElementById('repChapList').addEventListener('change', showRepAssessment);
+      document.getElementById('repChapAll').addEventListener('change', function(e){
+        document.querySelectorAll('#repChapList input[data-ch]').forEach(function(i){ i.checked = e.target.checked; });
+        showRepAssessment();
+      });
       document.getElementById('repChild').addEventListener('change', onRepChildChange);
       document.getElementById('repSendBtn').addEventListener('click', function(){ submitReport(true); });
       document.getElementById('repDownloadBtn').addEventListener('click', function(){ submitReport(false); });
@@ -3482,23 +3501,39 @@ module.exports = `<!doctype html>
     await loadReportHistory();
   }
   let repChapters = [];
+  const REP_RESULTS = '<option value="">Not recorded</option><option value="yes">Yes (skill achieved)</option><option value="almost">Almost there</option><option value="not_yet">Not yet</option>';
+  function checkedChapterIds(){
+    return Array.prototype.map.call(document.querySelectorAll('#repChapList input[data-ch]:checked'), function(i){ return i.getAttribute('data-ch'); });
+  }
+  // One assessment block per ticked chapter (printed under the coach's comment in the PDF).
   function showRepAssessment(){
-    const id = document.getElementById('repChapter').value;
-    const ch = repChapters.find(function(c){ return String(c.id) === String(id); });
-    const box = document.getElementById('repAssessBox');
-    if (ch && ch.assessment) { document.getElementById('repAssessText').textContent = ch.assessment; box.classList.remove('hidden'); }
-    else { box.classList.add('hidden'); }
-    document.getElementById('repAssessResult').value = '';
+    const keep = {};
+    document.querySelectorAll('#repAssessList select[data-res]').forEach(function(sel){ keep[sel.getAttribute('data-res')] = sel.value; });
+    const ids = checkedChapterIds();
+    let html = '';
+    ids.forEach(function(id){
+      const idx = repChapters.findIndex(function(c){ return String(c.id) === String(id); });
+      const ch = repChapters[idx];
+      if (!ch || !ch.assessment) return;
+      html += '<div style="background:#f3efe3;border-left:4px solid var(--gold);padding:10px 12px;margin:0 0 10px;border-radius:3px;">' +
+        '<div style="font-size:0.78rem;font-weight:700;color:#444;margin-bottom:4px;">Assessment: Chapter ' + (idx + 1) + ' ' + escapeHtml(ch.title) + '</div>' +
+        '<div style="font-size:0.88rem;color:#222;margin-bottom:8px;">' + escapeHtml(ch.assessment) + '</div>' +
+        '<label style="font-size:0.78rem;font-weight:600;color:#444;">Result for this child</label> <select data-res="' + id + '">' + REP_RESULTS + '</select></div>';
+    });
+    document.getElementById('repAssessList').innerHTML = html;
+    document.querySelectorAll('#repAssessList select[data-res]').forEach(function(sel){ if (keep[sel.getAttribute('data-res')]) sel.value = keep[sel.getAttribute('data-res')]; });
+    const boxes = document.querySelectorAll('#repChapList input[data-ch]');
+    document.getElementById('repChapAll').checked = boxes.length > 0 && ids.length === boxes.length;
   }
   let repPlayers = [];
   async function loadRepChapters(grade){
-    const chapSel = document.getElementById('repChapter');
     let chapters = [];
     if (grade) { try { chapters = await api('/api/admin/curriculum?grade=' + encodeURIComponent(grade)); } catch (e) { chapters = []; } }
     repChapters = Array.isArray(chapters) ? chapters : [];
-    chapSel.innerHTML = '<option value="">' + (grade ? (repChapters.length ? '— Choose a chapter —' : '— No chapters for this grade yet —') : '— Choose a child first —') + '</option>' + repChapters.map(function(c, i){
-      return '<option value="' + c.id + '">Chapter ' + (i + 1) + ': ' + escapeHtml(c.title) + '</option>';
-    }).join('');
+    const list = document.getElementById('repChapList');
+    list.innerHTML = repChapters.length ? repChapters.map(function(c, i){
+      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:0.9rem;cursor:pointer;"><input type="checkbox" data-ch="' + c.id + '" style="margin-top:3px;"> <span>Chapter ' + (i + 1) + ': ' + escapeHtml(c.title) + '</span></label>';
+    }).join('') : '<div style="color:#888;font-size:0.88rem;">' + (grade ? 'No chapters for this grade yet.' : 'Choose a child first.') + '</div>';
     showRepAssessment();
   }
   async function loadReportChoices(){
@@ -3524,9 +3559,9 @@ module.exports = `<!doctype html>
     const rows = await api('/api/admin/student-reports');
     const wrap = document.getElementById('repHistoryWrap');
     if (!rows.length) { wrap.innerHTML = '<div class="empty">No reports yet.</div>'; return; }
-    wrap.innerHTML = '<table><thead><tr><th>Child</th><th>Grade</th><th>Month</th><th>Chapter</th><th>Coach</th><th>Emailed</th><th></th></tr></thead><tbody>' +
+    wrap.innerHTML = '<table><thead><tr><th>Child</th><th>Grade</th><th>Term</th><th>Month</th><th>Chapters</th><th>Coach</th><th>Emailed</th><th></th></tr></thead><tbody>' +
       rows.map(function(r){
-        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (GRADE_LABELS[r.grade] || r.grade) + '</td><td>' + escapeHtml(r.month_label) + '</td><td>' +
+        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (GRADE_LABELS[r.grade] || r.grade) + '</td><td>' + escapeHtml(r.term || '—') + '</td><td>' + escapeHtml(r.month_label) + '</td><td>' +
           escapeHtml(r.chapter_title || '—') + '</td><td>' + escapeHtml(r.coach_name || '—') + '</td><td>' +
           (r.emailed_at ? escapeHtml(fmtDate(r.emailed_at)) + '<br><span style="color:#888">' + escapeHtml(r.parent_email || '') + '</span>' : 'Not emailed') +
           '</td><td style="white-space:nowrap;"><button type="button" class="btn-export" style="cursor:pointer;" data-pdf="' + r.id + '">PDF</button> ' +
@@ -3563,8 +3598,9 @@ module.exports = `<!doctype html>
     setStatus('repStatus', send ? 'Sending…' : 'Saving…', true);
     try {
       const result = await api('/api/admin/student-reports', { method: 'POST', body: JSON.stringify({
-        playerId: playerId, chapterId: document.getElementById('repChapter').value || null,
-        coachName: document.getElementById('repCoach').value, body: body, assessmentResult: document.getElementById('repAssessResult').value,
+        playerId: playerId, term: document.getElementById('repTerm').value,
+        chapters: checkedChapterIds().map(function(id){ const sel = document.querySelector('#repAssessList select[data-res="' + id + '"]'); return { id: id, result: sel ? sel.value : '' }; }),
+        coachName: document.getElementById('repCoach').value, body: body,
         month: monthValue('repMonth', 'repYear'), send: send,
       }) });
       if (result.error) { setStatus('repStatus', result.error, false); return; }
@@ -4061,7 +4097,7 @@ module.exports = `<!doctype html>
   }
   document.getElementById('sectionNav').addEventListener('change', async (e) => {
     const name = e.target.value;
-    try { sessionStorage.setItem('rch_admin_section', name); } catch (err) {}
+    rememberPlace(name, '');
     showSection(name);
     if (name === 'finances') await loadFinancesExtras();
     if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
@@ -4230,7 +4266,7 @@ module.exports = `<!doctype html>
   function goDashboard(e){
     if (e) e.preventDefault();
     document.getElementById('sectionNav').value = 'registrations';
-    try { sessionStorage.setItem('rch_admin_section', 'registrations'); } catch (err) {}
+    rememberPlace('registrations', '');
     showSection('registrations');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -4288,7 +4324,7 @@ module.exports = `<!doctype html>
     }
     closeSearch();
     searchInput.blur();
-    document.getElementById('sectionNav').value = 'registrations';
+    document.getElementById('sectionNav').value = 'registrations'; rememberPlace('registrations', '');
     showSection('registrations');
     if (r.type === 'player') {
       const sel = document.getElementById('rosterGradeFilter');

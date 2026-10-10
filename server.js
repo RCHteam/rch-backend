@@ -70,7 +70,7 @@ app.use('/api', siteContentRoutes);
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
-  res.type('html').send(adminPageHtml);
+  res.type('html').set('Cache-Control', 'no-store').send(adminPageHtml);
 });
 
 // Installable-app (PWA) files for the admin dashboard: manifest, icons and a

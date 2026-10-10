@@ -128,6 +128,16 @@ router.delete('/admin/curriculum/:id', requireAdmin, async (req, res) => {
 
 const ASSESSMENT_LABELS = { yes: 'Yes (skill achieved)', almost: 'Almost there', not_yet: 'Not yet' };
 
+// The year has two seasons, each split into two terms.
+const TERMS = ['Fall Term 1', 'Fall Term 2', 'Spring Term 1', 'Spring Term 2'];
+
+function reportChapters(r) {
+  try { const a = JSON.parse(r.chapters_json || '[]'); if (Array.isArray(a) && a.length) return a; } catch (e) { /* fall through */ }
+  // Older reports saved a single chapter.
+  if (r.chapter_title) return [{ title: r.chapter_title, assessment: r.assessment_check || '', result: r.assessment_result || '' }];
+  return [];
+}
+
 function buildReportPdf(r) {
   return new Promise((resolve, reject) => {
     try {
@@ -146,7 +156,9 @@ function buildReportPdf(r) {
       doc.font('Helvetica-Bold').fontSize(22).fillColor('#0c2a1c').text(r.player_name, 54, 120);
       doc.font('Helvetica').fontSize(12).fillColor('#444444')
         .text(`${GRADE_LABELS[r.grade] || r.grade}  •  ${r.month_label}`, 54);
-      if (r.chapter_title) doc.moveDown(0.3).text(`Chapter: ${r.chapter_title}`);
+      if (r.term) doc.moveDown(0.3).text(`Term: ${r.term}`);
+      const chaps = reportChapters(r);
+      if (chaps.length) doc.moveDown(0.3).text(`${chaps.length > 1 ? 'Chapters' : 'Chapter'}: ${chaps.map((c) => c.title).join('; ')}`);
       doc.moveDown(0.8);
       doc.moveTo(54, doc.y).lineTo(558, doc.y).lineWidth(1).strokeColor('#d9a441').stroke();
       doc.moveDown(0.8);
@@ -154,18 +166,19 @@ function buildReportPdf(r) {
       if (r.parent_name) doc.font('Helvetica').fontSize(11).fillColor('#000000').text(`Dear ${r.parent_name},`).moveDown(0.6);
       doc.font('Helvetica').fontSize(11).fillColor('#000000').text(String(r.body || ''), { align: 'left', lineGap: 3 });
 
-      if (r.assessment_check) {
+      for (const c of chaps) {
+        if (!c.assessment) continue;
         doc.moveDown(1.2);
         const boxX = 54, boxW = 504;
-        const label = ASSESSMENT_LABELS[r.assessment_result] || '';
-        const textH = doc.font('Helvetica').fontSize(10.5).heightOfString(r.assessment_check, { width: boxW - 28 });
+        const label = ASSESSMENT_LABELS[c.result] || '';
+        const textH = doc.font('Helvetica').fontSize(10.5).heightOfString(c.assessment, { width: boxW - 28 });
         const boxH = 30 + textH + (label ? 24 : 6);
         if (doc.y + boxH > 720) doc.addPage();
         const top = doc.y;
         doc.rect(boxX, top, boxW, boxH).fill('#f3efe3');
         doc.rect(boxX, top, 4, boxH).fill('#d9a441');
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#0c2a1c').text('Assessment', boxX + 14, top + 9, { width: boxW - 28 });
-        doc.font('Helvetica').fontSize(10.5).fillColor('#222222').text(r.assessment_check, boxX + 14, top + 26, { width: boxW - 28 });
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#0c2a1c').text('Assessment' + (chaps.length > 1 ? ' - ' + c.title : ''), boxX + 14, top + 9, { width: boxW - 28 });
+        doc.font('Helvetica').fontSize(10.5).fillColor('#222222').text(c.assessment, boxX + 14, top + 26, { width: boxW - 28 });
         if (label) doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#0c2a1c').text('Result: ' + label, boxX + 14, top + 28 + textH, { width: boxW - 28 });
         doc.y = top + boxH; doc.x = 54;
       }
@@ -179,14 +192,21 @@ function buildReportPdf(r) {
 }
 
 router.post('/admin/student-reports', requireAdmin, async (req, res) => {
-  const { playerId, chapterId, coachName, body, month, send, assessmentResult } = req.body || {};
+  const { playerId, chapterId, coachName, body, month, send, assessmentResult, term, chapters } = req.body || {};
   if (!playerId) return res.status(400).json({ error: 'Please choose a child.' });
   if (!body || !String(body).trim()) return res.status(400).json({ error: 'Please write the report.' });
   try {
     const player = (await pool.query('SELECT * FROM players WHERE id = $1', [playerId])).rows[0];
     if (!player) return res.status(404).json({ error: 'Player not found.' });
-    let chapter = null;
-    if (chapterId) chapter = (await pool.query('SELECT * FROM curriculum_chapters WHERE id = $1', [chapterId])).rows[0] || null;
+    // Chapters: a list of { id, result }. (An older single chapterId is still accepted.)
+    const wanted = Array.isArray(chapters) ? chapters : (chapterId ? [{ id: chapterId, result: assessmentResult }] : []);
+    const chapList = [];
+    for (const w of wanted.slice(0, 30)) {
+      const c = (await pool.query('SELECT * FROM curriculum_chapters WHERE id = $1', [w && w.id])).rows[0];
+      if (!c) continue;
+      chapList.push({ id: c.id, title: c.title, assessment: String(c.assessment || ''), result: c.assessment && ASSESSMENT_LABELS[w.result] ? w.result : '' });
+    }
+    const termName = TERMS.includes(term) ? term : '';
     const m = parseMonth(month);
     const shouldSend = send !== false;
     if (shouldSend && !String(player.parent_email || '').trim()) {
@@ -194,12 +214,12 @@ router.post('/admin/student-reports', requireAdmin, async (req, res) => {
     }
     const row = {
       player_id: player.id, player_name: player.player_name, grade: player.grade,
-      chapter_id: chapter ? chapter.id : null, chapter_title: chapter ? chapter.title : null,
+      chapter_id: chapList[0] ? chapList[0].id : null, chapter_title: chapList.length ? chapList.map((c) => c.title).join('; ') : null,
+      term: termName, chapters_json: JSON.stringify(chapList),
       month_key: monthKeyOf(m), month_label: monthLabel(m),
       coach_name: String(coachName || '').trim(), body: String(body).trim(),
       parent_name: player.parent_name || '', parent_email: player.parent_email || '',
-      assessment_check: chapter ? String(chapter.assessment || '') : '',
-      assessment_result: chapter && chapter.assessment && ASSESSMENT_LABELS[assessmentResult] ? assessmentResult : '',
+      assessment_check: '', assessment_result: '',
     };
     const pdf = await buildReportPdf(row);
     const filename = `${row.player_name.replace(/[^a-z0-9]+/gi, '_')}_${MONTH_NAMES[m.month - 1]}_${m.year}_Report.pdf`;
@@ -207,18 +227,18 @@ router.post('/admin/student-reports', requireAdmin, async (req, res) => {
     if (shouldSend) {
       const result = await sendStudentReportEmail({
         to: row.parent_email, parentName: row.parent_name, childName: row.player_name,
-        monthLabel: row.month_label, chapterTitle: row.chapter_title, pdf, filename,
+        monthLabel: row.month_label, chapterTitle: row.chapter_title, term: row.term, pdf, filename,
       });
       emailed = !(result && result.ok === false);
       if (!emailed) return res.status(502).json({ error: 'The email could not be sent. Nothing was saved. Please try again.' });
     }
     const ins = await pool.query(
       `INSERT INTO student_reports
-        (player_id, player_name, grade, chapter_id, chapter_title, month_key, month_label, coach_name, body, parent_name, parent_email, assessment_check, assessment_result, emailed_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, ${emailed ? 'now()' : 'NULL'})
+        (player_id, player_name, grade, chapter_id, chapter_title, month_key, month_label, coach_name, body, parent_name, parent_email, assessment_check, assessment_result, term, chapters_json, emailed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, ${emailed ? 'now()' : 'NULL'})
        RETURNING id`,
       [row.player_id, row.player_name, row.grade, row.chapter_id, row.chapter_title, row.month_key, row.month_label,
-       row.coach_name, row.body, row.parent_name, row.parent_email, row.assessment_check, row.assessment_result]
+       row.coach_name, row.body, row.parent_name, row.parent_email, row.assessment_check, row.assessment_result, row.term, row.chapters_json]
     );
     res.status(201).json({ ok: true, id: ins.rows[0].id, emailed, to: emailed ? row.parent_email : null });
   } catch (err) {
@@ -231,7 +251,7 @@ router.get('/admin/student-reports', requireAdmin, async (req, res) => {
   try {
     const grade = GRADES.includes(req.query.grade) ? req.query.grade : null;
     const r = await pool.query(
-      `SELECT id, player_id, player_name, grade, chapter_title, month_label, coach_name, parent_email, emailed_at, created_at
+      `SELECT id, player_id, player_name, grade, term, chapter_title, month_label, coach_name, parent_email, emailed_at, created_at
        FROM student_reports ${grade ? 'WHERE grade = $1' : ''} ORDER BY created_at DESC LIMIT 200`,
       grade ? [grade] : []
     );
@@ -257,7 +277,7 @@ router.post('/admin/student-reports/:id/email', requireAdmin, async (req, res) =
     const filename = `${row.player_name.replace(/[^a-z0-9]+/gi, '_')}_${row.month_key}_Report.pdf`;
     const result = await sendStudentReportEmail({
       to, parentName, childName: row.player_name, monthLabel: row.month_label,
-      chapterTitle: row.chapter_title, pdf, filename,
+      chapterTitle: row.chapter_title, term: row.term, pdf, filename,
     });
     if (result && result.ok === false) return res.status(502).json({ error: 'The email could not be sent. Please try again.' });
     await pool.query('UPDATE student_reports SET emailed_at = now(), parent_email = $2, parent_name = $3 WHERE id = $1', [row.id, to, parentName]);
