@@ -1265,7 +1265,7 @@ module.exports = `<!doctype html>
     <textarea id="coachNotes" rows="3" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:1rem;"></textarea>
     <div class="login-box">
       <h4>Coach login</h4>
-      <p id="coachLoginHint">Give this coach a username and a code. They log in at the same address as you, on the Coach tab, and only see the coaching tools.</p>
+      <p id="coachLoginHint">Give this coach a username and a code. They log in at your-site/coach and only see the coaching tools.</p>
       <label for="coachLoginUser">Username</label>
       <input type="text" id="coachLoginUser" placeholder="e.g. sam.coach" autocomplete="off" autocapitalize="none" spellcheck="false">
       <label for="coachLoginCode">Code</label>
@@ -2401,9 +2401,9 @@ module.exports = `<!doctype html>
   }
 
   function showCoachCred(c){
-    const url = location.origin + '/admin';
-    document.getElementById('coachCredText').innerHTML = 'Address: ' + escapeHtml(url) + ' (Coach tab)<br>Username: <b>' + escapeHtml(c.username) + '</b><br>Code: <b>' + escapeHtml(c.code) + '</b>';
-    document.getElementById('coachCredModal').dataset.copy = 'RCH coach login\\nAddress: ' + url + ' (choose the Coach tab)\\nUsername: ' + c.username + '\\nCode: ' + c.code;
+    const url = location.origin + '/coach';
+    document.getElementById('coachCredText').innerHTML = 'Address: ' + escapeHtml(url) + '<br>Username: <b>' + escapeHtml(c.username) + '</b><br>Code: <b>' + escapeHtml(c.code) + '</b>';
+    document.getElementById('coachCredModal').dataset.copy = 'RCH coach login\\nAddress: ' + url + '\\nUsername: ' + c.username + '\\nCode: ' + c.code;
     document.getElementById('coachCredModal').classList.remove('hidden');
   }
   document.getElementById('coachCredDone').addEventListener('click', () => document.getElementById('coachCredModal').classList.add('hidden'));

@@ -70,6 +70,9 @@ app.use('/api', outreachRoutes);
 app.use('/api', coachToolsRoutes);
 app.use('/api', siteContentRoutes);
 
+// Short address for coaches: opens the dashboard login on the Coach tab.
+app.get('/coach', (req, res) => res.redirect('/admin#coach'));
+
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
   res.type('html').set('Cache-Control', 'no-store').send(adminPageHtml);
