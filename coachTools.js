@@ -3,7 +3,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
-const { sendStudentReportEmail } = require('./email');
+const { sendStudentReportEmail, sendPlayerNoticeEmail } = require('./email');
 const { centralDateParts, practiceDates } = require('./proration');
 const { fixedEvents } = require('./fixedEvents');
 
@@ -27,7 +27,7 @@ function monthKeyOf({ year, month }) { return `${year}-${String(month).padStart(
 
 
 /* ---- The full curriculum pages (one HTML file per grade, shown in the admin inside a frame) ---- */
-const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html', 'kindergarten': 'curriculum-kindergarten.html', '1st-grade': 'curriculum-1st-grade.html', '2nd-grade': 'curriculum-2nd-grade.html', '3rd-grade': 'curriculum-3rd-grade.html', '4th-grade': 'curriculum-4th-grade.html' };
+const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html', 'kindergarten': 'curriculum-kindergarten.html', '1st-grade': 'curriculum-1st-grade.html', '2nd-grade': 'curriculum-2nd-grade.html', '3rd-grade': 'curriculum-3rd-grade.html', '4th-grade': 'curriculum-4th-grade.html', '5th-grade': 'curriculum-5th-grade.html', '6th-grade': 'curriculum-6th-grade.html' };
 router.all('/admin/curriculum-view/:grade', requireAdmin, (req, res) => {
   const file = CURRICULUM_FILES[req.params.grade];
   if (!file) return res.status(404).json({ error: 'This curriculum has not been loaded yet.' });
@@ -310,6 +310,109 @@ router.get('/admin/student-reports/:id/pdf', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Report PDF error:', err);
     res.status(500).json({ error: 'Could not build the PDF.' });
+  }
+});
+
+/* -------------------------------- Notices -------------------------------- */
+
+const NOTICE_CATEGORIES = {
+  behavior: 'Behavior', kit: 'Missing kit', late: 'Late or absent', injury: 'Injury or health',
+  positive: 'Positive note', other: 'Other',
+};
+function noticeDateLabel(iso) {
+  const d = new Date(iso + 'T12:00:00Z');
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+const noticeOut = (r) => ({
+  id: r.id, player_name: r.player_name, grade: r.grade, category: r.category,
+  category_label: NOTICE_CATEGORIES[r.category] || 'Other', body: r.body, coach_name: r.coach_name,
+  notice_date: r.notice_date, parent_email: r.parent_email, emailed_at: r.emailed_at,
+});
+async function emailNoticeRow(row, to, parentName) {
+  return sendPlayerNoticeEmail({
+    to, parentName, childName: row.player_name,
+    categoryLabel: NOTICE_CATEGORIES[row.category] || 'Other',
+    dateLabel: noticeDateLabel(row.notice_date), body: row.body, coachName: row.coach_name,
+  });
+}
+
+router.post('/admin/player-notices', requireAdmin, async (req, res) => {
+  const { playerId, category, body, coachName, date, send } = req.body || {};
+  if (!playerId) return res.status(400).json({ error: 'Please choose a child.' });
+  if (!body || !String(body).trim()) return res.status(400).json({ error: 'Please write the notice.' });
+  if (date && !ISO_DATE.test(String(date))) return res.status(400).json({ error: 'Please enter a valid date.' });
+  try {
+    const player = (await pool.query('SELECT * FROM players WHERE id = $1', [playerId])).rows[0];
+    if (!player) return res.status(404).json({ error: 'Player not found.' });
+    const shouldSend = send !== false;
+    if (shouldSend && !String(player.parent_email || '').trim()) {
+      return res.status(400).json({ error: 'This player has no parent email on file. Add one on the roster first.' });
+    }
+    const today = centralDateParts(new Date());
+    const noticeDate = date || `${today.year}-${String(today.month).padStart(2, '0')}-${String(today.day).padStart(2, '0')}`;
+    const row = {
+      player_id: player.id, player_name: player.player_name, grade: player.grade,
+      category: NOTICE_CATEGORIES[category] ? category : 'other',
+      body: String(body).trim().slice(0, 4000), coach_name: String(coachName || '').trim().slice(0, 100),
+      notice_date: noticeDate, parent_name: player.parent_name || '', parent_email: player.parent_email || '',
+    };
+    let emailed = false;
+    if (shouldSend) {
+      const result = await emailNoticeRow(row, row.parent_email, row.parent_name);
+      emailed = !(result && result.ok === false);
+      if (!emailed) return res.status(502).json({ error: 'The email could not be sent. Nothing was saved. Please try again.' });
+    }
+    const ins = await pool.query(
+      `INSERT INTO player_notices (player_id, player_name, grade, category, body, coach_name, notice_date, parent_name, parent_email, emailed_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, ${emailed ? 'now()' : 'NULL'}) RETURNING id`,
+      [row.player_id, row.player_name, row.grade, row.category, row.body, row.coach_name, row.notice_date, row.parent_name, row.parent_email]
+    );
+    res.status(201).json({ ok: true, id: ins.rows[0].id, emailed, to: emailed ? row.parent_email : null });
+  } catch (err) {
+    console.error('Notice error:', err);
+    res.status(500).json({ error: 'Could not save this notice.' });
+  }
+});
+
+router.get('/admin/player-notices', requireAdmin, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM player_notices ORDER BY created_at DESC LIMIT 200');
+    res.json(r.rows.map(noticeOut));
+  } catch (err) {
+    console.error('List notices error:', err);
+    res.status(500).json({ error: 'Could not load notices.' });
+  }
+});
+
+router.post('/admin/player-notices/:id/email', requireAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Notice not found.' });
+  try {
+    const row = (await pool.query('SELECT * FROM player_notices WHERE id = $1', [req.params.id])).rows[0];
+    if (!row) return res.status(404).json({ error: 'Notice not found.' });
+    let to = String(row.parent_email || '').trim(), parentName = row.parent_name || '';
+    if (row.player_id) {
+      const pl = (await pool.query('SELECT parent_email, parent_name FROM players WHERE id = $1', [row.player_id])).rows[0];
+      if (pl && String(pl.parent_email || '').trim()) { to = String(pl.parent_email).trim(); parentName = pl.parent_name || parentName; }
+    }
+    if (!to) return res.status(400).json({ error: 'This player has no parent email on file. Add one on the roster first.' });
+    const result = await emailNoticeRow(row, to, parentName);
+    if (result && result.ok === false) return res.status(502).json({ error: 'The email could not be sent. Please try again.' });
+    await pool.query('UPDATE player_notices SET emailed_at = now(), parent_email = $2, parent_name = $3 WHERE id = $1', [row.id, to, parentName]);
+    res.json({ ok: true, to });
+  } catch (err) {
+    console.error('Email notice error:', err);
+    res.status(500).json({ error: 'Could not email this notice.' });
+  }
+});
+
+router.delete('/admin/player-notices/:id', requireAdmin, async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Notice not found.' });
+  try {
+    await pool.query('DELETE FROM player_notices WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete notice error:', err);
+    res.status(500).json({ error: 'Could not delete this notice.' });
   }
 });
 

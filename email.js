@@ -250,7 +250,22 @@ async function sendStudentReportEmail({ to, parentName, childName, monthLabel, c
   return sendEmail({ to, subject, html, text, attachments: [{ filename, content: pdf.toString('base64') }] });
 }
 
+// A short notice from a coach to a parent about their child (behavior, missing kit, ...).
+async function sendPlayerNoticeEmail({ to, parentName, childName, categoryLabel, dateLabel, body, coachName }) {
+  const firstName = (parentName || '').split(' ')[0] || 'there';
+  const who = coachName ? `Coach ${coachName}` : 'your child\'s coach';
+  const subject = `${childName} — Notice from RCH Elite Training`;
+  const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
+    <p>${escHtml(who)} has a note for you about <b>${escHtml(childName)}</b> (${escHtml(dateLabel)}).</p>
+    <p style="margin:0 0 6px; font-size:0.78rem; letter-spacing:0.08em; text-transform:uppercase; color:#8a6a12;"><b>${escHtml(categoryLabel)}</b></p>
+    <div style="border-left:4px solid #d9a441; background:#f6f2e7; padding:12px 16px; white-space:pre-wrap;">${escHtml(body)}</div>
+    <p>Thank you for being part of RCH Elite Training.</p>`);
+  const text = `Hi ${firstName},\n\n${who} has a note for you about ${childName} (${dateLabel}).\n\n${categoryLabel}\n${body}\n\nThank you for being part of RCH Elite Training.`;
+  return sendEmail({ to, subject, html, text });
+}
+
 module.exports = {
+  sendPlayerNoticeEmail,
   sendOutreachEmail,
   sendStudentReportEmail,
   sendAgreementEmail,

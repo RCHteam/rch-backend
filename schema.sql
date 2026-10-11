@@ -474,3 +474,20 @@ BEGIN
     INSERT INTO site_settings (key, value) VALUES ('migrated_ismail_president', 'true');
   END IF;
 END $$;
+
+-- Short notices to a parent about a player (behavior, missing kit, ...), from Coaches > Notice.
+CREATE TABLE IF NOT EXISTS player_notices (
+  id           SERIAL PRIMARY KEY,
+  player_id    INTEGER,
+  player_name  TEXT NOT NULL,
+  grade        TEXT NOT NULL,
+  category     TEXT NOT NULL DEFAULT 'other',
+  body         TEXT NOT NULL,
+  coach_name   TEXT,
+  notice_date  TEXT NOT NULL,
+  parent_name  TEXT,
+  parent_email TEXT,
+  emailed_at   TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_player_notices_player ON player_notices(player_id, created_at DESC);

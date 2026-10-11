@@ -1,5 +1,5 @@
 // The chapter lists of the coaches' curriculum pages (curriculum-prek.html, curriculum-kindergarten.html,
-// curriculum-1st-grade.html, ... curriculum-4th-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
+// curriculum-1st-grade.html ... curriculum-6th-grade.html). They are copied into Coaches > Our Curriculum so the Student Report can offer
 // each grade's chapters and assessment checks. On every start the saved chapters are brought in line with
 // these lists (matched by chapter number), so a new version of a curriculum page updates the report choices.
 const CURRICULA = {
@@ -1251,6 +1251,532 @@ const CURRICULA = {
     "Runs three set plays in a game"
    ],
    "check": "Child explains offside, takes a legal restart, calls handball with a reason and runs a set play."
+  }
+ ],
+ "5th-grade": [
+  {
+   "n": 1,
+   "title": "Leadership, Game Management and Team Culture",
+   "lead": "Leadership grows from choosing a plan to managing a whole game. Fifth graders lead a warm-up, set a lineup and a plan with a role card, call code words in play, give one useful tip to a teammate, settle a call with the referee and review a game with honest, specific words.",
+   "objectives": [
+    "Set a lineup and a plan with role cards and explain it in three sentences",
+    "Call a code word in play (shift, press, switch, reset) at the right moment",
+    "Give a teammate one specific tip in under ten words and receive one calmly",
+    "Settle a disputed call by asking the referee one question and accepting the answer"
+   ],
+   "outcomes": [
+    "Explains the team plan in three sentences",
+    "Uses two code words correctly in a game",
+    "Gives and accepts a tip without arguing",
+    "Reviews a game with one thing that worked and one to change"
+   ],
+   "check": "Child explains the team plan in three sentences, uses a code word at the right time and gives one specific tip kindly."
+  },
+  {
+   "n": 2,
+   "title": "Speed, Agility and Athletic Development",
+   "lead": "Athletic work gets sharper and more careful. Fifth graders sprint 30 to 35 yards from many starts, brake and cut, land and balance on pods and low boxes, push light bands in every direction, throw a light medicine ball for the trunk and learn to notice when a growth spurt makes them clumsy.",
+   "objectives": [
+    "Sprint 30 to 35 yards from standing, crouch, lying and moving starts with good form",
+    "Brake in two steps and cut on a cue without losing balance",
+    "Land softly from a low box and hold the balance on a pod for five seconds",
+    "Throw a light medicine ball with the legs, trunk and arms together"
+   ],
+   "outcomes": [
+    "Sprints 30 yards in an improving own time",
+    "Lands soft and holds the balance in 8 of 10 jumps",
+    "Brakes and cuts on the call in 6 of 8 tries",
+    "Names one sign that says to rest"
+   ],
+   "check": "Child sprints 30 yards with good form, brakes in two steps and lands quietly from a low box."
+  },
+  {
+   "n": 3,
+   "title": "Dribbling, Feints and 1 v 1 Attack",
+   "lead": "Dribbling grows in speed, pressure and decision-making. Fifth graders dribble at pace under pressure, combine feints with a change of pace, escape in tight spaces, attack wide and central 1 v 1s with a plan and choose between dribbling, passing and shooting in 2 v 2 and 3 v 3.",
+   "objectives": [
+    "Dribble at pace with both feet while a defender closes from the side",
+    "Link a feint with a burst of speed and a change of direction",
+    "Escape a tight space with the sole, outside or inside of the foot",
+    "Choose dribble, pass or shoot at the end of every take-on"
+   ],
+   "outcomes": [
+    "Dribbles 20 yards at pace in control with both feet",
+    "Beats a passive defender with a feint plus burst in 4 of 6",
+    "Escapes a tight space in 4 of 6 tries",
+    "Chooses dribble, pass or shoot well in 3 of 5 live 2 v 2s"
+   ],
+   "check": "Child beats a passive defender with a feint plus burst and chooses dribble, pass or shoot well in a live 2 v 2."
+  },
+  {
+   "n": 4,
+   "title": "First Touch, Receiving and Turning under Pressure",
+   "lead": "First touch becomes a tool for the next action. Fifth graders control driven, lofted and bouncing balls with the right surface, receive on the half-turn between lines, turn with a defender touching their back, play first time when it is on and set the ball in the next space so they can play on within two seconds.",
+   "objectives": [
+    "Control driven and lofted balls with the right surface and set the ball into space",
+    "Receive on the half-turn between two lines of defenders",
+    "Turn away from a defender touching the back with a drag, hook or roll",
+    "Decide before the ball arrives whether to play first time or take one touch"
+   ],
+   "outcomes": [
+    "Controls 7 of 10 driven passes into space",
+    "Receives and turns between lines in 4 of 6",
+    "Escapes a defender at the back in 4 of 6",
+    "Plays on within two seconds in a 7 v 7"
+   ],
+   "check": "Child controls a driven pass into space, receives on the half-turn and plays on within two seconds."
+  },
+  {
+   "n": 5,
+   "title": "Passing: Combination, Long Passing and Switching",
+   "lead": "Passing grows in range, speed and purpose. Fifth graders pass 25 to 30 yards on the ground and in the air, drive the ball with the laces, bend a pass with the inside of the foot, play one-two combinations at speed, switch the play on purpose and break a line with a forward pass.",
+   "objectives": [
+    "Pass 25 to 30 yards on the ground and in the air with good technique",
+    "Drive the ball with the laces and bend a pass around a mannequin",
+    "Play a one-two combination at speed and run into the return",
+    "Switch the play to the far side and break a line with a forward pass"
+   ],
+   "outcomes": [
+    "Passes 6 of 10 over 25 yards to a target",
+    "Bends 3 of 6 passes around a mannequin",
+    "Completes 4 of 6 one-twos at speed",
+    "Switches or breaks a line in 3 of 5 tries in a game"
+   ],
+   "check": "Child passes 25 yards to a target, plays a one-two at speed and switches or breaks a line in a game."
+  },
+  {
+   "n": 6,
+   "title": "Finishing: Volleys, Crosses and Composure",
+   "lead": "Finishing grows in power, variety and calm. Fifth graders shoot with the instep and the outside of the foot, strike bouncing balls, finish from low and driven crosses with the feet, deliver a cross into three target zones, score 1 v 1 against a keeper and keep calm in penalties. There is still no heading practice.",
+   "objectives": [
+    "Shoot with the instep for power and the inside or outside for placement",
+    "Strike a bouncing ball with a half-volley and a soft volley without leaning back",
+    "Deliver a low and a driven cross into the near, middle and far zones and finish crosses with the feet",
+    "Score 1 v 1 against a keeper and keep a routine in a penalty"
+   ],
+   "outcomes": [
+    "Hits 6 of 10 on target from 15 yards",
+    "Half-volleys 3 of 6 on target",
+    "Finishes 3 of 6 crosses first time with the feet",
+    "Scores 3 of 6 in 1 v 1s and 3 of 5 penalties"
+   ],
+   "check": "Child hits the target with the instep, finishes a low cross with the feet and uses a routine in a penalty."
+  },
+  {
+   "n": 7,
+   "title": "Defending: Pressing Systems, Zonal Marking and Recovery",
+   "lead": "Defending becomes a team skill. Fifth graders press as a line, choose between pressing and dropping, mark space in a zone and a player at a corner, stay compact between the lines, recover goal-side at speed and tackle safely with the front foot and body.",
+   "objectives": [
+    "Press as a line on a trigger and drop together when there is no trigger",
+    "Mark space in a zone and a player at a corner, and know the difference",
+    "Keep the team compact between the lines and close the central lane",
+    "Recover goal-side at speed and tackle safely without fouling"
+   ],
+   "outcomes": [
+    "Presses as a line on the trigger in 4 of 6",
+    "Marks the right player at a corner in 3 of 4",
+    "Stays inside a 20-yard block for two minutes",
+    "Wins the ball safely in 3 of 8 duels"
+   ],
+   "check": "Child presses as a line on the trigger, marks the right player or zone at a corner and tackles safely."
+  },
+  {
+   "n": 8,
+   "title": "Attacking: Combination Play, Overloads and the Final Third",
+   "lead": "Attacking grows from support to patterns. Fifth graders play third-man runs, overlaps and underlaps, create overloads, use the five channels, play through and around a block and finish the final third with combinations, cutbacks and quick shots.",
+   "objectives": [
+    "Play a third-man run, an overlap and an underlap with a clear signal",
+    "Create and use an overload (a 3 v 2, 4 v 3 or 5 v 4) and say why it works",
+    "Use the five channels to find the free lane",
+    "Finish the final third with a combination, a cutback or a quick shot"
+   ],
+   "outcomes": [
+    "Completes 4 of 6 third-man runs",
+    "Chooses overlap or underlap correctly in 3 of 5",
+    "Scores in 3 of 6 overloads",
+    "Names the free channel in a game"
+   ],
+   "check": "Child plays a third-man run or overlap with a call, uses an overload and names the free channel."
+  },
+  {
+   "n": 9,
+   "title": "Advanced Positions and Roles: Full-Backs, Center Backs, Holding and Attacking Midfielders, Wide Players and Strikers",
+   "lead": "Positions grow from five groups into specific roles with their own jobs in each phase. Fifth graders learn the center back, full-back, holding midfielder, central and attacking midfielder, winger and striker, play each with and without the ball, use the shirt numbers and still rotate through all of them during the year.",
+   "objectives": [
+    "Name the job of the center back, full-back, holding midfielder, central midfielder, attacking midfielder, winger and striker",
+    "Play three different roles in a game with the right job in each phase",
+    "Use shirt numbers 1 to 11 to say who plays where",
+    "Explain how a job changes between attack, defense and transition"
+   ],
+   "outcomes": [
+    "Names the job of five roles",
+    "Plays three roles in one session with the right jobs",
+    "Rotates on the call within ten seconds",
+    "Explains how one role changes with the ball and without it"
+   ],
+   "check": "Child names the job of five roles, plays three roles with the right jobs and rotates on the call."
+  },
+  {
+   "n": 10,
+   "title": "Team Tactics: Formations, Build-Up, Pressing and Transitions in 8 v 8 and 9 v 9",
+   "lead": "Tactics grow from shapes into a game model. Fifth graders play 8 v 8 and 9 v 9 shapes, build out from the goalkeeper through three lines, press as a team from a high, mid or low block, switch quickly in transitions and make a plan and a change.",
+   "objectives": [
+    "Play the 3-3-1, 2-3-2, 3-3-2, 2-4-2 and 3-2-3 shapes and say the job of each line",
+    "Build out from the goalkeeper through the back, middle and front lines",
+    "Press from a high, mid or low block and drop together when needed",
+    "Switch between attack and defense within five seconds and say what changed"
+   ],
+   "outcomes": [
+    "Walks two shapes and names the lines",
+    "Builds out in 3 of 5 tries against light pressure",
+    "Holds a block for two minutes in a game",
+    "Counters within five seconds in 3 of 5 tries"
+   ],
+   "check": "Child names the lines of two shapes, builds out from the keeper and presses from a chosen block."
+  },
+  {
+   "n": 11,
+   "title": "The Goalkeeper: Shot-Stopping, Crosses, 1 v 1 and Distribution",
+   "lead": "Goalkeeping grows in range and leadership. Fifth graders set a position and an angle, save with hands and feet, dive on a crash mat, claim crosses with a W grip and a step, close down a 1 v 1, start attacks with throws and kicks from the ground and organise the defense with calls, while every child still takes a turn in goal.",
+   "objectives": [
+    "Set the position and angle for a shot and for a 1 v 1",
+    "Dive to both sides onto a crash mat and save with hands and feet",
+    "Claim a cross with a W grip and a step, or punch only when forced",
+    "Start an attack with a throw or a kick from the ground and give calls"
+   ],
+   "outcomes": [
+    "Saves 5 of 8 moderate shots from 12 yards",
+    "Dives and holds the ball in 4 of 6 tries",
+    "Claims 3 of 6 crosses",
+    "Sends 4 of 6 throws or kicks to a free player"
+   ],
+   "check": "Child sets an angle, dives onto a mat and starts an attack with a throw or a kick from the ground."
+  },
+  {
+   "n": 12,
+   "title": "Rules, Referees and Fair Play",
+   "lead": "Rules grow into refereeing. Fifth graders referee short games with an assistant who raises a flag, decide between a foul, careless, reckless and excessive force, explain the reasons for yellow and red cards, understand denying a goal-scoring chance, play added time, take a quick free kick and run a penalty shoot-out fairly.",
+   "objectives": [
+    "Referee a short game with a whistle, signals and a clear reason",
+    "Use the assistant referee flag for offside and for ball out of play",
+    "Separate careless, reckless and excessive force and say the matching card",
+    "Understand and use added time, a quick free kick and a penalty shoot-out"
+   ],
+   "outcomes": [
+    "Calls offside and handball with a reason in 3 of 4",
+    "Names careless, reckless and excessive force with a card",
+    "Runs a shoot-out fairly",
+    "Referees a 6 v 6 for five minutes with no major disputes"
+   ],
+   "check": "Child referees a short game with reasons, uses the flag correctly and explains the ladder of careless, reckless and excessive force."
+  },
+  {
+   "n": 13,
+   "title": "Set Plays: Corners, Free Kicks, Throw-Ins and Restarts",
+   "lead": "Set plays become a separate skill. Fifth graders plan and run corners, direct and indirect free kicks, throw-ins, goal kicks and kick-offs for both attack and defense, use signals, choose between zonal and player marking, take quick restarts and review what worked.",
+   "objectives": [
+    "Plan and run a corner with a taker, a near-post runner, a far-post runner and a stayer",
+    "Take direct and indirect free kicks with a signal and a decoy",
+    "Take quick throw-ins and goal kicks to a free player",
+    "Defend a corner or a free kick with a clear marking plan and calls"
+   ],
+   "outcomes": [
+    "Runs a corner routine with four jobs in 4 of 6",
+    "Scores or shoots from a free kick in 3 of 6",
+    "Takes a quick throw-in to a free player in 4 of 6",
+    "Defends 4 of 6 corners without a shot"
+   ],
+   "check": "Child plays one job in a corner, takes a free kick with a signal and defends a corner with a clear job."
+  },
+  {
+   "n": 14,
+   "title": "Game Intelligence and Mind: Scanning, Decisions, Pressure and Review",
+   "lead": "Thinking becomes a trained skill. Fifth graders scan before and after receiving, decide under time pressure, name two options, stay calm after a mistake with a reset routine, use self-talk and breathing, picture a move before it happens and review a short video clip with a coach asking questions.",
+   "objectives": [
+    "Scan twice before receiving and once after the first touch",
+    "Decide within two seconds and name two options",
+    "Reset calmly after a mistake with one breath and one cue word",
+    "Review a short video clip by answering three concrete questions"
+   ],
+   "outcomes": [
+    "Scans before receiving in 7 of 10 passes",
+    "Names two options in 3 of 5 situations",
+    "Uses the reset routine after a mistake",
+    "Answers three review questions with specific words"
+   ],
+   "check": "Child scans before receiving, names two options and uses the reset routine after a mistake."
+  }
+ ],
+ "6th-grade": [
+  {
+   "n": 1,
+   "title": "Leadership, Responsibility and Team Culture",
+   "lead": "Leadership grows from running a game to building a team. Sixth graders write a team charter, run a half as captain with the match sheet, mentor a newer player, give feedback with one fact and one next step, settle disputes calmly and accept the referee.",
+   "objectives": [
+    "Write and keep a team charter of three promises",
+    "Run a half as captain with a lineup and planned substitutions on the match sheet",
+    "Give a teammate feedback with one fact and one next step",
+    "Settle a dispute by talking in three steps and accept the referee's decision"
+   ],
+   "outcomes": [
+    "Names the three charter promises and keeps them in a game",
+    "Captain completes a planned substitution with the match sheet",
+    "Gives feedback with one fact and one next step",
+    "Replies to a call with one calm word or one question"
+   ],
+   "check": "Child names the charter promises, gives feedback with one fact and one next step, and answers a referee call with one calm word."
+  },
+  {
+   "n": 2,
+   "title": "Speed, Agility and Athletic Development",
+   "lead": "Athletic work becomes more exact. Sixth graders work on the first 10 yards of a sprint, stopping and cutting at sharp angles, reacting to lights and partner calls, repeating sprints with full rest, landing from boxes up to 18 inches, and tracking only their own best results.",
+   "objectives": [
+    "Accelerate over the first 10 yards with a low lean and long pushing steps",
+    "Stop in two steps and cut at a sharp angle on a light or call",
+    "Land from a box up to 18 inches and hold one-leg balance for five seconds",
+    "Repeat sprints with full rest and rate effort on a 1 to 10 chart"
+   ],
+   "outcomes": [
+    "Improves their own 10 yard time over three weeks",
+    "Lands quietly and holds balance in 8 of 10 jumps",
+    "Reacts to the cue and cuts correctly in 7 of 8 tries",
+    "Uses the effort chart honestly and names one sign that says to rest"
+   ],
+   "check": "Child accelerates with a low lean, stops and cuts on a cue, lands quietly from a box and rates effort honestly."
+  },
+  {
+   "n": 3,
+   "title": "Dribbling, Feints and 1 v 1 Attack",
+   "lead": "Sixth graders run with the ball at pace over 25 to 30 yards and use a change of pace as their main weapon. They learn the drag-back, Cruyff turn, step-over and inside-outside moves against a defender who really defends. They attack the weaker side, protect the ball and decide among dribbling, passing and shooting under a time limit.",
+   "objectives": [
+    "Run with the ball at pace over 25 to 30 yards with both feet",
+    "Use a change of pace to beat a defender, with a feint to help",
+    "Attack a defender's weaker side and protect the ball when pressed",
+    "Choose dribble, pass or shoot within three seconds"
+   ],
+   "outcomes": [
+    "Dribbles 25 yards under control with both feet in a timed run",
+    "Beats a passive defender with a move plus a burst in 5 of 8",
+    "Shows the defender to the weaker foot and gets past in 4 of 6",
+    "Chooses dribble, pass or shoot within three seconds in 5 of 8 live tries"
+   ],
+   "check": "The child beats a passive defender with a move plus burst, shows the defender to the weaker foot, and chooses dribble, pass or shoot within three seconds in a live 1 v 1 or 2 v 2."
+  },
+  {
+   "n": 4,
+   "title": "First Touch, Receiving and Turning under Pressure",
+   "lead": "First touch becomes a decision made before the ball arrives. Sixth graders receive in three zones of the body, control bouncing and lofted balls with the thigh, chest and instep, receive with a defender close behind and turn away, and escape pressure inside a time limit. They also receive from keepers and throw-ins and from a moving run.",
+   "objectives": [
+    "Set the first touch in the chosen direction with the thigh, chest, instep or foot",
+    "Decide before the ball arrives whether to play first time or take one touch, using a look over the shoulder",
+    "Receive with a defender close behind, turn away and play on within the time limit",
+    "Control balls from keepers, throw-ins and bouncing or lofted passes without heading"
+   ],
+   "outcomes": [
+    "Controls 7 of 10 lofted or bouncing balls with the thigh, chest or instep and keeps them within two yards",
+    "Looks over the shoulder before 8 of 10 receptions",
+    "Turns away from a pad defender and plays on within three seconds in 4 of 6",
+    "Receives a keeper release or throw-in and plays on within two seconds in 4 of 6"
+   ],
+   "check": "The coach checks that the child scans before receiving, picks one touch or two, and escapes a close defender and plays on within the time limit in a game."
+  },
+  {
+   "n": 5,
+   "title": "Passing: Range, Combination and Switching",
+   "lead": "Sixth graders pass harder and farther, 30 to 35 yards on the ground and over a line, and bend and disguise passes. They choose the right pass under pressure, run passing patterns at speed and play through a pressing line in bigger games.",
+   "objectives": [
+    "Drive and loft passes 30 to 35 yards with a locked ankle and a clean strike",
+    "Disguise a pass and choose the best pass when a defender is close",
+    "Run Y, diamond and box passing patterns at speed with good rhythm",
+    "Play through a pressing line and switch play in 9 v 9 and 11 v 11"
+   ],
+   "outcomes": [
+    "Lands 5 of 10 driven passes in a hoop 30 yards away",
+    "Plays 4 of 6 passes to the right teammate with a defender at 2 yards",
+    "Completes a Y pattern 3 times in a row inside the time target",
+    "Finds a pass through the press line in 3 of 5 build-ups in a game"
+   ],
+   "check": "The coach checks that the child chooses a pass that suits the situation, strikes it cleanly at 30 yards or more, and moves straight after it."
+  },
+  {
+   "n": 6,
+   "title": "Finishing: Volleys, Crosses and Composure",
+   "lead": "Finishing grows in variety, speed and calm. Sixth graders place and drive shots, strike half volleys from a feed, finish crosses and cutbacks with the feet, follow every rebound, shoot after a sprint and keep a routine under penalty pressure. There is still no heading practice.",
+   "objectives": [
+    "Choose placement or power on purpose and use the side foot, laces and a curl",
+    "Strike a half volley from a feed without leaning back",
+    "Finish crosses, cutbacks and rebounds with the feet and chase every shot",
+    "Keep a calm routine in a penalty and finish after a sprint"
+   ],
+   "outcomes": [
+    "Hits 7 of 10 on target from 18 yards and names the corner first",
+    "Half volleys 4 of 6 on target from a feed",
+    "Finishes 4 of 6 crosses or cutbacks first time with the feet",
+    "Takes 4 of 5 penalties with the same routine and scores 3"
+   ],
+   "check": "Child chooses placement or power on purpose, finishes a cross or cutback with the feet and follows the same routine for a penalty."
+  },
+  {
+   "n": 7,
+   "title": "Defending: Pressing, Zonal Marking and Recovery",
+   "lead": "Defending becomes a team decision. Sixth graders choose a high, mid or low block, press on triggers, cover each other in 2 v 1 and 3 v 2, recover goal-side against the clock and win the ball without fouling.",
+   "objectives": [
+    "Choose a block and keep the team compact inside it",
+    "Press on a trigger and cover a teammate",
+    "Recover goal-side within a time limit",
+    "Win the ball with a clean tackle and know foul levels"
+   ],
+   "outcomes": [
+    "Presses on the trigger in 4 of 6 tries",
+    "Recovers goal-side in under the group target time",
+    "Makes a clean tackle in 3 of 8 duels",
+    "Names careless, reckless and serious foul play correctly"
+   ],
+   "check": "The child presses on the trigger, covers a teammate, recovers goal-side and wins the ball without a foul."
+  },
+  {
+   "n": 8,
+   "title": "Attacking: Combination Play, Overloads and the Final Third",
+   "lead": "Sixth graders create and finish chances against an organised block. They play between the lines, use wing play and cutbacks, and run patterns with set triggers. They also switch play from an overload and make quick decisions in the final third.",
+   "objectives": [
+    "Play between the lines and use the wing to create a cross or cutback",
+    "Time runs against the offside line and stay onside",
+    "Create an overload and switch play to the free side",
+    "Choose to shoot, pass or cross in the final third within a few seconds"
+   ],
+   "outcomes": [
+    "Plays a pass between two defenders in 4 of 6 tries",
+    "Stays onside on 5 of 6 timed runs",
+    "Switches play to the free side in 3 of 5 overloads",
+    "Chooses shoot, pass or cross correctly in 4 of 6 final third attacks"
+   ],
+   "check": "The child can play between the lines, time a run onside and choose to shoot, pass or cross within a few seconds."
+  },
+  {
+   "n": 9,
+   "title": "Positions and Roles: The 11 v 11 Picture",
+   "lead": "Sixth graders learn the full set of positions for 9 v 9 and 11 v 11, from goalkeeper to striker, and the job each one has in the four phases. They read how roles change in 4-3-3, 4-4-2, 4-2-3-1 and 3-5-2 shapes, and keep rotating through different roles.",
+   "objectives": [
+    "Name the job of each position in an 11 v 11 or 9 v 9 team and its job in each phase",
+    "Say my job, my partner's job and my line's job before and during play",
+    "Change role when the shape changes, for example from 4-3-3 to 4-4-2",
+    "Rotate through at least three different roles and keep the right job in each"
+   ],
+   "outcomes": [
+    "Names the job of the center back, full-back, 6, 8, 10, winger and striker",
+    "Says the job of a partner in the line in 3 of 4 phases",
+    "Moves to the correct spot within 10 seconds when the shape changes",
+    "Plays three different roles in a session with the right job in each phase"
+   ],
+   "check": "The coach checks that each player names their own job, a partner's job and their line's job in all four phases and moves to the correct spot when the shape changes."
+  },
+  {
+   "n": 10,
+   "title": "Team Tactics: Build-Up, Pressing, Blocks and Transitions in 9 v 9 and 11 v 11",
+   "lead": "Sixth graders turn shapes into a game plan. They build out with the keeper as an extra player, press with team signals, change blocks by score and time, switch within five seconds, and review the game with a match sheet. They also meet 11 v 11 shapes for the first time.",
+   "objectives": [
+    "State one team idea for each of the four moments of the game",
+    "Build out with the keeper as an extra player in 9 v 9 and 11 v 11",
+    "Press on a team signal and change the block by score and time",
+    "Switch between attack and defense within five seconds and review with a match sheet"
+   ],
+   "outcomes": [
+    "Says the job of each line in a 4-3-3 and a 4-4-2",
+    "Builds out against three pressers in 4 of 6 tries",
+    "Presses on the team signal together in 4 of 6 tries",
+    "Fills in a match sheet and names one change with a reason"
+   ],
+   "check": "Child states an idea for each moment, joins the build-up against pressure and presses on the team signal."
+  },
+  {
+   "n": 11,
+   "title": "The Goalkeeper: Distribution, Sweeping, Crosses and Composure",
+   "lead": "Sixth graders play in a full-size goal, sweep behind the back line, claim or punch crosses and read penalties. They start attacks under a pressing striker and learn to recover calmly after a mistake, while every child still takes a turn in goal.",
+   "objectives": [
+    "Position correctly for shots from the left, middle and right in a full-size goal",
+    "Claim, punch or leave a cross with an early call",
+    "Read a penalty and a 2 v 1 instead of guessing",
+    "Start attacks under pressure and reset calmly after a goal against"
+   ],
+   "outcomes": [
+    "Saves 5 of 8 moderate shots from 14 yards in a full-size goal",
+    "Calls early and claims 4 of 6 crosses",
+    "Releases the ball within 8 seconds in 5 of 6 tries",
+    "Plays a pass to a free player under a pressing striker in 4 of 6 restarts"
+   ],
+   "check": "Child sets position in a full-size goal, claims or punches a cross with an early call, reads a penalty and resets after a goal against."
+  },
+  {
+   "n": 12,
+   "title": "Rules, Referees and Fair Play: The Laws in Detail",
+   "lead": "Sixth graders learn the Laws in more detail and use them as referees, assistants and captains. They separate careless, reckless and excessive force, handle offside deliberate play and gaining an advantage, run free kicks and penalties by the book and practise calm, respectful talk with the referee.",
+   "objectives": [
+    "Judge a challenge as careless, reckless or excessive force and name the matching sanction",
+    "Apply offside deliberate play, gaining an advantage and the handball boundary",
+    "Run free kicks, penalties and substitutions by the correct procedure",
+    "Speak as a captain or referee with calm reasons and no dissent"
+   ],
+   "outcomes": [
+    "Names the correct card level with a reason in 3 of 4 cases",
+    "Explains deliberate play versus deflection in 3 of 4 offside cases",
+    "Takes a penalty or sets a wall of three with the right procedure",
+    "Referees five minutes of 9 v 9 with no unresolved disputes"
+   ],
+   "check": "The player names the severity level and reason for a challenge, applies deliberate play and gaining an advantage correctly and handles a call calmly as referee or captain."
+  },
+  {
+   "n": 13,
+   "title": "Set Plays: Corners, Free Kicks, Throw-Ins, Goal Kicks and Restarts",
+   "lead": "Sixth graders design a playbook of set plays for corners, free kicks, throw-ins, goal kicks and kick-offs, and defend each restart with zonal, player or mixed marking. They decide when to restart quickly and review their plays with a match sheet. No heading is practised; balls are played on the ground or low.",
+   "objectives": [
+    "Design and run a playbook of corner, free kick, throw-in and goal kick plans with names or colors",
+    "Set and attack a wall of three with attackers 1 yard away",
+    "Choose between a quick restart and a planned play",
+    "Defend restarts with zonal, player or mixed marking and review with a match sheet"
+   ],
+   "outcomes": [
+    "Runs a named corner routine with four jobs in 4 of 6",
+    "Takes a free kick around a wall of three on target in 3 of 6",
+    "Chooses a quick or planned restart correctly in 4 of 6",
+    "Defends 4 of 6 restarts without a shot"
+   ],
+   "check": "The coach checks that the child can call a plan, do a full job in it, and describe what happened afterwards."
+  },
+  {
+   "n": 14,
+   "title": "Game Intelligence and Mind: Scanning, Decisions, Pressure and Review",
+   "lead": "Thinking becomes a trained skill with numbers and clocks. Sixth graders count their scans, spot patterns such as 2 v 1 and overloads, decide inside a stopwatch limit and stay calm when peers are watching. They run their own routines for penalties, restarts and reviewing a clip.",
+   "objectives": [
+    "Count shoulder checks and scan before each receive",
+    "Name a pattern such as 2 v 1 or an overload and decide inside a time limit",
+    "Stay calm under pressure with a breath, a cue word and a routine",
+    "Review a clip or a half by answering three concrete questions"
+   ],
+   "outcomes": [
+    "Scans before receiving in 8 of 10 passes",
+    "Decides inside 3 seconds in 4 of 5 timed situations",
+    "Follows the reset or penalty routine every time under pressure",
+    "Answers three review questions about own play with specific words"
+   ],
+   "check": "The coach checks that the player scans before most passes, decides inside the time limit and uses a calm routine after a mistake."
+  },
+  {
+   "n": 15,
+   "title": "Athlete Habits: Warm-Up, Recovery, Growth and Readiness",
+   "lead": "Sixth graders learn the habits of a young athlete. They lead a structured warm-up and cool-down, use a foam roller gently, rate their own effort from 1 to 10, notice and report pain, and take part in simple movement checks and rest decisions, all through ball games.",
+   "objectives": [
+    "Lead a four stage warm-up (raise, activate, mobilise, prepare to sprint) and a cool-down",
+    "Rate effort on a 1 to 10 chart and match a requested effort level",
+    "Use a foam roller gently and report any sharp pain or growth spurt ache to the coach",
+    "Show a controlled squat, lunge, one-leg balance and soft landing"
+   ],
+   "outcomes": [
+    "Leads one warm-up stage clearly without help from the coach",
+    "Points to an effort number within one point of the coach's estimate in 6 of 8 tries",
+    "Names two signs that mean stop and tell the coach",
+    "Holds a one-leg balance for 5 seconds and lands softly in 8 of 10 jumps"
+   ],
+   "check": "The coach checks that the child can lead a warm-up stage, give an honest effort number and name when to stop and tell an adult."
   }
  ]
 };
