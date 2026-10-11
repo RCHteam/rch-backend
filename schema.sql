@@ -491,3 +491,16 @@ CREATE TABLE IF NOT EXISTS player_notices (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_player_notices_player ON player_notices(player_id, created_at DESC);
+
+-- Coach logins. Admins create a username and a code for a coach in Coaches > Our Coaches.
+-- Only a salted hash of the code is stored. Kept in its own table so it never travels with
+-- the coach rows the dashboard loads.
+CREATE TABLE IF NOT EXISTS coach_logins (
+  coach_id      INTEGER PRIMARY KEY REFERENCES coaches(id) ON DELETE CASCADE,
+  username      TEXT NOT NULL,
+  code_salt     TEXT NOT NULL,
+  code_hash     TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_login_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS coach_logins_username_idx ON coach_logins (lower(username));

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const pool = require('./pool');
-const { requireAdmin } = require('./auth');
+const { requireAdmin, requireStaff } = require('./auth');
 const { sendStudentReportEmail, sendPlayerNoticeEmail } = require('./email');
 const { centralDateParts, practiceDates } = require('./proration');
 const { fixedEvents } = require('./fixedEvents');
@@ -28,7 +28,7 @@ function monthKeyOf({ year, month }) { return `${year}-${String(month).padStart(
 
 /* ---- The full curriculum pages (one HTML file per grade, shown in the admin inside a frame) ---- */
 const CURRICULUM_FILES = { 'pre-k': 'curriculum-prek.html', 'kindergarten': 'curriculum-kindergarten.html', '1st-grade': 'curriculum-1st-grade.html', '2nd-grade': 'curriculum-2nd-grade.html', '3rd-grade': 'curriculum-3rd-grade.html', '4th-grade': 'curriculum-4th-grade.html', '5th-grade': 'curriculum-5th-grade.html', '6th-grade': 'curriculum-6th-grade.html' };
-router.all('/admin/curriculum-view/:grade', requireAdmin, (req, res) => {
+router.all('/admin/curriculum-view/:grade', requireStaff, (req, res) => {
   const file = CURRICULUM_FILES[req.params.grade];
   if (!file) return res.status(404).json({ error: 'This curriculum has not been loaded yet.' });
   try {
@@ -44,7 +44,7 @@ router.all('/admin/curriculum-view/:grade', requireAdmin, (req, res) => {
 
 /* ------------------------------ Curriculum ------------------------------ */
 
-router.get('/admin/curriculum', requireAdmin, async (req, res) => {
+router.get('/admin/curriculum', requireStaff, async (req, res) => {
   try {
     const grade = GRADES.includes(req.query.grade) ? req.query.grade : null;
     const r = await pool.query(
@@ -192,8 +192,9 @@ function buildReportPdf(r) {
   });
 }
 
-router.post('/admin/student-reports', requireAdmin, async (req, res) => {
-  const { playerId, chapterId, coachName, body, month, send, assessmentResult, term, chapters } = req.body || {};
+router.post('/admin/student-reports', requireStaff, async (req, res) => {
+  const { playerId, chapterId, coachName: coachNameIn, body, month, send, assessmentResult, term, chapters } = req.body || {};
+  const coachName = req.coach ? req.coach.name : coachNameIn; // a coach's own name is always used
   if (!playerId) return res.status(400).json({ error: 'Please choose a child.' });
   if (!body || !String(body).trim()) return res.status(400).json({ error: 'Please write the report.' });
   try {
@@ -248,7 +249,7 @@ router.post('/admin/student-reports', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/admin/student-reports', requireAdmin, async (req, res) => {
+router.get('/admin/student-reports', requireStaff, async (req, res) => {
   try {
     const grade = GRADES.includes(req.query.grade) ? req.query.grade : null;
     const r = await pool.query(
@@ -256,14 +257,14 @@ router.get('/admin/student-reports', requireAdmin, async (req, res) => {
        FROM student_reports ${grade ? 'WHERE grade = $1' : ''} ORDER BY created_at DESC LIMIT 200`,
       grade ? [grade] : []
     );
-    res.json(r.rows);
+    res.json(req.coach ? r.rows.map((x) => ({ ...x, parent_email: '' })) : r.rows);
   } catch (err) {
     console.error('List reports error:', err);
     res.status(500).json({ error: 'Could not load reports.' });
   }
 });
 
-router.post('/admin/student-reports/:id/email', requireAdmin, async (req, res) => {
+router.post('/admin/student-reports/:id/email', requireStaff, async (req, res) => {
   try {
     const row = (await pool.query('SELECT * FROM student_reports WHERE id = $1', [req.params.id])).rows[0];
     if (!row) return res.status(404).json({ error: 'Report not found.' });
@@ -299,7 +300,7 @@ router.delete('/admin/student-reports/:id', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/admin/student-reports/:id/pdf', requireAdmin, async (req, res) => {
+router.get('/admin/student-reports/:id/pdf', requireStaff, async (req, res) => {
   try {
     const row = (await pool.query('SELECT * FROM student_reports WHERE id = $1', [req.params.id])).rows[0];
     if (!row) return res.status(404).json({ error: 'Report not found.' });
@@ -336,8 +337,9 @@ async function emailNoticeRow(row, to, parentName) {
   });
 }
 
-router.post('/admin/player-notices', requireAdmin, async (req, res) => {
-  const { playerId, category, body, coachName, date, send } = req.body || {};
+router.post('/admin/player-notices', requireStaff, async (req, res) => {
+  const { playerId, category, body, coachName: coachNameIn, date, send } = req.body || {};
+  const coachName = req.coach ? req.coach.name : coachNameIn; // a coach's own name is always used
   if (!playerId) return res.status(400).json({ error: 'Please choose a child.' });
   if (!body || !String(body).trim()) return res.status(400).json({ error: 'Please write the notice.' });
   if (date && !ISO_DATE.test(String(date))) return res.status(400).json({ error: 'Please enter a valid date.' });
@@ -374,17 +376,17 @@ router.post('/admin/player-notices', requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/admin/player-notices', requireAdmin, async (req, res) => {
+router.get('/admin/player-notices', requireStaff, async (req, res) => {
   try {
     const r = await pool.query('SELECT * FROM player_notices ORDER BY created_at DESC LIMIT 200');
-    res.json(r.rows.map(noticeOut));
+    res.json(r.rows.map(noticeOut).map((x) => (req.coach ? { ...x, parent_email: '' } : x)));
   } catch (err) {
     console.error('List notices error:', err);
     res.status(500).json({ error: 'Could not load notices.' });
   }
 });
 
-router.post('/admin/player-notices/:id/email', requireAdmin, async (req, res) => {
+router.post('/admin/player-notices/:id/email', requireStaff, async (req, res) => {
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Notice not found.' });
   try {
     const row = (await pool.query('SELECT * FROM player_notices WHERE id = $1', [req.params.id])).rows[0];
@@ -512,7 +514,7 @@ function buildAttendancePdf({ grades, byGrade, ym }) {
   });
 }
 
-router.get('/admin/attendance/pdf', requireAdmin, async (req, res) => {
+router.get('/admin/attendance/pdf', requireStaff, async (req, res) => {
   try {
     const ym = parseMonth(req.query.month);
     const wantAll = req.query.grade === 'all';
@@ -553,7 +555,7 @@ function eventFields(b) {
   return { values: [title, b.date, startTime, endTime, String(b.location || '').trim().slice(0, 200), String(b.notes || '').trim().slice(0, 4000), EVENT_COLORS.has(b.color) ? b.color : 'green'] };
 }
 
-router.get('/admin/calendar-events', requireAdmin, async (req, res) => {
+router.get('/admin/calendar-events', requireStaff, async (req, res) => {
   try {
     const r = await pool.query('SELECT * FROM calendar_events ORDER BY event_date, start_time, id');
     res.json(r.rows.map(eventOut).concat(fixedEvents()));

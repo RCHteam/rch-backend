@@ -60,6 +60,9 @@ module.exports = `<!doctype html>
   #login-view h2{ margin-top:0; font-size:1.5rem; }
   #login-view input{ width:100%; padding:11px 12px; border:1px solid #d9d2bd; border-radius:3px; margin:10px 0; font-size:1rem; font-family:inherit; }
   #login-view input:focus{ outline:2px solid var(--acc); outline-offset:0; border-color:transparent; }
+  #login-view .lt-row{ display:flex; gap:6px; margin:0 0 14px; }
+  #login-view .lt-row button{ flex:1; background:#efe9d6; color:#5a5a4a; padding:9px; font-size:0.85rem; }
+  #login-view .lt-row button.active{ background:var(--pitch-deep); color:#fff; }
   #login-view button{ width:100%; padding:12px; background:var(--gold); border:none; border-radius:3px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.95rem; transition:background .2s ease; }
   #login-view button:hover{ background:var(--gold-bright); }
   #login-error{ color:#b5482f; font-size:0.9rem; min-height:1.2em; }
@@ -336,6 +339,16 @@ module.exports = `<!doctype html>
   .cal-btn{ background:#fff; border:1px solid #d6d6d6; border-radius:6px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:visible; white-space:normal; word-break:break-word; text-align:left; border:none; width:100%; font-family:inherit; }
+  /* Coach login: coaches see only the coach tabs, read-only where it matters */
+  body.is-coach .btn-coach-hide, body.is-coach [data-del], body.is-coach [data-ndel], body.is-coach #calSubtabs{ display:none !important; }
+  .coach-who{ color:var(--chalk); font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.08em; margin-right:12px; }
+  .login-box{ margin:14px 0 4px; padding:12px 14px; background:#f6f3ea; border:1px solid #e4dcc6; border-radius:6px; }
+  .login-box h4{ margin:0 0 4px; font-size:0.95rem; }
+  .login-box p{ margin:0 0 8px; font-size:0.8rem; color:#666; }
+  .login-box input[type=text]{ width:100%; padding:9px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:0.95rem; margin:4px 0 8px; }
+  .cc-login{ display:inline-block; margin-top:6px; padding:2px 8px; border-radius:10px; background:#e3f3ea; color:#14553a; font-size:0.72rem; font-weight:700; }
+  .cc-login.none{ background:#eee; color:#777; }
+  .cred-line{ font-family:'Space Mono',monospace; font-size:1.05rem; background:#f6f3ea; border:1px solid #e4dcc6; border-radius:6px; padding:10px 12px; margin:8px 0; word-break:break-all; }
   .cal-ev.fx{ box-shadow:inset 3px 0 0 rgba(0,0,0,.35); }
   .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; } .cal-ev.gray{ background:#8a8f8c; }
   .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
@@ -381,7 +394,9 @@ module.exports = `<!doctype html>
 
 <div id="login-view">
   <img class="login-logo" src="/assets/logo.png" alt="RCH Elite Training">
-  <h2>Admin login</h2>
+  <div class="lt-row"><button type="button" id="ltAdmin" class="active">Admin</button><button type="button" id="ltCoach">Coach</button></div>
+  <h2 id="loginTitle">Admin login</h2>
+  <input type="text" id="cuser" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false" class="hidden">
   <input type="password" id="pw" placeholder="Password" autofocus>
   <button id="loginBtn">Log in</button>
   <p id="login-error"></p>
@@ -1248,10 +1263,32 @@ module.exports = `<!doctype html>
     </div>
     <label for="coachNotes">Notes</label>
     <textarea id="coachNotes" rows="3" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:1rem;"></textarea>
+    <div class="login-box">
+      <h4>Coach login</h4>
+      <p id="coachLoginHint">Give this coach a username and a code. They log in at the same address as you, on the Coach tab, and only see the coaching tools.</p>
+      <label for="coachLoginUser">Username</label>
+      <input type="text" id="coachLoginUser" placeholder="e.g. sam.coach" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <label for="coachLoginCode">Code</label>
+      <input type="text" id="coachLoginCode" placeholder="Leave blank to generate one" autocomplete="off" spellcheck="false">
+      <label id="coachLoginRegenRow" class="hidden" style="display:none;font-size:0.85rem;"><input type="checkbox" id="coachLoginRegen"> Generate a new code</label>
+      <button type="button" class="btn-cancel hidden" id="coachLoginRemove" style="display:none;margin-top:6px;">Remove this coach's login</button>
+    </div>
     <p class="modal-error" id="coachModalError"></p>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="coachModalCancel">Cancel</button>
       <button type="button" class="btn-send" id="coachModalSubmit">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="coachCredModal">
+  <div class="modal">
+    <h3>Coach login ready</h3>
+    <p class="modal-sub">Send these to the coach. The code is shown only now. If it is lost, edit the coach and generate a new one.</p>
+    <div class="cred-line" id="coachCredText"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="coachCredCopy">Copy</button>
+      <button type="button" class="btn-send" id="coachCredDone">Done</button>
     </div>
   </div>
 </div>
@@ -1588,7 +1625,9 @@ module.exports = `<!doctype html>
   }
   function getToken(){ return sessionStorage.getItem('rch_admin_token'); }
   function setToken(t){ sessionStorage.setItem('rch_admin_token', t); }
-  function clearToken(){ sessionStorage.removeItem('rch_admin_token'); }
+  function clearToken(){ sessionStorage.removeItem('rch_admin_token'); sessionStorage.removeItem('rch_admin_role'); sessionStorage.removeItem('rch_coach_name'); }
+  function isCoach(){ return sessionStorage.getItem('rch_admin_role') === 'coach'; }
+  function coachName(){ return sessionStorage.getItem('rch_coach_name') || ''; }
 
   async function api(path, opts = {}){
     const res = await fetch(API_BASE + path, {
@@ -1607,7 +1646,30 @@ module.exports = `<!doctype html>
     loginView.classList.remove('hidden');
     appView.classList.add('hidden');
   }
+  // Coaches get a stripped-down app: only the coach tabs. Everything else is removed from the page.
+  function showCoachApp(){
+    loginView.classList.add('hidden');
+    appView.classList.remove('hidden');
+    document.body.classList.add('is-coach');
+    ['registrations', 'finances', 'charges', 'shop', 'camp', 'data'].forEach(function(id){ const e = document.getElementById('section-' + id); if (e) e.remove(); });
+    ['summary', 'sectionNav'].forEach(function(id){ const e = document.getElementById(id); if (e) e.remove(); });
+    const ss = document.querySelector('.search-slot'); if (ss) ss.innerHTML = '';
+    const who = document.createElement('span'); who.className = 'coach-who'; who.textContent = coachName();
+    document.querySelector('.header-right').insertBefore(who, document.getElementById('logoutBtn'));
+    // Hide Our Coaches and Add event; everything else on these tabs is read or write-your-own only.
+    const i = COACH_SUBS.indexOf('coaches'); if (i > -1) COACH_SUBS.splice(i, 1);
+    const cb = document.querySelector('#coachSubtabs [data-sub="coaches"]'); if (cb) cb.remove();
+    const cs = document.getElementById('coachSub-coaches'); if (cs) cs.remove();
+    const cat = document.getElementById('calAddTab'); if (cat) cat.remove();
+    const cn = coachName();
+    ['repCoach', 'ntCoach'].forEach(function(id){ const e = document.getElementById(id); if (e) { e.value = cn; e.readOnly = true; } });
+    document.getElementById('section-coaches').classList.remove('hidden');
+    let sub = '';
+    try { sub = sessionStorage.getItem('rch_admin_coachsub') || ''; } catch (e) {}
+    showCoachSub(COACH_SUBS.indexOf(sub) > -1 ? sub : 'responsibilities');
+  }
   function showApp(){
+    if (isCoach()) { showCoachApp(); return; }
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     document.getElementById('sectionNav').value = 'registrations';
@@ -1627,23 +1689,54 @@ module.exports = `<!doctype html>
     }, 0);
   }
 
+  let loginMode = 'admin';
+  function setLoginMode(m){
+    loginMode = m;
+    document.getElementById('ltAdmin').classList.toggle('active', m === 'admin');
+    document.getElementById('ltCoach').classList.toggle('active', m === 'coach');
+    document.getElementById('cuser').classList.toggle('hidden', m !== 'coach');
+    document.getElementById('loginTitle').textContent = m === 'coach' ? 'Coach login' : 'Admin login';
+    pwInput.placeholder = m === 'coach' ? 'Code' : 'Password';
+    loginError.textContent = '';
+  }
+  document.getElementById('ltAdmin').addEventListener('click', () => setLoginMode('admin'));
+  document.getElementById('ltCoach').addEventListener('click', () => { setLoginMode('coach'); document.getElementById('cuser').focus(); });
+  if ((location.hash || '') === '#coach') setLoginMode('coach');
+
   document.getElementById('loginBtn').addEventListener('click', async () => {
     loginError.textContent = '';
     const password = pwInput.value;
     try {
+      if (loginMode === 'coach') {
+        const res = await fetch(API_BASE + '/api/coach/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: document.getElementById('cuser').value, code: password }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setToken(data.token);
+          sessionStorage.setItem('rch_admin_role', 'coach');
+          sessionStorage.setItem('rch_coach_name', (data.coach && data.coach.name) || '');
+          pwInput.value = '';
+          showApp();
+        } else loginError.textContent = data.error || 'Login failed.';
+        return;
+      }
       const res = await fetch(API_BASE + '/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
-      if (data.ok) { setToken(password); showApp(); }
+      if (data.ok) { clearToken(); setToken(password); showApp(); }
       else loginError.textContent = data.error || 'Login failed.';
     } catch (e) { loginError.textContent = 'Could not reach the server.'; }
   });
   pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+  document.getElementById('cuser').addEventListener('keydown', (e) => { if (e.key === 'Enter') pwInput.focus(); });
 
-  document.getElementById('logoutBtn').addEventListener('click', () => { clearToken(); showLogin(); });
+  document.getElementById('logoutBtn').addEventListener('click', () => { const was = isCoach(); clearToken(); if (was) { location.href = '/admin'; } else showLogin(); });
 
   function renderTable(rows, columns, opts = {}){
     if (!rows.length) return '<div class="empty">No entries yet.</div>';
@@ -2217,7 +2310,7 @@ module.exports = `<!doctype html>
         '<div class="cc-art"><span class="cc-initials">' + escapeHtml(initials) + '</span>' +
           '<span class="cc-role">' + (COACH_ROLE_LABELS[role] || role) + '</span>' +
           (c.sultans ? '<span class="cc-star">★ SULTANS</span>' : '') + '</div>' +
-        '<div class="cc-info">' + (c.degree ? escapeHtml(c.degree) : 'No degree listed') + '</div>' +
+        '<div class="cc-info">' + (c.degree ? escapeHtml(c.degree) : 'No degree listed') + '<br>' + (coachLoginMap[c.id] ? '<span class="cc-login">Login: ' + escapeHtml(coachLoginMap[c.id].username) + '</span>' : '<span class="cc-login none">No login</span>') + '</div>' +
         '<div class="cc-move"><span class="cc-cost">GRADES</span><div class="txt">' + (grades ? '<div class="cc-chips">' + grades + '</div>' : '<span class="txt">None assigned</span>') + '</div></div>' +
         '<div class="cc-move"><span class="cc-cost">REFER</span><div><b>Referral bonus</b><span class="txt">' +
           (referralRate > 0 ? '$' + referralRate.toFixed(2) + ' × ' + referred + ' = $' + (referralRate * referred).toFixed(2) : '—') + '</span></div></div>' +
@@ -2237,9 +2330,15 @@ module.exports = `<!doctype html>
 
   let coachRows = [];
   let editCoachId = null;
+  let coachLoginMap = {};
 
   async function loadCoaches(){
     coachRows = await api('/api/admin/coaches');
+    try {
+      const lg = await api('/api/admin/coach-logins');
+      coachLoginMap = {};
+      (Array.isArray(lg) ? lg : []).forEach(function(l){ coachLoginMap[l.coach_id] = l; });
+    } catch (e) { coachLoginMap = {}; }
     COACH_ROLES.forEach((role) => {
       const wrap = document.getElementById('coachesTableWrap_' + role);
       if (!wrap) return;
@@ -2291,9 +2390,36 @@ module.exports = `<!doctype html>
       if (cb) cb.checked = grades.includes(g);
     });
     document.getElementById('coachModalError').textContent = '';
+    const lg = coach ? coachLoginMap[coach.id] : null;
+    document.getElementById('coachLoginUser').value = lg ? lg.username : '';
+    document.getElementById('coachLoginCode').value = '';
+    document.getElementById('coachLoginRegen').checked = false;
+    document.getElementById('coachLoginRegenRow').style.display = lg ? 'block' : 'none';
+    document.getElementById('coachLoginRemove').style.display = lg ? 'inline-block' : 'none';
+    document.getElementById('coachLoginCode').placeholder = lg ? 'Leave blank to keep the current code' : 'Leave blank to generate one';
     document.getElementById('coachModal').classList.remove('hidden');
   }
 
+  function showCoachCred(c){
+    const url = location.origin + '/admin';
+    document.getElementById('coachCredText').innerHTML = 'Address: ' + escapeHtml(url) + ' (Coach tab)<br>Username: <b>' + escapeHtml(c.username) + '</b><br>Code: <b>' + escapeHtml(c.code) + '</b>';
+    document.getElementById('coachCredModal').dataset.copy = 'RCH coach login\\nAddress: ' + url + ' (choose the Coach tab)\\nUsername: ' + c.username + '\\nCode: ' + c.code;
+    document.getElementById('coachCredModal').classList.remove('hidden');
+  }
+  document.getElementById('coachCredDone').addEventListener('click', () => document.getElementById('coachCredModal').classList.add('hidden'));
+  document.getElementById('coachCredCopy').addEventListener('click', async () => {
+    const txt = document.getElementById('coachCredModal').dataset.copy || '';
+    try { await navigator.clipboard.writeText(txt); document.getElementById('coachCredCopy').textContent = 'Copied ✓'; } catch (e) { document.getElementById('coachCredCopy').textContent = 'Select and copy the text above'; }
+  });
+  document.getElementById('coachLoginRemove').addEventListener('click', async () => {
+    if (!editCoachId || !confirm('Remove the login of this coach? They will not be able to log in any more.')) return;
+    try {
+      await api('/api/admin/coaches/' + editCoachId + '/login', { method: 'DELETE' });
+      document.getElementById('coachModal').classList.add('hidden');
+      editCoachId = null;
+      await loadCoaches();
+    } catch (e) { document.getElementById('coachModalError').textContent = 'Could not remove the login.'; }
+  });
   document.getElementById('addCoachBtn').addEventListener('click', () => openCoachModal(null));
   document.getElementById('coachModalCancel').addEventListener('click', () => {
     document.getElementById('coachModal').classList.add('hidden');
@@ -2334,9 +2460,22 @@ module.exports = `<!doctype html>
       if (result.error) {
         errEl.textContent = result.error;
       } else {
+        const cid = editCoachId || (result.entry && result.entry.id);
+        const loginName = document.getElementById('coachLoginUser').value.trim().toLowerCase();
+        let cred = null;
+        if (loginName && cid) {
+          editCoachId = cid; // the coach is saved; a retry edits instead of adding again
+          const lr = await api('/api/admin/coaches/' + cid + '/login', { method: 'PUT', body: JSON.stringify({
+            username: loginName, code: document.getElementById('coachLoginCode').value.trim(),
+            regenerate: document.getElementById('coachLoginRegen').checked,
+          }) });
+          if (lr.error) { errEl.textContent = 'Coach saved, but the login was not: ' + lr.error; await loadCoaches(); return; }
+          if (lr.code) cred = { username: lr.username, code: lr.code };
+        }
         document.getElementById('coachModal').classList.add('hidden');
         editCoachId = null;
         await loadCoaches();
+        if (cred) showCoachCred(cred);
         // Fixed/Referral Salary auto-sync into Charges server-side — refresh
         // that tab's table too if it's already been opened this session.
         if (chargesLoaded) { await loadCharges(); }
@@ -3707,7 +3846,7 @@ module.exports = `<!doctype html>
     const grade = document.getElementById('repGrade').value;
     const childSel = document.getElementById('repChild');
     childSel.innerHTML = '<option value="">Loading…</option>';
-    const players = await api('/api/admin/players' + (grade ? '?grade=' + encodeURIComponent(grade) : ''));
+    const players = await api((isCoach() ? '/api/coach/players' : '/api/admin/players') + (grade ? '?grade=' + encodeURIComponent(grade) : ''));
     repPlayers = Array.isArray(players) ? players : [];
     childSel.innerHTML = repPlayers.length
       ? '<option value="">— Choose a child —</option>' + repPlayers.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + (grade ? '' : ' — ' + (GRADE_LABELS[p.grade] || p.grade)) + '</option>'; }).join('')
@@ -3825,7 +3964,7 @@ module.exports = `<!doctype html>
     const sel = document.getElementById('ntChild');
     sel.innerHTML = '<option value="">Loading…</option>';
     let players = [];
-    try { players = await api('/api/admin/players' + (grade ? '?grade=' + encodeURIComponent(grade) : '')); } catch (e) { players = []; }
+    try { players = await api((isCoach() ? '/api/coach/players' : '/api/admin/players') + (grade ? '?grade=' + encodeURIComponent(grade) : '')); } catch (e) { players = []; }
     ntPlayers = Array.isArray(players) ? players : [];
     sel.innerHTML = ntPlayers.length
       ? '<option value="">— Choose a child —</option>' + ntPlayers.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + (grade ? '' : ' — ' + (GRADE_LABELS[p.grade] || p.grade)) + '</option>'; }).join('')
@@ -3912,15 +4051,17 @@ module.exports = `<!doctype html>
     document.getElementById('evLocation').value = ev ? ev.location : '';
     document.getElementById('evNotes').value = ev ? ev.notes : '';
     document.getElementById('evError').textContent = '';
-    const fixed = !!(ev && ev.fixed);
-    if (fixed) document.getElementById('evFormTitle').textContent = 'Fixed event (this date never moves)';
+    const fixed = !!(ev && ev.fixed) || isCoach();
+    if (ev && ev.fixed) document.getElementById('evFormTitle').textContent = 'Fixed event (this date never moves)';
+    else if (isCoach()) document.getElementById('evFormTitle').textContent = 'Event details';
     ['evTitle','evDate','evColor','evStart','evEnd','evLocation','evNotes'].forEach(function(id){ document.getElementById(id).disabled = fixed; });
     document.getElementById('evSave').style.display = fixed ? 'none' : '';
     document.getElementById('evDelete').style.display = (ev && !fixed) ? '' : 'none';
+    document.getElementById('evCancel').textContent = isCoach() ? 'Back to calendar' : 'Cancel';
     showCalSub('add');
   }
   document.querySelectorAll('#calSubtabs .subtab').forEach(function(b){
-    b.addEventListener('click', function(){ if (b.getAttribute('data-csub') === 'add') openEventForm(null); else showCalSub('view'); });
+    b.addEventListener('click', function(){ if (isCoach()) return; if (b.getAttribute('data-csub') === 'add') openEventForm(null); else showCalSub('view'); });
   });
   document.getElementById('evCancel').addEventListener('click', function(){ showCalSub('view'); });
   document.getElementById('evSave').addEventListener('click', async function(){
@@ -4523,6 +4664,7 @@ module.exports = `<!doctype html>
   // ---- Logo -> dashboard ----
   function goDashboard(e){
     if (e) e.preventDefault();
+    if (isCoach()) return;
     document.getElementById('sectionNav').value = 'registrations';
     rememberPlace('registrations', '');
     showSection('registrations');
@@ -4628,7 +4770,14 @@ module.exports = `<!doctype html>
   });
 
   wireExportLinks();
-  if (getToken()) showApp(); else showLogin();
+  if (getToken()) {
+    if (isCoach()) {
+      api('/api/coach/me').then(function(r){
+        if (r && r.role === 'coach') { sessionStorage.setItem('rch_coach_name', r.name || ''); showApp(); }
+        else { clearToken(); showLogin(); }
+      }).catch(function(){});
+    } else showApp();
+  } else showLogin();
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }
 </script>
 </body>
