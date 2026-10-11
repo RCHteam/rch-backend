@@ -337,7 +337,7 @@ module.exports = `<!doctype html>
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .cal-ev{ display:block; margin-top:3px; padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:700; line-height:1.3; color:#fff; background:var(--pitch); cursor:pointer; overflow:visible; white-space:normal; word-break:break-word; text-align:left; border:none; width:100%; font-family:inherit; }
   .cal-ev.fx{ box-shadow:inset 3px 0 0 rgba(0,0,0,.35); }
-  .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; }
+  .cal-ev.gold{ background:#c99a2e; color:#2a2100; } .cal-ev.red{ background:#b5482f; } .cal-ev.blue{ background:#2f6db5; } .cal-ev.gray{ background:#8a8f8c; }
   .cal-btn.on{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
   .cal-wrap{ background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden; border:1px solid #e3e3e3; }
   .cal-dow, .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }

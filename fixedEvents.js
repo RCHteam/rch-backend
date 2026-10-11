@@ -187,8 +187,104 @@ function attendanceReminders() {
   return out;
 }
 
+// ---------------------------------------------------------------------------------
+// TRAINING SCHEDULE. We train every Tuesday and Thursday, so one of these always shows
+// on both days. Which kind it is comes from the rules below (the handwritten plan).
+//   Nov 1 to Nov 20      practice on Plano city fields (lights needed, sunset about 5:30)
+//   Nov 21               season close, Thanksgiving week off
+//   Dec 1 to Dec 20      no field practice, cardio on Saturday and Sunday
+//   Dec 21 to Jan 4      break
+//   Jan 5 to Jan 18      cardio on Saturday and Sunday (Allen / Techiya)
+//   Jan 19 onward        Tuesday and Thursday practice again
+//   Every July           break
+//   Dec 2027 onward      break
+//   Mar 1 2027           PIT Plano negotiations
+// ---------------------------------------------------------------------------------
+const TRAIN_START = '17:00';
+const TRAIN_END = '18:15'; // 1 hour 15 minutes
+// Dec 1 to Jan 19 the session is shortened to 5:00 to 6:00 PM.
+const WINTER_END = '18:00';
+const TRAIN_FIRST_DAY = '2026-10-11';
+const TRAIN_LAST_DAY = '2028-12-31';
+
+// Returns { kind, label } for a date: 'practice' | 'off' | 'break'
+function trainingPhase(date) {
+  if (date >= '2027-12-01') return { kind: 'break', label: 'Break (December 2027 onward)' };
+  if (date.slice(5, 7) === '07') return { kind: 'break', label: 'July break' };
+  if (date >= '2026-11-21' && date <= '2026-11-30') return { kind: 'off', label: 'Season closed, Thanksgiving week' };
+  if (date >= '2026-12-01' && date <= '2026-12-20') return { kind: 'off', label: 'Off-season, weekend cardio only' };
+  if (date >= '2026-12-21' && date <= '2027-01-04') return { kind: 'break', label: 'Winter break' };
+  if (date >= '2027-01-05' && date <= '2027-01-18') return { kind: 'off', label: 'Off-season, weekend cardio only' };
+  if (date >= '2026-11-01' && date <= '2026-11-20') return { kind: 'practice', where: 'Plano city field (booked on Plano, lights needed)' };
+  return { kind: 'practice', where: '' };
+}
+
+function trainingDays() {
+  const out = [];
+  for (let d = new Date(TRAIN_FIRST_DAY + 'T00:00:00Z'); iso(d) <= TRAIN_LAST_DAY; d = new Date(d.getTime() + 86400000)) {
+    const dow = d.getUTCDay();
+    const date = iso(d);
+    const ph = trainingPhase(date);
+    if (dow === 2 || dow === 4) {
+      const name = dow === 2 ? 'Tuesday' : 'Thursday';
+      if (ph.kind === 'practice') {
+        const plano = date >= '2026-11-01' && date <= '2026-11-20';
+        out.push({
+          id: 'fx-train-' + date, fixed: true, title: name + ' Practice', date,
+          startTime: TRAIN_START, endTime: TRAIN_END, location: ph.where, color: 'green',
+          notes: [
+            'We train every Tuesday and Thursday, 5:00 to 6:15 PM. Every practice starts with laps around the field and ends with 1 v 1.',
+            plano ? '' : null,
+            plano ? 'Nov 1 to Nov 20: booked on Plano city fields. Daylight saving has ended, so it is dark early (sunset about 5:30) and we need the lights.' : null,
+            plano ? 'Plano books 2 to 10 days ahead and only one practice per week, so confirm how the second weekly practice is covered.' : null,
+            '',
+            'Coaches: take attendance at the start and the end, follow the curriculum and the coaching summary, and use the Practice Field plan to stay organized.',
+          ].filter((x) => x !== null).join('\n'),
+        });
+      } else {
+        out.push({
+          id: 'fx-train-' + date, fixed: true, title: 'No Practice: ' + name, date,
+          startTime: TRAIN_START, endTime: (date >= '2026-12-01' && date <= '2027-01-19') ? WINTER_END : TRAIN_END, location: '', color: 'gray',
+          notes: ph.label + '. We normally train every Tuesday and Thursday; this one is off.',
+        });
+      }
+    }
+    if ((dow === 6 || dow === 0) && ph.kind === 'off' && (date <= '2026-12-20' ? date >= '2026-12-01' : true)) {
+      const jan = date >= '2027-01-05';
+      out.push({
+        id: 'fx-cardio-' + date, fixed: true, title: 'Weekend Cardio' + (jan ? ': Allen / Techiya' : ''), date,
+        startTime: TRAIN_START, endTime: WINTER_END, location: jan ? 'Allen / Techiya' : '', color: 'blue',
+        notes: [
+          'Off-season cardio, Saturday and Sunday, 5:00 to 6:00 PM. No field booking is needed.',
+          jan ? 'January cardio is at Allen / Techiya.' : null,
+        ].filter((x) => x !== null).join('\n'),
+      });
+    }
+  }
+  return out;
+}
+
+function trainingMarkers() {
+  const m = (id, date, title, color, notes) => ({
+    id: 'fx-' + id, fixed: true, title, date, startTime: '09:00', endTime: '09:30', location: '', color, notes,
+  });
+  const out = [
+    m('seasonclose-2026-11-21', '2026-11-21', 'Season Close', 'red',
+      'Last day of the fall season (Thanksgiving week off). Weekend cardio runs from December 1.'),
+    m('break-2026-12-21', '2026-12-21', 'Break Starts', 'gray', 'Winter break, December 21 to January 4. No practice and no cardio.'),
+    m('resume-2027-01-19', '2027-01-19', 'Practice Resumes', 'green', 'Tuesday and Thursday practice, 5:00 to 6:15 PM, starts again. January cardio at Allen / Techiya ran from January 5.'),
+    m('pit-2027-03-01', '2027-03-01', 'PIT Plano Negotiations', 'gold',
+      'PIT Plano (next to Epic Masjid) starts club field negotiations in March. Call (972) 294-5569 and ask for: the hourly rate for one lit grass field, a discount for a weekly slot for the full season, whether lights and parking are included, the rain policy, and the insurance they need. Our planning estimate is about $60 per hour; their real price is not published.'),
+  ];
+  for (const y of [2027, 2028]) {
+    out.push(m('julybreak-' + y + '-07-01', y + '-07-01', 'July Break Starts', 'gray', 'No Tuesday or Thursday practice in July.'));
+  }
+  out.push(m('break-2027-12-01', '2027-12-01', 'Break Starts (December 2027 onward)', 'gray', 'The program is on break from December 2027 onward.'));
+  return out;
+}
+
 function fixedEvents() {
-  return [...socialPosts(), ...outings(), ...termDays(), ...attendanceReminders()];
+  return [...socialPosts(), ...outings(), ...termDays(), ...attendanceReminders(), ...trainingDays(), ...trainingMarkers()];
 }
 
 module.exports = { fixedEvents, BREAKS, TERMS };
