@@ -188,35 +188,47 @@ function attendanceReminders() {
 }
 
 // ---------------------------------------------------------------------------------
-// TRAINING SCHEDULE. We train every Tuesday and Thursday, so one of these always shows
-// on both days. Which kind it is comes from the rules below (the handwritten plan).
-//   Nov 1 to Nov 20      practice on Plano city fields (lights needed, sunset about 5:30)
-//   Nov 21               season close, Thanksgiving week off
-//   Dec 1 to Dec 20      no field practice, cardio on Saturday and Sunday
-//   Dec 21 to Jan 4      break
-//   Jan 5 to Jan 18      cardio on Saturday and Sunday (Allen / Techiya)
-//   Jan 19 onward        Tuesday and Thursday practice again
-//   Every July           break
-//   Dec 2027 onward      break
-//   Mar 1 2027           PIT Plano negotiations
+// TRAINING SCHEDULE. We train every Tuesday and Thursday, so one entry always shows on both
+// days: a practice, a short session, or "No Practice" with the reason.
+//   Until Nov 20          practice 5:00 to 6:15 (Nov 1 to Nov 20 booked on Plano city fields)
+//   Nov 21 to Nov 29      Thanksgiving week, no practice
+//   Nov 30 to Dec 14      cardio once a week, Saturday or Sunday
+//   Dec 15 to Dec 20      no practice
+//   Dec 21 to Jan 4       practice early, 4:30 to 5:30
+//   Jan 5 to Jan 18       Tuesday cardio, Thursday 5:00 to 5:45 skirmishes only
+//   Jan 19 to Feb 14      regular time, 5:00 to 6:00
+//   Feb 15 onward         back to 5:00 to 6:15
+//   Every July            break
+//   Dec 2027 onward       break
+//   Mar 1 2027            PIT Plano negotiations
 // ---------------------------------------------------------------------------------
-const TRAIN_START = '17:00';
-const TRAIN_END = '18:15'; // 1 hour 15 minutes
-// Dec 1 to Jan 19 the session is shortened to 5:00 to 6:00 PM.
-const WINTER_END = '18:00';
 const TRAIN_FIRST_DAY = '2026-10-11';
 const TRAIN_LAST_DAY = '2028-12-31';
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const BASE_NOTE = 'Every practice starts with laps around the field and ends with 1 v 1. Coaches: take attendance at the start and the end, follow the curriculum and the coaching summary, and use the Practice Field plan to stay organized.';
 
-// Returns { kind, label } for a date: 'practice' | 'off' | 'break'
-function trainingPhase(date) {
-  if (date >= '2027-12-01') return { kind: 'break', label: 'Break (December 2027 onward)' };
-  if (date.slice(5, 7) === '07') return { kind: 'break', label: 'July break' };
-  if (date >= '2026-11-21' && date <= '2026-11-30') return { kind: 'off', label: 'Season closed, Thanksgiving week' };
-  if (date >= '2026-12-01' && date <= '2026-12-20') return { kind: 'off', label: 'Off-season, weekend cardio only' };
-  if (date >= '2026-12-21' && date <= '2027-01-04') return { kind: 'break', label: 'Winter break' };
-  if (date >= '2027-01-05' && date <= '2027-01-18') return { kind: 'off', label: 'Off-season, weekend cardio only' };
-  if (date >= '2026-11-01' && date <= '2026-11-20') return { kind: 'practice', where: 'Plano city field (booked on Plano, lights needed)' };
-  return { kind: 'practice', where: '' };
+// What happens on a Tuesday (dow 2) or Thursday (dow 4).
+function tuThPhase(date, dow) {
+  const off = (label) => ({ kind: 'off', label });
+  if (date >= '2027-12-01') return off('Break (December 2027 onward)');
+  if (date.slice(5, 7) === '07') return off('July break');
+  if (date >= '2026-11-21' && date <= '2026-11-29') return off('Thanksgiving week, no practice');
+  if (date >= '2026-11-30' && date <= '2026-12-20') return off(date <= '2026-12-14' ? 'Cardio weeks: cardio once a week on Saturday or Sunday only' : 'No practice this week');
+  if (date >= '2026-12-21' && date <= '2027-01-04') return { kind: 'practice', start: '16:30', end: '17:30', title: 'Early Practice', note: 'Early winter practice, 4:30 to 5:30 PM (December 21 to January 4).' };
+  if (date >= '2027-01-05' && date <= '2027-01-18') {
+    return dow === 2
+      ? { kind: 'practice', start: '17:00', end: '17:45', title: 'Tuesday Cardio', where: 'Allen / Techiya', note: 'Tuesday cardio session, 5:00 to 5:45 PM (January 5 to January 18).' }
+      : { kind: 'practice', start: '17:00', end: '17:45', title: 'Thursday Skirmishes', note: '45 minutes, 5:00 to 5:45 PM, skirmishes only (January 5 to January 18).' };
+  }
+  if (date >= '2027-01-19' && date <= '2027-02-14') return { kind: 'practice', start: '17:00', end: '18:00', note: 'Regular winter time, 5:00 to 6:00 PM, until February 14.' };
+  const plano = date >= '2026-11-01' && date <= '2026-11-20';
+  return {
+    kind: 'practice', start: '17:00', end: '18:15',
+    where: plano ? 'Plano city field (booked on Plano, lights needed)' : '',
+    note: plano
+      ? '5:00 to 6:15 PM. Nov 1 to Nov 20: booked on Plano city fields. Daylight saving has ended, so it is dark early (sunset about 5:30) and we need the lights. Plano books 2 to 10 days ahead and only one practice per week, so confirm how the second weekly practice is covered.'
+      : '5:00 to 6:15 PM.',
+  };
 }
 
 function trainingDays() {
@@ -224,40 +236,29 @@ function trainingDays() {
   for (let d = new Date(TRAIN_FIRST_DAY + 'T00:00:00Z'); iso(d) <= TRAIN_LAST_DAY; d = new Date(d.getTime() + 86400000)) {
     const dow = d.getUTCDay();
     const date = iso(d);
-    const ph = trainingPhase(date);
     if (dow === 2 || dow === 4) {
-      const name = dow === 2 ? 'Tuesday' : 'Thursday';
+      const name = DAY_NAMES[dow];
+      const ph = tuThPhase(date, dow);
       if (ph.kind === 'practice') {
-        const plano = date >= '2026-11-01' && date <= '2026-11-20';
         out.push({
-          id: 'fx-train-' + date, fixed: true, title: name + ' Practice', date,
-          startTime: TRAIN_START, endTime: TRAIN_END, location: ph.where, color: 'green',
-          notes: [
-            'We train every Tuesday and Thursday, 5:00 to 6:15 PM. Every practice starts with laps around the field and ends with 1 v 1.',
-            plano ? '' : null,
-            plano ? 'Nov 1 to Nov 20: booked on Plano city fields. Daylight saving has ended, so it is dark early (sunset about 5:30) and we need the lights.' : null,
-            plano ? 'Plano books 2 to 10 days ahead and only one practice per week, so confirm how the second weekly practice is covered.' : null,
-            '',
-            'Coaches: take attendance at the start and the end, follow the curriculum and the coaching summary, and use the Practice Field plan to stay organized.',
-          ].filter((x) => x !== null).join('\n'),
+          id: 'fx-train-' + date, fixed: true, title: ph.title || (name + ' Practice'), date,
+          startTime: ph.start, endTime: ph.end, location: ph.where || '', color: 'green',
+          notes: ['We train every Tuesday and Thursday.', ph.note, '', BASE_NOTE].join('\n'),
         });
       } else {
         out.push({
           id: 'fx-train-' + date, fixed: true, title: 'No Practice: ' + name, date,
-          startTime: TRAIN_START, endTime: (date >= '2026-12-01' && date <= '2027-01-19') ? WINTER_END : TRAIN_END, location: '', color: 'gray',
+          startTime: '17:00', endTime: '18:15', location: '', color: 'gray',
           notes: ph.label + '. We normally train every Tuesday and Thursday; this one is off.',
         });
       }
     }
-    if ((dow === 6 || dow === 0) && ph.kind === 'off' && (date <= '2026-12-20' ? date >= '2026-12-01' : true)) {
-      const jan = date >= '2027-01-05';
+    // Cardio weeks, Nov 30 to Dec 14: one cardio session a week, Saturday or Sunday.
+    if (dow === 6 && date >= '2026-11-30' && date <= '2026-12-14') {
       out.push({
-        id: 'fx-cardio-' + date, fixed: true, title: 'Weekend Cardio' + (jan ? ': Allen / Techiya' : ''), date,
-        startTime: TRAIN_START, endTime: WINTER_END, location: jan ? 'Allen / Techiya' : '', color: 'blue',
-        notes: [
-          'Off-season cardio, Saturday and Sunday, 5:00 to 6:00 PM. No field booking is needed.',
-          jan ? 'January cardio is at Allen / Techiya.' : null,
-        ].filter((x) => x !== null).join('\n'),
+        id: 'fx-cardio-' + date, fixed: true, title: 'Weekly Cardio (Sat or Sun)', date,
+        startTime: '17:00', endTime: '18:00', location: '', color: 'blue',
+        notes: 'Cardio weeks (December 1 to 14): one cardio session a week, on Saturday or Sunday, whichever suits the group. No field booking is needed.',
       });
     }
   }
@@ -270,9 +271,11 @@ function trainingMarkers() {
   });
   const out = [
     m('seasonclose-2026-11-21', '2026-11-21', 'Season Close', 'red',
-      'Last day of the fall season (Thanksgiving week off). Weekend cardio runs from December 1.'),
-    m('break-2026-12-21', '2026-12-21', 'Break Starts', 'gray', 'Winter break, December 21 to January 4. No practice and no cardio.'),
-    m('resume-2027-01-19', '2027-01-19', 'Practice Resumes', 'green', 'Tuesday and Thursday practice, 5:00 to 6:15 PM, starts again. January cardio at Allen / Techiya ran from January 5.'),
+      'Thanksgiving week: no practice (November 21 to 29). Cardio weeks follow from December 1.'),
+    m('early-2026-12-21', '2026-12-21', 'Early Practice Starts', 'green', 'December 21 to January 4: Tuesday and Thursday practice, early, 4:30 to 5:30 PM.'),
+    m('jan-2027-01-05', '2027-01-05', 'Short Sessions Start', 'green', 'January 5 to January 18: Tuesday cardio, Thursday 5:00 to 5:45 PM skirmishes only.'),
+    m('resume-2027-01-19', '2027-01-19', 'Regular Winter Time', 'green', 'January 19 to February 14: Tuesday and Thursday practice, 5:00 to 6:00 PM.'),
+    m('full-2027-02-15', '2027-02-15', 'Back to 5:00 to 6:15', 'green', 'From February 15: Tuesday and Thursday practice goes back to 5:00 to 6:15 PM.'),
     m('pit-2027-03-01', '2027-03-01', 'PIT Plano Negotiations', 'gold',
       'PIT Plano (next to Epic Masjid) starts club field negotiations in March. Call (972) 294-5569 and ask for: the hourly rate for one lit grass field, a discount for a weekly slot for the full season, whether lights and parking are included, the rain policy, and the insurance they need. Our planning estimate is about $60 per hour; their real price is not published.'),
   ];
