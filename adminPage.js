@@ -1702,6 +1702,11 @@ module.exports = `<!doctype html>
   document.getElementById('ltAdmin').addEventListener('click', () => setLoginMode('admin'));
   document.getElementById('ltCoach').addEventListener('click', () => { setLoginMode('coach'); document.getElementById('cuser').focus(); });
   if ((location.hash || '') === '#coach') setLoginMode('coach');
+  // On coach.<domain> only the coach login exists; on admin.<domain> only the admin login. (The server sets this.)
+  if (window.RCH_LOGIN_ONLY === 'coach' || window.RCH_LOGIN_ONLY === 'admin') {
+    document.querySelector('#login-view .lt-row').style.display = 'none';
+    setLoginMode(window.RCH_LOGIN_ONLY);
+  }
 
   document.getElementById('loginBtn').addEventListener('click', async () => {
     loginError.textContent = '';

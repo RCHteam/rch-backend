@@ -51,6 +51,25 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), hand
 // Shop/Camp images are uploaded as (resized) data URLs, so allow a larger body.
 app.use(express.json({ limit: '6mb' }));
 
+// coach.<domain> is for coaches only, admin.<domain> for admins only. Each address refuses the
+// other kind of login on the server too, not just on the page.
+function loginHostMode(req) {
+  const host = String(req.hostname || '').toLowerCase();
+  if (host.startsWith('coach.')) return 'coach';
+  if (host.startsWith('admin.')) return 'admin';
+  return null;
+}
+app.use((req, res, next) => {
+  const mode = loginHostMode(req);
+  if (mode === 'coach' && req.path === '/api/admin/login') {
+    return res.status(403).json({ ok: false, error: 'Admin login is not available on this address.' });
+  }
+  if (mode === 'admin' && req.path === '/api/coach/login') {
+    return res.status(403).json({ ok: false, error: 'Coach login is not available on this address.' });
+  }
+  next();
+});
+
 const formLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 app.use('/api/register', formLimiter);
 app.use('/api/join', formLimiter);
@@ -84,7 +103,11 @@ app.get('/coach', (req, res) => res.redirect('/admin#coach'));
 
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
-  res.type('html').set('Cache-Control', 'no-store').send(adminPageHtml);
+  const mode = loginHostMode(req);
+  const html = mode
+    ? adminPageHtml.replace('</head>', '<script>window.RCH_LOGIN_ONLY=' + JSON.stringify(mode) + ';</script></head>')
+    : adminPageHtml;
+  res.type('html').set('Cache-Control', 'no-store').send(html);
 });
 
 // Installable-app (PWA) files for the admin dashboard: manifest, icons and a
