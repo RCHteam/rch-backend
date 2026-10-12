@@ -104,9 +104,17 @@ app.get('/coach', (req, res) => res.redirect('/admin#coach'));
 // Admin dashboard — served directly from a JS string, no static folder needed
 app.get('/admin', (req, res) => {
   const mode = loginHostMode(req);
-  const html = mode
-    ? adminPageHtml.replace('</head>', '<script>window.RCH_LOGIN_ONLY=' + JSON.stringify(mode) + ';</script></head>')
-    : adminPageHtml;
+  let html = adminPageHtml;
+  if (mode) {
+    // Each address gets its own tab title and icon: the logo with ADMIN (green) or COACHES (yellow).
+    const label = mode === 'coach' ? 'RCH Coaches' : 'RCH Admin';
+    const icon = mode === 'coach' ? 'coaches' : 'admin';
+    html = html
+      .replace(/<title>[^<]*<\/title>/, '<title>' + label + '</title>')
+      .replace('<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">', '<link rel="apple-touch-icon" href="/assets/touch-' + icon + '.png">')
+      .replace('content="RCH Admin">', 'content="' + label + '">')
+      .replace('</head>', '<link rel="icon" type="image/png" href="/assets/icon-' + icon + '.png"><script>window.RCH_LOGIN_ONLY=' + JSON.stringify(mode) + ';</script></head>');
+  }
   res.type('html').set('Cache-Control', 'no-store').send(html);
 });
 
@@ -114,21 +122,28 @@ app.get('/admin', (req, res) => {
 // minimal service worker. The worker deliberately caches nothing — the admin
 // always loads live data and the newest uploaded code.
 app.get('/manifest.webmanifest', (req, res) => {
+  const hostMode = loginHostMode(req);
+  const coachHost = hostMode === 'coach';
   res.type('application/manifest+json').set('Cache-Control', 'public, max-age=3600').json({
-    name: 'RCH Admin',
-    short_name: 'RCH Admin',
+    name: coachHost ? 'RCH Coaches' : 'RCH Admin',
+    short_name: coachHost ? 'RCH Coaches' : 'RCH Admin',
     description: 'RCH Elite Training admin dashboard',
-    start_url: '/admin',
+    start_url: coachHost ? '/' : '/admin',
     scope: '/',
     display: 'standalone',
     orientation: 'any',
     background_color: '#0c2a1c',
     theme_color: '#0c2a1c',
-    icons: [
-      { src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-    ],
+    icons: hostMode
+      ? [
+        { src: '/assets/icon-' + (coachHost ? 'coaches' : 'admin') + '.png', sizes: '256x256', type: 'image/png' },
+        { src: '/assets/icon512-' + (coachHost ? 'coaches' : 'admin') + '.png', sizes: '512x512', type: 'image/png' },
+      ]
+      : [
+        { src: '/assets/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/assets/icon-512.png', sizes: '512x512', type: 'image/png' },
+        { src: '/assets/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
   });
 });
 app.get('/sw.js', (req, res) => {
@@ -138,7 +153,8 @@ app.get('/sw.js', (req, res) => {
     "self.addEventListener('fetch',function(){});"
   );
 });
-['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'coach-uniform.jpg'].forEach((f) => {
+['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'coach-uniform.jpg',
+  'icon-admin.png', 'icon-coaches.png', 'touch-admin.png', 'touch-coaches.png', 'icon512-admin.png', 'icon512-coaches.png'].forEach((f) => {
   app.get('/assets/' + f, (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.sendFile(path.join(__dirname, 'assets', f));
