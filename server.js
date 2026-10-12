@@ -70,6 +70,15 @@ app.use('/api', outreachRoutes);
 app.use('/api', coachToolsRoutes);
 app.use('/api', siteContentRoutes);
 
+// Branded addresses: coach.<domain> opens the coach login, admin.<domain> opens the admin login.
+// (Only the bare address "/" is handled here, so the API and every other page stay as they are.)
+app.get('/', (req, res, next) => {
+  const host = String(req.hostname || '').toLowerCase();
+  if (host.startsWith('coach.')) return res.redirect('/admin#coach');
+  if (host.startsWith('admin.')) return res.redirect('/admin');
+  next();
+});
+
 // Short address for coaches: opens the dashboard login on the Coach tab.
 app.get('/coach', (req, res) => res.redirect('/admin#coach'));
 
