@@ -1,4 +1,5 @@
 const express = require('express');
+const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { syncCoachCharges } = require('./coachCharges');
@@ -48,7 +49,7 @@ router.post('/admin/coaches', requireAdmin, async (req, res) => {
           fixed_salary_cents, referral_rate_cents, players_referred)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
       [
-        name, first, last, email || '', phone || '', Array.isArray(grades) ? grades : [], !!rch, !!sultans, notes || '',
+        name, first, last, email || '', formatPhone(phone || ''), Array.isArray(grades) ? grades : [], !!rch, !!sultans, notes || '',
         role, qualifications || '', certificates || '', degree || '', employmentType,
         Math.max(0, Math.round(Number(fixedSalaryCents) || 0)),
         Math.max(0, Math.round(Number(referralRateCents) || 0)),
@@ -89,7 +90,7 @@ router.put('/admin/coaches/:id', requireAdmin, async (req, res) => {
       firstName: firstName !== undefined ? String(firstName).trim() : existing.first_name,
       lastName: lastName !== undefined ? String(lastName).trim() : existing.last_name,
       email: email !== undefined ? email : existing.email,
-      phone: phone !== undefined ? phone : existing.phone,
+      phone: phone !== undefined ? formatPhone(phone) : existing.phone,
       grades: grades !== undefined ? (Array.isArray(grades) ? grades : []) : existing.grades,
       rch: rch !== undefined ? !!rch : existing.rch,
       sultans: sultans !== undefined ? !!sultans : existing.sultans,

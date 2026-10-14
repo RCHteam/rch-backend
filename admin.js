@@ -1,4 +1,5 @@
 const express = require('express');
+const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
@@ -218,7 +219,7 @@ router.post('/admin/skills-registrations', requireAdmin, async (req, res) => {
         (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [fullName.trim(), parentName || '', dob, email.trim(), phone.trim(), team.trim(), experience || '', notes || '', jersey, grade || null, sessionType || null]
+      [fullName.trim(), parentName || '', dob, email.trim(), formatPhone(phone.trim()), team.trim(), experience || '', notes || '', jersey, grade || null, sessionType || null]
     );
     res.status(201).json({ ok: true, entry: insertRes.rows[0] });
   } catch (err) {
@@ -268,7 +269,7 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
        WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation || '', experience || '', availability || '',
-       parentName.trim(), email.trim(), phone.trim(), emName || '', emPhone || '', medical || '', jersey,
+       parentName.trim(), email.trim(), formatPhone(phone.trim()), emName || '', formatPhone(emPhone || ''), medical || '', jersey,
        sessionType || null, capacity]
     );
     if (!insertRes.rows[0]) {

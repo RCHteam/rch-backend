@@ -1450,7 +1450,7 @@ module.exports = `<!doctype html>
     <input type="text" data-datemask id="asDob">
     <div class="two-col">
       <div><label for="asEmail">Email</label><input type="email" id="asEmail"></div>
-      <div><label for="asPhone">Phone (+1 followed by 10 digits)</label><input type="text" id="asPhone" placeholder="+12145551234"></div>
+      <div><label for="asPhone">Phone</label><input type="text" id="asPhone" placeholder="+1 214-555-1234"></div>
     </div>
     <div class="two-col">
       <div>
@@ -1527,11 +1527,11 @@ module.exports = `<!doctype html>
       <div><label for="ajParentName">Parent name</label><input type="text" id="ajParentName"></div>
       <div><label for="ajEmail">Email</label><input type="email" id="ajEmail"></div>
     </div>
-    <label for="ajPhone">Phone (+1 followed by 10 digits)</label>
-    <input type="text" id="ajPhone" placeholder="+12145551234">
+    <label for="ajPhone">Phone</label>
+    <input type="text" id="ajPhone" placeholder="+1 214-555-1234">
     <div class="two-col">
       <div><label for="ajEmName">Emergency contact name</label><input type="text" id="ajEmName"></div>
-      <div><label for="ajEmPhone">Emergency contact phone</label><input type="text" id="ajEmPhone" placeholder="+12145551234"></div>
+      <div><label for="ajEmPhone">Emergency contact phone</label><input type="text" id="ajEmPhone" placeholder="+1 214-555-1234"></div>
     </div>
     <label for="ajMedical">Medical / allergies</label>
     <textarea id="ajMedical"></textarea>
@@ -4264,6 +4264,25 @@ module.exports = `<!doctype html>
       catch (err) { alert('Could not delete. Please try again.'); }
     });
   });
+
+  // Every phone box formats itself as +1 XXX-XXX-XXXX while typing.
+  (function(){
+    var PHONE_IDS = ['apParentPhone','epParentPhone','coachPhone','moveParentPhone','asPhone','ajPhone','ajEmPhone'];
+    function fmtPhone(v){
+      var d = String(v || '').replace(/\\D/g, '');
+      if (d.charAt(0) === '1') d = d.slice(1);
+      d = d.slice(0, 10);
+      if (!d) return '';
+      var out = '+1 ' + d.slice(0, 3);
+      if (d.length > 3) out += '-' + d.slice(3, 6);
+      if (d.length > 6) out += '-' + d.slice(6);
+      return out;
+    }
+    PHONE_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function(){ el.value = fmtPhone(el.value); });
+    });
+  })();
 
   // ===================== Shop and Camp (admin) =====================
   // Photos are resized in the browser (max 900px, JPEG) before upload so pages stay fast.

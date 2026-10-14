@@ -1,4 +1,5 @@
 const express = require('express');
+const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { sendJoinRegistrationEmails } = require('./email');
 const { getSetting } = require('./settings');
@@ -124,7 +125,7 @@ router.post('/join/:ageGroup', async (req, res) => {
        WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
-       parentName.trim(), email.trim(), phone.trim(), emName.trim(), emPhone.trim(), medical.trim(), jersey,
+       parentName.trim(), email.trim(), formatPhone(phone.trim()), emName.trim(), formatPhone(emPhone.trim()), medical.trim(), jersey,
        sessionType, capacity, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0,
        normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
     );

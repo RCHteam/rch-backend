@@ -1,4 +1,5 @@
 const express = require('express');
+const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { sendSkillsRegistrationEmails } = require('./email');
 const { getSetting } = require('./settings');
@@ -80,7 +81,7 @@ router.post('/register', async (req, res) => {
         (full_name, parent_name, dob, email, phone, team, experience, notes, jersey_number, grade, session_type, sibling_discount, shirt_size, session_day)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
-      [fullName.trim(), parentName.trim(), dob, email.trim(), phone.trim(), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0, normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
+      [fullName.trim(), parentName.trim(), dob, email.trim(), formatPhone(phone.trim()), team.trim(), experience || '', notes.trim(), jersey, grade, sessionType, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0, normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
     );
 
     const entry = insertRes.rows[0];

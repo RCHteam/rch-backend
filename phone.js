@@ -13,13 +13,22 @@ function formatPhone(raw) {
 // Rewrites every existing player's phone into the standard format.
 // Safe to run on every start-up: already-formatted numbers are skipped.
 async function migratePlayerPhones(pool) {
-  const r = await pool.query("SELECT id, parent_phone FROM players WHERE parent_phone IS NOT NULL AND parent_phone <> ''");
+  const targets = [
+    ['players', 'parent_phone'],
+    ['skills_registrations', 'phone'],
+    ['join_registrations', 'phone'],
+    ['join_registrations', 'emergency_phone'],
+    ['coaches', 'phone'],
+  ];
   let n = 0;
-  for (const row of r.rows) {
-    const f = formatPhone(row.parent_phone);
-    if (f !== row.parent_phone) {
-      await pool.query('UPDATE players SET parent_phone = $1 WHERE id = $2', [f, row.id]);
-      n++;
+  for (const [table, col] of targets) {
+    const r = await pool.query(`SELECT id, ${col} AS v FROM ${table} WHERE ${col} IS NOT NULL AND ${col} <> ''`);
+    for (const row of r.rows) {
+      const f = formatPhone(row.v);
+      if (f !== row.v) {
+        await pool.query(`UPDATE ${table} SET ${col} = $1 WHERE id = $2`, [f, row.id]);
+        n++;
+      }
     }
   }
   return n;
