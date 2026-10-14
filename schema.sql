@@ -374,6 +374,11 @@ CREATE TABLE IF NOT EXISTS outreach_requests (
 );
 -- Parents choose whether to share their name; anonymous answers keep no identity.
 ALTER TABLE outreach_requests ADD COLUMN IF NOT EXISTS anonymous BOOLEAN NOT NULL DEFAULT false;
+-- Third kind: 'size' (ask parents for each child's uniform size).
+ALTER TABLE outreach_requests ADD COLUMN IF NOT EXISTS children JSONB;
+ALTER TABLE outreach_requests ADD COLUMN IF NOT EXISTS sizes JSONB;
+ALTER TABLE outreach_requests DROP CONSTRAINT IF EXISTS outreach_requests_kind_check;
+ALTER TABLE outreach_requests ADD CONSTRAINT outreach_requests_kind_check CHECK (kind IN ('review', 'feedback', 'size'));
 CREATE INDEX IF NOT EXISTS idx_outreach_kind ON outreach_requests(kind, sent_at DESC);
 
 -- Curriculum: chapters per grade, entered under Coaches > Our Curriculum.

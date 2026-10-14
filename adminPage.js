@@ -978,6 +978,16 @@ module.exports = `<!doctype html>
       </div>
     </details>
 
+    <details class="panel" id="panelSizes">
+      <summary><span class="panel-title">Uniform Sizes</span><span class="panel-hint">Ask families for each child's size</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+        <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails families a link with our size chart and a size choice for each child, with a note to base it on their current Sultans FC jersey if they have one. Their answers show up here and are saved to the Size column of the Players Roster automatically.</p>
+        <div class="panel-actions"><button type="button" class="btn-add" id="sendSizesBtn">Send Size Request…</button></div>
+        <div id="sizesSummary" style="margin:6px 0 10px; font-size:0.9rem;"></div>
+        <div id="sizesTableWrap"></div>
+      </div>
+    </details>
+
     <details class="panel">
       <summary><span class="panel-title">Unsubscribed Players</span><span class="panel-hint">Archived players who quit</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
@@ -4166,10 +4176,10 @@ module.exports = `<!doctype html>
   }
   async function openOutreach(kind){
     outreachKind = kind;
-    document.getElementById('outreachTitle').textContent = kind === 'review' ? 'Send Review Request' : 'Send "What Can We Change?"';
+    document.getElementById('outreachTitle').textContent = kind === 'review' ? 'Send Review Request' : (kind === 'size' ? 'Send Size Request' : 'Send "What Can We Change?"');
     document.getElementById('outreachIntro').textContent = kind === 'review'
       ? 'Thanks families for their trust and asks for a star rating and a comment.'
-      : 'Asks families what we should change in our services.';
+      : (kind === 'size' ? "Asks families to choose each child's uniform size from our size chart." : 'Asks families what we should change in our services.');
     buildOutreachScopes();
     document.getElementById('osIndividualWrap').classList.add('hidden');
     document.getElementById('outreachErr1').textContent = '';
@@ -4185,6 +4195,7 @@ module.exports = `<!doctype html>
   }
   document.getElementById('sendReviewBtn').addEventListener('click', function(){ openOutreach('review'); });
   document.getElementById('sendFeedbackBtn').addEventListener('click', function(){ openOutreach('feedback'); });
+  document.getElementById('sendSizesBtn').addEventListener('click', function(){ openOutreach('size'); });
   document.getElementById('osScope').addEventListener('change', function(){
     document.getElementById('osIndividualWrap').classList.toggle('hidden', document.getElementById('osScope').value !== 'individual');
   });
@@ -4240,8 +4251,12 @@ module.exports = `<!doctype html>
     } catch (e) { errEl.textContent = 'Could not send. Please try again.'; btn.disabled = false; btn.textContent = 'Send'; }
   });
   function stars(n){ let s = ''; for (let i = 1; i <= 5; i++) s += i <= n ? '★' : '☆'; return s; }
+  function sizeAnswer(r){
+    var kids = r.children || [], sz = r.sizes || {};
+    return kids.map(function(k){ return k.name + ': ' + (sz[k.id] || '—'); }).join('\\n') || '—';
+  }
   async function loadOutreach(kind){
-    const prefix = kind === 'review' ? 'reviews' : 'feedback';
+    const prefix = kind === 'review' ? 'reviews' : (kind === 'size' ? 'sizes' : 'feedback');
     const data = await api('/api/admin/outreach?kind=' + kind);
     const sm = data.summary;
     document.getElementById(prefix + 'Summary').innerHTML = '<b>' + sm.sent + '</b> sent &middot; <b>' + sm.responded + '</b> answered' +
@@ -4252,15 +4267,15 @@ module.exports = `<!doctype html>
       data.rows.map(function(r){
         return '<tr><td>' + escapeHtml(fmtDate(r.sent_at)) + '</td><td>' + (r.anonymous ? '<i style="color:#888">Anonymous</i>' : escapeHtml(r.child_names || '') + '<br><span style="color:#888">' + escapeHtml(r.parent_name || '') + '</span>') + '</td><td>' + (GRADE_LABELS[r.grade] || '') + '</td>' +
           (kind === 'review' ? '<td>' + (r.rating != null ? '<span style="color:#d9a441; letter-spacing:2px;">' + stars(r.rating) + '</span>' : '<span style="color:#999">Waiting</span>') + '</td>' : '') +
-          '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? escapeHtml(r.comment || '—') : (kind === 'review' ? '' : '<span style="color:#999">Waiting</span>')) + '</td>' +
+          '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? (kind === 'size' ? escapeHtml(sizeAnswer(r)) : escapeHtml(r.comment || '—')) : (kind === 'review' ? '' : '<span style="color:#999">Waiting</span>')) + '</td>' +
           '<td><button type="button" class="btn-delete-row" data-oid="' + r.id + '">Delete</button></td></tr>';
       }).join('') + '</tbody></table>';
   }
-  ['reviewsTableWrap', 'feedbackTableWrap'].forEach(function(id){
+  ['reviewsTableWrap', 'feedbackTableWrap', 'sizesTableWrap'].forEach(function(id){
     document.getElementById(id).addEventListener('click', async function(e){
       const b = e.target.closest('button[data-oid]');
       if (!b || !confirm('Delete this entry?')) return;
-      try { await api('/api/admin/outreach/' + b.getAttribute('data-oid'), { method: 'DELETE' }); await loadOutreach(id === 'reviewsTableWrap' ? 'review' : 'feedback'); }
+      try { await api('/api/admin/outreach/' + b.getAttribute('data-oid'), { method: 'DELETE' }); await loadOutreach(id === 'reviewsTableWrap' ? 'review' : (id === 'sizesTableWrap' ? 'size' : 'feedback')); }
       catch (err) { alert('Could not delete. Please try again.'); }
     });
   });
@@ -4527,7 +4542,7 @@ module.exports = `<!doctype html>
     if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
     if (name === 'shop') await loadShopAdmin();
     if (name === 'camp') await loadCampAdmin();
-    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements(), loadOutreach('review'), loadOutreach('feedback')]); }
+    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements(), loadOutreach('review'), loadOutreach('feedback'), loadOutreach('size')]); }
   });
   let chargesLoaded = false;
   let coachesLoaded = false;

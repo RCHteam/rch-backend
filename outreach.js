@@ -3,11 +3,12 @@ const crypto = require('crypto');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { sendOutreachEmail } = require('./email');
+const { SIZE_GROUPS, VALID_SIZES } = require('./sizes');
 
 const router = express.Router();
 
 const GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
-const KINDS = new Set(['review', 'feedback']);
+const KINDS = new Set(['review', 'feedback', 'size']);
 
 function siteUrl(req) {
   return `${req.protocol}://${req.get('host')}`;
@@ -53,9 +54,10 @@ function groupByFamily(players) {
     const email = String(p.parent_email || '').trim().toLowerCase();
     if (!email) { noEmail.push(p.player_name); continue; }
     if (!families.has(email)) {
-      families.set(email, { email: p.parent_email.trim(), parentName: p.parent_name || '', grade: p.grade, playerId: p.id, children: [] });
+      families.set(email, { email: p.parent_email.trim(), parentName: p.parent_name || '', grade: p.grade, playerId: p.id, children: [], kids: [] });
     }
     families.get(email).children.push(p.player_name);
+    families.get(email).kids.push({ id: p.id, name: p.player_name });
   }
   return { families: [...families.values()], noEmail };
 }
@@ -76,7 +78,7 @@ router.get('/admin/outreach/recipients', requireAdmin, async (req, res) => {
 
 router.post('/admin/outreach/send', requireAdmin, async (req, res) => {
   const { kind, scope, grade, playerId } = req.body || {};
-  if (!KINDS.has(kind)) return res.status(400).json({ error: 'kind must be "review" or "feedback".' });
+  if (!KINDS.has(kind)) return res.status(400).json({ error: 'kind must be "review", "feedback" or "size".' });
   let players;
   try {
     players = await resolvePlayers({ scope, grade, playerId });
@@ -94,9 +96,9 @@ router.post('/admin/outreach/send', requireAdmin, async (req, res) => {
     try {
       const token = crypto.randomBytes(20).toString('hex');
       await pool.query(
-        `INSERT INTO outreach_requests (kind, token, player_id, child_names, parent_name, email, grade, audience)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [kind, token, f.playerId, f.children.join(', '), f.parentName, f.email, f.grade, audience]
+        `INSERT INTO outreach_requests (kind, token, player_id, child_names, parent_name, email, grade, audience, children)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [kind, token, f.playerId, f.children.join(', '), f.parentName, f.email, f.grade, audience, kind === 'size' ? JSON.stringify(f.kids) : null]
       );
       const result = await sendOutreachEmail({
         to: f.email, parentName: f.parentName, childNames: f.children, kind, link: `${siteUrl(req)}/feedback/${token}`,
@@ -115,7 +117,7 @@ router.get('/admin/outreach', requireAdmin, async (req, res) => {
   const kind = KINDS.has(req.query.kind) ? req.query.kind : null;
   try {
     const r = await pool.query(
-      `SELECT id, kind, child_names, parent_name, email, grade, audience, sent_at, responded_at, rating, comment, anonymous
+      `SELECT id, kind, child_names, parent_name, email, grade, audience, sent_at, responded_at, rating, comment, anonymous, children, sizes
        FROM outreach_requests ${kind ? 'WHERE kind = $1' : ''} ORDER BY COALESCE(responded_at, sent_at) DESC LIMIT 500`,
       kind ? [kind] : []
     );
@@ -150,18 +152,47 @@ router.delete('/admin/outreach/:id', requireAdmin, async (req, res) => {
 // server.js at /feedback/:token; these two endpoints feed it) ----
 router.get('/outreach/:token', async (req, res) => {
   try {
-    const r = await pool.query('SELECT kind, child_names, parent_name, responded_at FROM outreach_requests WHERE token = $1', [req.params.token]);
+    const r = await pool.query('SELECT kind, child_names, parent_name, responded_at, children FROM outreach_requests WHERE token = $1', [req.params.token]);
     const row = r.rows[0];
     if (!row) return res.status(404).json({ error: 'This link is not valid.' });
-    res.json({ kind: row.kind, childNames: row.child_names, parentName: row.parent_name, done: !!row.responded_at });
+    res.json({
+      kind: row.kind, childNames: row.child_names, parentName: row.parent_name, done: !!row.responded_at,
+      children: row.kind === 'size' ? (row.children || []) : undefined,
+      sizeGroups: row.kind === 'size' ? SIZE_GROUPS : undefined,
+    });
   } catch (err) {
     console.error('Outreach lookup error:', err);
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 
+// Parents pick a uniform size for each child. Saved on the request and
+// copied onto each child's player record (the roster's Size column).
+async function answerSizes(req, res) {
+  try {
+    const r = await pool.query('SELECT kind, responded_at, children FROM outreach_requests WHERE token = $1', [req.params.token]);
+    const row = r.rows[0];
+    if (!row || row.kind !== 'size') return res.status(404).json({ error: 'This link is not valid.' });
+    if (row.responded_at) return res.status(409).json({ error: 'Thank you — we already received your answer.' });
+    const kids = row.children || [];
+    const chosen = {};
+    for (const k of kids) {
+      const v = String((req.body.sizes || {})[k.id] || '').trim().toUpperCase();
+      if (!VALID_SIZES.has(v)) return res.status(400).json({ error: 'Please choose a size for ' + k.name + '.' });
+      chosen[k.id] = v;
+    }
+    await pool.query('UPDATE outreach_requests SET responded_at = now(), sizes = $1 WHERE token = $2 AND responded_at IS NULL', [JSON.stringify(chosen), req.params.token]);
+    for (const k of kids) await pool.query('UPDATE players SET shirt_size = $1 WHERE id = $2', [chosen[k.id], k.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Size answer error:', err);
+    res.status(500).json({ error: 'Could not save your answer. Please try again.' });
+  }
+}
+
 router.post('/outreach/:token', async (req, res) => {
-  const { rating, comment, anonymous } = req.body || {};
+  const { rating, comment, anonymous, sizes } = req.body || {};
+  if (req.body && sizes !== undefined) return answerSizes(req, res);
   if (typeof anonymous !== 'boolean') return res.status(400).json({ error: 'Please choose whether to share your name or stay anonymous.' });
   const text = String(comment || '').trim().slice(0, 4000);
   try {

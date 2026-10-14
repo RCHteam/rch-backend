@@ -219,6 +219,15 @@ async function sendOutreachEmail({ to, parentName, childNames, kind, link }) {
   const kids = childNames && childNames.length ? childNames.join(' & ') : 'your child';
   const safeKids = escHtml(kids);
   const btn = (label) => `<p style="text-align:center; margin:26px 0;"><a href="${link}" style="background:#164a30; color:#ffffff; text-decoration:none; padding:14px 26px; border-radius:8px; font-weight:700; display:inline-block;">${label}</a></p>`;
+  if (kind === 'size') {
+    const subject = `Uniform size for ${kids} — RCH Elite Training`;
+    const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
+      <p>We are getting uniforms ready and need the right size for ${safeKids}.</p>
+      <p>Please choose a size from our size chart. <b>If your child already has a Sultans FC jersey, base your answer on the size of that current jersey.</b></p>${btn('Choose uniform size')}
+      <p style="color:#777; font-size:0.85rem;">If the button doesn't work, copy this link: ${link}</p>`);
+    const text = `Hi ${firstName},\n\nWe are getting uniforms ready and need the right size for ${kids}. Please choose a size from our size chart. If your child already has a Sultans FC jersey, base your answer on the size of that current jersey.\n\n${link}\n\nThank you,\nRCH Elite Training`;
+    return sendEmail({ to, subject, html, text });
+  }
   if (kind === 'feedback') {
     const subject = 'What can we change? We want your honest feedback — RCH Elite Training';
     const html = brandedEmail(`<p>Hi ${escHtml(firstName)},</p>
