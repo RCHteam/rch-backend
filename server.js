@@ -207,10 +207,13 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 
+const { migratePlayerPhones } = require('./phone');
+
 async function ensureSchema() {
   const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   await pool.query(sql);
   console.log('✅ Database schema is ready.');
+  try { const n = await migratePlayerPhones(pool); console.log('✅ Player phone numbers formatted (' + n + ' updated).'); } catch (e) { console.error('Phone format migration failed:', e); }
   try { await seedCurricula(pool); console.log('✅ Curriculum chapters synced.'); } catch (e) { console.error('Curriculum sync failed:', e); }
 }
 

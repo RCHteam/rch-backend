@@ -17,6 +17,10 @@ module.exports = `<!doctype html>
   .stars button.on{ color:var(--gold); }
   label{ display:block; font-weight:600; font-size:.85rem; margin-bottom:6px; }
   textarea{ width:100%; min-height:120px; padding:12px; border:1px solid #ccc; border-radius:8px; font:inherit; resize:vertical; }
+  .anon{ margin-top:16px; }
+  .anonq{ font-weight:700; margin-bottom:6px; }
+  .opt{ display:flex; gap:8px; align-items:flex-start; margin:6px 0; font-weight:400; cursor:pointer; }
+  .opt input{ margin-top:4px; }
   .go{ width:100%; margin-top:18px; padding:14px; background:var(--pitch); color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; }
   .go:disabled{ opacity:.6; cursor:default; }
   .err{ color:#b5482f; font-size:.88rem; margin-top:10px; min-height:1.2em; }
@@ -36,6 +40,11 @@ module.exports = `<!doctype html>
     </div>
     <label for="comment" id="commentLabel">Comment</label>
     <textarea id="comment" maxlength="4000"></textarea>
+    <div class="anon" id="anonWrap">
+      <div class="anonq">How would you like to send this?</div>
+      <label class="opt"><input type="radio" name="anon" value="no"> Share my name with my answer</label>
+      <label class="opt"><input type="radio" name="anon" value="yes"> Stay anonymous &mdash; RCH will not see my name or email</label>
+    </div>
     <button class="go" id="submitBtn">Submit</button>
     <div class="err" id="err"></div>
   </div>
@@ -85,8 +94,10 @@ module.exports = `<!doctype html>
     if (kind === 'review' && !rating) { $('err').textContent = 'Please choose 1 to 5 stars.'; return; }
     var comment = $('comment').value.trim();
     if (kind === 'feedback' && !comment) { $('err').textContent = 'Please tell us what we could change.'; return; }
+    var choice = document.querySelector('input[name=anon]:checked');
+    if (!choice) { $('err').textContent = 'Please choose whether to share your name or stay anonymous.'; return; }
     var btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Sending…';
-    fetch('/api/outreach/' + encodeURIComponent(token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating: rating, comment: comment }) })
+    fetch('/api/outreach/' + encodeURIComponent(token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating: rating, comment: comment, anonymous: choice.value === 'yes' }) })
       .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
       .then(function(x){
         if (!x.ok) { $('err').textContent = x.j.error || 'Could not send. Please try again.'; btn.disabled = false; btn.textContent = 'Submit'; return; }

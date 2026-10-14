@@ -115,7 +115,7 @@ router.get('/admin/outreach', requireAdmin, async (req, res) => {
   const kind = KINDS.has(req.query.kind) ? req.query.kind : null;
   try {
     const r = await pool.query(
-      `SELECT id, kind, child_names, parent_name, email, grade, audience, sent_at, responded_at, rating, comment
+      `SELECT id, kind, child_names, parent_name, email, grade, audience, sent_at, responded_at, rating, comment, anonymous
        FROM outreach_requests ${kind ? 'WHERE kind = $1' : ''} ORDER BY COALESCE(responded_at, sent_at) DESC LIMIT 500`,
       kind ? [kind] : []
     );
@@ -161,7 +161,8 @@ router.get('/outreach/:token', async (req, res) => {
 });
 
 router.post('/outreach/:token', async (req, res) => {
-  const { rating, comment } = req.body || {};
+  const { rating, comment, anonymous } = req.body || {};
+  if (typeof anonymous !== 'boolean') return res.status(400).json({ error: 'Please choose whether to share your name or stay anonymous.' });
   const text = String(comment || '').trim().slice(0, 4000);
   try {
     const r = await pool.query('SELECT kind, responded_at FROM outreach_requests WHERE token = $1', [req.params.token]);
@@ -175,10 +176,20 @@ router.post('/outreach/:token', async (req, res) => {
     } else if (!text) {
       return res.status(400).json({ error: 'Please tell us what we could change.' });
     }
-    await pool.query(
-      'UPDATE outreach_requests SET responded_at = now(), rating = $1, comment = $2 WHERE token = $3 AND responded_at IS NULL',
-      [stars, text, req.params.token]
-    );
+    if (anonymous) {
+      // Respect the parent's choice: erase everything that could identify them.
+      await pool.query(
+        `UPDATE outreach_requests SET responded_at = now(), rating = $1, comment = $2, anonymous = true,
+           player_id = NULL, child_names = '', parent_name = '', email = 'anonymous', grade = NULL, audience = NULL
+         WHERE token = $3 AND responded_at IS NULL`,
+        [stars, text, req.params.token]
+      );
+    } else {
+      await pool.query(
+        'UPDATE outreach_requests SET responded_at = now(), rating = $1, comment = $2, anonymous = false WHERE token = $3 AND responded_at IS NULL',
+        [stars, text, req.params.token]
+      );
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error('Outreach answer error:', err);

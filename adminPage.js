@@ -4250,7 +4250,7 @@ module.exports = `<!doctype html>
     if (!data.rows.length) { wrap.innerHTML = '<div class="empty">Nothing sent yet.</div>'; return; }
     wrap.innerHTML = '<table><thead><tr><th>Sent</th><th>Family</th><th>Grade</th>' + (kind === 'review' ? '<th>Rating</th>' : '') + '<th>' + (kind === 'review' ? 'Comment' : 'Their answer') + '</th><th></th></tr></thead><tbody>' +
       data.rows.map(function(r){
-        return '<tr><td>' + escapeHtml(fmtDate(r.sent_at)) + '</td><td>' + escapeHtml(r.child_names || '') + '<br><span style="color:#888">' + escapeHtml(r.parent_name || '') + '</span></td><td>' + (GRADE_LABELS[r.grade] || '') + '</td>' +
+        return '<tr><td>' + escapeHtml(fmtDate(r.sent_at)) + '</td><td>' + (r.anonymous ? '<i style="color:#888">Anonymous</i>' : escapeHtml(r.child_names || '') + '<br><span style="color:#888">' + escapeHtml(r.parent_name || '') + '</span>') + '</td><td>' + (GRADE_LABELS[r.grade] || '') + '</td>' +
           (kind === 'review' ? '<td>' + (r.rating != null ? '<span style="color:#d9a441; letter-spacing:2px;">' + stars(r.rating) + '</span>' : '<span style="color:#999">Waiting</span>') + '</td>' : '') +
           '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? escapeHtml(r.comment || '—') : (kind === 'review' ? '' : '<span style="color:#999">Waiting</span>')) + '</td>' +
           '<td><button type="button" class="btn-delete-row" data-oid="' + r.id + '">Delete</button></td></tr>';

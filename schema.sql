@@ -372,6 +372,8 @@ CREATE TABLE IF NOT EXISTS outreach_requests (
   rating        INTEGER,
   comment       TEXT
 );
+-- Parents choose whether to share their name; anonymous answers keep no identity.
+ALTER TABLE outreach_requests ADD COLUMN IF NOT EXISTS anonymous BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS idx_outreach_kind ON outreach_requests(kind, sent_at DESC);
 
 -- Curriculum: chapters per grade, entered under Coaches > Our Curriculum.

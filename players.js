@@ -1,4 +1,5 @@
 const express = require('express');
+const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
@@ -103,7 +104,7 @@ router.post('/admin/players', requireAdmin, async (req, res) => {
         (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
-      [grade, playerName.trim(), dob || null, parentName || '', parentPhone || '', parentEmail || '',
+      [grade, playerName.trim(), dob || null, parentName || '', formatPhone(parentPhone || ''), parentEmail || '',
        session, !!rch, !!sultans, Number(discountCents) || 0, normalizeSibling(siblingDiscount),
        normalizeSize(shirtSize), normalizeDay(sessionDay, session)]
     );
@@ -141,7 +142,7 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
       playerName: playerName !== undefined ? playerName.trim() : existing.player_name,
       dob: dob !== undefined ? (dob || null) : existing.dob,
       parentName: parentName !== undefined ? parentName : existing.parent_name,
-      parentPhone: parentPhone !== undefined ? parentPhone : existing.parent_phone,
+      parentPhone: parentPhone !== undefined ? formatPhone(parentPhone) : existing.parent_phone,
       parentEmail: parentEmail !== undefined ? parentEmail : existing.parent_email,
       sessionType: sessionType !== undefined ? normalizeSessionType(sessionType) : existing.session_type,
       rch: rch !== undefined ? !!rch : existing.rch,
@@ -329,7 +330,7 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
         (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
-      [grade, playerName, dob || null, parentName || '', parentPhone || '', parentEmail || '',
+      [grade, playerName, dob || null, parentName || '', formatPhone(parentPhone || ''), parentEmail || '',
        normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0,
        siblingOverride !== undefined ? normalizeSibling(siblingOverride) : normalizeSibling(siblingDiscount),
        normalizeSize(sizeOverride !== undefined ? sizeOverride : srcSize),
