@@ -157,8 +157,9 @@ router.get('/outreach/:token', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'This link is not valid.' });
     res.json({
       kind: row.kind, childNames: row.child_names, parentName: row.parent_name, done: !!row.responded_at,
-      children: row.kind === 'size' ? (row.children || []) : undefined,
+      children: row.kind === 'size' ? await currentChildInfo(row.children || []) : undefined,
       sizeGroups: row.kind === 'size' ? SIZE_GROUPS : undefined,
+      grades: row.kind === 'size' ? GRADES : undefined,
     });
   } catch (err) {
     console.error('Outreach lookup error:', err);
@@ -166,8 +167,19 @@ router.get('/outreach/:token', async (req, res) => {
   }
 });
 
-// Parents pick a uniform size for each child. Saved on the request and
-// copied onto each child's player record (the roster's Size column).
+// Current values from the roster, so the form comes pre-filled to reconfirm.
+async function currentChildInfo(kids) {
+  const out = [];
+  for (const k of kids) {
+    const r = await pool.query("SELECT to_char(dob, 'YYYY-MM-DD') AS dob, grade, shirt_size FROM players WHERE id = $1", [k.id]);
+    const p = r.rows[0] || {};
+    out.push({ id: k.id, name: k.name, dob: p.dob || '', grade: p.grade || '', size: p.shirt_size || '' });
+  }
+  return out;
+}
+
+// Parents reconfirm each child's date of birth, school grade and jersey size.
+// Saved on the request and copied onto each child's player record.
 async function answerSizes(req, res) {
   try {
     const r = await pool.query('SELECT kind, responded_at, children FROM outreach_requests WHERE token = $1', [req.params.token]);
@@ -176,13 +188,24 @@ async function answerSizes(req, res) {
     if (row.responded_at) return res.status(409).json({ error: 'Thank you — we already received your answer.' });
     const kids = row.children || [];
     const chosen = {};
+    const answers = req.body.sizes || {};
     for (const k of kids) {
-      const v = String((req.body.sizes || {})[k.id] || '').trim().toUpperCase();
-      if (!VALID_SIZES.has(v)) return res.status(400).json({ error: 'Please choose a size for ' + k.name + '.' });
-      chosen[k.id] = v;
+      const a = answers[k.id] || {};
+      const size = String(a.size || '').trim().toUpperCase();
+      const grade = String(a.grade || '').trim();
+      const dob = String(a.dob || '').trim();
+      const d = /^\d{4}-\d{2}-\d{2}$/.test(dob) ? new Date(dob + 'T12:00:00Z') : null;
+      const age = d && !isNaN(d) ? (Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000) : -1;
+      if (!(age >= 1 && age <= 25)) return res.status(400).json({ error: 'Please enter a valid date of birth for ' + k.name + '.' });
+      if (!GRADES.includes(grade)) return res.status(400).json({ error: 'Please choose the current school grade for ' + k.name + '.' });
+      if (!VALID_SIZES.has(size)) return res.status(400).json({ error: 'Please choose a jersey size for ' + k.name + '.' });
+      chosen[k.id] = { dob, grade, size };
     }
     await pool.query('UPDATE outreach_requests SET responded_at = now(), sizes = $1 WHERE token = $2 AND responded_at IS NULL', [JSON.stringify(chosen), req.params.token]);
-    for (const k of kids) await pool.query('UPDATE players SET shirt_size = $1 WHERE id = $2', [chosen[k.id], k.id]);
+    for (const k of kids) {
+      const c = chosen[k.id];
+      await pool.query('UPDATE players SET dob = $1, grade = $2, shirt_size = $3 WHERE id = $4', [c.dob, c.grade, c.size, k.id]);
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error('Size answer error:', err);

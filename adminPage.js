@@ -979,10 +979,10 @@ module.exports = `<!doctype html>
     </details>
 
     <details class="panel" id="panelSizes">
-      <summary><span class="panel-title">Uniform Sizes</span><span class="panel-hint">Ask families for each child's size</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <summary><span class="panel-title">Update Child Information</span><span class="panel-hint">Families reconfirm birth date, grade and jersey size</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
-        <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails families a link with our size chart and a size choice for each child, with a note to base it on their current Sultans FC jersey if they have one. Their answers show up here and are saved to the Size column of the Players Roster automatically.</p>
-        <div class="panel-actions"><button type="button" class="btn-add" id="sendSizesBtn">Send Size Request…</button></div>
+        <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails families a link where they reconfirm each child's date of birth, current school grade and jersey size (the form comes pre-filled with what we have, with the size chart and a note to base the size on their current Sultans FC jersey). Their answers show up here and are saved to the Players Roster automatically, so a grade change moves the player to the new grade.</p>
+        <div class="panel-actions"><button type="button" class="btn-add" id="sendSizesBtn">Send Update Request…</button></div>
         <div id="sizesSummary" style="margin:6px 0 10px; font-size:0.9rem;"></div>
         <div id="sizesTableWrap"></div>
       </div>
@@ -4176,10 +4176,10 @@ module.exports = `<!doctype html>
   }
   async function openOutreach(kind){
     outreachKind = kind;
-    document.getElementById('outreachTitle').textContent = kind === 'review' ? 'Send Review Request' : (kind === 'size' ? 'Send Size Request' : 'Send "What Can We Change?"');
+    document.getElementById('outreachTitle').textContent = kind === 'review' ? 'Send Review Request' : (kind === 'size' ? 'Send Update Request' : 'Send "What Can We Change?"');
     document.getElementById('outreachIntro').textContent = kind === 'review'
       ? 'Thanks families for their trust and asks for a star rating and a comment.'
-      : (kind === 'size' ? "Asks families to choose each child's uniform size from our size chart." : 'Asks families what we should change in our services.');
+      : (kind === 'size' ? "Asks families to reconfirm each child's date of birth, school grade and jersey size." : 'Asks families what we should change in our services.');
     buildOutreachScopes();
     document.getElementById('osIndividualWrap').classList.add('hidden');
     document.getElementById('outreachErr1').textContent = '';
@@ -4253,7 +4253,11 @@ module.exports = `<!doctype html>
   function stars(n){ let s = ''; for (let i = 1; i <= 5; i++) s += i <= n ? '★' : '☆'; return s; }
   function sizeAnswer(r){
     var kids = r.children || [], sz = r.sizes || {};
-    return kids.map(function(k){ return k.name + ': ' + (sz[k.id] || '—'); }).join('\\n') || '—';
+    return kids.map(function(k){
+      var a = sz[k.id];
+      if (a && typeof a === 'object') return k.name + ': born ' + (a.dob || '—') + ' · ' + (GRADE_LABELS[a.grade] || a.grade || '—') + ' · size ' + (a.size || '—');
+      return k.name + ': ' + (a || '—');
+    }).join('\\n') || '—';
   }
   async function loadOutreach(kind){
     const prefix = kind === 'review' ? 'reviews' : (kind === 'size' ? 'sizes' : 'feedback');

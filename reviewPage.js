@@ -19,6 +19,9 @@ module.exports = `<!doctype html>
   textarea{ width:100%; min-height:120px; padding:12px; border:1px solid #ccc; border-radius:8px; font:inherit; resize:vertical; }
   .sizewrap{ margin-top:6px; }
   .note{ background:#f6f2e7; border-left:4px solid #d9a441; padding:10px 12px; border-radius:6px; font-size:.9rem; margin:0 0 16px; line-height:1.45; }
+  .kid{ border:1px solid #e3e3e3; border-radius:10px; padding:14px 14px 4px; margin-bottom:14px; }
+  .kidname{ font-weight:700; font-size:1.05rem; margin-bottom:8px; }
+  input.sz{ width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font:inherit; margin-bottom:12px; background:#fff; }
   select.sz{ width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font:inherit; margin-bottom:12px; background:#fff; }
   .size-chart{ margin:4px 0 8px; font-size:.82rem; } .size-chart summary{ cursor:pointer; text-decoration:underline; }
   .size-chart table{ width:100%; border-collapse:collapse; margin-top:8px; } .size-chart th,.size-chart td{ border:1px solid #ccc; padding:5px 8px; text-align:left; } .size-chart th{ background:#f3f3f3; } .size-chart p{ margin:6px 0 0; color:#666; }
@@ -44,7 +47,7 @@ module.exports = `<!doctype html>
       <div class="stars" id="stars" role="radiogroup" aria-label="Star rating"></div>
     </div>
     <div id="sizeWrap" class="sizewrap hidden">
-      <div class="note"><b>Please base your answer on your child's current Sultans FC jersey, if they have one.</b></div>
+      <div class="note">Please check each child's details below. <b>For the jersey size, base your answer on your child's current Sultans FC jersey, if they have one.</b></div>
       <div id="sizeRows"></div>
       <details class="size-chart" open><summary>Size chart</summary><table><thead><tr><th>Size</th><th>Fits</th><th>Chest (in)</th></tr></thead><tbody><tr><td>2T / 3T / 4T</td><td>Ages 1-4</td><td>26 / 28 / 30</td></tr><tr><td>Youth XS</td><td>U.S. 6/7</td><td>32</td></tr><tr><td>Youth S</td><td>U.S. 7/8</td><td>34</td></tr><tr><td>Youth M</td><td>U.S. 10/12</td><td>36</td></tr><tr><td>Youth L</td><td>U.S. 14/16</td><td>38</td></tr><tr><td>Youth XL</td><td>U.S. 18/20</td><td>40</td></tr><tr><td>Adult S</td><td></td><td>36</td></tr><tr><td>Adult M</td><td></td><td>40</td></tr><tr><td>Adult L</td><td></td><td>44</td></tr><tr><td>Adult XL</td><td></td><td>48</td></tr><tr><td>Adult 2XL / 3XL / 4XL</td><td></td><td>52 / 56 / 60</td></tr></tbody></table><p>Measure around the fullest part of the chest. Sizes are in inches.</p></details>
     </div>
@@ -93,12 +96,21 @@ module.exports = `<!doctype html>
       $('starsWrap').classList.remove('hidden'); drawStars();
       $('commentLabel').textContent = 'Your comment (optional)';
     } else if (kind === 'size') {
-      $('title').textContent = 'Uniform size';
-      $('intro').textContent = 'Please choose the uniform size for ' + kids + '.';
+      $('title').textContent = 'Update child information';
+      $('intro').textContent = 'Please confirm the date of birth, current school grade and jersey size for ' + kids + '.';
       $('textWrap').classList.add('hidden'); $('anonWrap').classList.add('hidden');
       children = x.j.children || [];
       var opts = '<option value="">Select a size</option>' + (x.j.sizeGroups || []).map(function(g){ return '<optgroup label="' + g.label + '">' + g.sizes.map(function(s){ return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</optgroup>'; }).join('');
-      $('sizeRows').innerHTML = children.map(function(c){ return '<label for="sz' + c.id + '">' + String(c.name).replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</label><select class="sz" id="sz' + c.id + '" data-id="' + c.id + '">' + opts + '</select>'; }).join('');
+      var esc = function(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+      var gl = { 'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade', '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade' };
+      $('sizeRows').innerHTML = children.map(function(c){
+        var gopts = '<option value="">Select a grade</option>' + (x.j.grades || []).map(function(g){ return '<option value="' + g + '"' + (c.grade === g ? ' selected' : '') + '>' + (gl[g] || g) + '</option>'; }).join('');
+        var sopts = opts.replace('value="' + c.size + '"', 'value="' + c.size + '" selected');
+        return '<div class="kid"><div class="kidname">' + esc(c.name) + '</div>' +
+          '<label for="dob' + c.id + '">Date of birth</label><input type="date" class="sz" id="dob' + c.id + '" value="' + esc(c.dob) + '">' +
+          '<label for="gr' + c.id + '">Current school grade</label><select class="sz" id="gr' + c.id + '">' + gopts + '</select>' +
+          '<label for="sz' + c.id + '">Jersey size</label><select class="sz" id="sz' + c.id + '">' + sopts + '</select></div>';
+      }).join('');
       $('sizeWrap').classList.remove('hidden');
     } else {
       $('title').textContent = 'What can we change?';
@@ -111,14 +123,18 @@ module.exports = `<!doctype html>
     $('err').textContent = '';
     if (kind === 'size') {
       var picked = {}, missing = '';
-      children.forEach(function(c){ var v = $('sz' + c.id).value; if (!v && !missing) missing = c.name; picked[c.id] = v; });
-      if (missing) { $('err').textContent = 'Please choose a size for ' + missing + '.'; return; }
+      children.forEach(function(c){
+        var v = { dob: $('dob' + c.id).value, grade: $('gr' + c.id).value, size: $('sz' + c.id).value };
+        if ((!v.dob || !v.grade || !v.size) && !missing) missing = c.name;
+        picked[c.id] = v;
+      });
+      if (missing) { $('err').textContent = 'Please fill in the date of birth, grade and jersey size for ' + missing + '.'; return; }
       var b2 = $('submitBtn'); b2.disabled = true; b2.textContent = 'Sending…';
       fetch('/api/outreach/' + encodeURIComponent(token), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sizes: picked }) })
         .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
         .then(function(x){
           if (!x.ok) { $('err').textContent = x.j.error || 'Could not send. Please try again.'; b2.disabled = false; b2.textContent = 'Submit'; return; }
-          $('thanksText').textContent = 'Thank you! We received the size(s).'; show('thanks');
+          $('thanksText').textContent = 'Thank you! We received the information.'; show('thanks');
         }).catch(function(){ $('err').textContent = 'Could not send. Please try again.'; b2.disabled = false; b2.textContent = 'Submit'; });
       return;
     }
