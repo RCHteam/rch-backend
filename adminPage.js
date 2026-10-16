@@ -503,6 +503,12 @@ module.exports = `<!doctype html>
         <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
       </div>
     </div>
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:0 0 12px;">
+      <input type="text" id="rosterSearch" placeholder="Search players, parents, phone, email…" style="flex:1; min-width:220px; max-width:380px; padding:10px 12px; border:1px solid #ccc; border-radius:6px; font:inherit;" autocomplete="off">
+      <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="rosterUnpaid" style="width:auto; margin:0;"> Unpaid</label>
+      <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="rosterNoAgreement" style="width:auto; margin:0;"> Agreement not sent</label>
+      <span id="rosterCount" style="color:#666; font-size:0.85rem;"></span>
+    </div>
     <div id="rosterTableWrap"></div>
 
     <div class="section-head">
@@ -2920,16 +2926,17 @@ module.exports = `<!doctype html>
     return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>';
   }
 
-  function renderRosterTable(rows){
-    if (!rows.length) return '<div class="empty">No players yet.</div>';
+  function renderRosterTable(rows, showGrade){
+    if (!rows.length) return '<div class="empty">' + (showGrade ? 'No players match.' : 'No players yet.') + '</div>';
     let html = '<table><thead><tr>' +
-      '<th>Name</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
+      '<th>Name</th>' + (showGrade ? '<th>Grade</th>' : '') + '<th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
       '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
       html += '<tr data-rid="player-' + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
+        (showGrade ? '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' : '') +
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
@@ -3033,9 +3040,27 @@ module.exports = `<!doctype html>
 
   async function loadRoster(){
     const grade = document.getElementById('rosterGradeFilter').value;
-    const rows = await api('/api/admin/players?grade=' + encodeURIComponent(grade));
+    const q = document.getElementById('rosterSearch').value.trim().toLowerCase();
+    const onlyUnpaid = document.getElementById('rosterUnpaid').checked;
+    const onlyNoAg = document.getElementById('rosterNoAgreement').checked;
+    const filtering = !!(q || onlyUnpaid || onlyNoAg);
+    // While searching or filtering, look across every grade instead of just the selected one.
+    let rows = await api(filtering ? '/api/admin/players' : '/api/admin/players?grade=' + encodeURIComponent(grade));
+    if (filtering) {
+      rows = rows.filter(function(r){
+        if (q) {
+          const hay = [r.player_name, r.parent_name, r.parent_phone, r.parent_email].join(' ').toLowerCase();
+          const digits = q.replace(/\\D/g, '');
+          if (hay.indexOf(q) === -1 && !(digits.length >= 3 && String(r.parent_phone || '').replace(/\\D/g, '').indexOf(digits) !== -1)) return false;
+        }
+        if (onlyUnpaid) { const l = paymentLabel(r); if (l === 'Paid' || l === 'Paid otherwise' || l.indexOf('Paused') === 0) return false; }
+        if (onlyNoAg && (r.agreement_signed_at || r.agreement_sent_at)) return false;
+        return true;
+      });
+    }
+    document.getElementById('rosterCount').textContent = filtering ? rows.length + (rows.length === 1 ? ' player' : ' players') + ' found (all grades)' : '';
     const wrap = document.getElementById('rosterTableWrap');
-    wrap.innerHTML = renderRosterTable(rows);
+    wrap.innerHTML = renderRosterTable(rows, filtering);
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
@@ -3124,6 +3149,10 @@ module.exports = `<!doctype html>
     });
   }
   document.getElementById('rosterGradeFilter').addEventListener('change', loadRoster);
+  let rosterSearchTimer = null;
+  document.getElementById('rosterSearch').addEventListener('input', function(){ clearTimeout(rosterSearchTimer); rosterSearchTimer = setTimeout(loadRoster, 250); });
+  document.getElementById('rosterUnpaid').addEventListener('change', loadRoster);
+  document.getElementById('rosterNoAgreement').addEventListener('change', loadRoster);
 
   function renderOverviewTable(overview){
     let html = '<table><thead><tr><th>Grade</th><th>Total Players</th><th>Total RCH</th>' +
