@@ -744,7 +744,7 @@ module.exports = `<!doctype html>
 
       <div id="coachSub-field" class="hidden">
         <div class="section-head"><h2>Practice Field</h2></div>
-        <div class="tool-row"><div class="grow"><label for="pfLayout">Field setup</label><select id="pfLayout"><option value="one">One 11v11 field</option><option value="two">2 x 7v7 fields</option></select></div><div class="grow hidden" id="pfDayWrap"><label for="pfDay">Days</label><select id="pfDay"><option value="mw">Monday &amp; Wednesday</option><option value="tt">Tuesday &amp; Thursday</option></select></div></div>
+        <div class="tool-row"><div class="grow"><label for="pfLayout">Field setup</label><select id="pfLayout"><option value="one">One 11v11 field</option><option value="two">2 x 7v7 fields</option></select></div></div>
         <p class="pf-intro" id="pfIntro">How we stay organized at practice: one field, four zones, one coach per zone, and Coach Ismail checking on everybody. Parents and supplies stay at the canopy behind the top goal.</p>
         <div class="tool-row">
           <div><button type="button" class="btn-add" id="pfPauseBtn">&#10074;&#10074; Pause</button></div>
@@ -756,7 +756,7 @@ module.exports = `<!doctype html>
         </div>
         <div id="pf7Box" class="pf-box" style="display:none">
           <div class="pf-bar"><span>Practice Field</span><button type="button" id="pf7CloseBtn">&#10005; Close full screen</button></div>
-          <div class="pf-svgwrap"><svg viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two 7v7 fields"></svg></div>
+          <div class="pf-svgwrap"><svg viewBox="0 0 700 1480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two 7v7 fields, Monday and Wednesday, and Tuesday and Thursday"></svg></div>
         </div>
         <div class="pf-banner" id="pfBannerText"></div>
       </div>
@@ -3856,16 +3856,21 @@ module.exports = `<!doctype html>
   (function(){
     var box=document.getElementById('pfBox'), box7=document.getElementById('pf7Box'); if(!box||!box7) return;
     var paused=false;
-    var layoutSel=document.getElementById('pfLayout'), daySel=document.getElementById('pfDay');
-    var ZONES={ mw:[['U4 & U5','U6'],['U7','U8']], tt:[['U9','U10'],['U11','U12']] };
+    var layoutSel=document.getElementById('pfLayout');
     var COLORS=['#5aa9ff','#F5B82E','#c77dff','#e5484d'];
     function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
     function r1(n){ return Math.round(n*10)/10; }
-    function build7(day){
-      var rand=rng(day==='mw'?11:29), W=700, H=700, out=[];
-      out.push('<defs><pattern id="pf7Net" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H8M0 0V8" stroke="#fff" stroke-opacity=".55" stroke-width="1"/></pattern></defs>');
-      out.push('<rect width="'+W+'" height="'+H+'" fill="#e9e2d0"/>');
-      // header: parents, canopy, water & tools
+    var SCENES=[
+      {title:'MONDAY & WEDNESDAY', fields:['U4, U5 & U6','U7 & U8'], seed:11, ismail:false},
+      {title:'TUESDAY & THURSDAY', fields:['U9 & U10','U11 & U12'], seed:29, ismail:true}
+    ];
+    var SCENE_H=740, TOP=36;
+    function esc(t){ return t.replace(/&/g,'&amp;'); }
+    function scene(sc, oy, zoneStart){
+      var rand=rng(sc.seed), out=[], gid='pf7Net'+oy;
+      out.push('<rect x="30" y="'+(oy+2)+'" width="640" height="28" rx="14" fill="#0c2a1c"/><text x="350" y="'+(oy+22)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="17" letter-spacing="3" fill="#f0c674">'+esc(sc.title)+'</text>');
+      out.push('<g transform="translate(0,'+(oy+TOP)+')">');
+      out.push('<defs><pattern id="'+gid+'" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H8M0 0V8" stroke="#fff" stroke-opacity=".55" stroke-width="1"/></pattern></defs>');
       out.push('<rect x="30" y="8" width="640" height="138" rx="14" fill="#dfe8d6"/>');
       out.push('<text x="130" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">PARENTS</text>');
       for(var i=0;i<8;i++){ var px=76+(i%4)*40, py=50+Math.floor(i/4)*44; out.push('<rect x="'+px+'" y="'+py+'" width="30" height="30" rx="7" fill="#fff" stroke="#9aa79e" stroke-width="2"/>'); if(i!==3&&i!==6) out.push('<circle cx="'+(px+15)+'" cy="'+(py+15)+'" r="9" fill="#d9b38c" stroke="#6b5a45" stroke-width="1.5"/>'); }
@@ -3874,63 +3879,64 @@ module.exports = `<!doctype html>
       out.push('<text x="550" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">WATER &amp; TOOLS</text>');
       out.push('<circle cx="478" cy="68" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><circle cx="478" cy="112" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><text x="478" y="143" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="#0c2a1c">WATER</text>');
       out.push('<rect x="515" y="52" width="130" height="46" rx="6" fill="#c08a52" stroke="#0c2a1c" stroke-width="2"/><polygon points="535,88 543,70 551,88" fill="#ff7a1a"/><polygon points="565,88 573,70 581,88" fill="#ff7a1a"/><polygon points="595,88 603,70 611,88" fill="#ff7a1a"/><circle cx="625" cy="118" r="15" fill="#fff" stroke="#0c2a1c" stroke-width="3"/>');
-      var FX=[40,370], FW=290, Y0=190, FH=460, ZH=FH/2, zoneNo=0;
+      var FX=[40,370], FW=290, Y0=190, FH=460, MID=Y0+FH/2, coachNo=0;
       for(var f=0;f<2;f++){
-        var x0=FX[f];
+        var x0=FX[f], col=COLORS[(zoneStart/2+f)%4], lab=sc.fields[f];
         out.push('<text x="'+(x0+FW/2)+'" y="166" text-anchor="middle" font-family="Anton,sans-serif" font-size="17" letter-spacing="2" fill="#0c2a1c">FIELD '+(f+1)+'</text>');
         out.push('<rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'" fill="#2e8553"/>');
         for(var s=0;s<5;s++) out.push('<rect x="'+x0+'" y="'+(Y0+s*92)+'" width="'+FW+'" height="46" fill="#2a7a4b"/>');
-        for(var z=0;z<2;z++){
-          var zy=Y0+z*ZH, col=COLORS[zoneNo%4], lab=ZONES[day][f][z];
-          out.push('<rect x="'+x0+'" y="'+zy+'" width="'+FW+'" height="'+ZH+'" fill="'+col+'" fill-opacity=".14"/>');
-        }
-        out.push('<g stroke="#fff" stroke-opacity=".9" stroke-width="2.4" fill="none"><rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'"/><line x1="'+x0+'" y1="'+(Y0+ZH)+'" x2="'+(x0+FW)+'" y2="'+(Y0+ZH)+'"/><circle cx="'+(x0+FW/2)+'" cy="'+(Y0+ZH)+'" r="42"/>'
+        out.push('<rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'" fill="'+col+'" fill-opacity=".14"/>');
+        out.push('<g stroke="#fff" stroke-opacity=".9" stroke-width="2.4" fill="none"><rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'"/><line x1="'+x0+'" y1="'+MID+'" x2="'+(x0+FW)+'" y2="'+MID+'"/><circle cx="'+(x0+FW/2)+'" cy="'+MID+'" r="42"/>'
           +'<rect x="'+(x0+70)+'" y="'+Y0+'" width="150" height="66"/><rect x="'+(x0+105)+'" y="'+Y0+'" width="80" height="24"/>'
           +'<rect x="'+(x0+70)+'" y="'+(Y0+FH-66)+'" width="150" height="66"/><rect x="'+(x0+105)+'" y="'+(Y0+FH-24)+'" width="80" height="24"/></g>');
-        out.push('<circle cx="'+(x0+FW/2)+'" cy="'+(Y0+ZH)+'" r="3.5" fill="#fff"/>');
-        out.push('<rect x="'+(x0+FW/2-28)+'" y="'+(Y0-18)+'" width="56" height="18" fill="url(#pf7Net)" stroke="#fff" stroke-width="3"/><rect x="'+(x0+FW/2-28)+'" y="'+(Y0+FH)+'" width="56" height="18" fill="url(#pf7Net)" stroke="#fff" stroke-width="3"/>');
-        for(var z2=0;z2<2;z2++){
-          var zy2=Y0+z2*ZH, c2=COLORS[zoneNo%4], lab2=ZONES[day][f][z2], bx=x0+30, by=zy2+34, bw=FW-60, bh=ZH-68;
-          // cones along one edge
-          for(var k=0;k<3;k++){ var cx=bx+20+k*((bw-40)/2), cy=z2===0?zy2+ZH-16:zy2+16; out.push('<polygon points="'+cx+','+(cy-5)+' '+(cx+4.5)+','+(cy+4)+' '+(cx-4.5)+','+(cy+4)+'" fill="#ff7a1a" stroke="#fff" stroke-width="1.2"/>'); }
-          // players
-          for(var p=0;p<12;p++){
-            var rx=12+rand()*20, ry=12+rand()*20;
-            var cx2=bx+rx+rand()*(bw-2*rx), cy2=by+ry+rand()*(bh-2*ry);
-            var dur=6+Math.floor(rand()*5), beg=-Math.floor(rand()*10), pc=p%2?'#5aa9ff':'#F28C28';
-            var path='M'+r1(cx2-rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2+rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2-rx)+','+r1(cy2)+' Z';
-            out.push('<g><circle r="8" fill="'+pc+'" stroke="#fff" stroke-width="2"/><circle r="2.8" cy="-1" fill="#fff" fill-opacity=".85"/><animateMotion dur="'+dur+'s" begin="'+beg+'s" repeatCount="indefinite" path="'+path+'"/></g>');
-          }
-          // ball
-          var b1=[bx+rand()*bw,by+rand()*bh],b2=[bx+rand()*bw,by+rand()*bh],b3=[bx+rand()*bw,by+rand()*bh];
-          out.push('<g><circle r="5" fill="#fff" stroke="#111" stroke-width="1.6"/><animateMotion dur="'+(7+z2*2)+'s" repeatCount="indefinite" path="M'+r1(b1[0])+','+r1(b1[1])+' L'+r1(b2[0])+','+r1(b2[1])+' L'+r1(b3[0])+','+r1(b3[1])+' Z"/></g>');
-          // coach
-          var coX=x0+36, coY=zy2+ZH/2;
-          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(zoneNo+1)+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">COACH</text>');
-          // label pill
-          var pw=Math.max(110,lab2.length*11+40), pxl=x0+FW/2-pw/2, pyl=z2===0?zy2+ZH-30:zy2+8;
-          out.push('<rect x="'+pxl+'" y="'+pyl+'" width="'+pw+'" height="24" rx="12" fill="#0c2a1c" stroke="'+c2+'" stroke-width="3"/><text x="'+(x0+FW/2)+'" y="'+(pyl+16.5)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="12" font-weight="700" fill="#fff">'+lab2.replace('&','&amp;')+'</text>');
-          zoneNo++;
+        out.push('<circle cx="'+(x0+FW/2)+'" cy="'+MID+'" r="3.5" fill="#fff"/>');
+        out.push('<rect x="'+(x0+FW/2-28)+'" y="'+(Y0-18)+'" width="56" height="18" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/><rect x="'+(x0+FW/2-28)+'" y="'+(Y0+FH)+'" width="56" height="18" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/>');
+        var bx=x0+30, by=Y0+34, bw=FW-60, bh=FH-68;
+        for(var k=0;k<6;k++){ var cx=bx+20+(k%3)*((bw-40)/2), cy=k<3?Y0+90:Y0+FH-90; out.push('<polygon points="'+cx+','+(cy-5)+' '+(cx+4.5)+','+(cy+4)+' '+(cx-4.5)+','+(cy+4)+'" fill="#ff7a1a" stroke="#fff" stroke-width="1.2"/>'); }
+        for(var p=0;p<24;p++){
+          var rx=12+rand()*24, ry=12+rand()*26;
+          var cx2=bx+rx+rand()*(bw-2*rx), cy2=by+ry+rand()*(bh-2*ry);
+          var dur=6+Math.floor(rand()*5), beg=-Math.floor(rand()*10), pc=p%2?'#5aa9ff':'#F28C28';
+          var path='M'+r1(cx2-rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2+rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2-rx)+','+r1(cy2)+' Z';
+          out.push('<g><circle r="8" fill="'+pc+'" stroke="#fff" stroke-width="2"/><circle r="2.8" cy="-1" fill="#fff" fill-opacity=".85"/><animateMotion dur="'+dur+'s" begin="'+beg+'s" repeatCount="indefinite" path="'+path+'"/></g>');
         }
+        for(var bl=0;bl<2;bl++){
+          var b1=[bx+rand()*bw,by+rand()*bh],b2=[bx+rand()*bw,by+rand()*bh],b3=[bx+rand()*bw,by+rand()*bh];
+          out.push('<g><circle r="5" fill="#fff" stroke="#111" stroke-width="1.6"/><animateMotion dur="'+(7+bl*2)+'s" repeatCount="indefinite" path="M'+r1(b1[0])+','+r1(b1[1])+' L'+r1(b2[0])+','+r1(b2[1])+' L'+r1(b3[0])+','+r1(b3[1])+' Z"/></g>');
+        }
+        for(var c=0;c<2;c++){
+          var coX=x0+36, coY=Y0+FH*(c?0.75:0.25);
+          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(++coachNo)+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">COACH</text>');
+        }
+        var pw=Math.max(120,lab.length*11+44), pxl=x0+FW/2-pw/2;
+        out.push('<rect x="'+pxl+'" y="'+(MID-12)+'" width="'+pw+'" height="26" rx="13" fill="#0c2a1c" stroke="'+col+'" stroke-width="3"/><text x="'+(x0+FW/2)+'" y="'+(MID+6)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" fill="#fff">'+esc(lab)+'</text>');
       }
-      // Coach Ismail walks the gap and the sidelines between both fields
-      out.push('<g><circle r="13" fill="#b5482f" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">I</text><text y="28" text-anchor="middle" font-family="Space Mono,monospace" font-size="8.5" font-weight="700" fill="#b5482f">ISMAIL</text><animateMotion dur="22s" repeatCount="indefinite" path="M350,200 L350,640 L350,200 Z"/></g>');
+      out.push('</g>');
+      return out.join('');
+    }
+    function build7(){
+      var out=['<rect width="700" height="'+(SCENE_H*2)+'" fill="#e9e2d0"/>'];
+      out.push(scene(SCENES[0],0,0)); out.push(scene(SCENES[1],SCENE_H,2));
+      // Coach Ismail: mostly with Tuesday & Thursday, a short visit to Monday & Wednesday
+      var g1=TOP+190+10, g2=SCENE_H+TOP+190+10, ln=440;
+      var ismail='<g><circle r="13" fill="#b5482f" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">I</text><text y="28" text-anchor="middle" font-family="Space Mono,monospace" font-size="8.5" font-weight="700" fill="#b5482f">ISMAIL</text>'
+        +'<animateMotion dur="40s" repeatCount="indefinite" calcMode="linear" path="M350,'+(g2)+' L350,'+(g2+ln)+' L350,'+(g2)+' L350,'+(g2+ln)+' L350,'+(g2)+' L350,'+(g1+ln)+' L350,'+(g1)+' L350,'+(g2)+' Z"/></g>';
+      out.push(ismail);
       return out.join('');
     }
     function active(){ return layoutSel.value==='two' ? box7 : box; }
     function apply(){
       var two=layoutSel.value==='two';
       box.style.display=two?'none':''; box7.style.display=two?'':'none';
-      document.getElementById('pfDayWrap').classList.toggle('hidden',!two);
-      document.getElementById('pfIntro').textContent=two
-        ? 'Two 7v7 fields, each split into two zones: four zones, one coach per zone, and Coach Ismail checking on everybody. Parents and supplies stay at the canopy.'
+            document.getElementById('pfIntro').textContent=two
+        ? 'Two 7v7 fields. Monday and Wednesday and Tuesday and Thursday are two different days, so each day has its own canopy, parents and coaches. Coach Ismail checks on everybody, mostly on Tuesday and Thursday.'
         : 'How we stay organized at practice: one field, four zones, one coach per zone, and Coach Ismail checking on everybody. Parents and supplies stay at the canopy behind the top goal.';
       document.getElementById('pfBannerText').innerHTML=two
-        ? '<b>Ideal: 12 to 15 players per zone</b>, one coach each (about 50 to 60 players across both fields).'
+        ? '<b>Two coaches on each field</b> (4 coaches per day). Monday and Wednesday: U4, U5 &amp; U6 on Field 1, U7 &amp; U8 on Field 2. Tuesday and Thursday: U9 &amp; U10 on Field 1, U11 &amp; U12 on Field 2.'
         : '<b>Ideal: 50 to 60 players on this field.</b> That is about 12 to 15 players per zone with one coach each. Above 60 players the field gets crowded and coaches lose control of their group.';
-      if(two){ var s7=box7.querySelector('svg'); s7.innerHTML=build7(daySel.value); s7.setAttribute('aria-label','Two 7v7 fields, '+(daySel.value==='mw'?'Monday and Wednesday':'Tuesday and Thursday')+': four zones with a coach in each'); if(paused) s7.pauseAnimations(); }
+      if(two){ var s7=box7.querySelector('svg'); s7.innerHTML=build7(); if(paused) s7.pauseAnimations(); }
     }
-    layoutSel.addEventListener('change',apply); daySel.addEventListener('change',apply);
+    layoutSel.addEventListener('change',apply);
     document.getElementById('pfPauseBtn').addEventListener('click',function(){
       var s=active().querySelector('svg'); paused=!paused;
       if(paused){ s.pauseAnimations(); this.innerHTML='&#9654; Play'; } else { s.unpauseAnimations(); this.innerHTML='&#10074;&#10074; Pause'; }
