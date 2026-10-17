@@ -491,14 +491,19 @@ module.exports = `<!doctype html>
       <h2>Players Roster</h2>
       <div style="display:flex; align-items:center; gap:14px;">
         <select id="rosterGradeFilter">
-          <option value="pre-k">Pre-K</option>
-          <option value="kindergarten">Kindergarten</option>
-          <option value="1st-grade">1st Grade</option>
-          <option value="2nd-grade">2nd Grade</option>
-          <option value="3rd-grade">3rd Grade</option>
-          <option value="4th-grade">4th Grade</option>
-          <option value="5th-grade">5th Grade</option>
-          <option value="6th-grade">6th Grade</option>
+          <option value="all">All players</option>
+          <option value="u5">U5</option>
+          <option value="u6">U6</option>
+          <option value="u7">U7</option>
+          <option value="u8">U8</option>
+          <option value="u9">U9</option>
+          <option value="u10">U10</option>
+          <option value="u11">U11</option>
+          <option value="u12">U12</option>
+          <option value="u13">U13</option>
+          <option value="u14+">U14 &amp; older</option>
+          <option value="u4-">U4 &amp; younger</option>
+          <option value="nodob">No birth date</option>
         </select>
         <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
       </div>
@@ -2926,17 +2931,36 @@ module.exports = `<!doctype html>
     return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>';
   }
 
+  // ---- Age groups (US Youth Soccer school-year rule: Aug 1 - Jul 31, from 2026-27) ----
+  function seasonStartYear(){ const n = new Date(); return n.getMonth() >= 7 ? n.getFullYear() : n.getFullYear() - 1; }
+  function ageNumber(dob){
+    const p = String(dob || '').slice(0, 10).split('-');
+    if (p.length !== 3 || !Number(p[0])) return null;
+    const y = Number(p[0]), m = Number(p[1]);
+    return seasonStartYear() - (m >= 8 ? y : y - 1);
+  }
+  function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : 'U' + n; }
+  function ageGroupKey(dob){
+    const n = ageNumber(dob);
+    if (n == null) return 'nodob';
+    if (n <= 4) return 'u4-';
+    if (n >= 14) return 'u14+';
+    return 'u' + n;
+  }
+  const AGE_TO_GRADE = { 5: 'pre-k', 6: 'kindergarten', 7: '1st-grade', 8: '2nd-grade', 9: '3rd-grade', 10: '4th-grade', 11: '5th-grade', 12: '6th-grade' };
+
   function renderRosterTable(rows, showGrade){
     if (!rows.length) return '<div class="empty">' + (showGrade ? 'No players match.' : 'No players yet.') + '</div>';
     let html = '<table><thead><tr>' +
-      '<th>Name</th>' + (showGrade ? '<th>Grade</th>' : '') + '<th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
+      '<th>Name</th><th>Age Group</th><th>School Grade</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
       '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
       html += '<tr data-rid="player-' + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
-        (showGrade ? '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' : '') +
+        '<td>' + escapeHtml(ageGroupLabel(r.dob)) + '</td>' +
+        '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
@@ -3045,7 +3069,9 @@ module.exports = `<!doctype html>
     const onlyNoAg = document.getElementById('rosterNoAgreement').checked;
     const filtering = !!(q || onlyUnpaid || onlyNoAg);
     // While searching or filtering, look across every grade instead of just the selected one.
-    let rows = await api(filtering ? '/api/admin/players' : '/api/admin/players?grade=' + encodeURIComponent(grade));
+    let rows = await api('/api/admin/players');
+    // The roster is divided by age group (from date of birth); school grade is still kept on every player.
+    if (!filtering && grade !== 'all') rows = rows.filter(function(r){ return ageGroupKey(r.dob) === grade; });
     if (filtering) {
       rows = rows.filter(function(r){
         if (q) {
@@ -3058,9 +3084,9 @@ module.exports = `<!doctype html>
         return true;
       });
     }
-    document.getElementById('rosterCount').textContent = filtering ? rows.length + (rows.length === 1 ? ' player' : ' players') + ' found (all grades)' : '';
+    document.getElementById('rosterCount').textContent = rows.length + (rows.length === 1 ? ' player' : ' players') + (filtering ? ' found (all age groups)' : '');
     const wrap = document.getElementById('rosterTableWrap');
-    wrap.innerHTML = renderRosterTable(rows, filtering);
+    wrap.innerHTML = renderRosterTable(rows, filtering || grade === 'all');
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
@@ -3647,7 +3673,7 @@ module.exports = `<!doctype html>
   });
 
   document.getElementById('addPlayerBtn').addEventListener('click', () => {
-    document.getElementById('apGrade').value = document.getElementById('rosterGradeFilter').value;
+    (function(){ const v = document.getElementById('rosterGradeFilter').value; const n = /^u(\\d+)$/.test(v) ? Number(v.slice(1)) : null; document.getElementById('apGrade').value = (n && AGE_TO_GRADE[n]) || 'pre-k'; })();
     ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
       document.getElementById(id).value = '';
     });
@@ -3694,9 +3720,12 @@ module.exports = `<!doctype html>
         errEl.textContent = result.error;
       } else {
         document.getElementById('addPlayerModal').classList.add('hidden');
-        if (document.getElementById('rosterGradeFilter').value === grade) {
-          await loadRoster();
-        }
+        // Show the age group the new player belongs to.
+        const dm = /^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/.exec(String(payload.dob || '').trim());
+        const gk = ageGroupKey(dm ? dm[3] + '-' + dm[1].padStart(2, '0') + '-' + dm[2].padStart(2, '0') : payload.dob);
+        const rf = document.getElementById('rosterGradeFilter');
+        if (rf.value !== 'all' && gk !== 'nodob') rf.value = gk; else if (rf.value !== 'all') rf.value = 'nodob';
+        await loadRoster();
         await loadOverviewAndRevenue();
       }
     } catch (e) {
@@ -4800,7 +4829,11 @@ module.exports = `<!doctype html>
     showSection('registrations');
     if (r.type === 'player') {
       const sel = document.getElementById('rosterGradeFilter');
-      if (sel.value !== r.grade) { sel.value = r.grade; await loadRoster(); }
+      if (sel.value !== 'all') { sel.value = 'all'; }
+      document.getElementById('rosterSearch').value = '';
+      document.getElementById('rosterUnpaid').checked = false;
+      document.getElementById('rosterNoAgreement').checked = false;
+      await loadRoster();
       flashRow('player-' + r.id);
     } else if (r.type === 'join') {
       const sel = document.getElementById('ageGroupFilter');
