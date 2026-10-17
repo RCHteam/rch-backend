@@ -436,14 +436,8 @@ module.exports = `<!doctype html>
     <div id="section-registrations">
 
     <div class="section-head">
-      <h2>Skills Training</h2>
+      <h2>New Registrations</h2>
       <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-        <label class="switch-row">
-          <input type="checkbox" id="skillsOpenToggle">
-          <span class="switch-track"><span class="switch-thumb"></span></span>
-          <span id="skillsOpenLabel">Registration open</span>
-          <span id="skillsOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
-        </label>
         <select id="skillsGradeFilter" title="Pick a grade to open/close just that grade; All grades = the whole Skills Training page">
           <option value="">All grades</option>
           <option value="pre-k">Pre-K</option>
@@ -455,22 +449,7 @@ module.exports = `<!doctype html>
           <option value="5th-grade">5th Grade</option>
           <option value="6th-grade">6th Grade</option>
         </select>
-        <button type="button" class="btn-add" id="addSkillsBtn">+ Add Registration</button>
-        <a class="btn-export" id="exportSkills" href="#">Export CSV</a>
-      </div>
-    </div>
-    <div id="skillsTableWrap"></div>
-
-    <div class="section-head">
-      <h2>Join Sultans FC</h2>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <label class="switch-row">
-          <input type="checkbox" id="joinOpenToggle">
-          <span class="switch-track"><span class="switch-thumb"></span></span>
-          <span id="joinOpenLabel">Registration open</span>
-          <span id="joinOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
-        </label>
-        <select id="ageGroupFilter">
+        <select id="ageGroupFilter" style="display:none">
           <option value="">All grades</option>
           <option value="pre-k">Pre-K</option>
           <option value="kindergarten">Kindergarten</option>
@@ -481,11 +460,27 @@ module.exports = `<!doctype html>
           <option value="5th-grade">5th Grade</option>
           <option value="6th-grade">6th Grade</option>
         </select>
-        <button type="button" class="btn-add" id="addJoinBtn">+ Add Registration</button>
-        <a class="btn-export" id="exportJoin" href="#">Export CSV</a>
+        <button type="button" class="btn-add" id="addSkillsBtn">+ Add Training</button>
+        <button type="button" class="btn-add" id="addJoinBtn">+ Add Sultans</button>
+        <a class="btn-export" id="exportSkills" href="#">Export Training CSV</a>
+        <a class="btn-export" id="exportJoin" href="#">Export Sultans CSV</a>
       </div>
     </div>
-    <div id="joinTableWrap"></div>
+    <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap; margin:0 0 12px;">
+      <label class="switch-row">
+        <input type="checkbox" id="skillsOpenToggle">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <b>Training:</b>&nbsp;<span id="skillsOpenLabel">Registration open</span>
+        <span id="skillsOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
+      </label>
+      <label class="switch-row">
+        <input type="checkbox" id="joinOpenToggle">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <b>Sultans:</b>&nbsp;<span id="joinOpenLabel">Registration open</span>
+        <span id="joinOpenGradeLabel" style="color:#888; font-weight:normal;"></span>
+      </label>
+    </div>
+    <div id="skillsTableWrap"></div>
 
     <div class="section-head">
       <h2>Players Roster</h2>
@@ -1921,7 +1916,7 @@ module.exports = `<!doctype html>
   });
 
   function wireMoveToRosterButtons(wrapId, sourceType, rows, onSent){
-    const wrap = document.getElementById(wrapId);
+    const wrap = typeof wrapId === 'string' ? document.getElementById(wrapId) : wrapId;
     wrap.querySelectorAll('.btn-move-to-roster').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
@@ -1932,7 +1927,7 @@ module.exports = `<!doctype html>
   }
 
   function wireAgreementButtons(wrapId, registrationType, onSent){
-    const wrap = document.getElementById(wrapId);
+    const wrap = typeof wrapId === 'string' ? document.getElementById(wrapId) : wrapId;
     wrap.querySelectorAll('.btn-send-agreement').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const label = btn.getAttribute('data-label') || 'this family';
@@ -1953,7 +1948,7 @@ module.exports = `<!doctype html>
   }
 
   function wirePaymentLinkButtons(wrapId, registrationType, onSent){
-    const wrap = document.getElementById(wrapId);
+    const wrap = typeof wrapId === 'string' ? document.getElementById(wrapId) : wrapId;
     wrap.querySelectorAll('.btn-payment-link').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
@@ -2775,7 +2770,7 @@ module.exports = `<!doctype html>
   });
 
   function wireDeleteButtons(wrapId, onDelete){
-    const wrap = document.getElementById(wrapId);
+    const wrap = typeof wrapId === 'string' ? document.getElementById(wrapId) : wrapId;
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
@@ -2850,59 +2845,57 @@ module.exports = `<!doctype html>
   function sessionsLabel(type, day){ const base = type === 'two' ? 'Two' : type === 'online' ? 'Online' : 'One'; return type === 'one' && day ? base + ' (' + (DAY_LABELS[day] || day) + ')' : base; }
   function addSiblingLabel(r){ return { ...r, sibling_label: r.sibling_discount ? r.sibling_discount + '% sibling' : '—', sessions_label: r.session_type ? sessionsLabel(r.session_type, r.session_day) : '—', size_label: r.shirt_size || '—' }; }
 
-  async function loadSkills(){
-    const rows = (await api('/api/admin/skills-registrations')).map(addSiblingLabel);
-    document.getElementById('skillsTableWrap').innerHTML = renderTable(rows.map(r => ({ ...r, email: emailDropdown(r.email), dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) })), [
-      { key:'jersey_number', label:'#' },
-      { key:'full_name', label:'Name' },
-      { key:'dob', label:'DOB' },
-      { key:'email', label:'Email' },
-      { key:'phone', label:'Phone' },
-      { key:'team', label:'Team' },
-      { key:'sessions_label', label:'Sessions' },
-      { key:'size_label', label:'Size' },
-      { key:'sibling_label', label:'Sibling' },
-      { key:'experience', label:'Experience' },
-      { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onMoveToRoster: true, labelKey: 'full_name', ridPrefix: 'skills-' });
-    wireDeleteButtons('skillsTableWrap', async (id) => {
-      await api('/api/admin/skills-registrations/' + id, { method: 'DELETE' });
-      await Promise.all([loadSummary(), loadSkills()]);
-    });
-    wireAgreementButtons('skillsTableWrap', 'skills');
-    wireMoveToRosterButtons('skillsTableWrap', 'skills', rows, async () => { await Promise.all([loadSummary(), loadSkills()]); });
-  }
-
   const GRADE_LABELS = {
     'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade',
     '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
   };
 
-  async function loadJoin(){
-    const ageGroup = document.getElementById('ageGroupFilter').value;
-    const rows = (await api('/api/admin/join-registrations' + (ageGroup ? '?ageGroup=' + encodeURIComponent(ageGroup) : ''))).map(addSiblingLabel);
-    const displayRows = rows.map(r => ({ ...r, email: emailDropdown(r.email), age_group: GRADE_LABELS[r.age_group] || r.age_group, dob: fmtDay(r.dob), submitted_at: fmtDate(r.submitted_at) }));
-    document.getElementById('joinTableWrap').innerHTML = renderTable(displayRows, [
-      { key:'jersey_number', label:'#' },
-      { key:'age_group', label:'Grade' },
-      { key:'child_name', label:'Player' },
-      { key:'dob', label:'DOB' },
-      { key:'parent_name', label:'Parent' },
-      { key:'email', label:'Email' },
-      { key:'phone', label:'Phone' },
-      { key:'availability', label:'Availability' },
-      { key:'sessions_label', label:'Sessions' },
-      { key:'size_label', label:'Size' },
-      { key:'sibling_label', label:'Sibling' },
-      { key:'submitted_at', label:'Submitted' },
-    ], { onDelete: true, onMoveToRoster: true, labelKey: 'child_name', ridPrefix: 'join-' });
-    wireDeleteButtons('joinTableWrap', async (id) => {
-      await api('/api/admin/join-registrations/' + id, { method: 'DELETE' });
-      await Promise.all([loadSummary(), loadJoin()]);
+  // One combined list: Sultans signups and Training-only signups together.
+  async function loadRegistrations(){
+    const grade = document.getElementById('skillsGradeFilter').value;
+    const [skillsAll, joinAll] = await Promise.all([api('/api/admin/skills-registrations'), api('/api/admin/join-registrations')]);
+    const skills = skillsAll.map(addSiblingLabel).filter(r => !grade || r.grade === grade);
+    const join = joinAll.map(addSiblingLabel).filter(r => !grade || r.age_group === grade);
+    const tag = (t) => t === 'join' ? '<span style="background:#1a4d2e;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;white-space:nowrap;">Sultans</span>' : '<span style="background:#d9a441;color:#111;border-radius:10px;padding:2px 8px;font-size:12px;white-space:nowrap;">Training only</span>';
+    const all = [
+      ...join.map(r => ({ r, t:'join' })),
+      ...skills.map(r => ({ r, t:'skills' })),
+    ].sort((x, y) => new Date(y.r.submitted_at) - new Date(x.r.submitted_at));
+    const wrap = document.getElementById('skillsTableWrap');
+    if (!all.length) { wrap.innerHTML = '<div class="empty">No entries yet.</div>'; return; }
+    const rows = all.map(({ r, t }) => ({
+      __rid: (t === 'join' ? 'join-' : 'skills-') + r.id, __id: r.id, __t: t,
+      type: tag(t), jersey_number: r.jersey_number ?? '',
+      name: t === 'join' ? r.child_name : r.full_name,
+      grade: GRADE_LABELS[t === 'join' ? r.age_group : r.grade] || (t === 'join' ? r.age_group : r.grade) || '',
+      dob: fmtDay(r.dob), parent: r.parent_name || '', email: emailDropdown(r.email), phone: r.phone || '',
+      sessions_label: r.sessions_label, size_label: r.size_label, sibling_label: r.sibling_label,
+      submitted_at: fmtDate(r.submitted_at),
+    }));
+    const cols = [['type','Type'],['jersey_number','#'],['name','Name'],['grade','Grade'],['dob','DOB'],['parent','Parent'],['email','Email'],['phone','Phone'],['sessions_label','Sessions'],['size_label','Size'],['sibling_label','Sibling'],['submitted_at','Submitted'],['','']];
+    let html = '<table><thead><tr>' + cols.map(c => '<th>' + c[1] + '</th>').join('') + '</tr></thead><tbody>';
+    for (const x of rows) {
+      const label = String(x.name || '').replace(/"/g, '&quot;');
+      html += '<tr data-rid="' + x.__rid + '">' + cols.slice(0, -1).map(c => '<td>' + (x[c[0]] ?? '') + '</td>').join('');
+      html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">'
+        + '<button type="button" class="btn-move-to-roster" data-id="' + x.__id + '" data-label="' + label + '">Move to Roster</button>'
+        + '<button type="button" class="btn-send-agreement" data-id="' + x.__id + '" data-label="' + label + '">Send Agreement</button>'
+        + '<button type="button" class="btn-delete-row" data-id="' + x.__id + '">Delete</button></td></tr>';
+    }
+    wrap.innerHTML = html + '</tbody></table>';
+    const reload = async () => { await Promise.all([loadSummary(), loadRegistrations()]); };
+    wrap.querySelectorAll('tr[data-rid]').forEach((tr) => {
+      const t = tr.getAttribute('data-rid').startsWith('join-') ? 'join' : 'skills';
+      wireDeleteButtons(tr, async (id) => {
+        await api('/api/admin/' + (t === 'join' ? 'join-registrations/' : 'skills-registrations/') + id, { method: 'DELETE' });
+        await reload();
+      });
+      wireAgreementButtons(tr, t);
+      wireMoveToRosterButtons(tr, t, t === 'join' ? join : skills, reload);
     });
-    wireAgreementButtons('joinTableWrap', 'join');
-    wireMoveToRosterButtons('joinTableWrap', 'join', rows, async () => { await Promise.all([loadSummary(), loadJoin()]); });
   }
+  const loadSkills = loadRegistrations;
+  const loadJoin = loadRegistrations;
 
   // ---- Players Roster, Season Overview, Pricing & Revenue ----
 
@@ -3813,8 +3806,7 @@ module.exports = `<!doctype html>
       if (ageGroup) params.set('ageGroup', ageGroup);
       window.open(API_BASE + '/api/admin/export/join.csv?' + params.toString());
     });
-    document.getElementById('ageGroupFilter').addEventListener('change', loadJoin);
-    document.getElementById('exportRosterLink').addEventListener('click', (e) => {
+        document.getElementById('exportRosterLink').addEventListener('click', (e) => {
       e.preventDefault();
       window.open(API_BASE + '/api/admin/export/roster.csv?token=' + encodeURIComponent(getToken()));
     });
@@ -4717,7 +4709,7 @@ module.exports = `<!doctype html>
       // it and prompt picking a specific grade instead.
       joinToggle.checked = false;
       joinToggle.disabled = true;
-      joinLabel.textContent = 'Select a grade to toggle';
+      joinLabel.textContent = 'Pick a grade to toggle';
       if (joinGradeLabel) joinGradeLabel.textContent = '';
       return;
     }
@@ -4728,7 +4720,10 @@ module.exports = `<!doctype html>
     if (joinGradeLabel) joinGradeLabel.textContent = '(' + (GRADE_LABELS[grade] || grade) + ')';
   }
 
-  document.getElementById('skillsGradeFilter').addEventListener('change', applySkillsToggle);
+  document.getElementById('skillsGradeFilter').addEventListener('change', () => {
+    document.getElementById('ageGroupFilter').value = document.getElementById('skillsGradeFilter').value;
+    applySkillsToggle(); applyJoinToggleForSelectedGrade(); loadRegistrations();
+  });
   document.getElementById('skillsOpenToggle').addEventListener('change', async (e) => {
     const toggle = e.target;
     const grade = document.getElementById('skillsGradeFilter').value;
@@ -4779,8 +4774,7 @@ module.exports = `<!doctype html>
     }
   });
 
-  document.getElementById('ageGroupFilter').addEventListener('change', applyJoinToggleForSelectedGrade);
-
+  
   // Everything the first screen needs loads at once. Pricing is needed before
   // the revenue table can draw, so that single dependency runs second. The
   // Finances-only panels (proration mode, reset info, one-time payments) wait
@@ -4795,7 +4789,7 @@ module.exports = `<!doctype html>
   async function loadAll(){
     financesLoaded = false;
     await Promise.all([
-      loadSummary(), loadSkills(), loadJoin(), loadSkillsToggle(), loadRoster(),
+      loadSummary(), loadRegistrations(), loadSkillsToggle(), loadRoster(),
       loadPricing(), loadPaymentPricing(),
     ]);
     await loadOverviewAndRevenue();
@@ -4902,8 +4896,8 @@ module.exports = `<!doctype html>
       await loadRoster();
       flashRow('player-' + r.id);
     } else if (r.type === 'join') {
-      const sel = document.getElementById('ageGroupFilter');
-      if (sel.value && sel.value !== r.grade) { sel.value = r.grade; applyJoinToggleForSelectedGrade(); await loadJoin(); }
+      const sel = document.getElementById('skillsGradeFilter');
+      if (sel.value && sel.value !== r.grade) { sel.value = ''; document.getElementById('ageGroupFilter').value = ''; applySkillsToggle(); applyJoinToggleForSelectedGrade(); await loadRegistrations(); }
       flashRow('join-' + r.id);
     } else {
       flashRow('skills-' + r.id);
