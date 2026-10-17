@@ -1,4 +1,5 @@
 const express = require('express');
+const { ageGroupLabel } = require('./ageGroups');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
@@ -47,7 +48,10 @@ async function generateSnapshot(monthDate) {
   const rates = { one: parseInt(oneCents, 10), two: parseInt(twoCents, 10), online: parseInt(onlineCents, 10) };
 
   const playersRes = await pool.query('SELECT * FROM players WHERE archived_at IS NULL ORDER BY grade, player_name');
-  const roster = playersRes.rows.map((p) => ({ ...p, discount_cents: effectiveDiscountCents(p, rates) }));
+  // Age group is stored with the snapshot, using the season that month belongs to.
+  const [snapY, snapM] = String(month).slice(0, 7).split('-').map(Number);
+  const snapDate = new Date(snapY, snapM - 1, 15);
+  const roster = playersRes.rows.map((p) => ({ ...p, age_group: ageGroupLabel(p.dob, snapDate), discount_cents: effectiveDiscountCents(p, rates) }));
 
   let totalRevenueCents = 0;
   for (const p of roster) {
@@ -163,7 +167,7 @@ router.get('/admin/monthly-snapshots/:month/csv', requireAdmin, async (req, res)
     if (!snap) return res.status(404).json({ error: 'No snapshot found for that month.' });
 
     const rows = snap.roster_json.map((p) => ({
-      grade: p.grade, player_name: p.player_name, session_type: p.session_type,
+      age_group: p.age_group || ageGroupLabel(p.dob), grade: p.grade, player_name: p.player_name, session_type: p.session_type,
       rch: p.rch, sultans: p.sultans, discount_cents: p.discount_cents,
       parent_name: p.parent_name, parent_email: p.parent_email, parent_phone: p.parent_phone,
     }));
@@ -204,7 +208,7 @@ router.get('/admin/export/roster.csv', requireAdmin, async (req, res) => {
     );
     res.set('Content-Type', 'text/csv');
     res.set('Content-Disposition', 'attachment; filename="players-roster.csv"');
-    res.send(toCsv(result.rows));
+    res.send(toCsv(result.rows.map((r) => ({ id: r.id, age_group: ageGroupLabel(r.dob), ...r }))));
   } catch (err) {
     console.error('Roster CSV export error:', err);
     res.status(500).json({ error: 'Could not export the roster.' });

@@ -1,3 +1,4 @@
+const { ageGroupLabel } = require('./ageGroups');
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM = process.env.CLUB_FROM_EMAIL;
 const NOTIFY = process.env.CLUB_NOTIFY_EMAIL;
@@ -85,19 +86,24 @@ async function sendSkillsRegistrationEmails(entry) {
   }
 }
 
+const GRADE_WORDS = { 'pre-k': 'Pre-K', 'kindergarten': 'Kindergarten', '1st-grade': '1st Grade', '2nd-grade': '2nd Grade', '3rd-grade': '3rd Grade', '4th-grade': '4th Grade', '5th-grade': '5th Grade', '6th-grade': '6th Grade' };
+
 async function sendJoinRegistrationEmails(entry) {
   const firstName = entry.parent_name.split(' ')[0];
+  // entry.age_group holds the school grade the family picked (e.g. "3rd-grade").
+  const gradeName = GRADE_WORDS[entry.age_group] || entry.age_group;
+  const uAge = ageGroupLabel(entry.dob);
   await sendEmail({
     to: entry.email,
-    subject: `You're on the team — Join Sultans FC (${entry.age_group})`,
-    html: brandedEmail(`<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
-    text: `Hi ${firstName},\n\n${entry.child_name} has signed up for the ${entry.age_group} team. A coordinator will reach out to you at ${entry.email} to start your first session.\n\nRCH Elite Training`,
+    subject: `You're on the team — Join Sultans FC (${gradeName})`,
+    html: brandedEmail(`<p>Hi ${firstName},</p><p>${entry.child_name} has signed up for the ${gradeName} team. A coordinator will reach out to you at ${entry.email} to start your first session.</p>`),
+    text: `Hi ${firstName},\n\n${entry.child_name} has signed up for the ${gradeName} team. A coordinator will reach out to you at ${entry.email} to start your first session.\n\nRCH Elite Training`,
   });
   if (NOTIFY) {
     await sendEmail({
       to: NOTIFY,
-      subject: `New Join Sultans FC registration: ${entry.child_name} (${entry.age_group})`,
-      html: `<p>${entry.child_name} (${entry.dob}), age group ${entry.age_group}.</p><p>Parent: ${entry.parent_name}<br/>Email: ${entry.email}<br/>Phone: ${entry.phone}</p><p>Experience: ${entry.experience}</p><p>Medical: ${entry.medical}</p>`,
+      subject: `New Join Sultans FC registration: ${entry.child_name} (${gradeName}${uAge ? ', ' + uAge : ''})`,
+      html: `<p>${entry.child_name} (${entry.dob}), grade: ${gradeName}${uAge ? ', age group: ' + uAge : ''}.</p><p>Parent: ${entry.parent_name}<br/>Email: ${entry.email}<br/>Phone: ${entry.phone}</p><p>Experience: ${entry.experience}</p><p>Medical: ${entry.medical}</p>`,
     });
   }
 }

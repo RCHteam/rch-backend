@@ -313,27 +313,32 @@ router.get('/admin/search', requireAdmin, async (req, res) => {
   const q = String(req.query.q || '').trim().slice(0, 80);
   if (q.length < 2) return res.json({ results: [] });
   const like = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+  const qd = q.replace(/\D/g, '');
+  const likeDigits = qd.length >= 3 ? '%' + qd + '%' : null; // phones are stored as +1 XXX-XXX-XXXX
   try {
     const [players, skills, join] = await Promise.all([
       pool.query(
-        `SELECT id, player_name, grade, parent_name, parent_email, parent_phone, session_type, sibling_discount, archived_at
+        `SELECT id, player_name, grade, dob, parent_name, parent_email, parent_phone, session_type, sibling_discount, archived_at
            FROM players
           WHERE player_name ILIKE $1 OR parent_name ILIKE $1 OR parent_email ILIKE $1 OR parent_phone ILIKE $1
-          ORDER BY (archived_at IS NOT NULL), player_name LIMIT 8`, [like]),
+             OR ($2::text IS NOT NULL AND regexp_replace(parent_phone, '\\D', '', 'g') LIKE $2)
+          ORDER BY (archived_at IS NOT NULL), player_name LIMIT 8`, [like, likeDigits]),
       pool.query(
         `SELECT id, full_name, grade, parent_name, email, phone, session_type, sibling_discount, moved_at
            FROM skills_registrations
           WHERE full_name ILIKE $1 OR parent_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1
-          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like]),
+             OR ($2::text IS NOT NULL AND regexp_replace(phone, '\\D', '', 'g') LIKE $2)
+          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like, likeDigits]),
       pool.query(
         `SELECT id, child_name, age_group, parent_name, email, phone, session_type, sibling_discount, moved_at
            FROM join_registrations
           WHERE child_name ILIKE $1 OR parent_name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1
-          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like]),
+             OR ($2::text IS NOT NULL AND regexp_replace(phone, '\\D', '', 'g') LIKE $2)
+          ORDER BY (moved_at IS NOT NULL), submitted_at DESC LIMIT 8`, [like, likeDigits]),
     ]);
     const results = [
       ...players.rows.map((r) => ({
-        type: 'player', id: r.id, name: r.player_name, grade: r.grade, parent: r.parent_name,
+        type: 'player', id: r.id, name: r.player_name, grade: r.grade, dob: r.dob, parent: r.parent_name,
         email: r.parent_email, phone: r.parent_phone, sessionType: r.session_type,
         sibling: r.sibling_discount, archived: !!r.archived_at,
       })),

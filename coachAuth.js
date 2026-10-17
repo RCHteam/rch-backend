@@ -1,6 +1,7 @@
 // Coach logins: admins create a username and code per coach; coaches log in with them and
 // can only use the few coach routes (see requireStaff in coachTools.js).
 const express = require('express');
+const { ageGroupLabel } = require('./ageGroups');
 const rateLimit = require('express-rate-limit');
 const pool = require('./pool');
 const { requireAdmin, requireStaff, makeCoachToken, hashCode, newSalt, generateCode, safeEqual } = require('./auth');
@@ -42,10 +43,10 @@ router.get('/coach/players', requireStaff, async (req, res) => {
   try {
     const grade = req.query.grade ? String(req.query.grade) : null;
     const r = await pool.query(
-      `SELECT id, player_name, grade, session_type, rch, sultans FROM players
+      `SELECT id, player_name, grade, dob, session_type, rch, sultans FROM players
         WHERE archived_at IS NULL ${grade ? 'AND grade = $1' : ''} ORDER BY player_name`,
       grade ? [grade] : []);
-    res.json(r.rows);
+    res.json(r.rows.map((p) => ({ ...p, age_group: ageGroupLabel(p.dob) })));
   } catch (err) {
     console.error('Coach players error:', err);
     res.json([]);

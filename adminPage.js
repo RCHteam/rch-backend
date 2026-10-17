@@ -491,8 +491,7 @@ module.exports = `<!doctype html>
       <h2>Players Roster</h2>
       <div style="display:flex; align-items:center; gap:14px;">
         <select id="rosterGradeFilter">
-          <option value="all">All players</option>
-          <option value="u5">U5</option>
+          <option value="u5-">U4 &amp; U5</option>
           <option value="u6">U6</option>
           <option value="u7">U7</option>
           <option value="u8">U8</option>
@@ -502,7 +501,6 @@ module.exports = `<!doctype html>
           <option value="u12">U12</option>
           <option value="u13">U13</option>
           <option value="u14+">U14 &amp; older</option>
-          <option value="u4-">U4 &amp; younger</option>
           <option value="nodob">No birth date</option>
         </select>
         <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
@@ -513,13 +511,19 @@ module.exports = `<!doctype html>
       <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="rosterUnpaid" style="width:auto; margin:0;"> Unpaid</label>
       <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="rosterNoAgreement" style="width:auto; margin:0;"> Agreement not sent</label>
       <span id="rosterCount" style="color:#666; font-size:0.85rem;"></span>
+      <span id="rosterNotice" style="font-size:0.85rem;"></span>
     </div>
     <div id="rosterTableWrap"></div>
 
     <div class="section-head">
-      <h2>Season Overview — All Grades</h2>
+      <h2>Season Overview — By School Grade</h2>
     </div>
     <div id="overviewTableWrap"></div>
+
+    <div class="section-head">
+      <h2>Season Overview — By Age Group</h2>
+    </div>
+    <div id="overviewAgeWrap"></div>
 
     </div><!-- /section-registrations -->
 
@@ -1133,6 +1137,7 @@ module.exports = `<!doctype html>
     <input type="text" id="apName">
     <label for="apDob">Date of birth</label>
     <input type="text" data-datemask id="apDob">
+    <div id="apAgeNote" style="font-size:0.82rem; color:#555; margin:-4px 0 8px; min-height:1.1em;"></div>
     <div class="two-col">
       <div><label for="apParentName">Parent name</label><input type="text" id="apParentName"></div>
       <div><label for="apParentPhone">Parent phone</label><input type="text" id="apParentPhone"></div>
@@ -1189,6 +1194,7 @@ module.exports = `<!doctype html>
     <input type="text" id="epName">
     <label for="epDob">Date of birth</label>
     <input type="text" data-datemask id="epDob">
+    <div id="epAgeNote" style="font-size:0.82rem; color:#555; margin:-4px 0 8px; min-height:1.1em;"></div>
     <div class="two-col">
       <div><label for="epParentName">Parent name</label><input type="text" id="epParentName"></div>
       <div><label for="epParentPhone">Parent phone</label><input type="text" id="epParentPhone"></div>
@@ -2932,22 +2938,42 @@ module.exports = `<!doctype html>
   }
 
   // ---- Age groups (US Youth Soccer school-year rule: Aug 1 - Jul 31, from 2026-27) ----
+  // U4 and U5 (and anything younger) are one group.
   function seasonStartYear(){ const n = new Date(); return n.getMonth() >= 7 ? n.getFullYear() : n.getFullYear() - 1; }
+  function dobToIso(v){
+    const t = String(v || '').trim();
+    const m = /^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/.exec(t);
+    if (m) return m[3] + '-' + m[1].padStart(2, '0') + '-' + m[2].padStart(2, '0');
+    return t.slice(0, 10);
+  }
   function ageNumber(dob){
-    const p = String(dob || '').slice(0, 10).split('-');
+    const p = dobToIso(dob).split('-');
     if (p.length !== 3 || !Number(p[0])) return null;
     const y = Number(p[0]), m = Number(p[1]);
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
-  function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : 'U' + n; }
+  function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + n); }
   function ageGroupKey(dob){
     const n = ageNumber(dob);
     if (n == null) return 'nodob';
-    if (n <= 4) return 'u4-';
+    if (n <= 5) return 'u5-';
     if (n >= 14) return 'u14+';
     return 'u' + n;
   }
+  const AGE_KEYS = ['u5-','u6','u7','u8','u9','u10','u11','u12','u13','u14+','nodob'];
+  const AGE_KEY_LABELS = { 'u5-':'U4 & U5', 'u6':'U6', 'u7':'U7', 'u8':'U8', 'u9':'U9', 'u10':'U10', 'u11':'U11', 'u12':'U12', 'u13':'U13', 'u14+':'U14 & older', 'nodob':'No birth date' };
+  const AGE_SCOPE_KEYS = AGE_KEYS.filter(function(k){ return k !== 'nodob'; });
+  // The school grade that usually matches each age group (used to flag odd matches).
   const AGE_TO_GRADE = { 5: 'pre-k', 6: 'kindergarten', 7: '1st-grade', 8: '2nd-grade', 9: '3rd-grade', 10: '4th-grade', 11: '5th-grade', 12: '6th-grade' };
+  function ageGradeMismatch(r){
+    const n = ageNumber(r.dob);
+    const gi = GRADES.indexOf(r.grade);
+    if (n == null || gi < 0 || n < 5 || n > 13) return false;
+    return Math.abs(gi - (n - 5)) >= 2;
+  }
+  function ageScopeOptions(prefix, label){
+    return '<optgroup label="' + label + '">' + AGE_SCOPE_KEYS.map(function(k){ return '<option value="' + prefix + ':' + k + '">' + AGE_KEY_LABELS[k] + '</option>'; }).join('') + '</optgroup>';
+  }
 
   function renderRosterTable(rows, showGrade){
     if (!rows.length) return '<div class="empty">' + (showGrade ? 'No players match.' : 'No players yet.') + '</div>';
@@ -2959,7 +2985,7 @@ module.exports = `<!doctype html>
       const label = escapeHtml(r.player_name);
       html += '<tr data-rid="player-' + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
-        '<td>' + escapeHtml(ageGroupLabel(r.dob)) + '</td>' +
+        '<td>' + escapeHtml(ageGroupLabel(r.dob)) + (ageGradeMismatch(r) ? ' <span title="The school grade and age group are far apart for this player. Check the date of birth and grade." style="color:#b5482f; cursor:help;">⚠</span>' : '') + '</td>' +
         '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
@@ -2997,6 +3023,18 @@ module.exports = `<!doctype html>
     return html;
   }
 
+  function showAgeNote(inputId, noteId){
+    const v = document.getElementById(inputId).value;
+    const el = document.getElementById(noteId);
+    const n = ageNumber(v);
+    el.textContent = n == null ? '' : 'Age group: ' + (n <= 5 ? 'U4 / U5' : 'U' + n) + ' (this season)';
+  }
+  ['apDob', 'epDob'].forEach(function(id){
+    const el = document.getElementById(id);
+    const note = id === 'apDob' ? 'apAgeNote' : 'epAgeNote';
+    ['input', 'change', 'blur'].forEach(function(ev){ el.addEventListener(ev, function(){ showAgeNote(id, note); }); });
+  });
+
   let editPlayerId = null;
 
   function openEditPlayerModal(player){
@@ -3004,6 +3042,7 @@ module.exports = `<!doctype html>
     document.getElementById('epGrade').value = player.grade;
     document.getElementById('epName').value = player.player_name || '';
     document.getElementById('epDob').value = player.dob || '';
+    showAgeNote('epDob', 'epAgeNote');
     document.getElementById('epParentName').value = player.parent_name || '';
     document.getElementById('epParentPhone').value = player.parent_phone || '';
     document.getElementById('epParentEmail').value = player.parent_email || '';
@@ -3070,8 +3109,9 @@ module.exports = `<!doctype html>
     const filtering = !!(q || onlyUnpaid || onlyNoAg);
     // While searching or filtering, look across every grade instead of just the selected one.
     let rows = await api('/api/admin/players');
+    const everyone = rows;
     // The roster is divided by age group (from date of birth); school grade is still kept on every player.
-    if (!filtering && grade !== 'all') rows = rows.filter(function(r){ return ageGroupKey(r.dob) === grade; });
+    if (!filtering) rows = rows.filter(function(r){ return ageGroupKey(r.dob) === grade; });
     if (filtering) {
       rows = rows.filter(function(r){
         if (q) {
@@ -3086,7 +3126,12 @@ module.exports = `<!doctype html>
     }
     document.getElementById('rosterCount').textContent = rows.length + (rows.length === 1 ? ' player' : ' players') + (filtering ? ' found (all age groups)' : '');
     const wrap = document.getElementById('rosterTableWrap');
-    wrap.innerHTML = renderRosterTable(rows, filtering || grade === 'all');
+    const missingDob = everyone.filter(function(r){ return !String(r.dob || '').slice(0, 10); }).length;
+    const noticeEl = document.getElementById('rosterNotice');
+    noticeEl.innerHTML = missingDob ? '<a href="#" id="rosterNoDobLink" style="color:#b5482f; font-weight:600;">' + missingDob + (missingDob === 1 ? ' player has' : ' players have') + ' no birth date — click to see them</a>' : '';
+    const nl = document.getElementById('rosterNoDobLink');
+    if (nl) nl.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('rosterGradeFilter').value = 'nodob'; loadRoster(); });
+    wrap.innerHTML = renderRosterTable(rows, filtering);
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
@@ -3179,6 +3224,26 @@ module.exports = `<!doctype html>
   document.getElementById('rosterSearch').addEventListener('input', function(){ clearTimeout(rosterSearchTimer); rosterSearchTimer = setTimeout(loadRoster, 250); });
   document.getElementById('rosterUnpaid').addEventListener('change', loadRoster);
   document.getElementById('rosterNoAgreement').addEventListener('change', loadRoster);
+
+  function renderAgeOverview(players){
+    const g = {};
+    AGE_KEYS.forEach(function(k){ g[k] = { players:0, rch:0, sultans:0, both:0, one:0, two:0, online:0 }; });
+    players.forEach(function(p){
+      const o = g[ageGroupKey(p.dob)];
+      o.players++; if (p.rch) o.rch++; if (p.sultans) o.sultans++; if (p.rch && p.sultans) o.both++;
+      if (p.session_type === 'one') o.one++; else if (p.session_type === 'two') o.two++; else if (p.session_type === 'online') o.online++;
+    });
+    let html = '<table><thead><tr><th>Age Group</th><th>Total Players</th><th>Total RCH</th><th>Total Sultans</th><th>Total Both</th><th>Total One Session</th><th>Total Two Session</th><th>Total Online</th></tr></thead><tbody>';
+    const t = { players:0, rch:0, sultans:0, both:0, one:0, two:0, online:0 };
+    AGE_KEYS.forEach(function(k){
+      const o = g[k];
+      if ((k === 'u14+' || k === 'nodob') && !o.players) return;
+      Object.keys(t).forEach(function(f){ t[f] += o[f]; });
+      html += '<tr><td>' + AGE_KEY_LABELS[k] + '</td><td>' + o.players + '</td><td>' + o.rch + '</td><td>' + o.sultans + '</td><td>' + o.both + '</td><td>' + o.one + '</td><td>' + o.two + '</td><td>' + o.online + '</td></tr>';
+    });
+    html += '<tr class="grand-total"><td>GRAND TOTAL</td><td>' + t.players + '</td><td>' + t.rch + '</td><td>' + t.sultans + '</td><td>' + t.both + '</td><td>' + t.one + '</td><td>' + t.two + '</td><td>' + t.online + '</td></tr></tbody></table>';
+    return html;
+  }
 
   function renderOverviewTable(overview){
     let html = '<table><thead><tr><th>Grade</th><th>Total Players</th><th>Total RCH</th>' +
@@ -3286,6 +3351,7 @@ module.exports = `<!doctype html>
     lastOverview = overview;
     lastChargesCents = currentMonthChargesCents(charges);
     document.getElementById('overviewTableWrap').innerHTML = renderOverviewTable(overview);
+    try { document.getElementById('overviewAgeWrap').innerHTML = renderAgeOverview(await api('/api/admin/players')); } catch (e) { document.getElementById('overviewAgeWrap').innerHTML = ''; }
     document.getElementById('revenueTableWrap').innerHTML = renderRevenueTable(overview, currentPricing, lastChargesCents);
   }
 
@@ -3491,7 +3557,8 @@ module.exports = `<!doctype html>
     GRADES.forEach((g) => { html += '<option value="rch_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
     html += '</optgroup><optgroup label="Sultans — Specific Grade">';
     GRADES.forEach((g) => { html += '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
-    html += '</optgroup><option value="individual">Individual player…</option>';
+    html += '</optgroup>' + ageScopeOptions('age', 'A Specific Age Group (any program)') + ageScopeOptions('rch_age', 'RCH — Age Group') + ageScopeOptions('sultans_age', 'Sultans — Age Group');
+    html += '<option value="individual">Individual player…</option>';
     sel.innerHTML = html;
   }
 
@@ -3539,6 +3606,9 @@ module.exports = `<!doctype html>
     if (value.indexOf('grade:') === 0) return { scope: 'grade', grade: value.slice(6) };
     if (value.indexOf('rch_grade:') === 0) return { scope: 'rch_grade', grade: value.slice(10) };
     if (value.indexOf('sultans_grade:') === 0) return { scope: 'sultans_grade', grade: value.slice(14) };
+    if (value.indexOf('rch_age:') === 0) return { scope: 'rch_age', grade: value.slice(8) };
+    if (value.indexOf('sultans_age:') === 0) return { scope: 'sultans_age', grade: value.slice(12) };
+    if (value.indexOf('age:') === 0) return { scope: 'age', grade: value.slice(4) };
     return { scope: value, grade: null };
   }
 
@@ -3673,10 +3743,11 @@ module.exports = `<!doctype html>
   });
 
   document.getElementById('addPlayerBtn').addEventListener('click', () => {
-    (function(){ const v = document.getElementById('rosterGradeFilter').value; const n = /^u(\\d+)$/.test(v) ? Number(v.slice(1)) : null; document.getElementById('apGrade').value = (n && AGE_TO_GRADE[n]) || 'pre-k'; })();
+    (function(){ const v = document.getElementById('rosterGradeFilter').value; const n = v === 'u5-' ? 5 : (/^u(\\d+)$/.test(v) ? Number(v.slice(1)) : null); document.getElementById('apGrade').value = (n && AGE_TO_GRADE[n]) || 'pre-k'; })();
     ['apName','apDob','apParentName','apParentPhone','apParentEmail'].forEach((id) => {
       document.getElementById(id).value = '';
     });
+    document.getElementById('apAgeNote').textContent = '';
     document.getElementById('apSessions').value = 'one';
     document.getElementById('apRch').checked = false;
     document.getElementById('apSultans').checked = false;
@@ -3721,10 +3792,7 @@ module.exports = `<!doctype html>
       } else {
         document.getElementById('addPlayerModal').classList.add('hidden');
         // Show the age group the new player belongs to.
-        const dm = /^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/.exec(String(payload.dob || '').trim());
-        const gk = ageGroupKey(dm ? dm[3] + '-' + dm[1].padStart(2, '0') + '-' + dm[2].padStart(2, '0') : payload.dob);
-        const rf = document.getElementById('rosterGradeFilter');
-        if (rf.value !== 'all' && gk !== 'nodob') rf.value = gk; else if (rf.value !== 'all') rf.value = 'nodob';
+        document.getElementById('rosterGradeFilter').value = ageGroupKey(payload.dob);
         await loadRoster();
         await loadOverviewAndRevenue();
       }
@@ -3922,7 +3990,7 @@ module.exports = `<!doctype html>
     const players = await api((isCoach() ? '/api/coach/players' : '/api/admin/players') + (grade ? '?grade=' + encodeURIComponent(grade) : ''));
     repPlayers = Array.isArray(players) ? players : [];
     childSel.innerHTML = repPlayers.length
-      ? '<option value="">— Choose a child —</option>' + repPlayers.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + (grade ? '' : ' — ' + (GRADE_LABELS[p.grade] || p.grade)) + '</option>'; }).join('')
+      ? '<option value="">— Choose a child —</option>' + repPlayers.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + (p.dob ? ' (' + ageGroupLabel(p.dob) + ')' : '') + (grade ? '' : ' — ' + (GRADE_LABELS[p.grade] || p.grade)) + '</option>'; }).join('')
       : '<option value="">No players in this grade</option>';
     await loadRepChapters(grade);
   }
@@ -4219,6 +4287,7 @@ module.exports = `<!doctype html>
     html += '<optgroup label="A Specific Grade (any program)">' + GRADES.map(function(g){ return '<option value="grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
     html += '<optgroup label="RCH — Specific Grade">' + GRADES.map(function(g){ return '<option value="rch_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
     html += '<optgroup label="Sultans — Specific Grade">' + GRADES.map(function(g){ return '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += ageScopeOptions('age', 'A Specific Age Group (any program)') + ageScopeOptions('rch_age', 'RCH — Age Group') + ageScopeOptions('sultans_age', 'Sultans — Age Group');
     html += '<option value="individual">Individual player…</option>';
     document.getElementById('osScope').innerHTML = html;
   }
@@ -4795,7 +4864,7 @@ module.exports = `<!doctype html>
           '<span class="sr-type t-' + r.type + '">' + TYPE_LABEL[r.type] + '</span>' +
           '<span class="sr-name">' + escapeHtml(r.name) + '</span>' +
           '<span class="sr-tag">' + escapeHtml(tag) + '</span>' +
-          '<span class="sr-meta">' + [GRADE_LABELS[r.grade] || r.grade, sess, r.parent, r.email, r.phone].filter(Boolean).map(escapeHtml).join(' · ') + '</span>' +
+          '<span class="sr-meta">' + [r.type === 'player' && r.dob ? ageGroupLabel(r.dob) : '', GRADE_LABELS[r.grade] || r.grade, sess, r.parent, r.email, r.phone].filter(Boolean).map(escapeHtml).join(' · ') + '</span>' +
           '</div>';
       }).join('');
     }
@@ -4829,7 +4898,7 @@ module.exports = `<!doctype html>
     showSection('registrations');
     if (r.type === 'player') {
       const sel = document.getElementById('rosterGradeFilter');
-      if (sel.value !== 'all') { sel.value = 'all'; }
+      sel.value = ageGroupKey(r.dob);
       document.getElementById('rosterSearch').value = '';
       document.getElementById('rosterUnpaid').checked = false;
       document.getElementById('rosterNoAgreement').checked = false;

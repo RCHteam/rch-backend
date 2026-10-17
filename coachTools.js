@@ -1,4 +1,5 @@
 const express = require('express');
+const { ageGroupLabel } = require('./ageGroups');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const pool = require('./pool');
@@ -489,6 +490,8 @@ function buildAttendancePdf({ grades, byGrade, ym }) {
             doc.font('Helvetica').fontSize(10).fillColor('#000000');
             doc.text(String(i + 1), left + 4, y + 8, { width: 18 });
             doc.text(p.player_name, left + 22, y + 8, { width: nameW - 6 });
+            const ag = ageGroupLabel(p.dob);
+            if (ag) doc.font('Helvetica').fontSize(8).fillColor('#888888').text(ag, left + 22, y + 9, { width: nameW - 8, align: 'right' });
             const sess = p.session_type === 'two' ? '2 / week' : (p.session_type === 'online' ? 'Online' : (p.session_day === 'tuesday' ? '1 (Tue)' : p.session_day === 'thursday' ? '1 (Thu)' : '1 / week'));
             doc.fontSize(9).fillColor('#444444').text(sess, left + 22 + nameW, y + 8, { width: sessW });
             days.forEach((d, k) => {
@@ -521,7 +524,7 @@ router.get('/admin/attendance/pdf', requireStaff, async (req, res) => {
     if (!wantAll && !GRADES.includes(req.query.grade)) return res.status(400).json({ error: 'Please choose a grade.' });
     const grades = wantAll ? GRADES : [req.query.grade];
     const r = await pool.query(
-      `SELECT player_name, grade, session_type, session_day FROM players
+      `SELECT player_name, grade, dob, session_type, session_day FROM players
        WHERE archived_at IS NULL AND grade = ANY($1) ORDER BY grade, player_name`,
       [grades]
     );
