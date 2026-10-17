@@ -756,7 +756,7 @@ module.exports = `<!doctype html>
         </div>
         <div id="pf7Box" class="pf-box" style="display:none">
           <div class="pf-bar"><span>Practice Field</span><button type="button" id="pf7CloseBtn">&#10005; Close full screen</button></div>
-          <div class="pf-svgwrap"><svg viewBox="0 0 700 1480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two 7v7 fields, Monday and Wednesday, and Tuesday and Thursday"></svg></div>
+          <div class="pf-svgwrap"><svg viewBox="0 0 1400 910" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two 7v7 fields, Monday and Wednesday, and Tuesday and Thursday"></svg></div>
         </div>
         <div class="pf-banner" id="pfBannerText"></div>
       </div>
@@ -3861,40 +3861,39 @@ module.exports = `<!doctype html>
     function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
     function r1(n){ return Math.round(n*10)/10; }
     var SCENES=[
-      {title:'MONDAY & WEDNESDAY', fields:['U4, U5 & U6','U7 & U8'], seed:11, ismail:false},
-      {title:'TUESDAY & THURSDAY', fields:['U9 & U10','U11 & U12'], seed:29, ismail:true}
+      {title:'MONDAY & WEDNESDAY', halves:['U4, U5 & U6','U7 & U8'], seed:11},
+      {title:'TUESDAY & THURSDAY', halves:['U9 & U10','U11 & U12'], seed:29}
     ];
-    var SCENE_H=740, TOP=36;
+    var TOP=36, X0=80, FW=520, Y0=190, FH=640, MID=Y0+FH/2;
     function esc(t){ return t.replace(/&/g,'&amp;'); }
-    function scene(sc, oy, zoneStart){
-      var rand=rng(sc.seed), out=[], gid='pf7Net'+oy;
-      out.push('<rect x="30" y="'+(oy+2)+'" width="640" height="28" rx="14" fill="#0c2a1c"/><text x="350" y="'+(oy+22)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="17" letter-spacing="3" fill="#f0c674">'+esc(sc.title)+'</text>');
-      out.push('<g transform="translate(0,'+(oy+TOP)+')">');
+    function scene(sc, ox, si){
+      var rand=rng(sc.seed), out=[], gid='pf7Net'+si;
+      out.push('<rect x="'+(ox+20)+'" y="2" width="640" height="28" rx="14" fill="#0c2a1c"/><text x="'+(ox+340)+'" y="22" text-anchor="middle" font-family="Anton,sans-serif" font-size="17" letter-spacing="3" fill="#f0c674">'+esc(sc.title)+'</text>');
+      out.push('<g transform="translate('+ox+','+TOP+')">');
       out.push('<defs><pattern id="'+gid+'" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0H8M0 0V8" stroke="#fff" stroke-opacity=".55" stroke-width="1"/></pattern></defs>');
-      out.push('<rect x="30" y="8" width="640" height="138" rx="14" fill="#dfe8d6"/>');
-      out.push('<text x="130" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">PARENTS</text>');
-      for(var i=0;i<8;i++){ var px=76+(i%4)*40, py=50+Math.floor(i/4)*44; out.push('<rect x="'+px+'" y="'+py+'" width="30" height="30" rx="7" fill="#fff" stroke="#9aa79e" stroke-width="2"/>'); if(i!==3&&i!==6) out.push('<circle cx="'+(px+15)+'" cy="'+(py+15)+'" r="9" fill="#d9b38c" stroke="#6b5a45" stroke-width="1.5"/>'); }
-      out.push('<text x="350" y="30" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">COACHING CANOPY</text>');
-      out.push('<rect x="292" y="40" width="116" height="94" fill="#f6f2e7" stroke="#0c2a1c" stroke-width="5"/><polygon points="292,40 408,40 350,87" fill="#164a30"/><polygon points="292,134 408,134 350,87" fill="#164a30"/><circle cx="350" cy="87" r="7" fill="#d9a441" stroke="#0c2a1c" stroke-width="2"/>');
-      out.push('<text x="550" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">WATER &amp; TOOLS</text>');
-      out.push('<circle cx="478" cy="68" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><circle cx="478" cy="112" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><text x="478" y="143" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="#0c2a1c">WATER</text>');
-      out.push('<rect x="515" y="52" width="130" height="46" rx="6" fill="#c08a52" stroke="#0c2a1c" stroke-width="2"/><polygon points="535,88 543,70 551,88" fill="#ff7a1a"/><polygon points="565,88 573,70 581,88" fill="#ff7a1a"/><polygon points="595,88 603,70 611,88" fill="#ff7a1a"/><circle cx="625" cy="118" r="15" fill="#fff" stroke="#0c2a1c" stroke-width="3"/>');
-      var FX=[40,370], FW=290, Y0=190, FH=460, MID=Y0+FH/2, coachNo=0;
-      for(var f=0;f<2;f++){
-        var x0=FX[f], col=COLORS[(zoneStart/2+f)%4], lab=sc.fields[f];
-        out.push('<text x="'+(x0+FW/2)+'" y="166" text-anchor="middle" font-family="Anton,sans-serif" font-size="17" letter-spacing="2" fill="#0c2a1c">FIELD '+(f+1)+'</text>');
-        out.push('<rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'" fill="#2e8553"/>');
-        for(var s=0;s<5;s++) out.push('<rect x="'+x0+'" y="'+(Y0+s*92)+'" width="'+FW+'" height="46" fill="#2a7a4b"/>');
-        out.push('<rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'" fill="'+col+'" fill-opacity=".14"/>');
-        out.push('<g stroke="#fff" stroke-opacity=".9" stroke-width="2.4" fill="none"><rect x="'+x0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'"/><line x1="'+x0+'" y1="'+MID+'" x2="'+(x0+FW)+'" y2="'+MID+'"/><circle cx="'+(x0+FW/2)+'" cy="'+MID+'" r="42"/>'
-          +'<rect x="'+(x0+70)+'" y="'+Y0+'" width="150" height="66"/><rect x="'+(x0+105)+'" y="'+Y0+'" width="80" height="24"/>'
-          +'<rect x="'+(x0+70)+'" y="'+(Y0+FH-66)+'" width="150" height="66"/><rect x="'+(x0+105)+'" y="'+(Y0+FH-24)+'" width="80" height="24"/></g>');
-        out.push('<circle cx="'+(x0+FW/2)+'" cy="'+MID+'" r="3.5" fill="#fff"/>');
-        out.push('<rect x="'+(x0+FW/2-28)+'" y="'+(Y0-18)+'" width="56" height="18" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/><rect x="'+(x0+FW/2-28)+'" y="'+(Y0+FH)+'" width="56" height="18" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/>');
-        var bx=x0+30, by=Y0+34, bw=FW-60, bh=FH-68;
-        for(var k=0;k<6;k++){ var cx=bx+20+(k%3)*((bw-40)/2), cy=k<3?Y0+90:Y0+FH-90; out.push('<polygon points="'+cx+','+(cy-5)+' '+(cx+4.5)+','+(cy+4)+' '+(cx-4.5)+','+(cy+4)+'" fill="#ff7a1a" stroke="#fff" stroke-width="1.2"/>'); }
-        for(var p=0;p<24;p++){
-          var rx=12+rand()*24, ry=12+rand()*26;
+      out.push('<rect x="20" y="8" width="640" height="138" rx="14" fill="#dfe8d6"/>');
+      out.push('<text x="120" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">PARENTS</text>');
+      for(var i=0;i<8;i++){ var px=66+(i%4)*40, py=50+Math.floor(i/4)*44; out.push('<rect x="'+px+'" y="'+py+'" width="30" height="30" rx="7" fill="#fff" stroke="#9aa79e" stroke-width="2"/>'); if(i!==3&&i!==6) out.push('<circle cx="'+(px+15)+'" cy="'+(py+15)+'" r="9" fill="#d9b38c" stroke="#6b5a45" stroke-width="1.5"/>'); }
+      out.push('<text x="340" y="30" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">COACHING CANOPY</text>');
+      out.push('<rect x="282" y="40" width="116" height="94" fill="#f6f2e7" stroke="#0c2a1c" stroke-width="5"/><polygon points="282,40 398,40 340,87" fill="#164a30"/><polygon points="282,134 398,134 340,87" fill="#164a30"/><circle cx="340" cy="87" r="7" fill="#d9a441" stroke="#0c2a1c" stroke-width="2"/>');
+      out.push('<text x="540" y="34" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" letter-spacing="2" fill="#0c2a1c">WATER &amp; TOOLS</text>');
+      out.push('<circle cx="468" cy="68" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><circle cx="468" cy="112" r="17" fill="#F28C28" stroke="#0c2a1c" stroke-width="3"/><text x="468" y="143" text-anchor="middle" font-family="Space Mono,monospace" font-size="10" fill="#0c2a1c">WATER</text>');
+      out.push('<rect x="505" y="52" width="130" height="46" rx="6" fill="#c08a52" stroke="#0c2a1c" stroke-width="2"/><polygon points="525,88 533,70 541,88" fill="#ff7a1a"/><polygon points="555,88 563,70 571,88" fill="#ff7a1a"/><polygon points="585,88 593,70 601,88" fill="#ff7a1a"/><circle cx="615" cy="118" r="15" fill="#fff" stroke="#0c2a1c" stroke-width="3"/>');
+      out.push('<rect x="'+X0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'" fill="#2e8553"/>');
+      for(var s=0;s<7;s++) out.push('<rect x="'+X0+'" y="'+(Y0+s*91.4)+'" width="'+FW+'" height="45.7" fill="#2a7a4b"/>');
+      var cols=si===0?['#5aa9ff','#F5B82E']:['#c77dff','#e5484d'];
+      out.push('<rect x="'+X0+'" y="'+Y0+'" width="'+FW+'" height="'+(FH/2)+'" fill="'+cols[0]+'" fill-opacity=".14"/><rect x="'+X0+'" y="'+MID+'" width="'+FW+'" height="'+(FH/2)+'" fill="'+cols[1]+'" fill-opacity=".14"/>');
+      var cx0=X0+FW/2;
+      out.push('<g stroke="#fff" stroke-opacity=".9" stroke-width="2.4" fill="none"><rect x="'+X0+'" y="'+Y0+'" width="'+FW+'" height="'+FH+'"/><line x1="'+X0+'" y1="'+MID+'" x2="'+(X0+FW)+'" y2="'+MID+'"/><circle cx="'+cx0+'" cy="'+MID+'" r="50"/>'
+        +'<rect x="'+(cx0-100)+'" y="'+Y0+'" width="200" height="80"/><rect x="'+(cx0-50)+'" y="'+Y0+'" width="100" height="30"/>'
+        +'<rect x="'+(cx0-100)+'" y="'+(Y0+FH-80)+'" width="200" height="80"/><rect x="'+(cx0-50)+'" y="'+(Y0+FH-30)+'" width="100" height="30"/></g>');
+      out.push('<circle cx="'+cx0+'" cy="'+MID+'" r="3.5" fill="#fff"/>');
+      out.push('<rect x="'+(cx0-34)+'" y="'+(Y0-20)+'" width="68" height="20" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/><rect x="'+(cx0-34)+'" y="'+(Y0+FH)+'" width="68" height="20" fill="url(#'+gid+')" stroke="#fff" stroke-width="3"/>');
+      for(var h=0;h<2;h++){
+        var zy=Y0+h*FH/2, ZH=FH/2, bx=X0+60, by=zy+30, bw=FW-120, bh=ZH-60, lab=sc.halves[h], col=cols[h];
+        for(var k=0;k<3;k++){ var cx=bx+20+k*((bw-40)/2), cy=h===0?zy+ZH-60:zy+60; out.push('<polygon points="'+cx+','+(cy-5)+' '+(cx+4.5)+','+(cy+4)+' '+(cx-4.5)+','+(cy+4)+'" fill="#ff7a1a" stroke="#fff" stroke-width="1.2"/>'); }
+        for(var p=0;p<20;p++){
+          var rx=12+rand()*28, ry=12+rand()*22;
           var cx2=bx+rx+rand()*(bw-2*rx), cy2=by+ry+rand()*(bh-2*ry);
           var dur=6+Math.floor(rand()*5), beg=-Math.floor(rand()*10), pc=p%2?'#5aa9ff':'#F28C28';
           var path='M'+r1(cx2-rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2+rx)+','+r1(cy2)+' A'+r1(rx)+','+r1(ry)+' 0 1,1 '+r1(cx2-rx)+','+r1(cy2)+' Z';
@@ -3905,23 +3904,22 @@ module.exports = `<!doctype html>
           out.push('<g><circle r="5" fill="#fff" stroke="#111" stroke-width="1.6"/><animateMotion dur="'+(7+bl*2)+'s" repeatCount="indefinite" path="M'+r1(b1[0])+','+r1(b1[1])+' L'+r1(b2[0])+','+r1(b2[1])+' L'+r1(b3[0])+','+r1(b3[1])+' Z"/></g>');
         }
         for(var c=0;c<2;c++){
-          var coX=x0+36, coY=Y0+FH*(c?0.75:0.25);
-          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(++coachNo)+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">COACH</text>');
+          var coX=X0+(c?FW-36:36), coY=zy+ZH*0.5+(h===0?-30:30);
+          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(h*2+c+1)+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">COACH</text>');
         }
-        var pw=Math.max(120,lab.length*11+44), pxl=x0+FW/2-pw/2;
-        out.push('<rect x="'+pxl+'" y="'+(MID-12)+'" width="'+pw+'" height="26" rx="13" fill="#0c2a1c" stroke="'+col+'" stroke-width="3"/><text x="'+(x0+FW/2)+'" y="'+(MID+6)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" fill="#fff">'+esc(lab)+'</text>');
+        var pw=Math.max(120,lab.length*11+44), pyl=h===0?MID-62:MID+36;
+        out.push('<rect x="'+(cx0-pw/2)+'" y="'+pyl+'" width="'+pw+'" height="26" rx="13" fill="#0c2a1c" stroke="'+col+'" stroke-width="3"/><text x="'+cx0+'" y="'+(pyl+18)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" fill="#fff">'+esc(lab)+'</text>');
       }
       out.push('</g>');
       return out.join('');
     }
     function build7(){
-      var out=['<rect width="700" height="'+(SCENE_H*2)+'" fill="#e9e2d0"/>'];
-      out.push(scene(SCENES[0],0,0)); out.push(scene(SCENES[1],SCENE_H,2));
-      // Coach Ismail: mostly with Tuesday & Thursday, a short visit to Monday & Wednesday
-      var g1=TOP+190+10, g2=SCENE_H+TOP+190+10, ln=440;
-      var ismail='<g><circle r="13" fill="#b5482f" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">I</text><text y="28" text-anchor="middle" font-family="Space Mono,monospace" font-size="8.5" font-weight="700" fill="#b5482f">ISMAIL</text>'
-        +'<animateMotion dur="40s" repeatCount="indefinite" calcMode="linear" path="M350,'+(g2)+' L350,'+(g2+ln)+' L350,'+(g2)+' L350,'+(g2+ln)+' L350,'+(g2)+' L350,'+(g1+ln)+' L350,'+(g1)+' L350,'+(g2)+' Z"/></g>';
-      out.push(ismail);
+      var out=['<rect width="1400" height="910" fill="#e9e2d0"/>'];
+      out.push(scene(SCENES[0],0,0)); out.push(scene(SCENES[1],700,1));
+      // Coach Ismail walks the middle line: mostly the Tuesday & Thursday field, one short visit to Monday & Wednesday
+      var y=TOP+MID, a=700+X0+20, b=700+X0+FW-20, c=X0+20, d=X0+FW-20;
+      var path='M'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+d+','+y+' L'+c+','+y+' L'+d+','+y+' L'+a+','+y+' Z';
+      out.push('<g><circle r="14" fill="#b5482f" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">I</text><text y="30" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#b5482f">ISMAIL</text><animateMotion dur="60s" repeatCount="indefinite" path="'+path+'"/></g>');
       return out.join('');
     }
     function active(){ return layoutSel.value==='two' ? box7 : box; }
@@ -3929,10 +3927,10 @@ module.exports = `<!doctype html>
       var two=layoutSel.value==='two';
       box.style.display=two?'none':''; box7.style.display=two?'':'none';
             document.getElementById('pfIntro').textContent=two
-        ? 'Two 7v7 fields. Monday and Wednesday and Tuesday and Thursday are two different days, so each day has its own canopy, parents and coaches. Coach Ismail checks on everybody, mostly on Tuesday and Thursday.'
+        ? 'One field per day, split in two halves (two 7v7 fields). Monday and Wednesday and Tuesday and Thursday are different days, so each has its own canopy, parents and coaches. Coach Ismail checks on everybody, mostly on Tuesday and Thursday.'
         : 'How we stay organized at practice: one field, four zones, one coach per zone, and Coach Ismail checking on everybody. Parents and supplies stay at the canopy behind the top goal.';
       document.getElementById('pfBannerText').innerHTML=two
-        ? '<b>Two coaches on each field</b> (4 coaches per day). Monday and Wednesday: U4, U5 &amp; U6 on Field 1, U7 &amp; U8 on Field 2. Tuesday and Thursday: U9 &amp; U10 on Field 1, U11 &amp; U12 on Field 2.'
+        ? '<b>Monday &amp; Wednesday:</b> U4, U5 &amp; U6 on the top half, U7 &amp; U8 on the bottom half. <b>Tuesday &amp; Thursday:</b> U9 &amp; U10 on the top half, U11 &amp; U12 on the bottom half. Two coaches per half.'
         : '<b>Ideal: 50 to 60 players on this field.</b> That is about 12 to 15 players per zone with one coach each. Above 60 players the field gets crowded and coaches lose control of their group.';
       if(two){ var s7=box7.querySelector('svg'); s7.innerHTML=build7(); if(paused) s7.pauseAnimations(); }
     }
