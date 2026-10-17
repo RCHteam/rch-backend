@@ -1,4 +1,5 @@
 const express = require('express');
+const { ageGroupKey } = require('./ageGroups');
 const { formatPhone } = require('./phone');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
@@ -289,7 +290,7 @@ router.post('/admin/join-registrations', requireAdmin, async (req, res) => {
 // breakdown below (Skills Training = total RCH players on the roster, across
 // all grades; Join FC <grade> = Sultans players on the roster, per grade).
 router.get('/admin/summary', requireAdmin, async (req, res) => {
-  const [potentialRch, potentialSultans, rosterRch, rosterSultansByGrade] = await Promise.all([
+  const [potentialRch, potentialSultans, rosterRch, rosterSultansByGrade, sultansDobs] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`),
     pool.query(`SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`),
     pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`),
@@ -297,12 +298,17 @@ router.get('/admin/summary', requireAdmin, async (req, res) => {
       `SELECT grade AS age_group, COUNT(*)::int AS n FROM players
        WHERE sultans AND archived_at IS NULL GROUP BY grade`
     ),
+    pool.query(`SELECT dob FROM players WHERE sultans AND archived_at IS NULL`),
   ]);
+  // Sultans players per age group (U-age from date of birth).
+  const sultansByAgeGroup = {};
+  sultansDobs.rows.forEach((r) => { const k = ageGroupKey(r.dob); sultansByAgeGroup[k] = (sultansByAgeGroup[k] || 0) + 1; });
   res.json({
     potentialRchCount: potentialRch.rows[0].n,
     potentialSultansCount: potentialSultans.rows[0].n,
     skillsTrainingCount: rosterRch.rows[0].n,
     joinCountsByAgeGroup: rosterSultansByGrade.rows,
+    sultansByAgeGroup,
   });
 });
 

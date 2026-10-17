@@ -2795,13 +2795,12 @@ module.exports = `<!doctype html>
 
   async function loadSummary(){
     const s = await api('/api/admin/summary');
-    const groups = ['pre-k','kindergarten','1st-grade','2nd-grade','3rd-grade','4th-grade','5th-grade','6th-grade'];
-    const groupLabels = {
-      'pre-k':'Pre-K', 'kindergarten':'Kindergarten', '1st-grade':'1st Grade', '2nd-grade':'2nd Grade',
-      '3rd-grade':'3rd Grade', '4th-grade':'4th Grade', '5th-grade':'5th Grade', '6th-grade':'6th Grade',
-    };
+    // Sultans cards are by age group (U-age from date of birth).
+    const groups = ['u5-','u6','u7','u8','u9','u10','u11','u12'];
+    const groupLabels = { 'u5-':'U4 & U5', 'u6':'U6', 'u7':'U7', 'u8':'U8', 'u9':'U9', 'u10':'U10', 'u11':'U11', 'u12':'U12', 'nodob':'No birth date' };
     const counts = Object.fromEntries(groups.map(g => [g, 0]));
-    (s.joinCountsByAgeGroup || []).forEach(r => { counts[r.age_group] = r.n; });
+    Object.keys(s.sultansByAgeGroup || {}).forEach(k => { counts[k] = s.sultansByAgeGroup[k]; });
+    if (counts['nodob']) groups.push('nodob');
     const card = (n, l) => '<div class="card"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>';
     document.getElementById('summary').innerHTML =
       '<div class="sum-group sum-reg"><h3 class="sum-title">Registrations</h3><div class="sum-cards">' +
