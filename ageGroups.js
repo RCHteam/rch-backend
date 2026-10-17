@@ -1,7 +1,7 @@
 // US Youth Soccer school-year age groups: a season runs Aug 1 - Jul 31.
 // A player's U-age = season start year - the year of the Aug-1 school year they were born in.
-// U4 and U5 (and anything younger) are treated as one group.
-const AGE_KEYS = ['u5-', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11', 'u12', 'u13', 'u14+', 'nodob'];
+// U4 and U5 (and anything younger) are one group; U12 is the top group (anything older is included).
+const AGE_KEYS = ['u5-', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11', 'u12', 'nodob'];
 
 function seasonStartYear(now) {
   const d = now || new Date();
@@ -26,7 +26,7 @@ function ageGroupKey(dob, now) {
   const n = ageNumber(dob, now);
   if (n == null) return 'nodob';
   if (n <= 5) return 'u5-';
-  if (n >= 14) return 'u14+';
+  if (n >= 12) return 'u12';
   return 'u' + n;
 }
 
@@ -34,12 +34,11 @@ function ageGroupLabel(dob, now) {
   const n = ageNumber(dob, now);
   if (n == null) return '';
   if (n <= 5) return 'U4/U5';
-  return 'U' + n;
+  return 'U' + Math.min(n, 12);
 }
 
 function keyLabel(key) {
   if (key === 'u5-') return 'U4 & U5';
-  if (key === 'u14+') return 'U14 & older';
   if (key === 'nodob') return 'No birth date';
   return key.toUpperCase();
 }

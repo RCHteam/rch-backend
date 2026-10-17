@@ -499,8 +499,6 @@ module.exports = `<!doctype html>
           <option value="u10">U10</option>
           <option value="u11">U11</option>
           <option value="u12">U12</option>
-          <option value="u13">U13</option>
-          <option value="u14+">U14 &amp; older</option>
           <option value="nodob">No birth date</option>
         </select>
         <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
@@ -2952,24 +2950,24 @@ module.exports = `<!doctype html>
     const y = Number(p[0]), m = Number(p[1]);
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
-  function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + n); }
+  function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + Math.min(n, 12)); }
   function ageGroupKey(dob){
     const n = ageNumber(dob);
     if (n == null) return 'nodob';
     if (n <= 5) return 'u5-';
-    if (n >= 14) return 'u14+';
+    if (n >= 12) return 'u12';
     return 'u' + n;
   }
-  const AGE_KEYS = ['u5-','u6','u7','u8','u9','u10','u11','u12','u13','u14+','nodob'];
-  const AGE_KEY_LABELS = { 'u5-':'U4 & U5', 'u6':'U6', 'u7':'U7', 'u8':'U8', 'u9':'U9', 'u10':'U10', 'u11':'U11', 'u12':'U12', 'u13':'U13', 'u14+':'U14 & older', 'nodob':'No birth date' };
+  const AGE_KEYS = ['u5-','u6','u7','u8','u9','u10','u11','u12','nodob'];
+  const AGE_KEY_LABELS = { 'u5-':'U4 & U5', 'u6':'U6', 'u7':'U7', 'u8':'U8', 'u9':'U9', 'u10':'U10', 'u11':'U11', 'u12':'U12', 'nodob':'No birth date' };
   const AGE_SCOPE_KEYS = AGE_KEYS.filter(function(k){ return k !== 'nodob'; });
   // The school grade that usually matches each age group (used to flag odd matches).
   const AGE_TO_GRADE = { 5: 'pre-k', 6: 'kindergarten', 7: '1st-grade', 8: '2nd-grade', 9: '3rd-grade', 10: '4th-grade', 11: '5th-grade', 12: '6th-grade' };
   function ageGradeMismatch(r){
     const n = ageNumber(r.dob);
     const gi = GRADES.indexOf(r.grade);
-    if (n == null || gi < 0 || n < 5 || n > 13) return false;
-    return Math.abs(gi - (n - 5)) >= 2;
+    if (n == null || gi < 0 || n < 5) return false;
+    return Math.abs(gi - (Math.min(n, 12) - 5)) >= 2;
   }
   function ageScopeOptions(prefix, label){
     return '<optgroup label="' + label + '">' + AGE_SCOPE_KEYS.map(function(k){ return '<option value="' + prefix + ':' + k + '">' + AGE_KEY_LABELS[k] + '</option>'; }).join('') + '</optgroup>';
@@ -3027,7 +3025,7 @@ module.exports = `<!doctype html>
     const v = document.getElementById(inputId).value;
     const el = document.getElementById(noteId);
     const n = ageNumber(v);
-    el.textContent = n == null ? '' : 'Age group: ' + (n <= 5 ? 'U4 / U5' : 'U' + n) + ' (this season)';
+    el.textContent = n == null ? '' : 'Age group: ' + (n <= 5 ? 'U4 / U5' : 'U' + Math.min(n, 12)) + ' (this season)';
   }
   ['apDob', 'epDob'].forEach(function(id){
     const el = document.getElementById(id);
@@ -3237,7 +3235,7 @@ module.exports = `<!doctype html>
     const t = { players:0, rch:0, sultans:0, both:0, one:0, two:0, online:0 };
     AGE_KEYS.forEach(function(k){
       const o = g[k];
-      if ((k === 'u14+' || k === 'nodob') && !o.players) return;
+      if (k === 'nodob' && !o.players) return;
       Object.keys(t).forEach(function(f){ t[f] += o[f]; });
       html += '<tr><td>' + AGE_KEY_LABELS[k] + '</td><td>' + o.players + '</td><td>' + o.rch + '</td><td>' + o.sultans + '</td><td>' + o.both + '</td><td>' + o.one + '</td><td>' + o.two + '</td><td>' + o.online + '</td></tr>';
     });
