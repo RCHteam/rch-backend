@@ -264,6 +264,9 @@ module.exports = `<!doctype html>
   .lg-picker{ border:1px solid #ddd; border-radius:6px; padding:10px; margin-top:10px; background:#f7faf7; }
   .lg-picker .lg-res{ max-height:210px; overflow-y:auto; margin-top:8px; }
   .lg-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 8px; border-bottom:1px solid #e6ebe6; font-size:0.88rem; }
+  .lt-pill{ display:inline-block; min-width:24px; text-align:center; font-weight:700; border-radius:5px; padding:2px 7px; margin-right:3px; font-family:'Space Mono',monospace; }
+  .lt-R{ background:rgba(63,207,122,0.18); color:#3fcf7a; }
+  .lt-C{ background:rgba(214,64,58,0.22); color:#ff7b74; }
   .lg-cat{ background:#14201a; color:#3fcf7a; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; padding:6px 8px; position:sticky; top:0; }
   .lg-row .lg-sub{ color:#777; font-size:0.78rem; margin-left:6px; }
   .lg-plus{ background:#1f9d4b; color:#fff; border:none; border-radius:50%; width:26px; height:26px; font-size:1.1rem; line-height:1; cursor:pointer; flex:none; }
@@ -626,8 +629,8 @@ module.exports = `<!doctype html>
         </div>
         <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:0 0 12px;">
           <input type="text" id="srosterSearch" placeholder="Search players, parents, phone, email…" style="flex:1; min-width:220px; max-width:380px; padding:10px 12px; font:inherit;" autocomplete="off">
-          <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterUnpaid" style="width:auto; margin:0;"> Unpaid</label>
-          <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterNoAgreement" style="width:auto; margin:0;"> Agreement not sent</label>
+          <label style="display:none; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterUnpaid" style="width:auto; margin:0;"> Unpaid</label>
+          <label style="display:none; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterNoAgreement" style="width:auto; margin:0;"> Agreement not sent</label>
           <span id="srosterCount" class="sul-muted"></span>
           <span id="srosterNotice" style="font-size:0.85rem;"></span>
         </div>
@@ -1508,6 +1511,8 @@ module.exports = `<!doctype html>
       <div><label for="lgAgeFrom">Age group, from</label><select id="lgAgeFrom"></select></div>
       <div><label for="lgAgeTo">Age group, to</label><select id="lgAgeTo"></select></div>
     </div>
+    <label for="lgType">Type of league</label>
+    <select id="lgType"><option value="recreational">Recreational</option><option value="competitive">Competitive</option></select>
     <label for="lgDesc">Description</label>
     <textarea id="lgDesc" placeholder="Anything about this league or team"></textarea>
     <label>Players <span id="lgCount" style="color:#777; font-weight:400;"></span></label>
@@ -3145,7 +3150,7 @@ module.exports = `<!doctype html>
     if (!rows.length) return '<div class="empty">' + (showGrade ? 'No players match.' : 'No players yet.') + '</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>Age Group</th><th>School Grade</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th>' + (sulView ? '<th>Called</th>' : '') + '<th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
+      (sulView ? '' : '<th>Sessions</th>') + '<th>Size</th><th>RCH</th><th>Sultans</th>' + (sulView ? '<th>Called</th><th>Type of League</th>' : '') + (sulView ? '' : '<th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th>') + '<th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
@@ -3158,31 +3163,33 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
         '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
         '<td>' + emailDropdown(r.parent_email) + '</td>' +
-        '<td>' + sessionsLabel(r.session_type, r.session_day) + '</td>' +
+        (sulView ? '' : '<td>' + sessionsLabel(r.session_type, r.session_day) + '</td>') +
         '<td>' + (r.shirt_size || '—') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
         (sulView ? '<td>' + (calledNames.length ? calledNames.map(function(n){ return '<span class="called-pill">✓ ' + escapeHtml(n) + '</span>'; }).join('') : '—') + '</td>' : '') +
+        (sulView ? '<td>' + ((leagueTypeByPlayer[r.id] || []).map(function(t){ return '<span class="lt-pill lt-' + t + '" title="' + (t === 'C' ? 'Competitive' : 'Recreational') + '">' + t + '</span>'; }).join('') || '—') + '</td>' : '') +
+        (sulView ? '' :
         '<td>$' + ((r.effective_discount_cents != null ? r.effective_discount_cents : r.discount_cents) / 100).toFixed(2) + (r.effective_discount_cents > 0 ? (r.discount_is_manual ? ' <span style="color:#888; font-size:0.72rem;">(manual)</span>' : ' <span style="color:#888; font-size:0.72rem;">(sibling)</span>') : '') + '</td>' +
         '<td>' + (r.sibling_discount ? r.sibling_discount + '%' : '—') + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
-        '<td>' + agreementCell(r, label) + '</td>' +
+        '<td>' + agreementCell(r, label) + '</td>') +
         '<td>' +
           '<div class="row-actions">' +
-            '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '" data-sibling="' + (r.sibling_discount || 0) + '">Send Payment Link</button>' +
+            (sulView ? '' :             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '" data-sibling="' + (r.sibling_discount || 0) + '">Send Payment Link</button>') +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
               (sulView
                 ? '<button type="button" class="btn-sul-remove" data-id="' + r.id + '" data-label="' + label + '">Remove from Sultans Roster</button>'
                 : (!r.sultans ? '<button type="button" class="btn-sul-send" data-id="' + r.id + '" data-label="' + label + '">Send to Sultans Roster</button>' : '')) +
-              (r.agreement_signed_at
+              (sulView ? '' : (r.agreement_signed_at
                 ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
                 : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
               '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? 'Undo Paid Otherwise' : 'Paid Otherwise') + '</button>' +
               (r.payment_status === 'completed' && !r.stripe_subscription_id
                 ? '<button type="button" class="btn-start-billing" data-id="' + r.id + '" data-label="' + label + '">Start Monthly Billing</button>' : '') +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
-              '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>' +
+              '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>') +
               '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
               '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
             '</div>' +
@@ -3417,6 +3424,7 @@ module.exports = `<!doctype html>
   // Reloads the main roster, and the whole Sultans section once it has been opened.
   let sultansLoaded = false;
   let leagueTeams = [];
+  let leagueTypeByPlayer = {};
   let calledByPlayer = {};
   async function loadRoster(){
     await loadRosterView('roster');
@@ -4945,7 +4953,10 @@ module.exports = `<!doctype html>
     try { teams = await api('/api/admin/league-teams'); } catch (e) { teams = []; }
     leagueTeams = Array.isArray(teams) ? teams : [];
     calledByPlayer = {};
+    leagueTypeByPlayer = {};
     leagueTeams.forEach(function(t){
+      const lt = t.league_type === 'competitive' ? 'C' : 'R';
+      (t.players || []).forEach(function(p){ const a = (leagueTypeByPlayer[p.id] = leagueTypeByPlayer[p.id] || []); if (a.indexOf(lt) === -1) a.push(lt); });
       (t.players || []).forEach(function(p){ (calledByPlayer[p.id] = calledByPlayer[p.id] || []).push(t.name); });
     });
   }
@@ -5002,7 +5013,7 @@ module.exports = `<!doctype html>
       const names = (t.players || []).map(function(p){ return escapeHtml(p.player_name); }).join(', ');
       return '<div class="lg-card" data-team="' + t.id + '">' +
         '<h3>' + escapeHtml(t.name) + '</h3>' +
-        '<div class="lg-meta">' + escapeHtml(t.age_label) + (fmtLeagueDates(t) ? '  •  ' + escapeHtml(fmtLeagueDates(t)) : '') + '  •  ' + (t.players || []).length + ' players</div>' +
+        '<div class="lg-meta">' + (t.league_type === 'competitive' ? 'Competitive' : 'Recreational') + '  •  ' + escapeHtml(t.age_label) + (fmtLeagueDates(t) ? '  •  ' + escapeHtml(fmtLeagueDates(t)) : '') + '  •  ' + (t.players || []).length + ' players</div>' +
         (t.description ? '<div class="lg-desc">' + escapeHtml(t.description) + '</div>' : '') +
         '<div class="lg-players">' + (names || '<span class="sul-muted">No players added yet.</span>') + '</div>' +
         '<div class="lg-btns">' +
@@ -5120,6 +5131,7 @@ module.exports = `<!doctype html>
     document.getElementById('lgAgeFrom').value = String(team ? team.age_from : 4);
     document.getElementById('lgAgeTo').value = String(team ? team.age_to : 5);
     document.getElementById('lgDesc').value = team ? (team.description || '') : '';
+    document.getElementById('lgType').value = team && team.league_type === 'competitive' ? 'competitive' : 'recreational';
     lgChosen = team ? (team.players || []).map(function(p){ return { id: p.id, name: p.player_name, dob: p.dob }; }) : [];
     document.getElementById('lgError').textContent = '';
     document.getElementById('lgSearch').value = '';
@@ -5157,6 +5169,7 @@ module.exports = `<!doctype html>
       ageFrom: Number(document.getElementById('lgAgeFrom').value),
       ageTo: Number(document.getElementById('lgAgeTo').value),
       description: document.getElementById('lgDesc').value.trim(),
+      leagueType: document.getElementById('lgType').value,
       playerIds: lgChosen.map(function(p){ return p.id; }),
     };
     if (!payload.name) { errEl.textContent = 'Please enter the league name.'; return; }

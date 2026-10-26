@@ -533,6 +533,7 @@ CREATE TABLE IF NOT EXISTS league_teams (
   description   TEXT NOT NULL DEFAULT '',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE league_teams ADD COLUMN IF NOT EXISTS league_type TEXT NOT NULL DEFAULT 'recreational';
 CREATE TABLE IF NOT EXISTS league_team_players (
   team_id    INTEGER NOT NULL REFERENCES league_teams(id) ON DELETE CASCADE,
   player_id  INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,

@@ -79,6 +79,7 @@ function parseTeamBody(b) {
     name, ageFrom, ageTo, ids,
     seasonStart: cleanDate(b && b.seasonStart), seasonEnd: cleanDate(b && b.seasonEnd),
     description: String((b && b.description) || '').trim(),
+    leagueType: (b && b.leagueType) === 'competitive' ? 'competitive' : 'recreational',
   };
 }
 
@@ -125,9 +126,9 @@ router.post('/admin/league-teams', requireAdmin, async (req, res) => {
   try {
     await client.query('BEGIN');
     const ins = await client.query(
-      `INSERT INTO league_teams (name, season_start, season_end, age_from, age_to, description)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-      [t.name, t.seasonStart, t.seasonEnd, t.ageFrom, t.ageTo, t.description]);
+      `INSERT INTO league_teams (name, season_start, season_end, age_from, age_to, description, league_type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+      [t.name, t.seasonStart, t.seasonEnd, t.ageFrom, t.ageTo, t.description, t.leagueType]);
     await saveTeamPlayers(client, ins.rows[0].id, t.ids);
     await client.query('COMMIT');
     res.status(201).json({ ok: true, id: ins.rows[0].id });
@@ -147,9 +148,9 @@ router.put('/admin/league-teams/:id', requireAdmin, async (req, res) => {
   try {
     await client.query('BEGIN');
     const upd = await client.query(
-      `UPDATE league_teams SET name=$2, season_start=$3, season_end=$4, age_from=$5, age_to=$6, description=$7
+      `UPDATE league_teams SET name=$2, season_start=$3, season_end=$4, age_from=$5, age_to=$6, description=$7, league_type=$8
        WHERE id=$1 RETURNING id`,
-      [id, t.name, t.seasonStart, t.seasonEnd, t.ageFrom, t.ageTo, t.description]);
+      [id, t.name, t.seasonStart, t.seasonEnd, t.ageFrom, t.ageTo, t.description, t.leagueType]);
     if (!upd.rows[0]) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'League roster not found.' }); }
     await saveTeamPlayers(client, id, t.ids);
     await client.query('COMMIT');
@@ -203,7 +204,7 @@ function buildTeamPdf(team) {
         try { doc.image(path.join(__dirname, 'assets', 'sultans-logo.png'), left, 12, { height: 74 }); } catch (e) { /* logo is optional */ }
         doc.font('Helvetica-Bold').fontSize(22).fillColor('#ffffff').text(team.name, 130, 20, { width: pageW - 130 - left });
         doc.font('Helvetica').fontSize(11).fillColor('#9fe6bb');
-        const bits = [team.age_label];
+        const bits = [team.age_label, team.league_type === 'competitive' ? 'Competitive' : 'Recreational'];
         if (team.season_start || team.season_end) bits.push('Season: ' + (fmtDate(team.season_start) || '?') + ' to ' + (fmtDate(team.season_end) || '?'));
         bits.push(team.players.length + (team.players.length === 1 ? ' player' : ' players'));
         doc.text(bits.join('   •   '), 130, 54, { width: pageW - 130 - left });
