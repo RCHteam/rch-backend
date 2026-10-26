@@ -264,6 +264,7 @@ module.exports = `<!doctype html>
   .lg-picker{ border:1px solid #ddd; border-radius:6px; padding:10px; margin-top:10px; background:#f7faf7; }
   .lg-picker .lg-res{ max-height:210px; overflow-y:auto; margin-top:8px; }
   .lg-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 8px; border-bottom:1px solid #e6ebe6; font-size:0.88rem; }
+  .lg-cat{ background:#14201a; color:#3fcf7a; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; padding:6px 8px; position:sticky; top:0; }
   .lg-row .lg-sub{ color:#777; font-size:0.78rem; margin-left:6px; }
   .lg-plus{ background:#1f9d4b; color:#fff; border:none; border-radius:50%; width:26px; height:26px; font-size:1.1rem; line-height:1; cursor:pointer; flex:none; }
   .lg-minus{ background:#fff; color:#b5482f; border:1px solid #d98a76; border-radius:50%; width:26px; height:26px; line-height:1; cursor:pointer; flex:none; }
@@ -1512,7 +1513,10 @@ module.exports = `<!doctype html>
     <label>Players <span id="lgCount" style="color:#777; font-weight:400;"></span></label>
     <button type="button" class="btn-add" id="lgAddBtn" style="margin-top:2px;">+ Add players</button>
     <div class="lg-picker hidden" id="lgPicker">
-      <input type="text" id="lgSearch" placeholder="Search the Sultans roster…" autocomplete="off">
+      <div style="display:flex; gap:8px; margin-bottom:6px;">
+        <select id="lgGroup" style="flex:0 0 150px;"></select>
+        <input type="text" id="lgSearch" placeholder="Search the Sultans roster…" autocomplete="off" style="flex:1; margin:0;">
+      </div>
       <div class="lg-res" id="lgResults"></div>
     </div>
     <div class="lg-chosen" id="lgChosen"></div>
@@ -5045,6 +5049,10 @@ module.exports = `<!doctype html>
     document.getElementById('lgAgeTo').innerHTML = o;
   })();
 
+  (function fillGroup(){
+    document.getElementById('lgGroup').innerHTML = '<option value="all">All ages</option>' + AGE_KEYS.map(function(k){ return '<option value="' + k + '">' + AGE_KEY_LABELS[k] + '</option>'; }).join('');
+  })();
+
   function lgInRange(dob){
     const n = ageNumber(dob);
     if (n == null) return false;
@@ -5074,21 +5082,27 @@ module.exports = `<!doctype html>
     const q = document.getElementById('lgSearch').value.trim().toLowerCase();
     const chosenIds = {};
     lgChosen.forEach(function(p){ chosenIds[p.id] = true; });
+    const grp = document.getElementById('lgGroup').value;
     let list = lgSultansPlayers.filter(function(r){
       if (chosenIds[r.id]) return false;
+      if (grp !== 'all' && ageGroupKey(r.dob) !== grp) return false;
       if (!q) return true;
       return [r.player_name, r.parent_name].join(' ').toLowerCase().indexOf(q) !== -1;
     });
-    list.sort(function(a, b){
-      const ia = lgInRange(a.dob) ? 0 : 1, ib = lgInRange(b.dob) ? 0 : 1;
-      return ia - ib || String(a.player_name).localeCompare(String(b.player_name));
-    });
+    list.sort(function(a, b){ return String(a.player_name).localeCompare(String(b.player_name)); });
     const el = document.getElementById('lgResults');
     if (!list.length) { el.innerHTML = '<div class="lg-row" style="color:#888;">' + (lgSultansPlayers.length ? 'No other players match.' : 'The Sultans roster is empty.') + '</div>'; return; }
-    el.innerHTML = list.slice(0, 80).map(function(r){
-      return '<div class="lg-row"><span>' + escapeHtml(r.player_name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(r.dob) || 'no birth date') + (lgInRange(r.dob) ? ' • in range' : '') + '</span></span>' +
-        '<button type="button" class="lg-plus" data-id="' + r.id + '" title="Add">+</button></div>';
-    }).join('');
+    let html = '';
+    AGE_KEYS.forEach(function(k){
+      const g = list.filter(function(r){ return ageGroupKey(r.dob) === k; });
+      if (!g.length) return;
+      html += '<div class="lg-cat">' + AGE_KEY_LABELS[k] + ' (' + g.length + ')</div>';
+      g.forEach(function(r){
+        html += '<div class="lg-row"><span>' + escapeHtml(r.player_name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(r.dob) || 'no birth date') + '</span></span>' +
+          '<button type="button" class="lg-plus" data-id="' + r.id + '" title="Add">+</button></div>';
+      });
+    });
+    el.innerHTML = html;
     el.querySelectorAll('.lg-plus').forEach(function(b){
       b.addEventListener('click', function(){
         const r = lgSultansPlayers.find(function(x){ return String(x.id) === b.getAttribute('data-id'); });
@@ -5109,6 +5123,7 @@ module.exports = `<!doctype html>
     lgChosen = team ? (team.players || []).map(function(p){ return { id: p.id, name: p.player_name, dob: p.dob }; }) : [];
     document.getElementById('lgError').textContent = '';
     document.getElementById('lgSearch').value = '';
+    document.getElementById('lgGroup').value = 'all';
     document.getElementById('lgPicker').classList.add('hidden');
     renderLgChosen();
     document.getElementById('leagueModal').classList.remove('hidden');
@@ -5125,6 +5140,7 @@ module.exports = `<!doctype html>
     if (!pk.classList.contains('hidden')) { renderLgResults(); document.getElementById('lgSearch').focus(); }
   });
   document.getElementById('lgSearch').addEventListener('input', renderLgResults);
+  document.getElementById('lgGroup').addEventListener('change', renderLgResults);
   document.getElementById('lgAgeFrom').addEventListener('change', renderLgResults);
   document.getElementById('lgAgeTo').addEventListener('change', renderLgResults);
   document.getElementById('lgCancel').addEventListener('click', function(){
