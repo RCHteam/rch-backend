@@ -25,8 +25,11 @@ module.exports = `<!doctype html>
   header .header-brand img{ height:56px; width:auto; display:block; transition:transform .2s ease; }
   header .header-brand a:hover img{ transform:scale(1.04); }
   .header-right{ display:flex; align-items:center; justify-content:flex-end; gap:12px; }
-  #sectionNav{ background:transparent; border:1px solid rgba(246,242,231,0.3); border-radius:3px; padding:9px 12px; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--chalk); cursor:pointer; }
-  #sectionNav option{ color:var(--ink); text-transform:none; letter-spacing:0; }
+  #sectionNav{ -webkit-appearance:none; appearance:none; background:rgba(246,242,231,0.07) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23f6f2e7' stroke-width='2'/></svg>") no-repeat right 12px center; border:1px solid rgba(246,242,231,0.35); border-radius:8px; padding:10px 36px 10px 14px; min-width:170px; font-family:'Space Mono',monospace; font-size:0.74rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--chalk); cursor:pointer; transition:border-color .15s, background-color .15s; }
+  #sectionNav:hover, #sectionNav:focus{ border-color:#3fcf7a; outline:none; background-color:rgba(63,207,122,0.12); }
+  #sectionNav option{ background:#14201a; color:#f6f2e7; text-transform:none; letter-spacing:0.02em; font-size:0.9rem; padding:10px 14px; }
+  #sectionNav option:checked{ background:#1f9d4b; color:#fff; }
+  body.sultans-mode{ background:#0b120e; }
   /* search */
   .search-wrap{ position:relative; max-width:380px; width:100%; }
   .search-wrap input{ width:100%; padding:10px 14px 10px 36px; border:1px solid rgba(246,242,231,0.3); background:rgba(246,242,231,0.08); color:var(--chalk); border-radius:3px; font-family:inherit; font-size:0.9rem; }
@@ -5160,6 +5163,7 @@ module.exports = `<!doctype html>
   function showSection(name){
     // The count cards belong to the dashboard (Registrations) only.
     document.getElementById('summary').classList.toggle('hidden', name !== 'registrations');
+    document.body.classList.toggle('sultans-mode', name === 'sultans');
     SECTION_IDS.forEach((id) => {
       document.getElementById('section-' + id).classList.toggle('hidden', id !== name);
     });
