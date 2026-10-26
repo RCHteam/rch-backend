@@ -196,21 +196,24 @@ function buildTeamPdf(team) {
         ['Parent', 120], ['Phone', 100], ['Email', 156],
       ];
       const tableW = cols.reduce((s, c) => s + c[1], 0);
+      const comp = team.league_type === 'competitive';
+      const HEAD = comp ? '#0e1712' : '#17803f';       // black = competitive, green = recreational
+      const SUB = comp ? '#9fe6bb' : '#e6f8ec';
 
       function banner() {
-        doc.rect(0, 0, pageW, 96).fill('#0e1712');
+        doc.rect(0, 0, pageW, 96).fill(HEAD);
         doc.rect(0, 96, pageW / 2, 4).fill('#c8372d');
         doc.rect(pageW / 2, 96, pageW / 2, 4).fill('#1f9d4b');
         try { doc.image(path.join(__dirname, 'assets', 'sultans-logo.png'), left, 12, { height: 74 }); } catch (e) { /* logo is optional */ }
         doc.font('Helvetica-Bold').fontSize(22).fillColor('#ffffff').text(team.name, 130, 20, { width: pageW - 130 - left });
-        doc.font('Helvetica').fontSize(11).fillColor('#9fe6bb');
+        doc.font('Helvetica').fontSize(11).fillColor(SUB);
         const bits = [team.age_label, team.league_type === 'competitive' ? 'Competitive' : 'Recreational'];
         if (team.season_start || team.season_end) bits.push('Season: ' + (fmtDate(team.season_start) || '?') + ' to ' + (fmtDate(team.season_end) || '?'));
         bits.push(team.players.length + (team.players.length === 1 ? ' player' : ' players'));
         doc.text(bits.join('   •   '), 130, 54, { width: pageW - 130 - left });
       }
       function head(y) {
-        doc.rect(left, y, tableW, 22).fill('#0e1712');
+        doc.rect(left, y, tableW, 22).fill(HEAD);
         doc.font('Helvetica-Bold').fontSize(9).fillColor('#ffffff');
         let x = left;
         cols.forEach((c) => { doc.text(c[0], x + 4, y + 7, { width: c[1] - 6 }); x += c[1]; });
