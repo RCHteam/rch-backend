@@ -283,7 +283,7 @@ router.put('/admin/players/:id/unarchive', requireAdmin, async (req, res) => {
 router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   const {
     sourceType, sourceId, grade, sessionType,
-    rch, sultans, parentName, parentPhone, parentEmail, discountCents, siblingDiscount: siblingOverride, shirtSize: sizeOverride, sessionDay: dayOverride,
+    rch, sultans, tryout, parentName, parentPhone, parentEmail, discountCents, siblingDiscount: siblingOverride, shirtSize: sizeOverride, sessionDay: dayOverride,
   } = req.body || {};
 
   if (!['skills', 'join'].includes(sourceType)) {
@@ -298,8 +298,12 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
   // opt one into Sultans too at move time (e.g. a Skills Training player who
   // decides to also join the Sultans FC squad) — so sultans is whatever was
   // submitted, for either source type.
-  const isSultans = !!sultans;
-  const isRch = isSultans ? true : !!rch; // Sultans always implies RCH
+  // "Send to Try Outs Sultans" (join signups only): the player goes onto the
+  // regular RCH roster AND the try outs list, but is not on the Sultans roster
+  // until he passes the try outs.
+  const isTryout = !!tryout && sourceType === 'join';
+  const isSultans = isTryout ? false : !!sultans;
+  const isRch = (isSultans || isTryout) ? true : !!rch; // Sultans always implies RCH
 
   try {
     let sourceTable, playerName, dob, siblingDiscount = 0, srcSize = null, srcDay = null;
@@ -327,14 +331,15 @@ router.post('/admin/move-to-roster', requireAdmin, async (req, res) => {
 
     const insertRes = await pool.query(
       `INSERT INTO players
-        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        (grade, player_name, dob, parent_name, parent_phone, parent_email, session_type, rch, sultans, discount_cents, sibling_discount, shirt_size, session_day, tryout_status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
       [grade, playerName, dob || null, parentName || '', formatPhone(parentPhone || ''), parentEmail || '',
        normalizeSessionType(sessionType), isRch, isSultans, Number(discountCents) || 0,
        siblingOverride !== undefined ? normalizeSibling(siblingOverride) : normalizeSibling(siblingDiscount),
        normalizeSize(sizeOverride !== undefined ? sizeOverride : srcSize),
-       normalizeDay(dayOverride !== undefined ? dayOverride : srcDay, normalizeSessionType(sessionType))]
+       normalizeDay(dayOverride !== undefined ? dayOverride : srcDay, normalizeSessionType(sessionType)),
+       isTryout ? 'tryout' : null]
     );
 
     await pool.query(`UPDATE ${sourceTable} SET moved_at = now() WHERE id = $1`, [sourceId]);

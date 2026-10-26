@@ -511,3 +511,32 @@ CREATE TABLE IF NOT EXISTS coach_logins (
   last_login_at TIMESTAMPTZ
 );
 CREATE UNIQUE INDEX IF NOT EXISTS coach_logins_username_idx ON coach_logins (lower(username));
+
+-- ===== Sultans section =====
+-- Try outs: a player who signed up through Join Sultans FC is sent to the
+-- regular RCH roster AND onto the try outs list. tryout_status is
+--   NULL     = never went through try outs
+--   'tryout' = waiting on the try outs list
+--   'passed' = passed (players.sultans is set to true at the same time)
+--   'failed' = failed (stays in RCH training, not in the Sultans roster)
+ALTER TABLE players ADD COLUMN IF NOT EXISTS tryout_status TEXT;
+
+-- League rosters (teams) built from the Sultans roster. A player can be on
+-- more than one team; the Sultans roster shows the teams in its Called column.
+CREATE TABLE IF NOT EXISTS league_teams (
+  id            SERIAL PRIMARY KEY,
+  name          TEXT NOT NULL,
+  season_start  DATE,
+  season_end    DATE,
+  age_from      INTEGER NOT NULL DEFAULT 4,
+  age_to        INTEGER NOT NULL DEFAULT 12,
+  description   TEXT NOT NULL DEFAULT '',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS league_team_players (
+  team_id    INTEGER NOT NULL REFERENCES league_teams(id) ON DELETE CASCADE,
+  player_id  INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  added_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (team_id, player_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ltp_player ON league_team_players(player_id);

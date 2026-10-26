@@ -15,6 +15,7 @@ const { router: paymentRoutes, handleStripeWebhook } = require('./payments');
 const paymentPageHtml = require('./paymentPage');
 const oneTimePaymentPageHtml = require('./oneTimePaymentPage');
 const playersRoutes = require('./players');
+const sultansRoutes = require('./sultans');
 const chargesRoutes = require('./charges');
 const coachesRoutes = require('./coaches');
 const coachAuthRoutes = require('./coachAuth');
@@ -80,6 +81,7 @@ app.use('/api', joinRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', playersRoutes);
+app.use('/api', sultansRoutes);
 app.use('/api', chargesRoutes);
 app.use('/api', coachesRoutes);
 app.use('/api', coachAuthRoutes);
@@ -154,7 +156,7 @@ app.get('/sw.js', (req, res) => {
   );
 });
 ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'coach-uniform.jpg',
-  'icon-admin.png', 'icon-coaches.png', 'touch-admin.png', 'touch-coaches.png', 'icon512-admin.png', 'icon512-coaches.png'].forEach((f) => {
+  'icon-admin.png', 'sultans-logo.png', 'icon-coaches.png', 'touch-admin.png', 'touch-coaches.png', 'icon512-admin.png', 'icon512-coaches.png'].forEach((f) => {
   app.get('/assets/' + f, (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.sendFile(path.join(__dirname, 'assets', f));

@@ -204,6 +204,68 @@ module.exports = `<!doctype html>
   .panel-body table{ box-shadow:none; border:1px solid #eee8d8; margin-bottom:6px; }
   .panel-actions{ display:flex; justify-content:flex-end; margin-bottom:10px; }
 
+
+  /* ---------- Sultans section (dark, red and green, like the website) ---------- */
+  #section-sultans{ --sg:#3fcf7a; --sg2:#1f9d4b; --sr:#d6403a; --sbg:#0e1712; --sbg2:#14201a; --sbg3:#1b2a22; --sch:#f6f2e7; --sdim:#b9c4bb; }
+  .sul-hero{ display:flex; align-items:center; gap:22px; padding:22px 28px; border-radius:10px 10px 0 0; color:var(--sch);
+    background: radial-gradient(circle at 12% 20%, rgba(31,157,75,0.38), transparent 45%), radial-gradient(circle at 90% 10%, rgba(214,64,58,0.30), transparent 42%), var(--sbg); }
+  .sul-hero img{ height:92px; width:auto; display:block; }
+  .sul-hero .sul-k{ font-family:'Space Mono',monospace; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--sg); }
+  .sul-hero .sul-t{ font-family:'Anton',sans-serif; font-size:2.4rem; letter-spacing:0.04em; line-height:1.05; margin:2px 0 4px; }
+  .sul-hero .sul-s{ color:var(--sdim); font-size:0.92rem; }
+  .sul-tricolor{ height:6px; background:linear-gradient(90deg, var(--sr) 0%, var(--sr) 33.3%, #0a0a0a 33.3%, #0a0a0a 66.6%, var(--sg2) 66.6%, var(--sg2) 100%); margin-bottom:22px; border-radius:0 0 3px 3px; }
+  .sul-panel{ background:var(--sbg2); color:var(--sch); border:1px solid rgba(246,242,231,0.10); border-top:4px solid var(--sg2); border-radius:8px; padding:20px 22px 12px; margin-bottom:26px; box-shadow:0 10px 30px rgba(0,0,0,0.25); }
+  .sul-panel.sul-red{ border-top-color:var(--sr); }
+  .sul-panel .section-head h2{ color:var(--sch); border-left-color:var(--sr); }
+  .sul-panel .section-head select, .sul-panel input[type="text"], .sul-panel input[type="search"]{ background:var(--sbg3); color:var(--sch); border:1px solid rgba(246,242,231,0.22); border-radius:4px; }
+  .sul-panel label{ color:var(--sch); }
+  .sul-panel .sul-muted{ color:var(--sdim); font-size:0.85rem; }
+  .sul-panel .btn-add{ background:var(--sg2); color:#fff; }
+  .sul-panel .btn-add:hover{ background:var(--sg); color:#0e1712; }
+  .sul-panel table{ background:var(--sbg3); color:var(--sch); box-shadow:none; border:1px solid rgba(246,242,231,0.08); }
+  .sul-panel tbody tr:hover{ background:#223329; }
+  .sul-panel th{ background:#070c09; color:var(--sg); border-bottom:2px solid var(--sr); }
+  .sul-panel td{ border-bottom:1px solid rgba(246,242,231,0.08); }
+  .sul-panel .empty{ color:var(--sdim); }
+  .sul-panel td details summary, .sul-panel details.email-dd summary{ color:var(--sg); background:var(--sbg2); border-color:rgba(246,242,231,0.2); }
+  .sul-panel .status-paid{ background:rgba(63,207,122,0.18); color:#7ff0ab; }
+  .sul-panel .status-declined{ background:rgba(214,64,58,0.22); color:#ff9a94; }
+  .sul-panel .status-pending{ background:rgba(240,198,116,0.18); color:#f0c674; }
+  .sul-panel .status-neutral{ background:rgba(246,242,231,0.12); color:var(--sdim); }
+  .sul-panel .btn-payment-link, .sul-panel .btn-send-agreement, .sul-panel .btn-dl-agreement{ background:transparent; border-color:var(--sg); color:var(--sg); }
+  .sul-panel .btn-payment-link:hover, .sul-panel .btn-send-agreement:hover, .sul-panel .btn-dl-agreement:hover{ background:var(--sg2); color:#fff; }
+  .sul-panel .btn-kebab{ background:var(--sbg3); color:var(--sch); border-color:rgba(246,242,231,0.25); }
+  .sul-panel .btn-kebab:hover{ background:#2a4033; }
+  .btn-tryout-pass{ background:var(--sg2,#1f9d4b); border:none; color:#fff; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:700; white-space:nowrap; }
+  .btn-tryout-pass:hover{ background:#3fcf7a; color:#0e1712; }
+  .btn-tryout-fail{ background:transparent; border:1px solid #d6403a; color:#ff8a84; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:700; white-space:nowrap; }
+  .btn-tryout-fail:hover{ background:#d6403a; color:#fff; }
+  .btn-tryout-send{ background:#0e1712; border:1px solid #1f9d4b; color:#3fcf7a; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; white-space:nowrap; }
+  .btn-tryout-send:hover{ background:#1f9d4b; color:#fff; }
+  .called-pill{ display:inline-block; background:rgba(63,207,122,0.18); color:#7ff0ab; border:1px solid rgba(63,207,122,0.45); border-radius:12px; padding:2px 9px; font-size:0.74rem; font-weight:700; margin:1px 3px 1px 0; white-space:nowrap; }
+  .sul-panel .row-menu{ background:var(--sbg3); border-color:rgba(246,242,231,0.2); }
+  .sul-panel .row-menu button{ background:var(--sbg2); color:var(--sch); border:1px solid rgba(246,242,231,0.2); }
+  .sul-panel .row-menu button:hover{ background:var(--sg2); color:#fff; }
+  .lg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding-bottom:14px; }
+  .lg-card{ background:var(--sbg3); border:1px solid rgba(246,242,231,0.10); border-left:5px solid var(--sr); border-radius:8px; padding:16px 18px; }
+  .lg-card h3{ margin:0 0 2px; font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.02em; color:var(--sch); }
+  .lg-card .lg-meta{ color:var(--sg); font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; }
+  .lg-card .lg-desc{ color:var(--sdim); font-size:0.88rem; margin:6px 0 10px; white-space:pre-wrap; }
+  .lg-card .lg-players{ font-size:0.82rem; color:var(--sch); margin-bottom:12px; line-height:1.7; }
+  .lg-card .lg-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .lg-card .lg-btns button{ border-radius:6px; padding:7px 13px; cursor:pointer; font-size:0.8rem; font-weight:700; font-family:inherit; }
+  .lg-pdf{ background:var(--sg2); color:#fff; border:none; } .lg-pdf:hover{ background:var(--sg); color:#0e1712; }
+  .lg-edit{ background:transparent; color:var(--sch); border:1px solid rgba(246,242,231,0.35); }
+  .lg-del{ background:transparent; color:#ff8a84; border:1px solid #d6403a; } .lg-del:hover{ background:#d6403a; color:#fff; }
+  #leagueModal .modal{ max-width:640px; border-top-color:#d6403a; }
+  .lg-picker{ border:1px solid #ddd; border-radius:6px; padding:10px; margin-top:10px; background:#f7faf7; }
+  .lg-picker .lg-res{ max-height:210px; overflow-y:auto; margin-top:8px; }
+  .lg-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 8px; border-bottom:1px solid #e6ebe6; font-size:0.88rem; }
+  .lg-row .lg-sub{ color:#777; font-size:0.78rem; margin-left:6px; }
+  .lg-plus{ background:#1f9d4b; color:#fff; border:none; border-radius:50%; width:26px; height:26px; font-size:1.1rem; line-height:1; cursor:pointer; flex:none; }
+  .lg-minus{ background:#fff; color:#b5482f; border:1px solid #d98a76; border-radius:50%; width:26px; height:26px; line-height:1; cursor:pointer; flex:none; }
+  .lg-chosen{ border:1px solid #ddd; border-radius:6px; margin-top:8px; max-height:200px; overflow-y:auto; }
+
   /* tables scroll inside their own box so the page never slides sideways */
   body{ overflow-x:clip; }
   main{ min-width:0; }
@@ -420,6 +482,7 @@ module.exports = `<!doctype html>
     <div class="header-right">
       <select id="sectionNav">
         <option value="registrations">Registrations</option>
+        <option value="sultans">Sultans</option>
         <option value="finances">Finances</option>
         <option value="charges">Charges</option>
         <option value="coaches">Coaches</option>
@@ -519,6 +582,63 @@ module.exports = `<!doctype html>
     <div id="overviewAgeWrap"></div>
 
     </div><!-- /section-registrations -->
+
+    <div id="section-sultans" class="hidden">
+      <div class="sul-hero">
+        <img src="/assets/sultans-logo.png" alt="Sultans FC">
+        <div>
+          <div class="sul-k">RCH Elite Training</div>
+          <div class="sul-t">SULTANS FC</div>
+          <div class="sul-s">Try outs, the Sultans roster and league rosters</div>
+        </div>
+      </div>
+      <div class="sul-tricolor"></div>
+
+      <div class="sul-panel sul-red">
+        <div class="section-head">
+          <h2>Try Outs Sultans</h2>
+          <span class="sul-muted" id="tryoutCount"></span>
+        </div>
+        <p class="sul-muted" style="margin:-4px 0 12px;">Players sent from New Registrations wait here. They are also on the regular RCH roster. Pass moves a player to the Sultans roster. Fail keeps him in RCH training.</p>
+        <div id="tryoutTableWrap"></div>
+      </div>
+
+      <div class="sul-panel">
+        <div class="section-head">
+          <h2>Sultans Roster</h2>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <select id="srosterGradeFilter">
+            <option value="u5-">U4 &amp; U5</option>
+            <option value="u6">U6</option>
+            <option value="u7">U7</option>
+            <option value="u8">U8</option>
+            <option value="u9">U9</option>
+            <option value="u10">U10</option>
+            <option value="u11">U11</option>
+            <option value="u12">U12</option>
+            <option value="nodob">No birth date</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:0 0 12px;">
+          <input type="text" id="srosterSearch" placeholder="Search players, parents, phone, email…" style="flex:1; min-width:220px; max-width:380px; padding:10px 12px; font:inherit;" autocomplete="off">
+          <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterUnpaid" style="width:auto; margin:0;"> Unpaid</label>
+          <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600; cursor:pointer;"><input type="checkbox" id="srosterNoAgreement" style="width:auto; margin:0;"> Agreement not sent</label>
+          <span id="srosterCount" class="sul-muted"></span>
+          <span id="srosterNotice" style="font-size:0.85rem;"></span>
+        </div>
+        <div id="srosterTableWrap"></div>
+      </div>
+
+      <div class="sul-panel sul-red">
+        <div class="section-head">
+          <h2>League Rosters</h2>
+          <button type="button" class="btn-add" id="createLeagueBtn">+ Create League Roster</button>
+        </div>
+        <p class="sul-muted" style="margin:-4px 0 12px;">Build a team from the Sultans roster. Players on a team show as Called in the roster. Each team downloads as a PDF.</p>
+        <div id="leagueListWrap"></div>
+      </div>
+    </div><!-- /section-sultans -->
 
     <div id="section-finances" class="hidden">
     <div class="panel-tools"><button type="button" class="panel-tool" data-panels="expand">Expand all</button><button type="button" class="panel-tool" data-panels="collapse">Collapse all</button></div>
@@ -1320,8 +1440,9 @@ module.exports = `<!doctype html>
 
 <div class="modal-overlay hidden" id="moveToRosterModal">
   <div class="modal">
-    <h3>Move to Roster</h3>
+    <h3 id="moveModalTitle">Send to Roster</h3>
     <p class="modal-sub" id="moveModalSub"></p>
+    <p class="modal-sub hidden" id="moveTryoutNote" style="color:#1f7a44; font-weight:600;">This player goes on the regular RCH roster and on the Try Outs Sultans list.</p>
     <label for="moveGrade">Grade</label>
     <select id="moveGrade">
       <option value="pre-k">Pre-K</option>
@@ -1351,7 +1472,7 @@ module.exports = `<!doctype html>
       <option value="15">15% (3 siblings)</option>
       <option value="20">20% (4 siblings)</option>
     </select>
-    <div class="two-col">
+    <div class="two-col" id="moveFlagsRow">
       <div class="checkbox-row"><input type="checkbox" id="moveRch"><label for="moveRch">RCH</label></div>
       <div class="checkbox-row"><input type="checkbox" id="moveSultans"><label for="moveSultans">Sultans (implies RCH)</label></div>
     </div>
@@ -1364,7 +1485,38 @@ module.exports = `<!doctype html>
     <p class="modal-error" id="moveModalError"></p>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="moveModalCancel">Cancel</button>
-      <button type="button" class="btn-send" id="moveModalSubmit">Move to Roster</button>
+      <button type="button" class="btn-send" id="moveModalSubmit">Send to Roster</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="leagueModal">
+  <div class="modal">
+    <h3 id="lgTitle">Create League Roster</h3>
+    <p class="modal-sub">Fill in the details, then add players from the Sultans roster.</p>
+    <label for="lgName">League name</label>
+    <input type="text" id="lgName" placeholder="Example: Fall 2026 Plano League U6">
+    <div class="two-col">
+      <div><label for="lgStart">Season start</label><input type="date" id="lgStart"></div>
+      <div><label for="lgEnd">Season end</label><input type="date" id="lgEnd"></div>
+    </div>
+    <div class="two-col">
+      <div><label for="lgAgeFrom">Age group, from</label><select id="lgAgeFrom"></select></div>
+      <div><label for="lgAgeTo">Age group, to</label><select id="lgAgeTo"></select></div>
+    </div>
+    <label for="lgDesc">Description</label>
+    <textarea id="lgDesc" placeholder="Anything about this league or team"></textarea>
+    <label>Players <span id="lgCount" style="color:#777; font-weight:400;"></span></label>
+    <button type="button" class="btn-add" id="lgAddBtn" style="margin-top:2px;">+ Add players</button>
+    <div class="lg-picker hidden" id="lgPicker">
+      <input type="text" id="lgSearch" placeholder="Search the Sultans roster…" autocomplete="off">
+      <div class="lg-res" id="lgResults"></div>
+    </div>
+    <div class="lg-chosen" id="lgChosen"></div>
+    <p class="modal-error" id="lgError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="lgCancel">Cancel</button>
+      <button type="button" class="btn-send" id="lgSave">Save League Roster</button>
     </div>
   </div>
 </div>
@@ -1779,7 +1931,7 @@ module.exports = `<!doctype html>
         html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">';
         if (opts.onMoveToRoster) {
           const label = (row[opts.labelKey] ?? '').toString().replace(/"/g, '&quot;');
-          html += \`<button type="button" class="btn-move-to-roster" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Move to Roster</button>\`;
+          html += \`<button type="button" class="btn-move-to-roster" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Send to Roster</button>\`;
           html += \`<button type="button" class="btn-send-agreement" data-id="\${row[opts.idKey || 'id']}" data-label="\${label}">Send Agreement</button>\`;
         }
         if (opts.onPaymentLink) {
@@ -1832,8 +1984,12 @@ module.exports = `<!doctype html>
 
   let moveModalCtx = null;
 
-  function openMoveModal(sourceType, id, row, onSent){
-    moveModalCtx = { sourceType, id, onSent };
+  function openMoveModal(sourceType, id, row, onSent, opts){
+    const tryout = !!(opts && opts.tryout) && sourceType === 'join';
+    moveModalCtx = { sourceType, id, onSent, tryout };
+    document.getElementById('moveModalTitle').textContent = tryout ? 'Send to Try Outs Sultans' : 'Send to Roster';
+    document.getElementById('moveTryoutNote').classList.toggle('hidden', !tryout);
+    document.getElementById('moveFlagsRow').style.display = tryout ? 'none' : '';
     const label = sourceType === 'skills' ? row.full_name : row.child_name;
     document.getElementById('moveModalSub').textContent = label;
     // Prefill whatever the source registration already has — both forms now
@@ -1845,15 +2001,14 @@ module.exports = `<!doctype html>
     document.getElementById('moveSize').value = row.shirt_size || '';
     document.getElementById('moveDay').value = row.session_day || 'tuesday';
     syncMoveDay();
+    // Training signups go on the roster as RCH only. Sultans FC signups use the
+    // Try Outs button (RCH roster plus the try outs list); the boxes below are only
+    // for the rare case where you want to set the flags yourself.
     document.getElementById('moveRch').checked = true;
-    // Skills Training applicants default to RCH-only, but the admin can still
-    // check Sultans too if this player is also joining that squad. Join
-    // Sultans FC registrations default with Sultans already checked (which
-    // implies RCH).
-    document.getElementById('moveSultans').checked = sourceType === 'join';
+    document.getElementById('moveSultans').checked = false;
     document.getElementById('moveSultans').disabled = false;
     document.getElementById('moveSultans').closest('.checkbox-row').style.display = '';
-    document.getElementById('moveRch').disabled = sourceType === 'join';
+    document.getElementById('moveRch').disabled = false;
     document.getElementById('moveParentName').value = row.parent_name || row.full_name || '';
     document.getElementById('moveParentPhone').value = row.phone || '';
     document.getElementById('moveParentEmail').value = row.email || '';
@@ -1889,15 +2044,16 @@ module.exports = `<!doctype html>
       siblingDiscount: Number(document.getElementById('moveSibling').value) || 0,
       shirtSize: document.getElementById('moveSize').value,
       sessionDay: dayValue('moveSessionType', 'moveDay'),
-      rch: document.getElementById('moveRch').checked,
-      sultans: document.getElementById('moveSultans').checked,
+      rch: moveModalCtx.tryout ? true : document.getElementById('moveRch').checked,
+      sultans: moveModalCtx.tryout ? false : document.getElementById('moveSultans').checked,
+      tryout: !!moveModalCtx.tryout,
       parentName: document.getElementById('moveParentName').value.trim(),
       parentPhone: document.getElementById('moveParentPhone').value.trim(),
       parentEmail: document.getElementById('moveParentEmail').value.trim(),
     };
     const btn = document.getElementById('moveModalSubmit');
     btn.disabled = true;
-    btn.textContent = 'Moving…';
+    btn.textContent = 'Sending…';
     try {
       const result = await api('/api/admin/move-to-roster', { method: 'POST', body: JSON.stringify(payload) });
       if (result.error) {
@@ -1916,7 +2072,7 @@ module.exports = `<!doctype html>
         : 'Could not reach the server. Please check your connection and try again.';
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Move to Roster';
+      btn.textContent = 'Send to Roster';
     }
   });
 
@@ -2883,7 +3039,8 @@ module.exports = `<!doctype html>
       const label = String(x.name || '').replace(/"/g, '&quot;');
       html += '<tr data-rid="' + x.__rid + '">' + cols.slice(0, -1).map(c => '<td>' + (x[c[0]] ?? '') + '</td>').join('');
       html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">'
-        + '<button type="button" class="btn-move-to-roster" data-id="' + x.__id + '" data-label="' + label + '">Move to Roster</button>'
+        + (x.__t === 'join' ? '<button type="button" class="btn-tryout-send" data-id="' + x.__id + '" data-label="' + label + '">Send to Try Outs Sultans</button>' : '')
+        + '<button type="button" class="btn-move-to-roster" data-id="' + x.__id + '" data-label="' + label + '">Send to Roster</button>'
         + '<button type="button" class="btn-send-agreement" data-id="' + x.__id + '" data-label="' + label + '">Send Agreement</button>'
         + '<button type="button" class="btn-delete-row" data-id="' + x.__id + '">Delete</button></td></tr>';
     }
@@ -2897,6 +3054,11 @@ module.exports = `<!doctype html>
       });
       wireAgreementButtons(tr, t);
       wireMoveToRosterButtons(tr, t, t === 'join' ? join : skills, reload);
+      const tb = tr.querySelector('.btn-tryout-send');
+      if (tb) tb.addEventListener('click', () => {
+        const row = join.find((r) => String(r.id) === tb.getAttribute('data-id'));
+        if (row) openMoveModal('join', tb.getAttribute('data-id'), row, reload, { tryout: true });
+      });
     });
   }
   const loadSkills = loadRegistrations;
@@ -2970,15 +3132,18 @@ module.exports = `<!doctype html>
     return '<optgroup label="' + label + '">' + AGE_SCOPE_KEYS.map(function(k){ return '<option value="' + prefix + ':' + k + '">' + AGE_KEY_LABELS[k] + '</option>'; }).join('') + '</optgroup>';
   }
 
-  function renderRosterTable(rows, showGrade){
+  function renderRosterTable(rows, showGrade, ropts){
+    ropts = ropts || {};
+    const sulView = !!ropts.sultansView;
     if (!rows.length) return '<div class="empty">' + (showGrade ? 'No players match.' : 'No players yet.') + '</div>';
     let html = '<table><thead><tr>' +
       '<th>Name</th><th>Age Group</th><th>School Grade</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th>' +
-      '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th><th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
+      '<th>Sessions</th><th>Size</th><th>RCH</th><th>Sultans</th>' + (sulView ? '<th>Called</th>' : '') + '<th>Discount</th><th>Sibling</th><th>Payment Status</th><th>Agreement</th><th></th>' +
       '</tr></thead><tbody>';
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
-      html += '<tr data-rid="player-' + r.id + '">' +
+      const calledNames = sulView ? (calledByPlayer[r.id] || []) : [];
+      html += '<tr data-rid="' + (sulView ? 'splayer-' : 'player-') + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
         '<td>' + escapeHtml(ageGroupLabel(r.dob)) + (ageGradeMismatch(r) ? ' <span title="The school grade and age group are far apart for this player. Check the date of birth and grade." style="color:#b5482f; cursor:help;">⚠</span>' : '') + '</td>' +
         '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
@@ -2990,6 +3155,7 @@ module.exports = `<!doctype html>
         '<td>' + (r.shirt_size || '—') + '</td>' +
         '<td>' + (r.rch ? '✓' : '—') + '</td>' +
         '<td>' + (r.sultans ? '✓' : '—') + '</td>' +
+        (sulView ? '<td>' + (calledNames.length ? calledNames.map(function(n){ return '<span class="called-pill">✓ ' + escapeHtml(n) + '</span>'; }).join('') : '—') + '</td>' : '') +
         '<td>$' + ((r.effective_discount_cents != null ? r.effective_discount_cents : r.discount_cents) / 100).toFixed(2) + (r.effective_discount_cents > 0 ? (r.discount_is_manual ? ' <span style="color:#888; font-size:0.72rem;">(manual)</span>' : ' <span style="color:#888; font-size:0.72rem;">(sibling)</span>') : '') + '</td>' +
         '<td>' + (r.sibling_discount ? r.sibling_discount + '%' : '—') + '</td>' +
         '<td><span class="status-badge ' + paymentLabelClass(r) + '">' + escapeHtml(paymentLabel(r)) + '</span></td>' +
@@ -2999,6 +3165,9 @@ module.exports = `<!doctype html>
             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '" data-sibling="' + (r.sibling_discount || 0) + '">Send Payment Link</button>' +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
+              (sulView
+                ? '<button type="button" class="btn-sul-remove" data-id="' + r.id + '" data-label="' + label + '">Remove from Sultans Roster</button>'
+                : (!r.sultans ? '<button type="button" class="btn-sul-send" data-id="' + r.id + '" data-label="' + label + '">Send to Sultans Roster</button>' : '')) +
               (r.agreement_signed_at
                 ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
                 : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
@@ -3096,14 +3265,15 @@ module.exports = `<!doctype html>
     }
   });
 
-  async function loadRoster(){
-    const grade = document.getElementById('rosterGradeFilter').value;
-    const q = document.getElementById('rosterSearch').value.trim().toLowerCase();
-    const onlyUnpaid = document.getElementById('rosterUnpaid').checked;
-    const onlyNoAg = document.getElementById('rosterNoAgreement').checked;
+  async function loadRosterView(P){
+    const grade = document.getElementById(P + 'GradeFilter').value;
+    const q = document.getElementById(P + 'Search').value.trim().toLowerCase();
+    const onlyUnpaid = document.getElementById(P + 'Unpaid').checked;
+    const onlyNoAg = document.getElementById(P + 'NoAgreement').checked;
     const filtering = !!(q || onlyUnpaid || onlyNoAg);
     // While searching or filtering, look across every grade instead of just the selected one.
     let rows = await api('/api/admin/players');
+    if (P === 'sroster') rows = rows.filter(function(r){ return r.sultans; });
     const everyone = rows;
     // The roster is divided by age group (from date of birth); school grade is still kept on every player.
     if (!filtering) rows = rows.filter(function(r){ return ageGroupKey(r.dob) === grade; });
@@ -3119,14 +3289,14 @@ module.exports = `<!doctype html>
         return true;
       });
     }
-    document.getElementById('rosterCount').textContent = rows.length + (rows.length === 1 ? ' player' : ' players') + (filtering ? ' found (all age groups)' : '');
-    const wrap = document.getElementById('rosterTableWrap');
+    document.getElementById(P + 'Count').textContent = rows.length + (rows.length === 1 ? ' player' : ' players') + (filtering ? ' found (all age groups)' : '');
+    const wrap = document.getElementById(P + 'TableWrap');
     const missingDob = everyone.filter(function(r){ return !String(r.dob || '').slice(0, 10); }).length;
-    const noticeEl = document.getElementById('rosterNotice');
-    noticeEl.innerHTML = missingDob ? '<a href="#" id="rosterNoDobLink" style="color:#b5482f; font-weight:600;">' + missingDob + (missingDob === 1 ? ' player has' : ' players have') + ' no birth date — click to see them</a>' : '';
-    const nl = document.getElementById('rosterNoDobLink');
-    if (nl) nl.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('rosterGradeFilter').value = 'nodob'; loadRoster(); });
-    wrap.innerHTML = renderRosterTable(rows, filtering);
+    const noticeEl = document.getElementById(P + 'Notice');
+    noticeEl.innerHTML = missingDob ? '<a href="#" id="' + P + 'NoDobLink" style="color:#b5482f; font-weight:600;">' + missingDob + (missingDob === 1 ? ' player has' : ' players have') + ' no birth date — click to see them</a>' : '';
+    const nl = document.getElementById(P + 'NoDobLink');
+    if (nl) nl.addEventListener('click', function(e){ e.preventDefault(); document.getElementById(P + 'GradeFilter').value = 'nodob'; loadRoster(); });
+    wrap.innerHTML = renderRosterTable(rows, filtering, P === 'sroster' ? { sultansView: true } : {});
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
@@ -3162,7 +3332,7 @@ module.exports = `<!doctype html>
         }
       });
     });
-    wireAgreementButtons('rosterTableWrap', 'player', loadRoster);
+    wireAgreementButtons(P + 'TableWrap', 'player', loadRoster);
     wrap.querySelectorAll('.btn-start-billing').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const label = btn.getAttribute('data-label') || 'this family';
@@ -3181,8 +3351,30 @@ module.exports = `<!doctype html>
         window.open(API_BASE + '/api/admin/agreements/' + a.getAttribute('data-agreement') + '/pdf?token=' + encodeURIComponent(getToken()));
       });
     });
-    wirePaymentLinkButtons('rosterTableWrap', 'player', loadRoster);
-    wireCancelButtons('rosterTableWrap', 'player', loadRoster);
+    wirePaymentLinkButtons(P + 'TableWrap', 'player', loadRoster);
+    wireCancelButtons(P + 'TableWrap', 'player', loadRoster);
+    wrap.querySelectorAll('.btn-sul-send').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/sultans', { method: 'PUT', body: JSON.stringify({ in: true }) });
+          if (r.error) { alert(r.error); btn.disabled = false; return; }
+          await Promise.all([loadRoster(), loadSummary()]);
+        } catch (e) { alert('Could not send this player to the Sultans roster. Please try again.'); btn.disabled = false; }
+      });
+    });
+    wrap.querySelectorAll('.btn-sul-remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const label = btn.getAttribute('data-label') || 'this player';
+        if (!confirm('Remove ' + label + ' from the Sultans roster? He stays in RCH training and is taken off any league roster.')) return;
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/sultans', { method: 'PUT', body: JSON.stringify({ in: false }) });
+          if (r.error) { alert(r.error); btn.disabled = false; return; }
+          await Promise.all([loadRoster(), loadSummary()]);
+        } catch (e) { alert('Could not remove this player. Please try again.'); btn.disabled = false; }
+      });
+    });
     wrap.querySelectorAll('.btn-kebab').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3214,11 +3406,25 @@ module.exports = `<!doctype html>
       });
     });
   }
-  document.getElementById('rosterGradeFilter').addEventListener('change', loadRoster);
+
+  // Reloads the main roster, and the whole Sultans section once it has been opened.
+  let sultansLoaded = false;
+  let leagueTeams = [];
+  let calledByPlayer = {};
+  async function loadRoster(){
+    await loadRosterView('roster');
+    if (sultansLoaded) await loadSultansAll();
+  }
+  document.getElementById('rosterGradeFilter').addEventListener('change', function(){ loadRosterView('roster'); });
   let rosterSearchTimer = null;
-  document.getElementById('rosterSearch').addEventListener('input', function(){ clearTimeout(rosterSearchTimer); rosterSearchTimer = setTimeout(loadRoster, 250); });
-  document.getElementById('rosterUnpaid').addEventListener('change', loadRoster);
-  document.getElementById('rosterNoAgreement').addEventListener('change', loadRoster);
+  document.getElementById('rosterSearch').addEventListener('input', function(){ clearTimeout(rosterSearchTimer); rosterSearchTimer = setTimeout(function(){ loadRosterView('roster'); }, 250); });
+  document.getElementById('rosterUnpaid').addEventListener('change', function(){ loadRosterView('roster'); });
+  document.getElementById('rosterNoAgreement').addEventListener('change', function(){ loadRosterView('roster'); });
+  document.getElementById('srosterGradeFilter').addEventListener('change', function(){ loadRosterView('sroster'); });
+  let srosterSearchTimer = null;
+  document.getElementById('srosterSearch').addEventListener('input', function(){ clearTimeout(srosterSearchTimer); srosterSearchTimer = setTimeout(function(){ loadRosterView('sroster'); }, 250); });
+  document.getElementById('srosterUnpaid').addEventListener('change', function(){ loadRosterView('sroster'); });
+  document.getElementById('srosterNoAgreement').addEventListener('change', function(){ loadRosterView('sroster'); });
 
   function renderAgeOverview(players){
     const g = {};
@@ -3903,9 +4109,9 @@ module.exports = `<!doctype html>
           var b1=[bx+rand()*bw,by+rand()*bh],b2=[bx+rand()*bw,by+rand()*bh],b3=[bx+rand()*bw,by+rand()*bh];
           out.push('<g><circle r="5" fill="#fff" stroke="#111" stroke-width="1.6"/><animateMotion dur="'+(7+bl*2)+'s" repeatCount="indefinite" path="M'+r1(b1[0])+','+r1(b1[1])+' L'+r1(b2[0])+','+r1(b2[1])+' L'+r1(b3[0])+','+r1(b3[1])+' Z"/></g>');
         }
-        for(var c=0;c<2;c++){
-          var coX=X0+(c?FW-36:36), coY=zy+ZH*0.5+(h===0?-30:30);
-          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(h*2+c+1)+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">COACH</text>');
+        for(var c=0;c<1;c++){
+          var coX=X0+FW/2+(h===0?-150:150), coY=zy+ZH*0.5+(h===0?-30:30);
+          out.push('<circle cx="'+coX+'" cy="'+coY+'" r="21" fill="none" stroke="#f0c674" stroke-opacity=".5" stroke-width="2"/><circle cx="'+coX+'" cy="'+coY+'" r="13" fill="#0c2a1c" stroke="#f0c674" stroke-width="2.5"/><text x="'+coX+'" y="'+(coY+5)+'" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">'+(si===0?(h===0?'Y':'3'):(h===0?'I':'3'))+'</text><text x="'+coX+'" y="'+(coY+30)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#fff">'+(si===0?(h===0?'YAHYA':'COACH 3'):(h===0?'ISMAIL':'COACH 3'))+'</text>');
         }
         var pw=Math.max(120,lab.length*11+44), pyl=h===0?MID-62:MID+36;
         out.push('<rect x="'+(cx0-pw/2)+'" y="'+pyl+'" width="'+pw+'" height="26" rx="13" fill="#0c2a1c" stroke="'+col+'" stroke-width="3"/><text x="'+cx0+'" y="'+(pyl+18)+'" text-anchor="middle" font-family="Space Mono,monospace" font-size="13" font-weight="700" fill="#fff">'+esc(lab)+'</text>');
@@ -3916,10 +4122,6 @@ module.exports = `<!doctype html>
     function build7(){
       var out=['<rect width="1400" height="910" fill="#e9e2d0"/>'];
       out.push(scene(SCENES[0],0,0)); out.push(scene(SCENES[1],700,1));
-      // Coach Ismail walks the middle line: mostly the Tuesday & Thursday field, one short visit to Monday & Wednesday
-      var y=TOP+MID, a=700+X0+20, b=700+X0+FW-20, c=X0+20, d=X0+FW-20;
-      var path='M'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+b+','+y+' L'+a+','+y+' L'+d+','+y+' L'+c+','+y+' L'+d+','+y+' L'+a+','+y+' Z';
-      out.push('<g><circle r="14" fill="#b5482f" stroke="#fff" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Anton,sans-serif" font-size="14" fill="#fff">I</text><text y="30" text-anchor="middle" font-family="Space Mono,monospace" font-size="9" font-weight="700" fill="#b5482f">ISMAIL</text><animateMotion dur="60s" repeatCount="indefinite" path="'+path+'"/></g>');
       return out.join('');
     }
     function active(){ return layoutSel.value==='two' ? box7 : box; }
@@ -4729,9 +4931,232 @@ module.exports = `<!doctype html>
     finally { btn.disabled = false; btn.textContent = 'Save'; }
   });
 
+  // ===================== Sultans section =====================
+
+  async function loadLeagues(){
+    let teams = [];
+    try { teams = await api('/api/admin/league-teams'); } catch (e) { teams = []; }
+    leagueTeams = Array.isArray(teams) ? teams : [];
+    calledByPlayer = {};
+    leagueTeams.forEach(function(t){
+      (t.players || []).forEach(function(p){ (calledByPlayer[p.id] = calledByPlayer[p.id] || []).push(t.name); });
+    });
+  }
+
+  async function loadTryouts(){
+    const all = await api('/api/admin/players');
+    const rows = all.filter(function(r){ return r.tryout_status === 'tryout'; });
+    document.getElementById('tryoutCount').textContent = rows.length + (rows.length === 1 ? ' player waiting' : ' players waiting');
+    const wrap = document.getElementById('tryoutTableWrap');
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">No one is waiting for try outs. Use Send to Try Outs Sultans in New Registrations.</div>'; return; }
+    let html = '<table><thead><tr><th>Name</th><th>Age Group</th><th>School Grade</th><th>DOB</th><th>Parent</th><th>Phone</th><th>Email</th><th>Size</th><th></th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      const label = escapeHtml(r.player_name);
+      html += '<tr data-rid="tryout-' + r.id + '">' +
+        '<td>' + label + '</td>' +
+        '<td>' + escapeHtml(ageGroupLabel(r.dob)) + '</td>' +
+        '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
+        '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
+        '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
+        '<td>' + escapeHtml(r.parent_phone || '') + '</td>' +
+        '<td>' + emailDropdown(r.parent_email) + '</td>' +
+        '<td>' + (r.shirt_size || '—') + '</td>' +
+        '<td><div class="row-actions">' +
+          '<button type="button" class="btn-tryout-pass" data-id="' + r.id + '" data-label="' + label + '">Pass Try Outs</button>' +
+          '<button type="button" class="btn-tryout-fail" data-id="' + r.id + '" data-label="' + label + '">Fail Try Outs</button>' +
+        '</div></td></tr>';
+    });
+    wrap.innerHTML = html + '</tbody></table>';
+    wrap.querySelectorAll('.btn-tryout-pass, .btn-tryout-fail').forEach(function(btn){
+      btn.addEventListener('click', async function(){
+        const pass = btn.classList.contains('btn-tryout-pass');
+        const label = btn.getAttribute('data-label') || 'this player';
+        if (!confirm(pass ? 'Pass try outs? ' + label + ' moves to the Sultans roster.' : 'Fail try outs? ' + label + ' stays in RCH training and leaves this list.')) return;
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/tryout', { method: 'PUT', body: JSON.stringify({ result: pass ? 'pass' : 'fail' }) });
+          if (r.error) { alert(r.error); btn.disabled = false; return; }
+          await Promise.all([loadRoster(), loadSummary()]);
+        } catch (e) { alert('Could not save the try outs result. Please try again.'); btn.disabled = false; }
+      });
+    });
+  }
+
+  function fmtLeagueDates(t){
+    const a = fmtDay(t.season_start), b = fmtDay(t.season_end);
+    if (a && b) return a + ' to ' + b;
+    return a || b || '';
+  }
+
+  function renderLeagues(){
+    const wrap = document.getElementById('leagueListWrap');
+    if (!leagueTeams.length) { wrap.innerHTML = '<div class="empty">No league rosters yet. Click Create League Roster.</div>'; return; }
+    wrap.innerHTML = '<div class="lg-grid">' + leagueTeams.map(function(t){
+      const names = (t.players || []).map(function(p){ return escapeHtml(p.player_name); }).join(', ');
+      return '<div class="lg-card" data-team="' + t.id + '">' +
+        '<h3>' + escapeHtml(t.name) + '</h3>' +
+        '<div class="lg-meta">' + escapeHtml(t.age_label) + (fmtLeagueDates(t) ? '  •  ' + escapeHtml(fmtLeagueDates(t)) : '') + '  •  ' + (t.players || []).length + ' players</div>' +
+        (t.description ? '<div class="lg-desc">' + escapeHtml(t.description) + '</div>' : '') +
+        '<div class="lg-players">' + (names || '<span class="sul-muted">No players added yet.</span>') + '</div>' +
+        '<div class="lg-btns">' +
+          '<button type="button" class="lg-pdf" data-team="' + t.id + '">Download PDF</button>' +
+          '<button type="button" class="lg-edit" data-team="' + t.id + '">Edit</button>' +
+          '<button type="button" class="lg-del" data-team="' + t.id + '">Delete</button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+    wrap.querySelectorAll('.lg-pdf').forEach(function(b){
+      b.addEventListener('click', function(){ window.open(API_BASE + '/api/admin/league-teams/' + b.getAttribute('data-team') + '/pdf?token=' + encodeURIComponent(getToken())); });
+    });
+    wrap.querySelectorAll('.lg-edit').forEach(function(b){
+      b.addEventListener('click', function(){
+        const t = leagueTeams.find(function(x){ return String(x.id) === b.getAttribute('data-team'); });
+        if (t) openLeagueModal(t);
+      });
+    });
+    wrap.querySelectorAll('.lg-del').forEach(function(b){
+      b.addEventListener('click', async function(){
+        const t = leagueTeams.find(function(x){ return String(x.id) === b.getAttribute('data-team'); });
+        if (!t || !confirm('Delete the league roster "' + t.name + '"? The players stay in the Sultans roster.')) return;
+        b.disabled = true;
+        try { await api('/api/admin/league-teams/' + t.id, { method: 'DELETE' }); await loadSultansAll(); }
+        catch (e) { alert('Could not delete this league roster. Please try again.'); b.disabled = false; }
+      });
+    });
+  }
+
+  async function loadSultansAll(){
+    sultansLoaded = true;
+    await loadLeagues();
+    await Promise.all([loadRosterView('sroster'), loadTryouts()]);
+    renderLeagues();
+  }
+
+  // ---- Create / edit a league roster ----
+  let lgEditId = null;
+  let lgChosen = [];       // [{ id, name, dob }]
+  let lgSultansPlayers = [];
+  (function fillAgeSelects(){
+    let o = '';
+    for (let n = 4; n <= 12; n++) o += '<option value="' + n + '">U' + n + '</option>';
+    document.getElementById('lgAgeFrom').innerHTML = o;
+    document.getElementById('lgAgeTo').innerHTML = o;
+  })();
+
+  function lgInRange(dob){
+    const n = ageNumber(dob);
+    if (n == null) return false;
+    const from = Number(document.getElementById('lgAgeFrom').value), to = Number(document.getElementById('lgAgeTo').value);
+    if (n <= 5) return from <= 5;
+    if (n >= 12) return to >= 12;
+    return n >= from && n <= to;
+  }
+
+  function renderLgChosen(){
+    document.getElementById('lgCount').textContent = lgChosen.length ? '(' + lgChosen.length + ' added)' : '';
+    const el = document.getElementById('lgChosen');
+    if (!lgChosen.length) { el.innerHTML = '<div class="lg-row" style="color:#888;">No players added yet.</div>'; return; }
+    el.innerHTML = lgChosen.map(function(p, i){
+      return '<div class="lg-row"><span>' + (i + 1) + '. ' + escapeHtml(p.name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(p.dob)) + '</span></span>' +
+        '<button type="button" class="lg-minus" data-id="' + p.id + '" title="Remove">−</button></div>';
+    }).join('');
+    el.querySelectorAll('.lg-minus').forEach(function(b){
+      b.addEventListener('click', function(){
+        lgChosen = lgChosen.filter(function(p){ return String(p.id) !== b.getAttribute('data-id'); });
+        renderLgChosen(); renderLgResults();
+      });
+    });
+  }
+
+  function renderLgResults(){
+    const q = document.getElementById('lgSearch').value.trim().toLowerCase();
+    const chosenIds = {};
+    lgChosen.forEach(function(p){ chosenIds[p.id] = true; });
+    let list = lgSultansPlayers.filter(function(r){
+      if (chosenIds[r.id]) return false;
+      if (!q) return true;
+      return [r.player_name, r.parent_name].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    list.sort(function(a, b){
+      const ia = lgInRange(a.dob) ? 0 : 1, ib = lgInRange(b.dob) ? 0 : 1;
+      return ia - ib || String(a.player_name).localeCompare(String(b.player_name));
+    });
+    const el = document.getElementById('lgResults');
+    if (!list.length) { el.innerHTML = '<div class="lg-row" style="color:#888;">' + (lgSultansPlayers.length ? 'No other players match.' : 'The Sultans roster is empty.') + '</div>'; return; }
+    el.innerHTML = list.slice(0, 80).map(function(r){
+      return '<div class="lg-row"><span>' + escapeHtml(r.player_name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(r.dob) || 'no birth date') + (lgInRange(r.dob) ? ' • in range' : '') + '</span></span>' +
+        '<button type="button" class="lg-plus" data-id="' + r.id + '" title="Add">+</button></div>';
+    }).join('');
+    el.querySelectorAll('.lg-plus').forEach(function(b){
+      b.addEventListener('click', function(){
+        const r = lgSultansPlayers.find(function(x){ return String(x.id) === b.getAttribute('data-id'); });
+        if (r) { lgChosen.push({ id: r.id, name: r.player_name, dob: r.dob }); renderLgChosen(); renderLgResults(); }
+      });
+    });
+  }
+
+  async function openLeagueModal(team){
+    lgEditId = team ? team.id : null;
+    document.getElementById('lgTitle').textContent = team ? 'Edit League Roster' : 'Create League Roster';
+    document.getElementById('lgName').value = team ? team.name : '';
+    document.getElementById('lgStart').value = team && team.season_start ? team.season_start : '';
+    document.getElementById('lgEnd').value = team && team.season_end ? team.season_end : '';
+    document.getElementById('lgAgeFrom').value = String(team ? team.age_from : 4);
+    document.getElementById('lgAgeTo').value = String(team ? team.age_to : 5);
+    document.getElementById('lgDesc').value = team ? (team.description || '') : '';
+    lgChosen = team ? (team.players || []).map(function(p){ return { id: p.id, name: p.player_name, dob: p.dob }; }) : [];
+    document.getElementById('lgError').textContent = '';
+    document.getElementById('lgSearch').value = '';
+    document.getElementById('lgPicker').classList.add('hidden');
+    renderLgChosen();
+    document.getElementById('leagueModal').classList.remove('hidden');
+    try {
+      const all = await api('/api/admin/players');
+      lgSultansPlayers = all.filter(function(r){ return r.sultans; });
+    } catch (e) { lgSultansPlayers = []; }
+    renderLgResults();
+  }
+  document.getElementById('createLeagueBtn').addEventListener('click', function(){ openLeagueModal(null); });
+  document.getElementById('lgAddBtn').addEventListener('click', function(){
+    const pk = document.getElementById('lgPicker');
+    pk.classList.toggle('hidden');
+    if (!pk.classList.contains('hidden')) { renderLgResults(); document.getElementById('lgSearch').focus(); }
+  });
+  document.getElementById('lgSearch').addEventListener('input', renderLgResults);
+  document.getElementById('lgAgeFrom').addEventListener('change', renderLgResults);
+  document.getElementById('lgAgeTo').addEventListener('change', renderLgResults);
+  document.getElementById('lgCancel').addEventListener('click', function(){
+    document.getElementById('leagueModal').classList.add('hidden');
+    lgEditId = null;
+  });
+  document.getElementById('lgSave').addEventListener('click', async function(){
+    const errEl = document.getElementById('lgError');
+    errEl.textContent = '';
+    const payload = {
+      name: document.getElementById('lgName').value.trim(),
+      seasonStart: document.getElementById('lgStart').value,
+      seasonEnd: document.getElementById('lgEnd').value,
+      ageFrom: Number(document.getElementById('lgAgeFrom').value),
+      ageTo: Number(document.getElementById('lgAgeTo').value),
+      description: document.getElementById('lgDesc').value.trim(),
+      playerIds: lgChosen.map(function(p){ return p.id; }),
+    };
+    if (!payload.name) { errEl.textContent = 'Please enter the league name.'; return; }
+    if (payload.ageFrom > payload.ageTo) { errEl.textContent = 'The first age must be the same as or younger than the second age.'; return; }
+    const btn = document.getElementById('lgSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const r = lgEditId
+        ? await api('/api/admin/league-teams/' + lgEditId, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/api/admin/league-teams', { method: 'POST', body: JSON.stringify(payload) });
+      if (r.error) { errEl.textContent = r.error; }
+      else { document.getElementById('leagueModal').classList.add('hidden'); lgEditId = null; await loadSultansAll(); }
+    } catch (e) { errEl.textContent = 'Could not save. Please try again.'; }
+    finally { btn.disabled = false; btn.textContent = 'Save League Roster'; }
+  });
+
   // ---- Section navigation (Registrations / Finances / Charges / Coaches / Data) ----
 
-  const SECTION_IDS = ['registrations', 'finances', 'charges', 'coaches', 'shop', 'camp', 'data'];
+  const SECTION_IDS = ['registrations', 'sultans', 'finances', 'charges', 'coaches', 'shop', 'camp', 'data'];
   function showSection(name){
     // The count cards belong to the dashboard (Registrations) only.
     document.getElementById('summary').classList.toggle('hidden', name !== 'registrations');
@@ -4743,6 +5168,7 @@ module.exports = `<!doctype html>
     const name = e.target.value;
     rememberPlace(name, '');
     showSection(name);
+    if (name === 'sultans') await loadSultansAll();
     if (name === 'finances') await loadFinancesExtras();
     if (name === 'charges' && !chargesLoaded) { chargesLoaded = true; await loadCharges(); }
     if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
