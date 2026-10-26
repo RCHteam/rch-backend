@@ -88,7 +88,7 @@ async function loadTeams(onlyId) {
     `SELECT * FROM league_teams ${onlyId ? 'WHERE id = $1' : ''} ORDER BY created_at DESC, id DESC`,
     onlyId ? [onlyId] : []);
   const players = await pool.query(
-    `SELECT ltp.team_id, p.id, p.player_name, p.dob, p.grade, p.parent_name, p.parent_phone, p.parent_email, p.shirt_size
+    `SELECT ltp.team_id, p.id, p.player_name, to_char(p.dob, 'YYYY-MM-DD') AS dob, p.grade, p.parent_name, p.parent_phone, p.parent_email, p.shirt_size
      FROM league_team_players ltp
      JOIN players p ON p.id = ltp.player_id
      WHERE p.archived_at IS NULL AND p.sultans
