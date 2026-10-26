@@ -91,7 +91,7 @@ const GRADE_WORDS = { 'pre-k': 'Pre-K', 'kindergarten': 'Kindergarten', '1st-gra
 async function sendJoinRegistrationEmails(entry) {
   const firstName = entry.parent_name.split(' ')[0];
   // entry.age_group holds the school grade the family picked (e.g. "3rd-grade").
-  const gradeName = GRADE_WORDS[entry.age_group] || entry.age_group;
+  const gradeName = GRADE_WORDS[entry.school_grade || entry.age_group] || entry.school_grade || entry.age_group;
   const uAge = ageGroupLabel(entry.dob);
   await sendEmail({
     to: entry.email,

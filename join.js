@@ -79,12 +79,13 @@ router.post('/join/:ageGroup', async (req, res) => {
 
   const {
     childName, dob, motivation, experience, availability,
-    parentName, email, phone, emName, emPhone, medical, sessionType, siblingDiscount, shirtSize, sessionDay,
+    parentName, email, phone, emName, emPhone, medical, sessionType, siblingDiscount, shirtSize, sessionDay, grade,
   } = req.body || {};
 
   const errors = {};
   if (!childName || !String(childName).trim()) errors.childName = "Please enter the player's name.";
   if (!dob) errors.dob = 'Please enter a date of birth.';
+  if (!grade || !VALID_GROUPS.has(String(grade))) errors.grade = 'Please select the current school grade.';
   if (!motivation || !String(motivation).trim()) errors.motivation = 'Please tell us a bit about this.';
   if (!parentName || !String(parentName).trim()) errors.parentName = 'Please enter a name.';
   if (!email || !EMAIL_RE.test(email)) errors.email = 'Please enter a valid email.';
@@ -120,14 +121,14 @@ router.post('/join/:ageGroup', async (req, res) => {
     const insertRes = await pool.query(
       `INSERT INTO join_registrations
         (age_group, child_name, dob, motivation, experience, availability,
-         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type, sibling_discount, shirt_size, session_day)
-       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16::int,$17,$18
+         parent_name, email, phone, emergency_name, emergency_phone, medical, jersey_number, session_type, sibling_discount, shirt_size, session_day, school_grade)
+       SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$16::int,$17,$18,$19
        WHERE (SELECT COUNT(*)::int FROM join_registrations WHERE age_group = $1) < $15
        RETURNING *`,
       [ageGroup, childName.trim(), dob, motivation.trim(), experience || '', availability || '',
        parentName.trim(), email.trim(), formatPhone(phone.trim()), emName.trim(), formatPhone(emPhone.trim()), medical.trim(), jersey,
        sessionType, capacity, [15, 20].includes(Number(siblingDiscount)) ? Number(siblingDiscount) : 0,
-       normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType)]
+       normalizeSize(shirtSize), normalizeDay(sessionDay, sessionType), String(grade)]
     );
 
     if (!insertRes.rows[0]) {

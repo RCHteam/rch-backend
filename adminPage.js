@@ -2007,7 +2007,7 @@ module.exports = `<!doctype html>
     // Prefill whatever the source registration already has — both forms now
     // collect grade (skills: row.grade; join: row.age_group) and session_type
     // directly from parents at signup, so this is usually already correct.
-    document.getElementById('moveGrade').value = row.grade || row.age_group || 'pre-k';
+    document.getElementById('moveGrade').value = row.grade || row.school_grade || row.age_group || 'pre-k';
     document.getElementById('moveSessionType').value = row.session_type || 'one';
     document.getElementById('moveSibling').value = String(row.sibling_discount || 0);
     document.getElementById('moveSize').value = row.shirt_size || '';
@@ -3028,7 +3028,7 @@ module.exports = `<!doctype html>
     const grade = document.getElementById('skillsGradeFilter').value;
     const [skillsAll, joinAll] = await Promise.all([api('/api/admin/skills-registrations'), api('/api/admin/join-registrations')]);
     const skills = skillsAll.map(addSiblingLabel).filter(r => !grade || r.grade === grade);
-    const join = joinAll.map(addSiblingLabel).filter(r => !grade || r.age_group === grade);
+    const join = joinAll.map(addSiblingLabel).filter(r => !grade || (r.school_grade || r.age_group) === grade);
     const tag = (t) => t === 'join' ? '<span style="background:#1a4d2e;color:#fff;border-radius:10px;padding:2px 8px;font-size:12px;white-space:nowrap;">Sultans</span>' : '<span style="background:#d9a441;color:#111;border-radius:10px;padding:2px 8px;font-size:12px;white-space:nowrap;">Training only</span>';
     const all = [
       ...join.map(r => ({ r, t:'join' })),
@@ -3040,7 +3040,7 @@ module.exports = `<!doctype html>
       __rid: (t === 'join' ? 'join-' : 'skills-') + r.id, __id: r.id, __t: t,
       type: tag(t), jersey_number: r.jersey_number ?? '',
       name: t === 'join' ? r.child_name : r.full_name,
-      grade: GRADE_LABELS[t === 'join' ? r.age_group : r.grade] || (t === 'join' ? r.age_group : r.grade) || '',
+      grade: GRADE_LABELS[t === 'join' ? (r.school_grade || r.age_group) : r.grade] || (t === 'join' ? (r.school_grade || r.age_group) : r.grade) || '',
       dob: fmtDay(r.dob), parent: r.parent_name || '', email: emailDropdown(r.email), phone: r.phone || '',
       sessions_label: r.sessions_label, size_label: r.size_label, sibling_label: r.sibling_label,
       submitted_at: fmtDate(r.submitted_at),
@@ -3052,7 +3052,7 @@ module.exports = `<!doctype html>
       html += '<tr data-rid="' + x.__rid + '">' + cols.slice(0, -1).map(c => '<td>' + (x[c[0]] ?? '') + '</td>').join('');
       html += '<td style="display:flex; gap:6px; flex-wrap:wrap;">'
         + (x.__t === 'join' ? '<button type="button" class="btn-tryout-send" data-id="' + x.__id + '" data-label="' + label + '">Send to Try Outs Sultans</button>' : '')
-        + '<button type="button" class="btn-move-to-roster" data-id="' + x.__id + '" data-label="' + label + '">Send to Roster</button>'
+        + (x.__t === 'join' ? '' : '<button type="button" class="btn-move-to-roster" data-id="' + x.__id + '" data-label="' + label + '">Send to Roster</button>')
         + '<button type="button" class="btn-send-agreement" data-id="' + x.__id + '" data-label="' + label + '">Send Agreement</button>'
         + '<button type="button" class="btn-delete-row" data-id="' + x.__id + '">Delete</button></td></tr>';
     }

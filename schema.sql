@@ -541,3 +541,6 @@ CREATE TABLE IF NOT EXISTS league_team_players (
   PRIMARY KEY (team_id, player_id)
 );
 CREATE INDEX IF NOT EXISTS idx_ltp_player ON league_team_players(player_id);
+
+-- School grade the parent picked on the Sultans form (age_group stays the form card used for capacity).
+ALTER TABLE join_registrations ADD COLUMN IF NOT EXISTS school_grade TEXT;
