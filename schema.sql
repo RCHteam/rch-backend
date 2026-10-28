@@ -571,3 +571,4 @@ CREATE TABLE IF NOT EXISTS league_guests (
   name        TEXT NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE league_guests ADD COLUMN IF NOT EXISTS age_key TEXT;

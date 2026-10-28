@@ -110,6 +110,8 @@ module.exports = `<!doctype html>
   .hidden{ display:none; }
   .empty{ padding:20px; color:#888; font-style:italic; }
   .btn-delete-row{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
+  .btn-delete-guest{ background:#fff; border:1px solid #d98a76; color:#b5482f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; }
+  .btn-delete-guest:hover{ background:#b5482f; color:#fff; }
   .btn-delete-row:hover{ background:#b5482f; color:#fff; }
   .btn-delete-row:disabled{ opacity:0.6; cursor:default; }
   .btn-payment-link{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
@@ -649,13 +651,13 @@ module.exports = `<!doctype html>
         </div>
         <div id="srosterTableWrap"></div>
         <div style="margin-top:22px; padding-top:14px; border-top:1px solid #2a2a2a;">
-          <div style="font-weight:700; margin-bottom:4px;">League-only players <span class="sul-muted" style="font-weight:400;">&mdash; sent to us by the league, not in RCH or Sultans</span></div>
+          <div style="font-weight:700; margin-bottom:4px;">Add a league-only player <span class="sul-muted" style="font-weight:400;">&mdash; sent to us by the league, not in RCH or Sultans. They show in the roster above, in the U you choose.</span></div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">
             <input type="text" id="guestName" placeholder="Player name" maxlength="120" style="flex:1; min-width:200px; max-width:320px; padding:10px 12px; font:inherit;" autocomplete="off">
+            <select id="guestAge" style="padding:10px 12px; font:inherit;"></select>
             <button type="button" class="btn-add" id="guestAddBtn">Add</button>
           </div>
           <div id="guestErr" style="color:#e07a5f; font-size:0.85rem;"></div>
-          <div id="guestList"></div>
         </div>
       </div>
 
@@ -3346,6 +3348,7 @@ module.exports = `<!doctype html>
     const nl = document.getElementById(P + 'NoDobLink');
     if (nl) nl.addEventListener('click', function(e){ e.preventDefault(); document.getElementById(P + 'GradeFilter').value = 'nodob'; loadRoster(); });
     wrap.innerHTML = renderRosterTable(rows, filtering, P === 'sroster' ? { sultansView: true } : {});
+    if (P === 'sroster') { await loadGuests(); addGuestRows(wrap, grade, q, filtering); }
     wrap.querySelectorAll('.btn-delete-row').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!confirm('Delete this player from the roster? This cannot be undone.')) return;
@@ -5202,14 +5205,31 @@ module.exports = `<!doctype html>
     });
   }
 
-  async function loadGuests(){
-    const el = document.getElementById('guestList');
-    try {
-      const rows = await api('/api/admin/league-guests');
-      el.innerHTML = rows.length ? '<table><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody>' + rows.map(function(g){
-        return '<tr><td>' + escapeHtml(g.name) + '</td><td><span style="color:#999;">League only &mdash; not with us</span></td><td><button type="button" class="btn-delete-row" data-gid="' + g.id + '">Delete</button></td></tr>';
-      }).join('') + '</tbody></table>' : '<div class="empty">None added.</div>';
-    } catch (e) { el.innerHTML = '<div class="empty">Could not load.</div>'; }
+  let guestRows = [];
+  function fillGuestAge(){
+    const sel = document.getElementById('guestAge');
+    sel.innerHTML = AGE_KEYS.filter(function(k){ return k !== 'nodob'; }).map(function(k){ return '<option value="' + k + '">' + AGE_KEY_LABELS[k] + '</option>'; }).join('');
+    const cur = document.getElementById('srosterGradeFilter').value;
+    if (AGE_KEYS.indexOf(cur) !== -1) sel.value = cur;
+  }
+  async function loadGuests(){ try { guestRows = await api('/api/admin/league-guests'); if (!Array.isArray(guestRows)) guestRows = []; } catch (e) { guestRows = []; } }
+  // League-only players sit inside the roster table, in the U they were added to.
+  function addGuestRows(wrap, grade, q, filtering){
+    const list = guestRows.filter(function(g){
+      if (filtering) return !q || String(g.name).toLowerCase().indexOf(q) !== -1;
+      return g.age_key === grade;
+    });
+    if (!list.length) return;
+    let tb = wrap.querySelector('tbody');
+    if (!tb) {
+      wrap.innerHTML = '<table><thead><tr><th>Name</th><th>Age Group</th><th colspan="10">Status</th><th></th></tr></thead><tbody></tbody></table>';
+      tb = wrap.querySelector('tbody');
+    }
+    tb.insertAdjacentHTML('beforeend', list.map(function(g){
+      return '<tr><td>' + escapeHtml(g.name) + '</td><td>' + escapeHtml(AGE_KEY_LABELS[g.age_key] || '') + '</td><td colspan="10" style="color:#999;">League only &mdash; not with us</td><td><button type="button" class="btn-delete-guest" data-gid="' + g.id + '">Delete</button></td></tr>';
+    }).join(''));
+    const cnt = document.getElementById('srosterCount');
+    cnt.textContent = cnt.textContent + ' + ' + list.length + ' league only';
   }
   async function addGuest(){
     const inp = document.getElementById('guestName'), err = document.getElementById('guestErr');
@@ -5217,23 +5237,26 @@ module.exports = `<!doctype html>
     const name = inp.value.trim();
     if (!name) { err.textContent = "Please enter the player's name."; return; }
     try {
-      const r = await api('/api/admin/league-guests', { method: 'POST', body: JSON.stringify({ name: name }) });
+      const r = await api('/api/admin/league-guests', { method: 'POST', body: JSON.stringify({ name: name, ageKey: document.getElementById('guestAge').value }) });
       if (r.error) { err.textContent = r.error; return; }
-      inp.value = ''; await loadGuests();
+      inp.value = '';
+      document.getElementById('srosterGradeFilter').value = r.age_key;
+      await loadRosterView('sroster');
     } catch (e) { err.textContent = 'Could not add. Please try again.'; }
   }
+  fillGuestAge();
   document.getElementById('guestAddBtn').addEventListener('click', addGuest);
   document.getElementById('guestName').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); addGuest(); } });
-  document.getElementById('guestList').addEventListener('click', async function(e){
+  document.getElementById('srosterTableWrap').addEventListener('click', async function(e){
     const b = e.target.closest('button[data-gid]');
-    if (!b || !confirm('Remove this player from the list?')) return;
-    try { await api('/api/admin/league-guests/' + b.getAttribute('data-gid'), { method: 'DELETE' }); await loadGuests(); } catch (x) { alert('Could not delete.'); }
+    if (!b || !confirm('Remove this player from the roster?')) return;
+    try { await api('/api/admin/league-guests/' + b.getAttribute('data-gid'), { method: 'DELETE' }); await loadRosterView('sroster'); } catch (x) { alert('Could not delete.'); }
   });
 
   async function loadSultansAll(){
     sultansLoaded = true;
     await loadLeagues();
-    await Promise.all([loadRosterView('sroster'), loadTryouts(), loadGuests()]);
+    await Promise.all([loadRosterView('sroster'), loadTryouts()]);
     renderLeagues();
   }
 

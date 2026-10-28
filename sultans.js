@@ -4,7 +4,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
-const { ageNumber, ageGroupLabel, seasonStartYear } = require('./ageGroups');
+const { ageNumber, ageGroupLabel, seasonStartYear, AGE_KEYS } = require('./ageGroups');
 
 const router = express.Router();
 
@@ -379,15 +379,17 @@ router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
 // ---- League-only players: sent to us by the league, not in RCH or Sultans (name only) ----
 router.get('/admin/league-guests', requireAdmin, async (req, res) => {
   try {
-    const r = await pool.query('SELECT id, name, created_at FROM league_guests ORDER BY lower(name)');
+    const r = await pool.query('SELECT id, name, age_key, created_at FROM league_guests ORDER BY lower(name)');
     res.json(r.rows);
   } catch (err) { console.error('List league guests error:', err); res.status(500).json({ error: 'Could not load the list.' }); }
 });
 router.post('/admin/league-guests', requireAdmin, async (req, res) => {
   const name = String((req.body && req.body.name) || '').trim().replace(/\s+/g, ' ').slice(0, 120);
   if (!name) return res.status(400).json({ error: "Please enter the player's name." });
+  const ageKey = String((req.body && req.body.ageKey) || '');
+  if (!AGE_KEYS.includes(ageKey) || ageKey === 'nodob') return res.status(400).json({ error: 'Please choose the age group (U).' });
   try {
-    const r = await pool.query('INSERT INTO league_guests (name) VALUES ($1) RETURNING id, name, created_at', [name]);
+    const r = await pool.query('INSERT INTO league_guests (name, age_key) VALUES ($1,$2) RETURNING id, name, age_key, created_at', [name, ageKey]);
     res.status(201).json(r.rows[0]);
   } catch (err) { console.error('Add league guest error:', err); res.status(500).json({ error: 'Could not add this player.' }); }
 });
