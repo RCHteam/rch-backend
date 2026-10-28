@@ -655,6 +655,7 @@ module.exports = `<!doctype html>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">
             <input type="text" id="guestName" placeholder="Player name" maxlength="120" style="flex:1; min-width:200px; max-width:320px; padding:10px 12px; font:inherit;" autocomplete="off">
             <select id="guestAge" style="padding:10px 12px; font:inherit;"></select>
+            <select id="guestHalf" style="padding:10px 12px; font:inherit; display:none;"><option value="E">Early (E)</option><option value="L">Late (L)</option></select>
             <button type="button" class="btn-add" id="guestAddBtn">Add</button>
           </div>
           <div id="guestErr" style="color:#e07a5f; font-size:0.85rem;"></div>
@@ -3159,6 +3160,13 @@ module.exports = `<!doctype html>
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
   function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + Math.min(n, 12)); }
+  // U with Early/Late side, same rule as Create UTeams (season end year minus birth year; Aug-Dec = L, Jan-Jul = E).
+  function uHalfLabel(dob){
+    const p = dobToIso(dob).split('-');
+    if (p.length !== 3 || !Number(p[0]) || !Number(p[1])) return '—';
+    const n = (seasonStartYear() + 1) - Number(p[0]);
+    return 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? (Number(p[1]) >= 8 ? 'L' : 'E') : '');
+  }
   function ageGroupKey(dob){
     const n = ageNumber(dob);
     if (n == null) return 'nodob';
@@ -3194,7 +3202,7 @@ module.exports = `<!doctype html>
       const calledNames = sulView ? (calledByPlayer[r.id] || []) : [];
       html += '<tr data-rid="' + (sulView ? 'splayer-' : 'player-') + r.id + '">' +
         '<td>' + escapeHtml(r.player_name) + '</td>' +
-        '<td>' + escapeHtml(ageGroupLabel(r.dob)) + (ageGradeMismatch(r) ? ' <span title="The school grade and age group are far apart for this player. Check the date of birth and grade." style="color:#b5482f; cursor:help;">⚠</span>' : '') + '</td>' +
+        '<td>' + escapeHtml(sulView ? uHalfLabel(r.dob) : ageGroupLabel(r.dob)) + (ageGradeMismatch(r) ? ' <span title="The school grade and age group are far apart for this player. Check the date of birth and grade." style="color:#b5482f; cursor:help;">⚠</span>' : '') + '</td>' +
         '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
         '<td>' + escapeHtml(r.parent_name || '') + '</td>' +
@@ -5212,6 +5220,11 @@ module.exports = `<!doctype html>
     const cur = document.getElementById('srosterGradeFilter').value;
     if (AGE_KEYS.indexOf(cur) !== -1) sel.value = cur;
   }
+  function guestLabel(g){ return g.age_key === 'u5-' ? 'U4/U5' : String(g.age_key).toUpperCase() + (g.half || ''); }
+  function guestHalfToggle(){
+    const k = document.getElementById('guestAge').value;
+    document.getElementById('guestHalf').style.display = ['u7','u8','u9','u10','u11'].indexOf(k) !== -1 ? '' : 'none';
+  }
   async function loadGuests(){ try { guestRows = await api('/api/admin/league-guests'); if (!Array.isArray(guestRows)) guestRows = []; } catch (e) { guestRows = []; } }
   // League-only players sit inside the roster table, in the U they were added to.
   function addGuestRows(wrap, grade, q, filtering){
@@ -5226,7 +5239,7 @@ module.exports = `<!doctype html>
       tb = wrap.querySelector('tbody');
     }
     tb.insertAdjacentHTML('beforeend', list.map(function(g){
-      return '<tr><td>' + escapeHtml(g.name) + '</td><td>' + escapeHtml(AGE_KEY_LABELS[g.age_key] || '') + '</td><td colspan="10" style="color:#999;">League only &mdash; not with us</td><td><button type="button" class="btn-delete-guest" data-gid="' + g.id + '">Delete</button></td></tr>';
+      return '<tr><td>' + escapeHtml(g.name) + '</td><td>' + escapeHtml(guestLabel(g)) + '</td><td colspan="10" style="color:#999;">League only &mdash; not with us</td><td><button type="button" class="btn-delete-guest" data-gid="' + g.id + '">Delete</button></td></tr>';
     }).join(''));
     const cnt = document.getElementById('srosterCount');
     cnt.textContent = cnt.textContent + ' + ' + list.length + ' league only';
@@ -5237,7 +5250,7 @@ module.exports = `<!doctype html>
     const name = inp.value.trim();
     if (!name) { err.textContent = "Please enter the player's name."; return; }
     try {
-      const r = await api('/api/admin/league-guests', { method: 'POST', body: JSON.stringify({ name: name, ageKey: document.getElementById('guestAge').value }) });
+      const r = await api('/api/admin/league-guests', { method: 'POST', body: JSON.stringify({ name: name, ageKey: document.getElementById('guestAge').value, half: document.getElementById('guestHalf').value }) });
       if (r.error) { err.textContent = r.error; return; }
       inp.value = '';
       document.getElementById('srosterGradeFilter').value = r.age_key;
@@ -5245,6 +5258,8 @@ module.exports = `<!doctype html>
     } catch (e) { err.textContent = 'Could not add. Please try again.'; }
   }
   fillGuestAge();
+  guestHalfToggle();
+  document.getElementById('guestAge').addEventListener('change', guestHalfToggle);
   document.getElementById('guestAddBtn').addEventListener('click', addGuest);
   document.getElementById('guestName').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); addGuest(); } });
   document.getElementById('srosterTableWrap').addEventListener('click', async function(e){
@@ -5289,7 +5304,7 @@ module.exports = `<!doctype html>
     const el = document.getElementById('lgChosen');
     if (!lgChosen.length) { el.innerHTML = '<div class="lg-row" style="color:#888;">No players added yet.</div>'; return; }
     el.innerHTML = lgChosen.map(function(p, i){
-      return '<div class="lg-row"><span>' + (i + 1) + '. ' + escapeHtml(p.name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(p.dob)) + '</span></span>' +
+      return '<div class="lg-row"><span>' + (i + 1) + '. ' + escapeHtml(p.name) + '<span class="lg-sub">' + escapeHtml(uHalfLabel(p.dob)) + '</span></span>' +
         '<button type="button" class="lg-minus" data-id="' + p.id + '" title="Remove">−</button></div>';
     }).join('');
     el.querySelectorAll('.lg-minus').forEach(function(b){
@@ -5320,7 +5335,7 @@ module.exports = `<!doctype html>
       if (!g.length) return;
       html += '<div class="lg-cat">' + AGE_KEY_LABELS[k] + ' (' + g.length + ')</div>';
       g.forEach(function(r){
-        html += '<div class="lg-row"><span>' + escapeHtml(r.player_name) + '<span class="lg-sub">' + escapeHtml(ageGroupLabel(r.dob) || 'no birth date') + '</span></span>' +
+        html += '<div class="lg-row"><span>' + escapeHtml(r.player_name) + '<span class="lg-sub">' + escapeHtml(r.dob ? uHalfLabel(r.dob) : 'no birth date') + '</span></span>' +
           '<button type="button" class="lg-plus" data-id="' + r.id + '" title="Add">+</button></div>';
       });
     });

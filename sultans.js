@@ -341,11 +341,13 @@ function buildUTeams(rows, now) {
 const GUEST_TEAM = { 'u5-': 0, u6: 1, u7: 2, u8: 3, u9: 4, u10: 5, u11: 6, u12: 6 };
 async function withGuests(out) {
   try {
-    const g = await pool.query('SELECT id, name, age_key FROM league_guests ORDER BY lower(name)');
+    const g = await pool.query('SELECT id, name, age_key, half FROM league_guests ORDER BY lower(name)');
     g.rows.forEach((x) => {
-      const i = GUEST_TEAM[x.age_key];
+      let i = GUEST_TEAM[x.age_key];
+      const n = x.age_key.startsWith('u') && x.age_key !== 'u5-' ? Number(x.age_key.slice(1)) : null;
+      if (n >= 7 && n <= 11) i = x.half === 'L' ? (n === 7 ? 1 : n - 6) : n - 5; // late side / early side of that U
       if (i == null || !out.teams[i]) return;
-      const lab = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase();
+      const lab = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase() + (n >= 7 && n <= 11 ? (x.half === 'L' ? 'L' : 'E') : '');
       out.teams[i].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '', u_label: lab, league_only: true });
     });
     out.teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
@@ -397,7 +399,7 @@ router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
 // ---- League-only players: sent to us by the league, not in RCH or Sultans (name only) ----
 router.get('/admin/league-guests', requireAdmin, async (req, res) => {
   try {
-    const r = await pool.query('SELECT id, name, age_key, created_at FROM league_guests ORDER BY lower(name)');
+    const r = await pool.query('SELECT id, name, age_key, half, created_at FROM league_guests ORDER BY lower(name)');
     res.json(r.rows);
   } catch (err) { console.error('List league guests error:', err); res.status(500).json({ error: 'Could not load the list.' }); }
 });
@@ -406,8 +408,11 @@ router.post('/admin/league-guests', requireAdmin, async (req, res) => {
   if (!name) return res.status(400).json({ error: "Please enter the player's name." });
   const ageKey = String((req.body && req.body.ageKey) || '');
   if (!AGE_KEYS.includes(ageKey) || ageKey === 'nodob') return res.status(400).json({ error: 'Please choose the age group (U).' });
+  const needsHalf = ['u7', 'u8', 'u9', 'u10', 'u11'].includes(ageKey);
+  const half = String((req.body && req.body.half) || '').toUpperCase();
+  if (needsHalf && half !== 'E' && half !== 'L') return res.status(400).json({ error: 'Please choose Early (E) or Late (L).' });
   try {
-    const r = await pool.query('INSERT INTO league_guests (name, age_key) VALUES ($1,$2) RETURNING id, name, age_key, created_at', [name, ageKey]);
+    const r = await pool.query('INSERT INTO league_guests (name, age_key, half) VALUES ($1,$2,$3) RETURNING id, name, age_key, half, created_at', [name, ageKey, needsHalf ? half : null]);
     res.status(201).json(r.rows[0]);
   } catch (err) { console.error('Add league guest error:', err); res.status(500).json({ error: 'Could not add this player.' }); }
 });
