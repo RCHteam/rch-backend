@@ -19,7 +19,8 @@ function ageNumber(dob, now) {
     if (p.length !== 3 || !Number(p[0])) return null;
     y = Number(p[0]); m = Number(p[1]);
   }
-  return seasonStartYear(now) - (m >= 8 ? y : y - 1);
+  // Same rule as UTeams: season end year minus birth year (so U8 holds both U8E and U8L).
+  return (seasonStartYear(now) + 1) - y;
 }
 
 function ageGroupKey(dob, now) {

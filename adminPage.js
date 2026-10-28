@@ -3157,6 +3157,12 @@ module.exports = `<!doctype html>
     const p = dobToIso(dob).split('-');
     if (p.length !== 3 || !Number(p[0])) return null;
     const y = Number(p[0]), m = Number(p[1]);
+    return (seasonStartYear() + 1) - y;
+  }
+  function schoolAgeNumber(dob){
+    const p = dobToIso(dob).split('-');
+    if (p.length !== 3 || !Number(p[0])) return null;
+    const y = Number(p[0]), m = Number(p[1]);
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
   function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + Math.min(n, 12)); }
@@ -3180,7 +3186,7 @@ module.exports = `<!doctype html>
   // The school grade that usually matches each age group (used to flag odd matches).
   const AGE_TO_GRADE = { 5: 'pre-k', 6: 'kindergarten', 7: '1st-grade', 8: '2nd-grade', 9: '3rd-grade', 10: '4th-grade', 11: '5th-grade', 12: '6th-grade' };
   function ageGradeMismatch(r){
-    const n = ageNumber(r.dob);
+    const n = schoolAgeNumber(r.dob);
     const gi = GRADES.indexOf(r.grade);
     if (n == null || gi < 0 || n < 5) return false;
     return Math.abs(gi - (Math.min(n, 12) - 5)) >= 2;
