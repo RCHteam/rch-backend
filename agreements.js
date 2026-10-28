@@ -139,6 +139,36 @@ router.post('/admin/agreements/send', requireAdmin, async (req, res) => {
   }
 });
 
+// Re-send the agreement to every family that has not signed yet (same link).
+router.post('/admin/agreements/resend-pending', requireAdmin, async (req, res) => {
+  const { dryRun } = req.body || {};
+  try {
+    const r = await pool.query(
+      `SELECT DISTINCT ON (registration_type, registration_id) id, token, player_name, parent_name, parent_email
+         FROM agreements a
+        WHERE signed_at IS NULL AND COALESCE(parent_email,'') <> ''
+          AND NOT EXISTS (SELECT 1 FROM agreements s WHERE s.registration_type=a.registration_type
+                           AND s.registration_id=a.registration_id AND s.signed_at IS NOT NULL)
+        ORDER BY registration_type, registration_id, id DESC`);
+    if (dryRun) return res.json({ pendingCount: r.rows.length });
+    let sentCount = 0; const failed = [];
+    for (const f of r.rows) {
+      try {
+        await sendAgreementEmail({ to: f.parent_email, parentName: f.parent_name, childName: f.player_name, link: `${siteUrl(req)}/sign/${f.token}` });
+        await pool.query('UPDATE agreements SET sent_at=now() WHERE id=$1', [f.id]);
+        sentCount++;
+      } catch (err) {
+        console.error('Agreement resend failed for', f.parent_email, err);
+        failed.push(f.parent_email);
+      }
+    }
+    res.json({ ok: true, sentCount, failed });
+  } catch (err) {
+    console.error('Agreement resend error:', err);
+    res.status(500).json({ error: 'Could not send the reminders.' });
+  }
+});
+
 // Admin: list (without the PDF bytes) and download
 router.get('/admin/agreements', requireAdmin, async (req, res) => {
   try {

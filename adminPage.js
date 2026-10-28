@@ -1116,6 +1116,7 @@ module.exports = `<!doctype html>
       <summary><span class="panel-title">Signed Agreements</span><span class="panel-hint">E-signed PDFs on file</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Use <b>Send Agreement</b> on a registration or roster row to email the family an e-sign link. Once they fill in the form and sign, the signed PDF is stored here and a copy is emailed to them and to you.</p>
+      <div class="panel-actions"><button type="button" class="btn-add" id="resendAgreementsBtn">Send to those who did not sign</button></div>
       <div id="agreementsTableWrap"></div>
 
       </div>
@@ -1145,7 +1146,7 @@ module.exports = `<!doctype html>
       <summary><span class="panel-title">Update Child Information</span><span class="panel-hint">Families reconfirm birth date, grade and jersey size</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
         <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Emails families a link where they reconfirm each child's date of birth, current school grade and jersey size (the form comes pre-filled with what we have, with the size chart and a note to base the size on their current Sultans FC jersey). Their answers show up here and are saved to the Players Roster automatically, so a grade change moves the player to the new grade.</p>
-        <div class="panel-actions"><button type="button" class="btn-add" id="sendSizesBtn">Send Update Request…</button></div>
+        <div class="panel-actions"><button type="button" class="btn-add" id="sendSizesBtn">Send Update Request…</button> <button type="button" class="btn-add" id="resendSizesBtn">Send to those who did not respond</button></div>
         <div id="sizesSummary" style="margin:6px 0 10px; font-size:0.9rem;"></div>
         <div id="sizesTableWrap"></div>
       </div>
@@ -4106,6 +4107,21 @@ module.exports = `<!doctype html>
   fillGradeSelects();
   fillMonthYear('repMonth', 'repYear');
   fillMonthYear('attMonth', 'attYear');
+  // Months/years we are not in show grey (still viewable); the current one stays normal.
+  function attGreyMonths(){
+    var now = new Date(), cy = now.getFullYear(), cm = now.getMonth() + 1;
+    var mSel = document.getElementById('attMonth'), ySel = document.getElementById('attYear');
+    var yearIsNow = Number(ySel.value) === cy;
+    Array.prototype.forEach.call(mSel.options, function(o){ o.style.color = (yearIsNow && Number(o.value) === cm) ? '#111' : '#9a9a9a'; });
+    Array.prototype.forEach.call(ySel.options, function(o){ o.style.color = Number(o.value) === cy ? '#111' : '#9a9a9a'; });
+    var notNow = !(yearIsNow && Number(mSel.value) === cm);
+    mSel.style.color = notNow ? '#9a9a9a' : ''; ySel.style.color = Number(ySel.value) === cy ? '' : '#9a9a9a';
+    var w = document.getElementById('attTableWrap');
+    if (w) w.style.opacity = notNow ? '0.6' : '';
+    w.style.filter = notNow ? 'grayscale(1)' : '';
+  }
+  ['attMonth', 'attYear'].forEach(function(id){ document.getElementById(id).addEventListener('change', attGreyMonths); });
+  attGreyMonths();
 
   // ===================== Coaches subtabs =====================
   const COACH_SUBS = ['coaches', 'responsibilities', 'curriculum', 'field', 'reports', 'notices', 'documents', 'calendar'];
@@ -4729,6 +4745,27 @@ module.exports = `<!doctype html>
   document.getElementById('sendReviewBtn').addEventListener('click', function(){ openOutreach('review'); });
   document.getElementById('sendFeedbackBtn').addEventListener('click', function(){ openOutreach('feedback'); });
   document.getElementById('sendSizesBtn').addEventListener('click', function(){ openOutreach('size'); });
+  async function resendPending(url, body, what, btnId){
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    try {
+      const pre = await api(url, { method: 'POST', body: JSON.stringify(Object.assign({ dryRun: true }, body)) });
+      if (pre.error) { alert(pre.error); return false; }
+      if (!pre.pendingCount) { alert('Everyone has already ' + what + '. Nobody to send to.'); return false; }
+      if (!confirm('Send a reminder to ' + pre.pendingCount + (pre.pendingCount === 1 ? ' family' : ' families') + ' who have not ' + what + ' yet?')) return false;
+      const r = await api(url, { method: 'POST', body: JSON.stringify(body) });
+      if (r.error) { alert(r.error); return false; }
+      alert('Sent to ' + r.sentCount + (r.sentCount === 1 ? ' family.' : ' families.') + (r.failed && r.failed.length ? ' ' + r.failed.length + ' could not be sent.' : ''));
+      return true;
+    } catch (e) { alert('Could not send. Please try again.'); return false; }
+    finally { btn.disabled = false; }
+  }
+  document.getElementById('resendSizesBtn').addEventListener('click', async function(){
+    if (await resendPending('/api/admin/outreach/resend-pending', { kind: 'size' }, 'responded', 'resendSizesBtn')) await loadOutreach('size');
+  });
+  document.getElementById('resendAgreementsBtn').addEventListener('click', async function(){
+    if (await resendPending('/api/admin/agreements/resend-pending', {}, 'signed', 'resendAgreementsBtn')) await loadAgreements();
+  });
   document.getElementById('osScope').addEventListener('change', function(){
     document.getElementById('osIndividualWrap').classList.toggle('hidden', document.getElementById('osScope').value !== 'individual');
   });

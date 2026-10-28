@@ -121,6 +121,43 @@ router.post('/admin/outreach/send', requireAdmin, async (req, res) => {
   res.json({ ok: true, sentCount: sent.length, skipped: noEmail, failed });
 });
 
+// Re-send to families who have not answered yet. Re-uses their existing link
+// (no duplicate rows); families who already answered are never emailed again.
+router.post('/admin/outreach/resend-pending', requireAdmin, async (req, res) => {
+  const { kind, dryRun } = req.body || {};
+  if (!KINDS.has(kind)) return res.status(400).json({ error: 'kind must be "review", "feedback" or "size".' });
+  try {
+    const r = await pool.query(
+      `SELECT DISTINCT ON (lower(o.email)) o.id, o.token, o.email, o.parent_name, o.child_names
+         FROM outreach_requests o
+        WHERE o.kind = $1 AND o.responded_at IS NULL AND COALESCE(o.email,'') <> ''
+          AND NOT EXISTS (SELECT 1 FROM outreach_requests x
+                           WHERE x.kind = o.kind AND lower(x.email) = lower(o.email) AND x.responded_at IS NOT NULL
+                             AND x.sent_at >= o.sent_at)
+        ORDER BY lower(o.email), o.sent_at DESC`, [kind]);
+    if (dryRun) return res.json({ pendingCount: r.rows.length });
+    let sentCount = 0; const failed = [];
+    for (const f of r.rows) {
+      try {
+        const result = await sendOutreachEmail({
+          to: f.email, parentName: f.parent_name, childNames: String(f.child_names || '').split(', ').filter(Boolean),
+          kind, link: `${siteUrl(req)}/feedback/${f.token}`,
+        });
+        if (result && result.ok === false) throw new Error('email provider rejected');
+        await pool.query('UPDATE outreach_requests SET sent_at = now() WHERE id = $1', [f.id]);
+        sentCount++;
+      } catch (err) {
+        console.error('Outreach resend failed for', f.email, err);
+        failed.push(f.email);
+      }
+    }
+    res.json({ ok: true, sentCount, failed });
+  } catch (err) {
+    console.error('Outreach resend error:', err);
+    res.status(500).json({ error: 'Could not send the reminders.' });
+  }
+});
+
 router.get('/admin/outreach', requireAdmin, async (req, res) => {
   const kind = KINDS.has(req.query.kind) ? req.query.kind : null;
   try {
