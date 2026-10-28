@@ -280,22 +280,22 @@ const UTEAM_DEFS = [
 ];
 const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function uteamRanges(se) { // se = season end year
-  return [
-    'Born ' + (se - 5) + ' or later',
-    'Aug ' + (se - 7) + ' - Dec ' + (se - 6),
-    'Aug ' + (se - 8) + ' - Jul ' + (se - 7),
-    'Aug ' + (se - 9) + ' - Jul ' + (se - 8),
-    'Aug ' + (se - 10) + ' - Jul ' + (se - 9),
-    'Aug ' + (se - 11) + ' - Jul ' + (se - 10),
-    'Jul ' + (se - 11) + ' or earlier',
+function uteamRanges(S) { // S = season start year (US Youth Soccer school year, Aug 1 - Jul 31)
+  const M = (a, b) => a + ', ' + b;
+  const ranges = [
+    'Born Aug ' + (S - 5) + ' or later',
+    M('Aug ' + (S - 7) + ' - Dec ' + (S - 7), 'Aug ' + (S - 6) + ' - Jul ' + (S - 5)),
   ];
+  for (let n = 7; n <= 10; n++) ranges.push('Aug ' + (S - n - 1) + ' - Dec ' + (S - n - 1) + ', Jan ' + (S - n + 1) + ' - Jul ' + (S - n + 1));
+  ranges.push('Jan ' + (S - 10) + ' - Jul ' + (S - 10) + ', or born Jul ' + (S - 11) + ' or earlier');
+  return ranges;
 }
 
 // Pure function (also used by tests): rows need { dob: 'YYYY-MM-DD' }. Returns { teams, noDob }.
 function buildUTeams(rows, now) {
-  const se = seasonStartYear(now) + 1;
-  const ranges = uteamRanges(se);
+  const S = seasonStartYear(now);
+  const se = S + 1;
+  const ranges = uteamRanges(S);
   const teams = UTEAM_DEFS.map((d, i) => ({ key: d.key, name: d.name, range: ranges[i], players: [] }));
   const noDob = [];
   // Sort everyone into halves: half[n] = { E: [], L: [] } for n = 7..11; others go straight to a team.
@@ -306,7 +306,7 @@ function buildUTeams(rows, now) {
     const p = String(r.dob || '').slice(0, 10).split('-');
     const y = Number(p[0]), m = Number(p[1]);
     if (p.length !== 3 || !y || !m) { noDob.push(r); return; }
-    const n = se - y;
+    const n = S - (m >= 8 ? y : y - 1); // US Youth Soccer school-year U
     const side = m >= 8 ? 'L' : 'E';
     const item = Object.assign({}, r, { u_label: 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? side : '') });
     if (n <= 5) young.push(item);
@@ -332,7 +332,7 @@ function buildUTeams(rows, now) {
   }
   // late(n) for n>=8 lives in team lateTeam(n); (n=7 handled above)
   teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
-  return { teams, noDob, season: (se - 1) + '-' + String(se).slice(2) };
+  return { teams, noDob, season: S + '-' + String(se).slice(2) };
 }
 
 

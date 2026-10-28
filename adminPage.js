@@ -3159,12 +3159,8 @@ module.exports = `<!doctype html>
     const y = Number(p[0]), m = Number(p[1]);
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
-  // Sultans grouping (same as UTeams): season end year minus birth year, so U8 holds U8E and U8L.
-  function birthUNumber(dob){
-    const p = dobToIso(dob).split('-');
-    if (p.length !== 3 || !Number(p[0])) return null;
-    return (seasonStartYear() + 1) - Number(p[0]);
-  }
+  // Sultans uses the US Youth Soccer school-year groups; E/L (born Jan-Jul = E, Aug-Dec = L) is shown inside each U.
+  function birthUNumber(dob){ return ageNumber(dob); }
   function sulGroupKey(dob){
     const n = birthUNumber(dob);
     if (n == null) return 'nodob';
@@ -3174,11 +3170,11 @@ module.exports = `<!doctype html>
   }
   function schoolAgeNumber(dob){ return ageNumber(dob); }
   function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + Math.min(n, 12)); }
-  // U with Early/Late side, same rule as Create UTeams (season end year minus birth year; Aug-Dec = L, Jan-Jul = E).
+  // School-year U with Early/Late side by birth month (Jan-Jul = E, Aug-Dec = L).
   function uHalfLabel(dob){
     const p = dobToIso(dob).split('-');
     if (p.length !== 3 || !Number(p[0]) || !Number(p[1])) return '—';
-    const n = (seasonStartYear() + 1) - Number(p[0]);
+    const n = ageNumber(dob);
     return 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? (Number(p[1]) >= 8 ? 'L' : 'E') : '');
   }
   function ageGroupKey(dob){

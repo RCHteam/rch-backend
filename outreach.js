@@ -45,7 +45,7 @@ async function resolvePlayers({ scope, grade, playerId }) {
     if (scope === 'rch_age') conditions.push('rch = true');
     if (scope === 'sultans_age') conditions.push('sultans = true');
     const ar = await pool.query(`SELECT * FROM players WHERE ${conditions.join(' AND ')} ORDER BY grade, player_name`);
-    return ar.rows.filter((p) => (scope === 'sultans_age' ? birthYearGroupKey(p.dob) : ageGroupKey(p.dob)) === grade);
+    return ar.rows.filter((p) => ageGroupKey(p.dob) === grade);
   } else {
     throw new Error('Please choose who to send this to.');
   }
