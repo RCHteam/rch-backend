@@ -564,3 +564,10 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (player_id, att_date)
 );
+
+-- Players the league sent us who did not join RCH or Sultans (name only).
+CREATE TABLE IF NOT EXISTS league_guests (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

@@ -376,5 +376,25 @@ router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
   }
 });
 
+// ---- League-only players: sent to us by the league, not in RCH or Sultans (name only) ----
+router.get('/admin/league-guests', requireAdmin, async (req, res) => {
+  try {
+    const r = await pool.query('SELECT id, name, created_at FROM league_guests ORDER BY lower(name)');
+    res.json(r.rows);
+  } catch (err) { console.error('List league guests error:', err); res.status(500).json({ error: 'Could not load the list.' }); }
+});
+router.post('/admin/league-guests', requireAdmin, async (req, res) => {
+  const name = String((req.body && req.body.name) || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+  if (!name) return res.status(400).json({ error: "Please enter the player's name." });
+  try {
+    const r = await pool.query('INSERT INTO league_guests (name) VALUES ($1) RETURNING id, name, created_at', [name]);
+    res.status(201).json(r.rows[0]);
+  } catch (err) { console.error('Add league guest error:', err); res.status(500).json({ error: 'Could not add this player.' }); }
+});
+router.delete('/admin/league-guests/:id', requireAdmin, async (req, res) => {
+  try { await pool.query('DELETE FROM league_guests WHERE id = $1', [req.params.id]); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: 'Could not delete.' }); }
+});
+
 module.exports = router;
 module.exports.buildUTeams = buildUTeams;

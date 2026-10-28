@@ -648,6 +648,15 @@ module.exports = `<!doctype html>
           <span id="srosterNotice" style="font-size:0.85rem;"></span>
         </div>
         <div id="srosterTableWrap"></div>
+        <div style="margin-top:22px; padding-top:14px; border-top:1px solid #2a2a2a;">
+          <div style="font-weight:700; margin-bottom:4px;">League-only players <span class="sul-muted" style="font-weight:400;">&mdash; sent to us by the league, not in RCH or Sultans</span></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">
+            <input type="text" id="guestName" placeholder="Player name" maxlength="120" style="flex:1; min-width:200px; max-width:320px; padding:10px 12px; font:inherit;" autocomplete="off">
+            <button type="button" class="btn-add" id="guestAddBtn">Add</button>
+          </div>
+          <div id="guestErr" style="color:#e07a5f; font-size:0.85rem;"></div>
+          <div id="guestList"></div>
+        </div>
       </div>
 
       <div class="sul-panel sul-red">
@@ -5193,10 +5202,38 @@ module.exports = `<!doctype html>
     });
   }
 
+  async function loadGuests(){
+    const el = document.getElementById('guestList');
+    try {
+      const rows = await api('/api/admin/league-guests');
+      el.innerHTML = rows.length ? '<table><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody>' + rows.map(function(g){
+        return '<tr><td>' + escapeHtml(g.name) + '</td><td><span style="color:#999;">League only &mdash; not with us</span></td><td><button type="button" class="btn-delete-row" data-gid="' + g.id + '">Delete</button></td></tr>';
+      }).join('') + '</tbody></table>' : '<div class="empty">None added.</div>';
+    } catch (e) { el.innerHTML = '<div class="empty">Could not load.</div>'; }
+  }
+  async function addGuest(){
+    const inp = document.getElementById('guestName'), err = document.getElementById('guestErr');
+    err.textContent = '';
+    const name = inp.value.trim();
+    if (!name) { err.textContent = "Please enter the player's name."; return; }
+    try {
+      const r = await api('/api/admin/league-guests', { method: 'POST', body: JSON.stringify({ name: name }) });
+      if (r.error) { err.textContent = r.error; return; }
+      inp.value = ''; await loadGuests();
+    } catch (e) { err.textContent = 'Could not add. Please try again.'; }
+  }
+  document.getElementById('guestAddBtn').addEventListener('click', addGuest);
+  document.getElementById('guestName').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); addGuest(); } });
+  document.getElementById('guestList').addEventListener('click', async function(e){
+    const b = e.target.closest('button[data-gid]');
+    if (!b || !confirm('Remove this player from the list?')) return;
+    try { await api('/api/admin/league-guests/' + b.getAttribute('data-gid'), { method: 'DELETE' }); await loadGuests(); } catch (x) { alert('Could not delete.'); }
+  });
+
   async function loadSultansAll(){
     sultansLoaded = true;
     await loadLeagues();
-    await Promise.all([loadRosterView('sroster'), loadTryouts()]);
+    await Promise.all([loadRosterView('sroster'), loadTryouts(), loadGuests()]);
     renderLeagues();
   }
 
