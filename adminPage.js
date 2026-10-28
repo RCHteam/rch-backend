@@ -249,6 +249,19 @@ module.exports = `<!doctype html>
   .sul-panel .row-menu{ background:var(--sbg3); border-color:rgba(246,242,231,0.2); }
   .sul-panel .row-menu button{ background:var(--sbg2); color:var(--sch); border:1px solid rgba(246,242,231,0.2); }
   .sul-panel .row-menu button:hover{ background:var(--sg2); color:#fff; }
+  .att-sum{ display:flex; flex-wrap:wrap; gap:14px; margin:6px 0 14px; }
+  .att-sum > div{ flex:1; min-width:240px; background:#f6f2e7; border:1px solid #e3dcc6; border-radius:8px; padding:12px 16px; display:flex; flex-direction:column; gap:3px; font-size:0.9rem; }
+  .att-bad{ color:#b5352f; }
+  .att-table th.att-day{ text-align:center; white-space:nowrap; }
+  .att-allhere{ margin-top:4px; padding:2px 7px; font-size:0.66rem; border:1px solid #cfc8b4; background:#fff; border-radius:5px; cursor:pointer; }
+  .att-btn{ display:inline-flex; align-items:center; justify-content:center; width:38px; height:32px; border-radius:7px; border:2px solid #b9b19a; background:#fff; font-weight:800; font-size:1rem; cursor:pointer; padding:0; }
+  .att-btn.att-p{ background:#1f9d4b; border-color:#1f9d4b; color:#fff; }
+  .att-btn.att-a{ background:#d6403a; border-color:#d6403a; color:#fff; }
+  .att-btn.att-na{ background:#ece9de; border-color:#e0dcce; color:#b5b0a0; cursor:default; }
+  .att-num{ text-align:center; font-weight:700; }
+  .ut-row{ display:flex; justify-content:space-between; gap:10px; padding:3px 0; border-bottom:1px solid rgba(246,242,231,0.07); font-size:0.88rem; }
+  .ut-lab{ color:var(--sg); font-family:'Space Mono',monospace; font-size:0.72rem; }
+  .ut-moved{ color:#ffd24a; font-weight:700; }
   .lg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding-bottom:14px; }
   .lg-card{ background:var(--sbg3); border:1px solid rgba(246,242,231,0.10); border-left:5px solid var(--sr); border-radius:8px; padding:16px 18px; }
   .lg-card h3{ margin:0 0 2px; font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.02em; color:var(--sch); }
@@ -645,6 +658,15 @@ module.exports = `<!doctype html>
         <p class="sul-muted" style="margin:-4px 0 12px;">Build a team from the Sultans roster. Players on a team show as Called in the roster. Each team downloads as a PDF.</p>
         <div id="leagueListWrap"></div>
       </div>
+
+      <div class="sul-panel">
+        <div class="section-head">
+          <h2>Create UTeams</h2>
+          <button type="button" class="btn-add" id="createUTeamsBtn">Create UTeams</button>
+        </div>
+        <p class="sul-muted" style="margin:-4px 0 12px;">Automatic. Built from the whole RCH roster (not only the Sultans roster) by date of birth. E = born January to July, L = born August to December. If a team has no one on its late side, the early players play with the late side of their own year. Nothing to type in.</p>
+        <div id="uteamsWrap"></div>
+      </div>
     </div><!-- /section-sultans -->
 
     <div id="section-finances" class="hidden">
@@ -781,7 +803,7 @@ module.exports = `<!doctype html>
         <button type="button" class="subtab" data-sub="field">Practice Field</button>
         <button type="button" class="subtab" data-sub="reports">Student Report</button>
         <button type="button" class="subtab" data-sub="notices">Notice</button>
-        <button type="button" class="subtab" data-sub="documents">Documents</button>
+        <button type="button" class="subtab" data-sub="documents">Attendance</button>
         <button type="button" class="subtab" data-sub="calendar">RCH Calendar</button>
       </div>
 
@@ -954,17 +976,18 @@ module.exports = `<!doctype html>
       </div>
 
       <div id="coachSub-documents" class="hidden">
-        <div class="section-head"><h2>Documents</h2></div>
+        <div class="section-head"><h2>Attendance</h2></div>
         <details class="panel" open>
-          <summary><span class="panel-title">Attendance</span><span class="panel-hint">Monthly practice sheets, PDF</span><span class="panel-chev" aria-hidden="true"></span></summary>
+          <summary><span class="panel-title">Attendance</span><span class="panel-hint">Take it on screen. Saved automatically</span><span class="panel-chev" aria-hidden="true"></span></summary>
           <div class="panel-body">
-            <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">One page per grade for the month, listing every Tuesday and Thursday practice. Each player gets an open box on each day they train: two boxes a week for two-session players, one box a week (their Tuesday or Thursday) for one-session players. Days a player does not train are greyed out. Online-course players show with all days greyed.</p>
+            <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Tap a box to mark a player: once for present, twice for absent, three times to clear it. Every tap is saved right away and you can change it any time. Grey boxes are days the player is not scheduled. The percentages count only the days attendance was taken.</p>
             <div class="tool-row">
               <div class="grow"><label for="attGrade">Grade</label><select id="attGrade" data-grades data-all="1"></select></div>
               <div class="grow"><label for="attMonth">Month</label><select id="attMonth"></select></div>
               <div class="grow"><label for="attYear">Year</label><select id="attYear"></select></div>
-              <div><button type="button" class="btn-add" id="attDownloadBtn">Download Attendance PDF</button></div>
             </div>
+            <div id="attSummary"></div>
+            <div id="attTableWrap"></div>
           </div>
         </details>
       </div>
@@ -1814,7 +1837,7 @@ module.exports = `<!doctype html>
   }
   function getToken(){ return sessionStorage.getItem('rch_admin_token'); }
   function setToken(t){ sessionStorage.setItem('rch_admin_token', t); }
-  function clearToken(){ sessionStorage.removeItem('rch_admin_token'); sessionStorage.removeItem('rch_admin_role'); sessionStorage.removeItem('rch_coach_name'); }
+  function clearToken(){ sessionStorage.removeItem('rch_admin_token'); sessionStorage.removeItem('rch_admin_role'); sessionStorage.removeItem('rch_coach_name'); sessionStorage.removeItem('rch_coach_grades'); }
   function isCoach(){ return sessionStorage.getItem('rch_admin_role') === 'coach'; }
   function coachName(){ return sessionStorage.getItem('rch_coach_name') || ''; }
 
@@ -1840,7 +1863,8 @@ module.exports = `<!doctype html>
     loginView.classList.add('hidden');
     appView.classList.remove('hidden');
     document.body.classList.add('is-coach');
-    ['registrations', 'finances', 'charges', 'shop', 'camp', 'data'].forEach(function(id){ const e = document.getElementById('section-' + id); if (e) e.remove(); });
+    ['registrations', 'sultans', 'finances', 'charges', 'shop', 'camp', 'data'].forEach(function(id){ const e = document.getElementById('section-' + id); if (e) e.remove(); });
+    fillGradeSelects();
     ['summary', 'sectionNav'].forEach(function(id){ const e = document.getElementById(id); if (e) e.remove(); });
     const ss = document.querySelector('.search-slot'); if (ss) ss.innerHTML = '';
     const who = document.createElement('span'); who.className = 'coach-who'; who.textContent = coachName();
@@ -1912,6 +1936,7 @@ module.exports = `<!doctype html>
           setToken(data.token);
           sessionStorage.setItem('rch_admin_role', 'coach');
           sessionStorage.setItem('rch_coach_name', (data.coach && data.coach.name) || '');
+          sessionStorage.setItem('rch_coach_grades', JSON.stringify((data.coach && data.coach.grades) || []));
           pwInput.value = '';
           showApp();
         } else loginError.textContent = data.error || 'Login failed.';
@@ -4060,15 +4085,25 @@ module.exports = `<!doctype html>
     el.textContent = text || '';
     el.className = 'status-msg' + (text ? (ok ? ' ok' : ' bad') : '');
   }
-  document.querySelectorAll('select[data-grades]').forEach(function(sel){
-    let html = sel.hasAttribute('data-all') ? '<option value="all">All grades (one page each)</option>' : '';
-    html += GRADES.map(function(g){ return '<option value="' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('');
-    sel.innerHTML = html;
-  });
-  document.getElementById('repGrade').insertAdjacentHTML('afterbegin', '<option value="">All grades</option>');
-  document.getElementById('repGrade').value = '';
-  document.getElementById('ntGrade').insertAdjacentHTML('afterbegin', '<option value="">All grades</option>');
-  document.getElementById('ntGrade').value = '';
+  // Coaches only get the grades they take care of; admins get every grade.
+  function coachGradeList(){
+    if (!isCoach()) return GRADES;
+    let mine = [];
+    try { mine = JSON.parse(sessionStorage.getItem('rch_coach_grades') || '[]'); } catch (e) { mine = []; }
+    return GRADES.filter(function(g){ return mine.indexOf(g) !== -1; });
+  }
+  function fillGradeSelects(){
+    const list = coachGradeList();
+    document.querySelectorAll('select[data-grades]').forEach(function(sel){
+      const anyOpt = sel.id === 'repGrade' || sel.id === 'ntGrade';
+      let html = anyOpt ? '<option value="">All grades</option>' : '';
+      if (sel.hasAttribute('data-all')) html += '<option value="all">' + (isCoach() ? 'All my grades' : 'All grades') + '</option>';
+      html += list.map(function(g){ return '<option value="' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('');
+      sel.innerHTML = html;
+      if (anyOpt) sel.value = '';
+    });
+  }
+  fillGradeSelects();
   fillMonthYear('repMonth', 'repYear');
   fillMonthYear('attMonth', 'attYear');
 
@@ -4438,11 +4473,90 @@ module.exports = `<!doctype html>
     finally { sendBtn.disabled = false; saveBtn.disabled = false; }
   }
 
-  // ---- Documents > Attendance ----
-  document.getElementById('attDownloadBtn').addEventListener('click', function(){
-    window.open(API_BASE + '/api/admin/attendance/pdf?grade=' + encodeURIComponent(document.getElementById('attGrade').value) +
-      '&month=' + monthValue('attMonth', 'attYear') + '&token=' + encodeURIComponent(getToken()));
+  // ---- Documents > Attendance (digital) ----
+  let attData = null;
+  function attPct(v){ return v == null ? '—' : v + '%'; }
+  function attRecalc(p){
+    const m = { present: 0, absent: 0 };
+    Object.keys(p.marks).forEach(function(d){ m[p.marks[d]] += 1; });
+    p.month.present = m.present; p.month.absent = m.absent; p.month.taken = m.present + m.absent;
+    p.month.pctMissed = p.month.taken ? Math.round(p.month.absent / p.month.taken * 1000) / 10 : null;
+    p.month.pctAttended = p.month.taken ? Math.round(p.month.present / p.month.taken * 1000) / 10 : null;
+    p.total.taken = p.total.present + p.total.absent;
+    p.total.pctMissed = p.total.taken ? Math.round(p.total.absent / p.total.taken * 1000) / 10 : null;
+    p.total.pctAttended = p.total.taken ? Math.round(p.total.present / p.total.taken * 1000) / 10 : null;
+  }
+  function attSummaryBox(){
+    let mp = 0, ma = 0, tp = 0, ta = 0;
+    attData.players.forEach(function(p){ mp += p.month.present; ma += p.month.absent; tp += p.total.present; ta += p.total.absent; });
+    const mt = mp + ma, tt = tp + ta;
+    const pm = mt ? Math.round(ma / mt * 1000) / 10 : null, pt = tt ? Math.round(ta / tt * 1000) / 10 : null;
+    document.getElementById('attSummary').innerHTML =
+      '<div class="att-sum">' +
+        '<div><b>' + escapeHtml(attData.label) + '</b><span>' + mp + ' present, <b class="att-bad">' + ma + ' missed</b></span><span>Missed: <b class="att-bad">' + attPct(pm) + '</b> of ' + mt + ' marks</span></div>' +
+        '<div><b>All months so far</b><span>' + tp + ' present, <b class="att-bad">' + ta + ' missed</b></span><span>Missed: <b class="att-bad">' + attPct(pt) + '</b> of ' + tt + ' marks</span></div>' +
+      '</div>';
+  }
+  function attRender(){
+    const wrap = document.getElementById('attTableWrap');
+    if (!attData.players.length) { wrap.innerHTML = '<div class="empty">No players in this grade.</div>'; attSummaryBox(); return; }
+    const showGrade = document.getElementById('attGrade').value === 'all';
+    let html = '<table class="att-table"><thead><tr><th>Player</th>' + (showGrade ? '<th>Grade</th>' : '') + '<th>Sessions</th>' +
+      attData.days.map(function(d){ return '<th class="att-day">' + escapeHtml(d.label) + '<br><button type="button" class="att-allhere" data-date="' + d.date + '">All here</button></th>'; }).join('') +
+      '<th>Missed (month)</th><th>% missed</th><th>Missed (total)</th><th>% missed</th></tr></thead><tbody>';
+    attData.players.forEach(function(p){
+      const sess = p.session_type === 'two' ? '2 / week' : (p.session_type === 'online' ? 'Online' : (p.session_day === 'tuesday' ? '1 (Tue)' : p.session_day === 'thursday' ? '1 (Thu)' : '1 / week'));
+      html += '<tr data-pid="' + p.id + '"><td>' + escapeHtml(p.name) + '</td>' + (showGrade ? '<td>' + escapeHtml(GRADE_LABELS[p.grade] || p.grade) + '</td>' : '') + '<td>' + sess + '</td>';
+      attData.days.forEach(function(d){
+        if (p.expected.indexOf(d.date) === -1) { html += '<td><span class="att-btn att-na">–</span></td>'; return; }
+        const st = p.marks[d.date];
+        html += '<td><button type="button" class="att-btn' + (st === 'present' ? ' att-p' : st === 'absent' ? ' att-a' : '') + '" data-pid="' + p.id + '" data-date="' + d.date + '">' + (st === 'present' ? '✓' : st === 'absent' ? '✗' : '') + '</button></td>';
+      });
+      html += '<td class="att-num' + (p.month.absent ? ' att-bad' : '') + '">' + p.month.absent + '</td><td>' + attPct(p.month.pctMissed) + '</td>' +
+        '<td class="att-num' + (p.total.absent ? ' att-bad' : '') + '">' + p.total.absent + '</td><td>' + attPct(p.total.pctMissed) + '</td></tr>';
+    });
+    wrap.innerHTML = html + '</tbody></table>';
+    attSummaryBox();
+  }
+  async function loadAttendance(){
+    const wrap = document.getElementById('attTableWrap');
+    try {
+      attData = await api('/api/admin/attendance?grade=' + encodeURIComponent(document.getElementById('attGrade').value) + '&month=' + monthValue('attMonth', 'attYear'));
+      if (!attData || !attData.players) throw new Error('bad');
+      attRender();
+    } catch (e) { wrap.innerHTML = '<div class="empty">Could not load attendance. Please try again.</div>'; document.getElementById('attSummary').innerHTML = ''; }
+  }
+  ['attGrade', 'attMonth', 'attYear'].forEach(function(id){ document.getElementById(id).addEventListener('change', loadAttendance); });
+  document.getElementById('attTableWrap').addEventListener('click', async function(e){
+    const all = e.target.closest('.att-allhere');
+    if (all) {
+      if (!confirm('Mark everyone who is scheduled that day as present? Players you already marked stay as they are.')) return;
+      try {
+        const r = await api('/api/admin/attendance/day', { method: 'PUT', body: JSON.stringify({ grade: document.getElementById('attGrade').value, date: all.getAttribute('data-date') }) });
+        if (r.error) { alert(r.error); return; }
+        await loadAttendance();
+      } catch (err) { alert('Could not save attendance. Please try again.'); }
+      return;
+    }
+    const b = e.target.closest('button.att-btn');
+    if (!b || !b.getAttribute('data-pid')) return;
+    const p = attData.players.find(function(x){ return String(x.id) === b.getAttribute('data-pid'); });
+    const date = b.getAttribute('data-date');
+    if (!p) return;
+    const cur = p.marks[date] || null;
+    const next = cur === null ? 'present' : cur === 'present' ? 'absent' : null;
+    if (cur) { p.total[cur] -= 1; }
+    if (next) { p.marks[date] = next; p.total[next] += 1; } else { delete p.marks[date]; }
+    attRecalc(p); attRender();
+    try {
+      const r = await api('/api/admin/attendance', { method: 'PUT', body: JSON.stringify({ playerId: p.id, date: date, status: next }) });
+      if (r.error) throw new Error(r.error);
+    } catch (err) {
+      alert('That mark could not be saved. Please try again.');
+      await loadAttendance();
+    }
   });
+  document.querySelector('[data-sub="documents"]') && document.querySelector('[data-sub="documents"]').addEventListener('click', loadAttendance);
 
   // ---- RCH Calendar (a big Google-style month / week view; events come later) ----
   let calView = 'month';
@@ -5186,6 +5300,38 @@ module.exports = `<!doctype html>
     finally { btn.disabled = false; btn.textContent = 'Save League Roster'; }
   });
 
+  // ---- Create UTeams (automatic, from the whole RCH roster) ----
+  async function loadUTeams(){
+    const wrap = document.getElementById('uteamsWrap');
+    const btn = document.getElementById('createUTeamsBtn');
+    btn.disabled = true; btn.textContent = 'Building…';
+    try {
+      const r = await api('/api/admin/uteams');
+      if (!r || !r.teams) throw new Error('bad');
+      let total = 0;
+      r.teams.forEach(function(t){ total += t.players.length; });
+      let html = '<p class="sul-muted" style="margin:0 0 12px;">Season ' + escapeHtml(r.season) + '  •  ' + total + ' players placed</p><div class="lg-grid">';
+      r.teams.forEach(function(t){
+        html += '<div class="lg-card"><h3>' + escapeHtml(t.name) + '</h3>' +
+          '<div class="lg-meta">' + escapeHtml(t.range) + '  •  ' + t.players.length + ' players</div>';
+        if (!t.players.length) html += '<div class="lg-players"><span class="sul-muted">No players.</span></div>';
+        else html += '<div class="lg-players">' + t.players.map(function(p){
+          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.moved ? ' <span class="ut-moved" title="Plays with the late side of his own year because the usual late side is empty">*</span>' : '') + '</span><span class="ut-lab">' + escapeHtml(p.u_label) + '</span></div>';
+        }).join('') + '</div>';
+        html += '<div class="lg-btns"><button type="button" class="lg-pdf ut-pdf" data-key="' + t.key + '">Download PDF</button></div></div>';
+      });
+      html += '</div>';
+      if (r.noDob && r.noDob.length) html += '<p class="sul-muted">No birth date, not placed: ' + r.noDob.map(function(p){ return escapeHtml(p.player_name); }).join(', ') + '</p>';
+      html += '<p class="sul-muted">* plays with the late side of his own year.</p>';
+      wrap.innerHTML = html;
+      wrap.querySelectorAll('.ut-pdf').forEach(function(b){
+        b.addEventListener('click', function(){ window.open(API_BASE + '/api/admin/uteams/' + b.getAttribute('data-key') + '/pdf?token=' + encodeURIComponent(getToken())); });
+      });
+    } catch (e) { wrap.innerHTML = '<div class="empty">Could not build the UTeams. Please try again.</div>'; }
+    finally { btn.disabled = false; btn.textContent = 'Create UTeams'; }
+  }
+  document.getElementById('createUTeamsBtn').addEventListener('click', loadUTeams);
+
   // ---- Section navigation (Registrations / Finances / Charges / Coaches / Data) ----
 
   const SECTION_IDS = ['registrations', 'sultans', 'finances', 'charges', 'coaches', 'shop', 'camp', 'data'];
@@ -5483,7 +5629,7 @@ module.exports = `<!doctype html>
   if (getToken()) {
     if (isCoach()) {
       api('/api/coach/me').then(function(r){
-        if (r && r.role === 'coach') { sessionStorage.setItem('rch_coach_name', r.name || ''); showApp(); }
+        if (r && r.role === 'coach') { sessionStorage.setItem('rch_coach_name', r.name || ''); sessionStorage.setItem('rch_coach_grades', JSON.stringify(r.grades || [])); showApp(); }
         else { clearToken(); showLogin(); }
       }).catch(function(){});
     } else showApp();

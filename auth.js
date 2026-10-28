@@ -37,7 +37,7 @@ function safeEqual(a, b) {
   const x = Buffer.from(String(a)); const y = Buffer.from(String(b));
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
-// Returns { id, name } for a valid, unexpired token of a coach who still has a login, else null.
+// Returns { id, name, grades } for a valid, unexpired token of a coach who still has a login, else null.
 async function coachFromToken(token) {
   if (!token || typeof token !== 'string' || !token.startsWith('c1.')) return null;
   const parts = token.split('.');
@@ -49,7 +49,7 @@ async function coachFromToken(token) {
   if (!Number.isInteger(id)) return null;
   try {
     const r = await pool.query(
-      'SELECT c.id, c.name FROM coaches c JOIN coach_logins l ON l.coach_id = c.id WHERE c.id = $1', [id]);
+      'SELECT c.id, c.name, c.grades FROM coaches c JOIN coach_logins l ON l.coach_id = c.id WHERE c.id = $1', [id]);
     return r.rows[0] || null;
   } catch (e) { return null; }
 }

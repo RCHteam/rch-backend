@@ -164,29 +164,6 @@ function termDays() {
   return out;
 }
 
-// 1st of every month: reminder to download the attendance sheets.
-function attendanceReminders() {
-  const out = [];
-  for (let y = 2026; y <= 2028; y++) {
-    for (let m = 1; m <= 12; m++) {
-      const date = `${y}-${pad(m)}-01`;
-      if (date < '2026-11-01') continue;
-      out.push({
-        id: 'fx-attendance-' + date, fixed: true, title: 'Download Attendance Sheets', date,
-        startTime: '09:00', endTime: '09:30', location: '', color: 'gold',
-        notes: [
-          'Fixed date: the 1st of every month.',
-          '',
-          'Coaches > Documents > Attendance: choose the grade and this month, then download the PDF sheet for every grade.',
-          'Print them (or load them on the coaches\' tablets) before the first practice of the month.',
-          'Last month\'s completed sheets: file them, and enter any missing attendance.',
-        ].join('\n'),
-      });
-    }
-  }
-  return out;
-}
-
 // ---------------------------------------------------------------------------------
 // TRAINING SCHEDULE. We train every Tuesday and Thursday, so one entry always shows on both
 // days: a practice, a short session, or "No Practice" with the reason.
@@ -287,7 +264,7 @@ function trainingMarkers() {
 }
 
 function fixedEvents() {
-  return [...socialPosts(), ...outings(), ...termDays(), ...attendanceReminders(), ...trainingDays(), ...trainingMarkers()];
+  return [...socialPosts(), ...outings(), ...termDays(), ...trainingDays(), ...trainingMarkers()];
 }
 
 module.exports = { fixedEvents, BREAKS, TERMS };

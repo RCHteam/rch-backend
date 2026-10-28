@@ -45,13 +45,21 @@ router.all('/admin/curriculum-view/:grade', requireStaff, (req, res) => {
 
 /* ------------------------------ Curriculum ------------------------------ */
 
+// A coach only works with the grades they take care of. Admins (req.coach unset) see everything.
+const myGrades = (req) => (req.coach ? (req.coach.grades || []) : null);
+const gradeOk = (req, g) => { const m = myGrades(req); return m === null || m.includes(g); };
+const NOT_YOURS = 'This player is not in one of your grades.';
+
 router.get('/admin/curriculum', requireStaff, async (req, res) => {
   try {
     const grade = GRADES.includes(req.query.grade) ? req.query.grade : null;
+    const mine = myGrades(req);
+    if (mine && grade && !mine.includes(grade)) return res.json([]);
+    const params = []; const where = [];
+    if (grade) { params.push(grade); where.push('grade = $' + params.length); }
+    if (mine) { params.push(mine); where.push('grade = ANY($' + params.length + ')'); }
     const r = await pool.query(
-      `SELECT * FROM curriculum_chapters ${grade ? 'WHERE grade = $1' : ''} ORDER BY grade, position, id`,
-      grade ? [grade] : []
-    );
+      `SELECT * FROM curriculum_chapters ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY grade, position, id`, params);
     res.json(r.rows);
   } catch (err) {
     console.error('List curriculum error:', err);
@@ -201,6 +209,7 @@ router.post('/admin/student-reports', requireStaff, async (req, res) => {
   try {
     const player = (await pool.query('SELECT * FROM players WHERE id = $1', [playerId])).rows[0];
     if (!player) return res.status(404).json({ error: 'Player not found.' });
+    if (!gradeOk(req, player.grade)) return res.status(403).json({ error: NOT_YOURS });
     // Chapters: a list of { id, result }. (An older single chapterId is still accepted.)
     const wanted = Array.isArray(chapters) ? chapters : (chapterId ? [{ id: chapterId, result: assessmentResult }] : []);
     const chapList = [];
@@ -253,11 +262,14 @@ router.post('/admin/student-reports', requireStaff, async (req, res) => {
 router.get('/admin/student-reports', requireStaff, async (req, res) => {
   try {
     const grade = GRADES.includes(req.query.grade) ? req.query.grade : null;
+    const mine = myGrades(req);
+    if (mine && grade && !mine.includes(grade)) return res.json([]);
+    const params = []; const where = [];
+    if (grade) { params.push(grade); where.push('grade = $' + params.length); }
+    if (mine) { params.push(mine); where.push('grade = ANY($' + params.length + ')'); }
     const r = await pool.query(
       `SELECT id, player_id, player_name, grade, term, chapter_title, month_label, coach_name, parent_email, emailed_at, created_at
-       FROM student_reports ${grade ? 'WHERE grade = $1' : ''} ORDER BY created_at DESC LIMIT 200`,
-      grade ? [grade] : []
-    );
+       FROM student_reports ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT 200`, params);
     res.json(req.coach ? r.rows.map((x) => ({ ...x, parent_email: '' })) : r.rows);
   } catch (err) {
     console.error('List reports error:', err);
@@ -268,7 +280,7 @@ router.get('/admin/student-reports', requireStaff, async (req, res) => {
 router.post('/admin/student-reports/:id/email', requireStaff, async (req, res) => {
   try {
     const row = (await pool.query('SELECT * FROM student_reports WHERE id = $1', [req.params.id])).rows[0];
-    if (!row) return res.status(404).json({ error: 'Report not found.' });
+    if (!row || !gradeOk(req, row.grade)) return res.status(404).json({ error: 'Report not found.' });
     let to = String(row.parent_email || '').trim(), parentName = row.parent_name || '';
     if (row.player_id) {
       const pl = (await pool.query('SELECT parent_email, parent_name FROM players WHERE id = $1', [row.player_id])).rows[0];
@@ -304,7 +316,7 @@ router.delete('/admin/student-reports/:id', requireAdmin, async (req, res) => {
 router.get('/admin/student-reports/:id/pdf', requireStaff, async (req, res) => {
   try {
     const row = (await pool.query('SELECT * FROM student_reports WHERE id = $1', [req.params.id])).rows[0];
-    if (!row) return res.status(404).json({ error: 'Report not found.' });
+    if (!row || !gradeOk(req, row.grade)) return res.status(404).json({ error: 'Report not found.' });
     const pdf = await buildReportPdf(row);
     res.set('Content-Type', 'application/pdf');
     res.set('Content-Disposition', `attachment; filename="${row.player_name.replace(/[^a-z0-9]+/gi, '_')}_${row.month_key}_Report.pdf"`);
@@ -347,6 +359,7 @@ router.post('/admin/player-notices', requireStaff, async (req, res) => {
   try {
     const player = (await pool.query('SELECT * FROM players WHERE id = $1', [playerId])).rows[0];
     if (!player) return res.status(404).json({ error: 'Player not found.' });
+    if (!gradeOk(req, player.grade)) return res.status(403).json({ error: NOT_YOURS });
     const shouldSend = send !== false;
     if (shouldSend && !String(player.parent_email || '').trim()) {
       return res.status(400).json({ error: 'This player has no parent email on file. Add one on the roster first.' });
@@ -379,7 +392,10 @@ router.post('/admin/player-notices', requireStaff, async (req, res) => {
 
 router.get('/admin/player-notices', requireStaff, async (req, res) => {
   try {
-    const r = await pool.query('SELECT * FROM player_notices ORDER BY created_at DESC LIMIT 200');
+    const mine = myGrades(req);
+    const r = mine
+      ? await pool.query('SELECT * FROM player_notices WHERE grade = ANY($1) ORDER BY created_at DESC LIMIT 200', [mine])
+      : await pool.query('SELECT * FROM player_notices ORDER BY created_at DESC LIMIT 200');
     res.json(r.rows.map(noticeOut).map((x) => (req.coach ? { ...x, parent_email: '' } : x)));
   } catch (err) {
     console.error('List notices error:', err);
@@ -391,7 +407,7 @@ router.post('/admin/player-notices/:id/email', requireStaff, async (req, res) =>
   if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Notice not found.' });
   try {
     const row = (await pool.query('SELECT * FROM player_notices WHERE id = $1', [req.params.id])).rows[0];
-    if (!row) return res.status(404).json({ error: 'Notice not found.' });
+    if (!row || !gradeOk(req, row.grade)) return res.status(404).json({ error: 'Notice not found.' });
     let to = String(row.parent_email || '').trim(), parentName = row.parent_name || '';
     if (row.player_id) {
       const pl = (await pool.query('SELECT parent_email, parent_name FROM players WHERE id = $1', [row.player_id])).rows[0];
@@ -436,107 +452,119 @@ function attendsOn(player, weekday) {
   return true; // one-session player with no day chosen yet: leave both open so nobody is left off
 }
 
-function buildAttendancePdf({ grades, byGrade, ym }) {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument({ margin: 36, size: 'LETTER', layout: 'landscape' });
-      const chunks = [];
-      doc.on('data', (c) => chunks.push(c));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+const ATT_STATUS = new Set(['present', 'absent']);
+const pad2 = (n) => String(n).padStart(2, '0');
 
-      const days = practiceDates(ym.year, ym.month);
-      const left = 36;
-      const pageW = 792;
-      const nameW = 170;
-      const sessW = 62;
-      const gridW = pageW - left * 2 - nameW - sessW - 22;
-      const colW = days.length ? Math.min(60, gridW / days.length) : 60;
-      const rowH = 26;
-      const box = 14;
-      const bottom = 612 - 60;
-
-      let firstPage = true;
-      grades.forEach((g) => {
-        const players = byGrade[g] || [];
-        let page = 0;
-        let i = 0;
-        do {
-          if (!firstPage) doc.addPage();
-          firstPage = false;
-          page += 1;
-          let y = 36;
-          doc.font('Helvetica-Bold').fontSize(16).fillColor('#0c2a1c').text(`RCH Elite Training — Attendance`, left, y);
-          doc.font('Helvetica-Bold').fontSize(12).fillColor('#444444')
-            .text(`${GRADE_LABELS[g]}  •  ${monthLabel(ym)}${page > 1 ? '  (continued)' : ''}`, left, y + 20);
-          y += 46;
-
-          const headY = y;
-          doc.rect(left, headY, nameW + sessW + 22 + colW * days.length, rowH).fill('#0c2a1c');
-          doc.font('Helvetica-Bold').fontSize(9).fillColor('#ffffff');
-          doc.text('#', left + 4, headY + 9, { width: 18 });
-          doc.text('Player', left + 22, headY + 9, { width: nameW - 4 });
-          doc.text('Sessions', left + 22 + nameW, headY + 9, { width: sessW });
-          days.forEach((d, k) => {
-            const x = left + 22 + nameW + sessW + k * colW;
-            doc.text(`${WEEKDAY_SHORT[d.weekday]} ${ym.month}/${d.day}`, x, headY + 9, { width: colW, align: 'center' });
-          });
-          y = headY + rowH;
-
-          let drawn = 0;
-          while (i < players.length && y + rowH <= bottom) {
-            const p = players[i];
-            if (drawn % 2 === 1) doc.rect(left, y, nameW + sessW + 22 + colW * days.length, rowH).fill('#f3f1e8');
-            doc.font('Helvetica').fontSize(10).fillColor('#000000');
-            doc.text(String(i + 1), left + 4, y + 8, { width: 18 });
-            doc.text(p.player_name, left + 22, y + 8, { width: nameW - 6 });
-            const ag = ageGroupLabel(p.dob);
-            if (ag) doc.font('Helvetica').fontSize(8).fillColor('#888888').text(ag, left + 22, y + 9, { width: nameW - 8, align: 'right' });
-            const sess = p.session_type === 'two' ? '2 / week' : (p.session_type === 'online' ? 'Online' : (p.session_day === 'tuesday' ? '1 (Tue)' : p.session_day === 'thursday' ? '1 (Thu)' : '1 / week'));
-            doc.fontSize(9).fillColor('#444444').text(sess, left + 22 + nameW, y + 8, { width: sessW });
-            days.forEach((d, k) => {
-              const cx = left + 22 + nameW + sessW + k * colW + (colW - box) / 2;
-              if (attendsOn(p, d.weekday)) {
-                doc.lineWidth(1).strokeColor('#164a30').rect(cx, y + (rowH - box) / 2, box, box).stroke();
-              } else {
-                doc.rect(cx, y + (rowH - box) / 2, box, box).fill('#d8d8d8');
-              }
-            });
-            doc.strokeColor('#e2e2e2').lineWidth(0.5).moveTo(left, y + rowH).lineTo(left + 22 + nameW + sessW + colW * days.length, y + rowH).stroke();
-            y += rowH; i += 1; drawn += 1;
-          }
-          if (!players.length) {
-            doc.font('Helvetica-Oblique').fontSize(10).fillColor('#888888').text('No players on the roster for this grade.', left + 22, y + 8);
-          }
-          doc.font('Helvetica').fontSize(8).fillColor('#666666')
-            .text('Open box = expected at practice (tick when present).  Grey box = not scheduled that day.   Coach: ________________________', left, 612 - 50, { width: pageW - left * 2 });
-        } while (i < players.length);
-      });
-      doc.end();
-    } catch (err) { reject(err); }
-  });
+function pct(num, den) { return den > 0 ? Math.round((num / den) * 1000) / 10 : null; }
+function tally(present, absent) {
+  const taken = present + absent;
+  return { present, absent, taken, pctMissed: pct(absent, taken), pctAttended: pct(present, taken) };
 }
 
-router.get('/admin/attendance/pdf', requireStaff, async (req, res) => {
+// Grades this request may look at: 'all' = every grade the user may see.
+function attGrades(req, gradeParam) {
+  const mine = myGrades(req);
+  if (gradeParam === 'all') return mine === null ? GRADES.slice() : GRADES.filter((g) => mine.includes(g));
+  if (!GRADES.includes(gradeParam)) return null;
+  if (mine && !mine.includes(gradeParam)) return [];
+  return [gradeParam];
+}
+
+// Digital attendance sheet for one grade (or all) and one month. Marks are saved per player per day.
+router.get('/admin/attendance', requireStaff, async (req, res) => {
   try {
+    const grades = attGrades(req, String(req.query.grade || ''));
+    if (grades === null) return res.status(400).json({ error: 'Please choose a grade.' });
     const ym = parseMonth(req.query.month);
-    const wantAll = req.query.grade === 'all';
-    if (!wantAll && !GRADES.includes(req.query.grade)) return res.status(400).json({ error: 'Please choose a grade.' });
-    const grades = wantAll ? GRADES : [req.query.grade];
-    const r = await pool.query(
-      `SELECT player_name, grade, dob, session_type, session_day FROM players
-       WHERE archived_at IS NULL AND grade = ANY($1) ORDER BY grade, player_name`,
-      [grades]
-    );
-    const byGrade = {};
-    r.rows.forEach((p) => { (byGrade[p.grade] = byGrade[p.grade] || []).push(p); });
-    const pdf = await buildAttendancePdf({ grades, byGrade, ym });
-    res.set('Content-Type', 'application/pdf');
-    res.set('Content-Disposition', `attachment; filename="Attendance_${wantAll ? 'All-Grades' : req.query.grade}_${monthKeyOf(ym)}.pdf"`);
-    res.send(pdf);
+    const days = practiceDates(ym.year, ym.month).map((d) => ({
+      date: `${ym.year}-${pad2(ym.month)}-${pad2(d.day)}`, weekday: d.weekday, label: `${WEEKDAY_SHORT[d.weekday]} ${ym.month}/${d.day}`,
+    }));
+    const pr = await pool.query(
+      `SELECT id, player_name, grade, dob, session_type, session_day FROM players
+       WHERE archived_at IS NULL AND grade = ANY($1) ORDER BY grade, player_name`, [grades]);
+    const ids = pr.rows.map((p) => p.id);
+    const first = `${ym.year}-${pad2(ym.month)}-01`;
+    const last = `${ym.year}-${pad2(ym.month)}-31`;
+    const rec = ids.length
+      ? await pool.query(
+          `SELECT player_id, to_char(att_date, 'YYYY-MM-DD') AS d, status FROM attendance_records WHERE player_id = ANY($1)`, [ids])
+      : { rows: [] };
+    const marks = {}; const tot = {}; const mon = {};
+    rec.rows.forEach((x) => {
+      (marks[x.player_id] = marks[x.player_id] || {})[x.d] = x.status;
+      const t = (tot[x.player_id] = tot[x.player_id] || { present: 0, absent: 0 });
+      t[x.status] += 1;
+      if (x.d >= first && x.d <= last) { const m = (mon[x.player_id] = mon[x.player_id] || { present: 0, absent: 0 }); m[x.status] += 1; }
+    });
+    let gp = 0, ga = 0, mp = 0, ma = 0;
+    const players = pr.rows.map((p) => {
+      const t = tot[p.id] || { present: 0, absent: 0 }, m = mon[p.id] || { present: 0, absent: 0 };
+      gp += t.present; ga += t.absent; mp += m.present; ma += m.absent;
+      const mk = marks[p.id] || {};
+      const monthMarks = {};
+      days.forEach((d) => { if (mk[d.date]) monthMarks[d.date] = mk[d.date]; });
+      return {
+        id: p.id, name: p.player_name, grade: p.grade, age_group: ageGroupLabel(p.dob),
+        session_type: p.session_type, session_day: p.session_day,
+        expected: days.filter((d) => attendsOn(p, d.weekday)).map((d) => d.date),
+        marks: monthMarks, month: tally(m.present, m.absent), total: tally(t.present, t.absent),
+      };
+    });
+    res.json({ month: `${ym.year}-${pad2(ym.month)}`, label: monthLabel(ym), days, players,
+      summary: { month: tally(mp, ma), total: tally(gp, ga) } });
   } catch (err) {
-    console.error('Attendance PDF error:', err);
-    res.status(500).json({ error: 'Could not build the attendance sheet.' });
+    console.error('Attendance load error:', err);
+    res.status(500).json({ error: 'Could not load attendance.' });
+  }
+});
+
+// Mark (or clear) one player on one day. Saved straight away; can be changed any time.
+router.put('/admin/attendance', requireStaff, async (req, res) => {
+  const { playerId, date, status } = req.body || {};
+  if (!/^\d+$/.test(String(playerId || ''))) return res.status(400).json({ error: 'Choose a player.' });
+  if (!ISO_DATE.test(String(date || ''))) return res.status(400).json({ error: 'Please enter a valid date.' });
+  if (status !== null && status !== undefined && status !== '' && !ATT_STATUS.has(status)) return res.status(400).json({ error: 'Status must be present or absent.' });
+  try {
+    const player = (await pool.query('SELECT id, grade FROM players WHERE id = $1 AND archived_at IS NULL', [playerId])).rows[0];
+    if (!player) return res.status(404).json({ error: 'Player not found.' });
+    if (!gradeOk(req, player.grade)) return res.status(403).json({ error: NOT_YOURS });
+    if (!status) {
+      await pool.query('DELETE FROM attendance_records WHERE player_id = $1 AND att_date = $2', [player.id, date]);
+    } else {
+      await pool.query(
+        `INSERT INTO attendance_records (player_id, att_date, status, marked_by, updated_at) VALUES ($1,$2,$3,$4, now())
+         ON CONFLICT (player_id, att_date) DO UPDATE SET status = $3, marked_by = $4, updated_at = now()`,
+        [player.id, date, status, req.coach ? req.coach.name : 'Admin']);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Attendance save error:', err);
+    res.status(500).json({ error: 'Could not save attendance.' });
+  }
+});
+
+// "Everyone here": mark every player expected that day (and not marked yet) as present.
+router.put('/admin/attendance/day', requireStaff, async (req, res) => {
+  const { grade, date } = req.body || {};
+  if (!ISO_DATE.test(String(date || ''))) return res.status(400).json({ error: 'Please enter a valid date.' });
+  try {
+    const grades = attGrades(req, String(grade || ''));
+    if (!grades || !grades.length) return res.status(400).json({ error: 'Please choose a grade.' });
+    const weekday = new Date(date + 'T12:00:00Z').getUTCDay();
+    const pr = await pool.query(
+      'SELECT id, session_type, session_day FROM players WHERE archived_at IS NULL AND grade = ANY($1)', [grades]);
+    const ids = pr.rows.filter((p) => attendsOn(p, weekday)).map((p) => p.id);
+    if (ids.length) {
+      await pool.query(
+        `INSERT INTO attendance_records (player_id, att_date, status, marked_by, updated_at)
+         SELECT unnest($1::int[]), $2::date, 'present', $3, now()
+         ON CONFLICT (player_id, att_date) DO NOTHING`,
+        [ids, date, req.coach ? req.coach.name : 'Admin']);
+    }
+    res.json({ ok: true, count: ids.length });
+  } catch (err) {
+    console.error('Attendance day error:', err);
+    res.status(500).json({ error: 'Could not save attendance.' });
   }
 });
 
@@ -610,4 +638,3 @@ router.delete('/admin/calendar-events/:id', requireAdmin, async (req, res) => {
 
 module.exports = router;
 module.exports.attendsOn = attendsOn;
-module.exports.buildAttendancePdf = buildAttendancePdf;

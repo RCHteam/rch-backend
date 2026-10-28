@@ -554,3 +554,13 @@ CREATE TABLE IF NOT EXISTS site_images (
   fy          INTEGER NOT NULL DEFAULT 50,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Digital attendance: one row per player per practice day (saved, editable).
+CREATE TABLE IF NOT EXISTS attendance_records (
+  player_id   INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  att_date    DATE NOT NULL,
+  status      TEXT NOT NULL CHECK (status IN ('present','absent')),
+  marked_by   TEXT NOT NULL DEFAULT '',
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (player_id, att_date)
+);

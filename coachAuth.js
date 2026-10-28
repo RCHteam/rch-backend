@@ -20,12 +20,12 @@ router.post('/coach/login', loginLimiter, async (req, res) => {
   if (!username || !code) return fail();
   try {
     const r = await pool.query(
-      'SELECT l.*, c.name FROM coach_logins l JOIN coaches c ON c.id = l.coach_id WHERE lower(l.username) = $1', [username]);
+      'SELECT l.*, c.name, c.grades FROM coach_logins l JOIN coaches c ON c.id = l.coach_id WHERE lower(l.username) = $1', [username]);
     const row = r.rows[0];
     if (!row) { hashCode(code, 'x'.repeat(32)); return fail(); } // keep timing similar
     if (!safeEqual(hashCode(code, row.code_salt), row.code_hash)) return fail();
     pool.query('UPDATE coach_logins SET last_login_at = now() WHERE coach_id = $1', [row.coach_id]).catch(() => {});
-    res.json({ ok: true, token: makeCoachToken(row.coach_id), coach: { id: row.coach_id, name: row.name } });
+    res.json({ ok: true, token: makeCoachToken(row.coach_id), coach: { id: row.coach_id, name: row.name, grades: row.grades || [] } });
   } catch (err) {
     console.error('Coach login error:', err);
     res.status(500).json({ ok: false, error: 'Could not log in. Please try again.' });
@@ -35,17 +35,21 @@ router.post('/coach/login', loginLimiter, async (req, res) => {
 // Who am I? (the page calls this after a refresh, for coaches)
 router.get('/coach/me', requireStaff, (req, res) => {
   if (!req.coach) return res.json({ role: 'admin' });
-  res.json({ role: 'coach', id: req.coach.id, name: req.coach.name });
+  res.json({ role: 'coach', id: req.coach.id, name: req.coach.name, grades: req.coach.grades || [] });
 });
 
 // The only player info coaches get: no parent contact details, no money.
 router.get('/coach/players', requireStaff, async (req, res) => {
   try {
     const grade = req.query.grade ? String(req.query.grade) : null;
+    const mine = req.coach ? (req.coach.grades || []) : null; // a coach only sees the grades they take care of
+    if (mine && grade && !mine.includes(grade)) return res.json([]);
+    const params = []; const where = ['archived_at IS NULL'];
+    if (grade) { params.push(grade); where.push('grade = $' + params.length); }
+    if (mine) { params.push(mine); where.push('grade = ANY($' + params.length + ')'); }
     const r = await pool.query(
       `SELECT id, player_name, grade, dob, session_type, rch, sultans FROM players
-        WHERE archived_at IS NULL ${grade ? 'AND grade = $1' : ''} ORDER BY player_name`,
-      grade ? [grade] : []);
+        WHERE ${where.join(' AND ')} ORDER BY player_name`, params);
     res.json(r.rows.map((p) => ({ ...p, age_group: ageGroupLabel(p.dob) })));
   } catch (err) {
     console.error('Coach players error:', err);

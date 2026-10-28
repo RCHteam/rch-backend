@@ -4,7 +4,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
-const { ageNumber, ageGroupLabel } = require('./ageGroups');
+const { ageNumber, ageGroupLabel, seasonStartYear } = require('./ageGroups');
 
 const router = express.Router();
 
@@ -264,4 +264,117 @@ router.get('/admin/league-teams/:id/pdf', requireAdmin, async (req, res) => {
   }
 });
 
+
+// ---- UTeams: automatic teams from the whole RCH roster, by date of birth -----------------------
+// U-age here is by BIRTH YEAR (season end year - birth year). Early (E) = born Jan-Jul, Late (L) = born Aug-Dec.
+//   U4-U5 | U6-U7L | U7E - U8L | U8E - U9L | U9E - U10L | U10E - U11L | U11E - U12
+// If a team's usual late half is empty, the early kids play with the late side of their own year instead.
+const UTEAM_DEFS = [
+  { key: 'u4-u5',    name: 'U4-U5' },
+  { key: 'u6-u7l',   name: 'U6-U7L' },
+  { key: 'u7e-u8l',  name: 'U7E - U8L' },
+  { key: 'u8e-u9l',  name: 'U8E - U9L' },
+  { key: 'u9e-u10l', name: 'U9E - U10L' },
+  { key: 'u10e-u11l', name: 'U10E - U11L' },
+  { key: 'u11e-u12', name: 'U11E - U12' },
+];
+const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function uteamRanges(se) { // se = season end year
+  return [
+    'Born ' + (se - 5) + ' or later',
+    'Aug ' + (se - 7) + ' - Dec ' + (se - 6),
+    'Aug ' + (se - 8) + ' - Jul ' + (se - 7),
+    'Aug ' + (se - 9) + ' - Jul ' + (se - 8),
+    'Aug ' + (se - 10) + ' - Jul ' + (se - 9),
+    'Aug ' + (se - 11) + ' - Jul ' + (se - 10),
+    'Jul ' + (se - 11) + ' or earlier',
+  ];
+}
+
+// Pure function (also used by tests): rows need { dob: 'YYYY-MM-DD' }. Returns { teams, noDob }.
+function buildUTeams(rows, now) {
+  const se = seasonStartYear(now) + 1;
+  const ranges = uteamRanges(se);
+  const teams = UTEAM_DEFS.map((d, i) => ({ key: d.key, name: d.name, range: ranges[i], players: [] }));
+  const noDob = [];
+  // Sort everyone into halves: half[n] = { E: [], L: [] } for n = 7..11; others go straight to a team.
+  const half = {};
+  for (let n = 7; n <= 11; n++) half[n] = { E: [], L: [] };
+  const young = [], six = [], old = [];
+  rows.forEach((r) => {
+    const p = String(r.dob || '').slice(0, 10).split('-');
+    const y = Number(p[0]), m = Number(p[1]);
+    if (p.length !== 3 || !y || !m) { noDob.push(r); return; }
+    const n = se - y;
+    const side = m >= 8 ? 'L' : 'E';
+    const item = Object.assign({}, r, { u_label: 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? side : '') });
+    if (n <= 5) young.push(item);
+    else if (n === 6) six.push(item);
+    else if (n >= 12) old.push(item);
+    else half[n][side].push(item);
+  });
+  // team index: 0 U4-U5, 1 U6-U7L, 2 U7E-U8L, 3 U8E-U9L, 4 U9E-U10L, 5 U10E-U11L, 6 U11E-U12
+  young.forEach((x) => teams[0].players.push(x));
+  six.forEach((x) => teams[1].players.push(x));
+  old.forEach((x) => teams[6].players.push(x));
+  const lateTeam = (n) => (n === 7 ? 1 : n - 6);          // team that holds late(n)
+  for (let n = 7; n <= 11; n++) {
+    const early = half[n].E, late = half[n].L;
+    const partnerLate = n === 11 ? old : half[n + 1].L;    // the usual partner of early(n)
+    const own = n - 5;                                      // team U(n)E - U(n+1)L
+    late.forEach((x) => { if (n >= 8) teams[lateTeam(n)].players.push(x); else teams[1].players.push(x); });
+    const moves = early.length && !partnerLate.length && late.length;
+    early.forEach((x) => {
+      if (moves) { teams[lateTeam(n)].players.push(Object.assign(x, { moved: true })); }
+      else teams[own].players.push(x);
+    });
+  }
+  // late(n) for n>=8 lives in team lateTeam(n); (n=7 handled above)
+  teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
+  return { teams, noDob, season: (se - 1) + '-' + String(se).slice(2) };
+}
+
+async function loadRchRoster() {
+  const r = await pool.query(
+    `SELECT id, player_name, to_char(dob, 'YYYY-MM-DD') AS dob, grade, parent_name, parent_phone, parent_email, shirt_size, rch, sultans
+     FROM players WHERE archived_at IS NULL ORDER BY player_name`);
+  return r.rows;
+}
+
+router.get('/admin/uteams', requireAdmin, async (req, res) => {
+  try {
+    const out = buildUTeams(await loadRchRoster());
+    res.json({
+      season: out.season,
+      teams: out.teams.map((t) => ({ key: t.key, name: t.name, range: t.range, players: t.players.map((p) => ({
+        id: p.id, player_name: p.player_name, dob: p.dob, grade: p.grade, parent_name: p.parent_name,
+        parent_phone: p.parent_phone, u_label: p.u_label, moved: !!p.moved, sultans: !!p.sultans })) })),
+      noDob: out.noDob.map((p) => ({ id: p.id, player_name: p.player_name, grade: p.grade })),
+    });
+  } catch (err) {
+    console.error('UTeams error:', err);
+    res.status(500).json({ error: 'Could not build the UTeams.' });
+  }
+});
+
+router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
+  try {
+    const out = buildUTeams(await loadRchRoster());
+    const t = out.teams.find((x) => x.key === req.params.key);
+    if (!t) return res.status(404).json({ error: 'Team not found.' });
+    const pdf = await buildTeamPdf({
+      name: t.name + ' (UTeam)', age_label: t.range, league_type: 'recreational', description: '',
+      season_start: null, season_end: null,
+      players: t.players.map((p) => ({ ...p, age_group: ageGroupLabel(p.dob) })),
+    });
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="UTeam_' + t.key + '.pdf"' });
+    res.send(pdf);
+  } catch (err) {
+    console.error('UTeam PDF error:', err);
+    res.status(500).json({ error: 'Could not build the PDF.' });
+  }
+});
+
 module.exports = router;
+module.exports.buildUTeams = buildUTeams;
