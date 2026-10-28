@@ -335,6 +335,24 @@ function buildUTeams(rows, now) {
   return { teams, noDob, season: (se - 1) + '-' + String(se).slice(2) };
 }
 
+
+// League-only players have no birth date, only the U they were added to, so they
+// go to the team that holds that U (early side of the U for the shared teams).
+const GUEST_TEAM = { 'u5-': 0, u6: 1, u7: 2, u8: 3, u9: 4, u10: 5, u11: 6, u12: 6 };
+async function withGuests(out) {
+  try {
+    const g = await pool.query('SELECT id, name, age_key FROM league_guests ORDER BY lower(name)');
+    g.rows.forEach((x) => {
+      const i = GUEST_TEAM[x.age_key];
+      if (i == null || !out.teams[i]) return;
+      const lab = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase();
+      out.teams[i].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '', u_label: lab, league_only: true });
+    });
+    out.teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
+  } catch (err) { console.error('UTeams guests error:', err); }
+  return out;
+}
+
 async function loadRchRoster() {
   const r = await pool.query(
     `SELECT id, player_name, to_char(dob, 'YYYY-MM-DD') AS dob, grade, parent_name, parent_phone, parent_email, shirt_size, rch, sultans
@@ -344,12 +362,12 @@ async function loadRchRoster() {
 
 router.get('/admin/uteams', requireAdmin, async (req, res) => {
   try {
-    const out = buildUTeams(await loadRchRoster());
+    const out = await withGuests(buildUTeams(await loadRchRoster()));
     res.json({
       season: out.season,
       teams: out.teams.map((t) => ({ key: t.key, name: t.name, range: t.range, players: t.players.map((p) => ({
         id: p.id, player_name: p.player_name, dob: p.dob, grade: p.grade, parent_name: p.parent_name,
-        parent_phone: p.parent_phone, u_label: p.u_label, moved: !!p.moved, sultans: !!p.sultans })) })),
+        parent_phone: p.parent_phone, u_label: p.u_label, moved: !!p.moved, sultans: !!p.sultans, league_only: !!p.league_only })) })),
       noDob: out.noDob.map((p) => ({ id: p.id, player_name: p.player_name, grade: p.grade })),
     });
   } catch (err) {
@@ -360,13 +378,13 @@ router.get('/admin/uteams', requireAdmin, async (req, res) => {
 
 router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
   try {
-    const out = buildUTeams(await loadRchRoster());
+    const out = await withGuests(buildUTeams(await loadRchRoster()));
     const t = out.teams.find((x) => x.key === req.params.key);
     if (!t) return res.status(404).json({ error: 'Team not found.' });
     const pdf = await buildTeamPdf({
       name: t.name + ' (UTeam)', age_label: t.range, league_type: 'recreational', description: '',
       season_start: null, season_end: null,
-      players: t.players.map((p) => ({ ...p, age_group: ageGroupLabel(p.dob) })),
+      players: t.players.map((p) => ({ ...p, age_group: p.league_only ? p.u_label : ageGroupLabel(p.dob) })),
     });
     res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="UTeam_' + t.key + '.pdf"' });
     res.send(pdf);

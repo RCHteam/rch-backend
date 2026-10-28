@@ -5413,7 +5413,7 @@ module.exports = `<!doctype html>
           '<div class="lg-meta">' + escapeHtml(t.range) + '  •  ' + t.players.length + ' players</div>';
         if (!t.players.length) html += '<div class="lg-players"><span class="sul-muted">No players.</span></div>';
         else html += '<div class="lg-players">' + t.players.map(function(p){
-          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.moved ? ' <span class="ut-moved" title="Plays with the late side of his own year because the usual late side is empty">*</span>' : '') + '</span><span class="ut-lab">' + escapeHtml(p.u_label) + '</span></div>';
+          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + (p.moved ? ' <span class="ut-moved" title="Plays with the late side of his own year because the usual late side is empty">*</span>' : '') + '</span><span class="ut-lab">' + escapeHtml(p.u_label) + '</span></div>';
         }).join('') + '</div>';
         html += '<div class="lg-btns"><button type="button" class="lg-pdf ut-pdf" data-key="' + t.key + '">Download PDF</button></div></div>';
       });
