@@ -19,13 +19,22 @@ function ageNumber(dob, now) {
     if (p.length !== 3 || !Number(p[0])) return null;
     y = Number(p[0]); m = Number(p[1]);
   }
-  // Same rule as UTeams: season end year minus birth year (so U8 holds both U8E and U8L).
-  return (seasonStartYear(now) + 1) - y;
+  return seasonStartYear(now) - (m >= 8 ? y : y - 1);
 }
 
 function ageGroupKey(dob, now) {
   const n = ageNumber(dob, now);
   if (n == null) return 'nodob';
+  if (n <= 5) return 'u5-';
+  if (n >= 12) return 'u12';
+  return 'u' + n;
+}
+
+// Sultans / UTeams grouping: season end year minus birth year (U8 holds both U8E and U8L).
+function birthYearGroupKey(dob, now) {
+  const p = String(dob instanceof Date ? dob.toISOString() : dob || '').slice(0, 10).split('-');
+  if (p.length !== 3 || !Number(p[0])) return 'nodob';
+  const n = (seasonStartYear(now) + 1) - Number(p[0]);
   if (n <= 5) return 'u5-';
   if (n >= 12) return 'u12';
   return 'u' + n;
@@ -44,4 +53,4 @@ function keyLabel(key) {
   return key.toUpperCase();
 }
 
-module.exports = { AGE_KEYS, seasonStartYear, ageNumber, ageGroupKey, ageGroupLabel, keyLabel };
+module.exports = { AGE_KEYS, seasonStartYear, ageNumber, ageGroupKey, birthYearGroupKey, ageGroupLabel, keyLabel };

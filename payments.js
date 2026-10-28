@@ -578,7 +578,7 @@ router.post('/admin/payment-links/resume', requireAdmin, async (req, res) => {
  *    everyone else the moment the first family paid.
  * ------------------------------------------------------------------------ */
 
-const { AGE_KEYS, ageGroupKey } = require('./ageGroups');
+const { AGE_KEYS, ageGroupKey, birthYearGroupKey } = require('./ageGroups');
 const AUDIENCE_GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd-grade', '4th-grade', '5th-grade', '6th-grade'];
 
 // Resolves a "Send Link" audience (scope + optional grade/playerId) into the
@@ -614,7 +614,7 @@ async function resolveOneTimeRecipients({ scope, grade, playerId }) {
     if (scope === 'rch_age') conditions.push('rch = true');
     if (scope === 'sultans_age') conditions.push('sultans = true');
     const ar = await pool.query(`SELECT * FROM players WHERE ${conditions.join(' AND ')} ORDER BY grade, player_name`);
-    return ar.rows.filter((p) => ageGroupKey(p.dob) === grade);
+    return ar.rows.filter((p) => (scope === 'sultans_age' ? birthYearGroupKey(p.dob) : ageGroupKey(p.dob)) === grade);
   } else {
     throw new Error('Please choose who to send this to.');
   }

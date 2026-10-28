@@ -3157,14 +3157,22 @@ module.exports = `<!doctype html>
     const p = dobToIso(dob).split('-');
     if (p.length !== 3 || !Number(p[0])) return null;
     const y = Number(p[0]), m = Number(p[1]);
-    return (seasonStartYear() + 1) - y;
-  }
-  function schoolAgeNumber(dob){
-    const p = dobToIso(dob).split('-');
-    if (p.length !== 3 || !Number(p[0])) return null;
-    const y = Number(p[0]), m = Number(p[1]);
     return seasonStartYear() - (m >= 8 ? y : y - 1);
   }
+  // Sultans grouping (same as UTeams): season end year minus birth year, so U8 holds U8E and U8L.
+  function birthUNumber(dob){
+    const p = dobToIso(dob).split('-');
+    if (p.length !== 3 || !Number(p[0])) return null;
+    return (seasonStartYear() + 1) - Number(p[0]);
+  }
+  function sulGroupKey(dob){
+    const n = birthUNumber(dob);
+    if (n == null) return 'nodob';
+    if (n <= 5) return 'u5-';
+    if (n >= 12) return 'u12';
+    return 'u' + n;
+  }
+  function schoolAgeNumber(dob){ return ageNumber(dob); }
   function ageGroupLabel(dob){ const n = ageNumber(dob); return n == null ? '—' : (n <= 5 ? 'U4/U5' : 'U' + Math.min(n, 12)); }
   // U with Early/Late side, same rule as Create UTeams (season end year minus birth year; Aug-Dec = L, Jan-Jul = E).
   function uHalfLabel(dob){
@@ -3341,7 +3349,7 @@ module.exports = `<!doctype html>
     if (P === 'sroster') rows = rows.filter(function(r){ return r.sultans; });
     const everyone = rows;
     // The roster is divided by age group (from date of birth); school grade is still kept on every player.
-    if (!filtering) rows = rows.filter(function(r){ return ageGroupKey(r.dob) === grade; });
+    if (!filtering) rows = rows.filter(function(r){ return (P === 'sroster' ? sulGroupKey(r.dob) : ageGroupKey(r.dob)) === grade; });
     if (filtering) {
       rows = rows.filter(function(r){
         if (q) {
@@ -5297,7 +5305,7 @@ module.exports = `<!doctype html>
   })();
 
   function lgInRange(dob){
-    const n = ageNumber(dob);
+    const n = birthUNumber(dob);
     if (n == null) return false;
     const from = Number(document.getElementById('lgAgeFrom').value), to = Number(document.getElementById('lgAgeTo').value);
     if (n <= 5) return from <= 5;
@@ -5328,7 +5336,7 @@ module.exports = `<!doctype html>
     const grp = document.getElementById('lgGroup').value;
     let list = lgSultansPlayers.filter(function(r){
       if (chosenIds[r.id]) return false;
-      if (grp !== 'all' && ageGroupKey(r.dob) !== grp) return false;
+      if (grp !== 'all' && sulGroupKey(r.dob) !== grp) return false;
       if (!q) return true;
       return [r.player_name, r.parent_name].join(' ').toLowerCase().indexOf(q) !== -1;
     });
@@ -5337,7 +5345,7 @@ module.exports = `<!doctype html>
     if (!list.length) { el.innerHTML = '<div class="lg-row" style="color:#888;">' + (lgSultansPlayers.length ? 'No other players match.' : 'The Sultans roster is empty.') + '</div>'; return; }
     let html = '';
     AGE_KEYS.forEach(function(k){
-      const g = list.filter(function(r){ return ageGroupKey(r.dob) === k; });
+      const g = list.filter(function(r){ return sulGroupKey(r.dob) === k; });
       if (!g.length) return;
       html += '<div class="lg-cat">' + AGE_KEY_LABELS[k] + ' (' + g.length + ')</div>';
       g.forEach(function(r){
