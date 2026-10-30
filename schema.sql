@@ -573,3 +573,17 @@ CREATE TABLE IF NOT EXISTS league_guests (
 );
 ALTER TABLE league_guests ADD COLUMN IF NOT EXISTS age_key TEXT;
 ALTER TABLE league_guests ADD COLUMN IF NOT EXISTS half TEXT;
+
+-- Kit fee tracking (Finances > Kit Fees).
+CREATE TABLE IF NOT EXISTS kit_fees (
+  id           SERIAL PRIMARY KEY,
+  player_name  TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL DEFAULT 0,
+  charged_at   TIMESTAMPTZ,
+  paid_at      TIMESTAMPTZ,
+  ordered      BOOLEAN NOT NULL DEFAULT false,
+  ordered_at   TIMESTAMPTZ,
+  source       TEXT NOT NULL DEFAULT 'manual',
+  source_id    INTEGER,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);

@@ -763,6 +763,22 @@ module.exports = `<!doctype html>
       </div>
     </details>
 
+    <details class="panel" open>
+      <summary><span class="panel-title">Kit Fees</span><span class="panel-hint">Who was charged, who paid, kit ordered</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
+      <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
+        <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
+        <input type="number" id="kitAmount" min="0" step="0.01" placeholder="Amount ($)" style="width:130px; padding:10px 12px; font:inherit;">
+        <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600;"><input type="checkbox" id="kitPaidNow" style="width:auto; margin:0;"> Already paid</label>
+        <button type="button" class="btn-add" id="kitAddBtn">+ Add</button>
+        <span id="kitErr" style="color:#b5482f; font-size:0.85rem;"></span>
+      </div>
+      <div id="kitTableWrap"></div>
+      </div>
+    </details>
+
     <details class="panel">
       <summary><span class="panel-title">Reset Payment Status</span><span class="panel-hint">Start a fresh billing month</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
@@ -5592,11 +5608,59 @@ module.exports = `<!doctype html>
   // the revenue table can draw, so that single dependency runs second. The
   // Finances-only panels (proration mode, reset info, one-time payments) wait
   // until you actually open the Finances tab.
+  // ---- Kit Fees ----
+  async function loadKitFees(){
+    const wrap = document.getElementById('kitTableWrap');
+    try {
+      const rows = await api('/api/admin/kit-fees');
+      if (!Array.isArray(rows)) throw new Error('bad');
+      const paid = rows.filter(function(r){ return r.paid_at; }).length;
+      const toOrder = rows.filter(function(r){ return !r.ordered; }).length;
+      document.getElementById('kitSummary').innerHTML = '<b>' + rows.length + '</b> charged &middot; <b>' + paid + '</b> paid &middot; <b>' + toOrder + '</b> kit' + (toOrder === 1 ? '' : 's') + ' not ordered yet';
+      if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
+      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Amount</th><th>Paid by parent</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
+        const paidCell = r.paid_at
+          ? '<span style="color:#2e7d32; font-weight:700;">Paid</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.paid_at)) + '</span>'
+          : '<span style="color:#b5482f; font-weight:700;">Not paid</span>' + (r.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + r.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
+        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td><td>' + money(r.amount_cents) + '</td><td>' + paidCell + '</td>' +
+          '<td><label style="display:flex; align-items:center; gap:6px; margin:0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + r.id + '"' + (r.ordered ? ' checked' : '') + '>' + (r.ordered ? '<span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.ordered_at)) + '</span>' : '') + '</label></td>' +
+          '<td>' + (r.source === 'manual' ? '<button type="button" class="btn-delete-guest" data-kdel="' + r.id + '">Delete</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    } catch (e) { wrap.innerHTML = '<div class="empty">Could not load kit fees. Please try again.</div>'; }
+  }
+  document.getElementById('kitAddBtn').addEventListener('click', async function(){
+    const err = document.getElementById('kitErr');
+    err.textContent = '';
+    const name = document.getElementById('kitName').value.trim();
+    const amt = parseFloat(document.getElementById('kitAmount').value);
+    if (!name) { err.textContent = "Please enter the player's name."; return; }
+    if (!(amt >= 0)) { err.textContent = 'Please enter the amount.'; return; }
+    try {
+      const r = await api('/api/admin/kit-fees', { method: 'POST', body: JSON.stringify({ playerName: name, amountCents: Math.round(amt * 100), paid: document.getElementById('kitPaidNow').checked }) });
+      if (r.error) { err.textContent = r.error; return; }
+      document.getElementById('kitName').value = ''; document.getElementById('kitAmount').value = ''; document.getElementById('kitPaidNow').checked = false;
+      await loadKitFees();
+    } catch (e) { err.textContent = 'Could not add. Please try again.'; }
+  });
+  document.getElementById('kitTableWrap').addEventListener('change', async function(e){
+    const c = e.target.closest('input[data-kord]');
+    if (!c) return;
+    try { await api('/api/admin/kit-fees/' + c.getAttribute('data-kord'), { method: 'PUT', body: JSON.stringify({ ordered: c.checked }) }); await loadKitFees(); }
+    catch (x) { c.checked = !c.checked; alert('Could not save. Please try again.'); }
+  });
+  document.getElementById('kitTableWrap').addEventListener('click', async function(e){
+    const d = e.target.closest('button[data-kdel]'), p = e.target.closest('button[data-kpaid]');
+    try {
+      if (d) { if (!confirm('Delete this entry?')) return; const r = await api('/api/admin/kit-fees/' + d.getAttribute('data-kdel'), { method: 'DELETE' }); if (r.error) alert(r.error); await loadKitFees(); }
+      if (p) { await api('/api/admin/kit-fees/' + p.getAttribute('data-kpaid'), { method: 'PUT', body: JSON.stringify({ paid: true }) }); await loadKitFees(); }
+    } catch (x) { alert('Could not save. Please try again.'); }
+  });
+
   let financesLoaded = false;
   async function loadFinancesExtras(){
     if (financesLoaded) return;
     financesLoaded = true;
-    await Promise.all([loadProrationMode(), loadResetInfo(), loadOneTimePayments()]);
+    await Promise.all([loadProrationMode(), loadResetInfo(), loadOneTimePayments(), loadKitFees()]);
   }
 
   async function loadAll(){
