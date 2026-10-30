@@ -766,7 +766,7 @@ module.exports = `<!doctype html>
     <details class="panel" open>
       <summary><span class="panel-title">Kit Fees</span><span class="panel-hint">Who was charged, who paid, kit ordered</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
-      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). <b>Kit fee</b> shows separately whether the kit part was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
       <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
         <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
@@ -5618,13 +5618,14 @@ module.exports = `<!doctype html>
       const toOrder = rows.filter(function(r){ return !r.ordered; }).length;
       document.getElementById('kitSummary').innerHTML = '<b>' + rows.length + '</b> charged &middot; <b>' + paid + '</b> paid &middot; <b>' + toOrder + '</b> kit' + (toOrder === 1 ? '' : 's') + ' not ordered yet';
       if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
-      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Amount</th><th>Paid by parent</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
+      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Total paid</th><th>Kit fee</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
         const paidCell = r.paid_at
-          ? '<span style="color:#2e7d32; font-weight:700;">Paid</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.paid_at)) + '</span>'
-          : '<span style="color:#b5482f; font-weight:700;">Not paid</span>' + (r.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + r.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
-        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td><td>' + money(r.amount_cents) + '</td><td>' + paidCell + '</td>' +
+          ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(r.amount_cents) + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.paid_at)) + '</span>'
+          : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(r.amount_cents) + ')</span>' + (r.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + r.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
+        const totalCell = r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>';
+        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td><td>' + totalCell + '</td><td>' + paidCell + '</td>' +
           '<td><label style="display:flex; align-items:center; gap:6px; margin:0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + r.id + '"' + (r.ordered ? ' checked' : '') + '>' + (r.ordered ? '<span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.ordered_at)) + '</span>' : '') + '</label></td>' +
-          '<td>' + (r.source === 'manual' ? '<button type="button" class="btn-delete-guest" data-kdel="' + r.id + '">Delete</button>' : '') + '</td></tr>';
+          '<td><button type="button" class="btn-delete-guest" data-kdel="' + r.id + '">Delete</button></td></tr>';
       }).join('') + '</tbody></table>';
     } catch (e) { wrap.innerHTML = '<div class="empty">Could not load kit fees. Please try again.</div>'; }
   }
