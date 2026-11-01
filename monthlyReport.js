@@ -306,25 +306,37 @@ function buildMonthlyReportPdf(data) {
 
       // --- Final Net Revenue ---
       section(doc, 'Final Net Revenue');
-      const rev = [];
-      GRADES.forEach((g) => {
-        const r = data.revenueByGrade.find((x) => x.grade === g);
-        if (r.total === 0 && r.totalOne === 0 && r.totalTwo === 0 && r.totalOnline === 0) return;
-        rev.push([r.label, money(r.total), '-' + money(r.fee), money(r.net)]);
-      });
-      if (rev.length) {
+      const used = GRADES.map((g) => data.revenueByGrade.find((x) => x.grade === g)).filter((r) => r && (r.total !== 0 || r.revOne || r.revTwo || r.revOnline || r.disc || r.prorationCents));
+      const T = data.revenueTotals;
+      const planTotal = T.revOne + T.revTwo + T.revOnline;
+      if (used.length) {
+        doc.fillColor(C.green).font('Helvetica-Bold').fontSize(9).text('Revenue by plan, minus discounts, minus late-joiner proration (partial first month)', MX + 8, doc.y, { width: CW - 16 });
+        doc.moveDown(0.2);
+        const a = used.map((r) => [r.label, money(r.revOne), money(r.revTwo), money(r.revOnline), '-' + money(r.disc), '-' + money(r.prorationCents), money(r.total)]);
+        a.push(['Total', money(T.revOne), money(T.revTwo), money(T.revOnline), '-' + money(T.disc), '-' + money(T.prorationCents), money(T.total)]);
+        dataTable(doc, [
+          { label: 'Grade', w: 100 }, { label: 'One', w: 72, align: 'right' }, { label: 'Two', w: 76, align: 'right' }, { label: 'Online', w: 66, align: 'right' },
+          { label: 'Discounts', w: 74, align: 'right' }, { label: 'Late joiners', w: 74, align: 'right' }, { label: 'Gross', w: 70, align: 'right' },
+        ], a, true);
+        doc.moveDown(0.6);
+        doc.fillColor(C.green).font('Helvetica-Bold').fontSize(9).text('Stripe fees and net, by grade', MX + 8, doc.y, { width: CW - 16 });
+        doc.moveDown(0.2);
+        const b = used.map((r) => [r.label, money(r.total), '-' + money(r.fee), money(r.net)]);
+        b.push(['Total', money(T.total), '-' + money(T.fee), money(T.net)]);
         dataTable(doc, [
           { label: 'Grade', w: 172 }, { label: 'Gross', w: 120, align: 'right' }, { label: 'Stripe fees', w: 120, align: 'right' }, { label: 'Net', w: 120, align: 'right' },
-        ], rev, false);
+        ], b, true);
       }
-      doc.moveDown(0.4);
-      const tot = [];
-      if (data.revenueTotals.prorationCents > 0) tot.push({ label: 'Late-joiner proration (' + data.revenueTotals.lateJoiners + ' players, partial first month)', value: '-' + money(data.revenueTotals.prorationCents) });
-      tot.push({ label: 'Total revenue (gross)', value: money(data.revenueTotals.total) });
-      tot.push({ label: 'Est. Stripe fees', value: '-' + money(data.revenueTotals.fee) });
-      tot.push({ label: 'Business charges this month', value: '-' + money(data.businessChargesCents) });
-      tot.push({ label: 'FINAL NET REVENUE', value: money(data.finalNetRevenueCents), bold: true });
-      kvRows(doc, tot);
+      doc.moveDown(0.5);
+      kvRows(doc, [
+        { label: 'Plans (everyone on the roster at full price)', value: money(planTotal) },
+        { label: 'Discounts', value: '-' + money(T.disc) },
+        { label: 'Late-joiner proration (' + (T.lateJoiners || 0) + ' players, partial first month)', value: '-' + money(T.prorationCents) },
+        { label: 'Gross revenue', value: money(T.total), bold: true },
+        { label: 'Est. Stripe fees', value: '-' + money(T.fee) },
+        { label: 'Business charges this month', value: '-' + money(data.businessChargesCents) },
+        { label: 'FINAL NET REVENUE', value: money(data.finalNetRevenueCents), bold: true },
+      ]);
 
       // --- First-month payments (prorated) ---
       section(doc, 'New Families - Prorated First Month & Kit Fees');

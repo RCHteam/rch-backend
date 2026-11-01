@@ -1134,9 +1134,11 @@ module.exports = `<!doctype html>
       <summary><span class="panel-title">Monthly Report</span><span class="panel-hint">PDF report, emailed on the 1st</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">A full PDF dashboard report — roster counts, Season Overview, Final Net Revenue, one-time payments, business charges, and current coaches — is emailed automatically on the 1st of each month for the month that just ended. Use the buttons below to preview the current month any time, or to resend/send early.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <a class="btn-export" href="#" id="downloadMonthlyReportLink">Download This Month's PDF</a>
-        <button type="button" class="btn-add" id="sendMonthlyReportBtn">Email Me This Month's Report Now</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px;">
+        <div><label for="mrMonth">Month</label><select id="mrMonth"></select></div>
+        <div><label for="mrYear">Year</label><select id="mrYear"></select></div>
+        <a class="btn-export" href="#" id="downloadMonthlyReportLink">Download PDF</a>
+        <button type="button" class="btn-add" id="sendMonthlyReportBtn">Email Me This Report Now</button>
       </div>
       <span class="pricing-saved" id="monthlyReportStatus"></span>
 
@@ -2792,7 +2794,7 @@ module.exports = `<!doctype html>
 
   document.getElementById('downloadMonthlyReportLink').addEventListener('click', (e) => {
     e.preventDefault();
-    window.open(API_BASE + '/api/admin/monthly-report/current/pdf?token=' + encodeURIComponent(getToken()));
+    window.open(API_BASE + '/api/admin/monthly-report/' + monthValue('mrMonth', 'mrYear') + '-01/pdf?token=' + encodeURIComponent(getToken()));
   });
 
   document.getElementById('sendMonthlyReportBtn').addEventListener('click', async () => {
@@ -2801,7 +2803,7 @@ module.exports = `<!doctype html>
     btn.disabled = true;
     status.textContent = 'Generating and sending…';
     try {
-      const result = await api('/api/admin/monthly-report/send', { method: 'POST', body: JSON.stringify({}) });
+      const result = await api('/api/admin/monthly-report/send', { method: 'POST', body: JSON.stringify({ month: monthValue('mrMonth', 'mrYear') + '-01' }) });
       if (result.error) {
         status.textContent = '';
         alert(result.error);
@@ -4188,6 +4190,7 @@ module.exports = `<!doctype html>
   fillGradeSelects();
   fillMonthYear('repMonth', 'repYear');
   fillMonthYear('attMonth', 'attYear');
+  fillMonthYear('mrMonth', 'mrYear');
   // Months/years we are not in show grey (still viewable); the current one stays normal.
   function attGreyMonths(){
     var now = new Date(), cy = now.getFullYear(), cm = now.getMonth() + 1;
