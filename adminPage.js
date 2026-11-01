@@ -268,7 +268,9 @@ module.exports = `<!doctype html>
   .ut-right{ display:flex; align-items:center; gap:8px; }
   .ut-mv{ background:transparent; border:1px solid rgba(246,242,231,0.25); color:var(--sg); border-radius:999px; padding:1px 9px; font-size:0.72rem; cursor:pointer; font-family:inherit; }
   .ut-mv:hover{ border-color:var(--sg); background:rgba(246,242,231,0.08); }
-  .ut-upbadge{ background:#1f6f43; color:#fff; border-radius:999px; padding:1px 9px; font-size:0.72rem; font-weight:700; }
+  .ut-upnote{ color:#ffd24a; font-size:0.72rem; font-weight:600; }
+  .ut-undo{ background:none; border:none; padding:0; color:var(--sdim); font-size:0.72rem; text-decoration:underline; cursor:pointer; font-family:inherit; }
+  .ut-undo:hover{ color:var(--sch); }
   .lg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding-bottom:14px; }
   .lg-card{ background:var(--sbg3); border:1px solid rgba(246,242,231,0.10); border-left:5px solid var(--sr); border-radius:8px; padding:16px 18px; }
   .lg-card h3{ margin:0 0 2px; font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.02em; color:var(--sch); }
@@ -5490,7 +5492,7 @@ module.exports = `<!doctype html>
         else html += '<div class="lg-players">' + t.players.map(function(p){
           const kind = p.league_only ? 'g' : 'p', rid = String(p.id).replace(/^g/, '');
           const act = p.played_up
-            ? '<span class="ut-upbadge" title="A coach moved him up to this team">&uarr; plays up</span> <button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="0" title="Put him back in his own U">&larr; back</button>'
+            ? '<span class="ut-upnote" title="A coach moved him up to this team">&uarr; plays up</span><button type="button" class="ut-undo" data-kind="' + kind + '" data-id="' + rid + '" data-up="0" title="Put him back in his own U">undo</button>'
             : (p.can_up && nextName ? '<button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="1" title="Born Jan-Jul: can play up with ' + escapeHtml(nextName) + '">&uarr; ' + escapeHtml(nextName) + '</button>' : '');
           return '<div class="ut-row"><span' + (p.league_only ? ' class="guest-red"' : '') + '>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + '</span><span class="ut-right">' + act + '<span class="ut-lab">' + escapeHtml(p.u_label) + '</span></span></div>';
         }).join('') + '</div>';
@@ -5498,9 +5500,9 @@ module.exports = `<!doctype html>
       });
       html += '</div>';
       if (r.noDob && r.noDob.length) html += '<p class="sul-muted">No birth date, not placed: ' + r.noDob.map(function(p){ return escapeHtml(p.player_name); }).join(', ') + '</p>';
-      html += '<p class="sul-muted">Each team is one U (Aug 1 cutoff). E = born Jan-Jul, L = born Aug-Dec. A child born Jan-Jul (E) can be moved up to the next U with the &uarr; button when a team is short. Press <b>&larr; back</b> to undo.</p>';
+      html += '<p class="sul-muted">Each team is one U (Aug 1 cutoff). E = born Jan-Jul, L = born Aug-Dec. A child born Jan-Jul (E) can be moved up to the next U with the &uarr; button when a team is short. Press <b>undo</b> next to a child to put him back.</p>';
       wrap.innerHTML = html;
-      wrap.querySelectorAll('.ut-mv').forEach(function(b){
+      wrap.querySelectorAll('.ut-mv, .ut-undo').forEach(function(b){
         b.addEventListener('click', async function(){
           b.disabled = true;
           try {

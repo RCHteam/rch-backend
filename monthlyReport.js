@@ -56,6 +56,7 @@ async function gatherMonthlyReportData(monthKey) {
     chargesRows,
     oneTimePayments,
     coaches,
+    linkPayments,
   ] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`),
     pool.query(`SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`),
@@ -81,6 +82,13 @@ async function gatherMonthlyReportData(monthKey) {
       [monthShort]
     ),
     pool.query('SELECT * FROM coaches ORDER BY name'),
+    pool.query(
+      `SELECT child_name, program_label, one_time_amount_cents, sultans_kit_cents, prorated_amount_cents, completed_at
+         FROM payment_links
+        WHERE status IN ('completed', 'canceled') AND completed_at IS NOT NULL AND to_char(completed_at AT TIME ZONE 'America/Chicago', 'YYYY-MM') = $1
+        ORDER BY completed_at`,
+      [monthShort]
+    ),
   ]);
 
   const joinCountsByGrade = Object.fromEntries(GRADES.map((g) => [g, 0]));
@@ -142,6 +150,9 @@ async function gatherMonthlyReportData(monthKey) {
     finalNetRevenueCents,
     oneTimePayments: oneTimePayments.rows,
     coaches: coaches.rows,
+    // What families actually paid at checkout this month (kit fee(s) + prorated first month).
+    linkPayments: linkPayments.rows,
+    lateJoiners: (proration.details || []).filter((d) => d.reduction > 0),
   };
 }
 
@@ -314,6 +325,34 @@ function buildMonthlyReportPdf(data) {
       tot.push({ label: 'Business charges this month', value: '-' + money(data.businessChargesCents) });
       tot.push({ label: 'FINAL NET REVENUE', value: money(data.finalNetRevenueCents), bold: true });
       kvRows(doc, tot);
+
+      // --- First-month payments (prorated) ---
+      section(doc, 'New Families - Prorated First Month & Kit Fees');
+      const lp = data.linkPayments || [];
+      if (!lp.length) {
+        doc.fillColor(C.muted).text('No first payments this month.', MX + 8, doc.y, { width: CW - 16 });
+        doc.fillColor(C.ink).moveDown(0.3);
+      } else {
+        const rows = lp.map((p) => {
+          const kit = p.one_time_amount_cents || 0;
+          const pr = p.prorated_amount_cents || 0;
+          const d = new Date(p.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Chicago' });
+          return [p.child_name, d, money(kit), money(pr), money(kit + pr)];
+        });
+        const kitTotal = lp.reduce((a, p) => a + (p.one_time_amount_cents || 0), 0);
+        const prTotal = lp.reduce((a, p) => a + (p.prorated_amount_cents || 0), 0);
+        rows.push(['Total', '', money(kitTotal), money(prTotal), money(kitTotal + prTotal)]);
+        dataTable(doc, [
+          { label: 'Child', w: 172 }, { label: 'Paid on', w: 80 }, { label: 'Kit fee(s)', w: 90, align: 'right' },
+          { label: 'Prorated month', w: 100, align: 'right' }, { label: 'Total', w: 90, align: 'right' },
+        ], rows, true);
+      }
+      if ((data.lateJoiners || []).length) {
+        doc.moveDown(0.4);
+        doc.fillColor(C.green).font('Helvetica-Bold').text('Late joiners counted at a partial month in the revenue above', MX + 8, doc.y, { width: CW - 16 });
+        doc.moveDown(0.2);
+        kvRows(doc, data.lateJoiners.map((d) => ({ label: d.name + ' (link sent on the ' + d.linkDay + ')', value: money(d.prorated) + ' of ' + money(d.full) })));
+      }
 
       // --- One-Time Payments ---
       section(doc, 'One-Time Payments Completed in ' + data.monthLabel);
