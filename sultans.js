@@ -38,6 +38,23 @@ router.put('/admin/players/:id/sultans', requireAdmin, async (req, res) => {
 
 // ---- Try outs ---------------------------------------------------------------
 
+// A regular-roster player (not on the Sultans roster) who now wants to join Sultans:
+// put him on the try outs list. Pass makes him a Sultans player; fail leaves him as he was.
+router.put('/admin/players/:id/send-to-tryouts', requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad player id.' });
+  try {
+    const cur = await pool.query('SELECT sultans, tryout_status FROM players WHERE id = $1 AND archived_at IS NULL', [id]);
+    if (!cur.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    if (cur.rows[0].sultans) return res.status(409).json({ error: 'This player is already on the Sultans roster.' });
+    const r = await pool.query(`UPDATE players SET tryout_status = 'tryout' WHERE id = $1 RETURNING *`, [id]);
+    res.json({ ok: true, entry: r.rows[0] });
+  } catch (err) {
+    console.error('Send to try outs error:', err);
+    res.status(500).json({ error: 'Could not send this player to try outs.' });
+  }
+});
+
 // Pass: the player moves into the Sultans roster. Fail: the player stays in RCH training only.
 router.put('/admin/players/:id/tryout', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);

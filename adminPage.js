@@ -264,6 +264,7 @@ module.exports = `<!doctype html>
   .ut-row{ display:flex; justify-content:space-between; gap:10px; padding:3px 0; border-bottom:1px solid rgba(246,242,231,0.07); font-size:0.88rem; }
   .ut-lab{ color:var(--sg); font-family:'Space Mono',monospace; font-size:0.72rem; }
   .ut-moved{ color:#ffd24a; font-weight:700; }
+  .guest-red{ color:#ff5a52 !important; font-weight:600; }
   .ut-right{ display:flex; align-items:center; gap:8px; }
   .ut-mv{ background:transparent; border:1px solid rgba(246,242,231,0.25); color:var(--sg); border-radius:999px; padding:1px 9px; font-size:0.72rem; cursor:pointer; font-family:inherit; }
   .ut-mv:hover{ border-color:var(--sg); background:rgba(246,242,231,0.08); }
@@ -712,8 +713,12 @@ module.exports = `<!doctype html>
         <input type="number" id="paymentTwoInput" min="0" step="0.01">
       </div>
       <div>
-        <label for="kitFeeInput">Kit Fee (one-time)</label>
+        <label for="kitFeeInput">Practice Kit Fee (one-time)</label>
         <input type="number" id="kitFeeInput" min="0" step="0.01">
+      </div>
+      <div>
+        <label for="sultansKitInput">Sultans FC Kit Fee (one-time)</label>
+        <input type="number" id="sultansKitInput" min="0" step="0.01">
       </div>
       <div>
         <label for="onlineCourseInput">Monthly — Online Course</label>
@@ -770,10 +775,11 @@ module.exports = `<!doctype html>
     <details class="panel" open>
       <summary><span class="panel-title">Kit Fees</span><span class="panel-hint">Who was charged, who paid, kit ordered</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
-      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). <b>Kit fee</b> shows separately whether the kit part was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). The <b>Practice Kit</b> and <b>Sultans Kit</b> columns show separately whether each kit was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
       <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
         <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
+        <select id="kitType" style="padding:10px 12px; font:inherit;"><option value="practice">Practice Kit</option><option value="sultans">Sultans Kit</option></select>
         <input type="number" id="kitAmount" min="0" step="0.01" placeholder="Amount ($)" style="width:130px; padding:10px 12px; font:inherit;">
         <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600;"><input type="checkbox" id="kitPaidNow" style="width:auto; margin:0;"> Already paid</label>
         <button type="button" class="btn-add" id="kitAddBtn">+ Add</button>
@@ -1615,10 +1621,12 @@ module.exports = `<!doctype html>
     </select>
     <label for="dollarDiscountInput">Or a dollar discount per month (overrides sibling %)</label>
     <input type="text" inputmode="decimal" id="dollarDiscountInput" placeholder="e.g. 10">
-    <div class="checkbox-row">
-      <input type="checkbox" id="includeKitFee">
-      <label for="includeKitFee" id="includeKitFeeLabel">Include kit fee</label>
-    </div>
+    <label for="kitChoice">Kit fee</label>
+    <select id="kitChoice">
+      <option value="none">No kit fee</option>
+      <option value="practice" id="kitOptPractice">Include Practice Kit fee</option>
+      <option value="both" id="kitOptBoth">Include Both Kit fees</option>
+    </select>
     <div class="modal-amounts" id="modalAmounts"></div>
     <p class="modal-error" id="paymentModalError"></p>
     <div class="modal-actions">
@@ -2240,8 +2248,10 @@ module.exports = `<!doctype html>
     const monthlyText = (m.dollars || m.sibPct)
       ? '<s>$' + (tier.monthly / 100).toFixed(2) + '</s> <b>$' + (discounted / 100).toFixed(2) + '/mo</b> (' + m.label + ')'
       : '$' + (tier.monthly / 100).toFixed(2) + '/mo';
-    const includeKit = document.getElementById('includeKitFee').checked;
-    const kitText = includeKit ? 'Kit fee (one-time): $' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + '<br>' : '';
+    const kc = document.getElementById('kitChoice').value;
+    const pk = PAYMENT_PRICING.kitFeeCents, sk = PAYMENT_PRICING.sultansKitFeeCents != null ? PAYMENT_PRICING.sultansKitFeeCents : 4000;
+    const kitText = kc === 'practice' ? 'Practice Kit fee (one-time): $' + (pk / 100).toFixed(2) + '<br>'
+      : (kc === 'both' ? 'Practice Kit fee (one-time): $' + (pk / 100).toFixed(2) + '<br>Sultans FC Kit fee (one-time): $' + (sk / 100).toFixed(2) + '<br>' : '');
     document.getElementById('modalAmounts').innerHTML =
       kitText + 'Full monthly rate: ' + monthlyText +
       '<br><span style="color:#888;">First charge is prorated automatically for the Tue/Thu practices left this month.</span>';
@@ -2266,10 +2276,12 @@ module.exports = `<!doctype html>
     }
     document.getElementById('seasonSelect').value = 'regular';
     document.getElementById('seasonEndInput').value = computeSeasonEndDate('regular');
-    document.getElementById('includeKitFee').checked = false;
+    document.getElementById('kitChoice').value = 'none';
     document.getElementById('dollarDiscountInput').value = '';
     document.getElementById('siblingDiscountSelect').value = (sibling === '15' || sibling === '20') ? sibling : '0';
-    document.getElementById('includeKitFeeLabel').textContent = 'Include kit fee ($' + (PAYMENT_PRICING.kitFeeCents / 100).toFixed(2) + ')';
+    const pkc = PAYMENT_PRICING.kitFeeCents, skc = PAYMENT_PRICING.sultansKitFeeCents != null ? PAYMENT_PRICING.sultansKitFeeCents : 4000;
+    document.getElementById('kitOptPractice').textContent = 'Include Practice Kit fee ($' + (pkc / 100).toFixed(2) + ')';
+    document.getElementById('kitOptBoth').textContent = 'Include Both Kit fees ($' + ((pkc + skc) / 100).toFixed(2) + ')';
     document.getElementById('paymentModalError').textContent = '';
     updateModalAmounts();
     document.getElementById('paymentModal').classList.remove('hidden');
@@ -2281,7 +2293,7 @@ module.exports = `<!doctype html>
   }
 
   document.getElementById('tierSelect').addEventListener('change', updateModalAmounts);
-  document.getElementById('includeKitFee').addEventListener('change', updateModalAmounts);
+  document.getElementById('kitChoice').addEventListener('change', updateModalAmounts);
   document.getElementById('siblingDiscountSelect').addEventListener('change', updateModalAmounts);
   document.getElementById('dollarDiscountInput').addEventListener('input', updateModalAmounts);
   document.getElementById('seasonSelect').addEventListener('change', (e) => {
@@ -2304,7 +2316,7 @@ module.exports = `<!doctype html>
     const mm = modalMonthly(tier);
     const monthlyAmount = mm.amount;
     const tierLabel = tier.label + ' — ' + SEASON_LABELS[seasonKey] + ((mm.dollars || mm.sibPct) ? ' (' + mm.label + ')' : '');
-    const includeKit = document.getElementById('includeKitFee').checked;
+    const kitChoiceVal = document.getElementById('kitChoice').value;
     const ctx = paymentModalCtx;
 
     const btn = document.getElementById('paymentModalSend');
@@ -2317,7 +2329,8 @@ module.exports = `<!doctype html>
           registrationType: ctx.registrationType,
           registrationId: ctx.id,
           seasonEndDate,
-          oneTimeAmount: includeKit ? PAYMENT_PRICING.kitFeeCents : 0,
+          oneTimeAmount: kitChoiceVal !== 'none' ? PAYMENT_PRICING.kitFeeCents : 0,
+          sultansKitAmount: kitChoiceVal === 'both' ? (PAYMENT_PRICING.sultansKitFeeCents != null ? PAYMENT_PRICING.sultansKitFeeCents : 4000) : 0,
           monthlyAmount,
           tierLabel,
         }),
@@ -3255,8 +3268,8 @@ module.exports = `<!doctype html>
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
               (sulView
-                ? '<button type="button" class="btn-sul-remove" data-id="' + r.id + '" data-label="' + label + '">Remove from Sultans Roster</button>'
-                : (!r.sultans ? '<button type="button" class="btn-sul-send" data-id="' + r.id + '" data-label="' + label + '">Send to Sultans Roster</button>' : '')) +
+                ? '<button type="button" class="btn-sul-kit" data-id="' + r.id + '" data-label="' + label + '">Send Kit Fee</button><button type="button" class="btn-sul-remove" data-id="' + r.id + '" data-label="' + label + '">Remove from Sultans Roster</button>'
+                : (!r.sultans && r.tryout_status !== 'tryout' ? '<button type="button" class="btn-sul-send" data-id="' + r.id + '" data-label="' + label + '">Send to Try Outs</button>' : '')) +
               (sulView ? '' : (r.agreement_signed_at
                 ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
                 : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
@@ -3447,10 +3460,24 @@ module.exports = `<!doctype html>
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
-          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/sultans', { method: 'PUT', body: JSON.stringify({ in: true }) });
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/send-to-tryouts', { method: 'PUT' });
           if (r.error) { alert(r.error); btn.disabled = false; return; }
-          await Promise.all([loadRoster(), loadSummary()]);
-        } catch (e) { alert('Could not send this player to the Sultans roster. Please try again.'); btn.disabled = false; }
+          alert((btn.getAttribute('data-label') || 'The player') + ' is on the Sultans try outs list.');
+          await Promise.all([loadRoster(), loadSummary(), loadTryouts()]);
+        } catch (e) { alert('Could not send this player to try outs. Please try again.'); btn.disabled = false; }
+      });
+    });
+    wrap.querySelectorAll('.btn-sul-kit').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const label = btn.getAttribute('data-label') || 'this player';
+        if (!confirm('Email the parent of ' + label + ' a one-time payment link for the Sultans FC Kit Fee?')) return;
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + '/sultans-kit-fee', { method: 'POST' });
+          if (r.error) { alert(r.error); btn.disabled = false; return; }
+          alert('Sultans FC Kit Fee ($' + (r.amountCents / 100).toFixed(2) + ') ' + (r.resent ? 'link sent again to ' : 'sent to ') + r.email + '.');
+          btn.disabled = false;
+        } catch (e) { alert('Could not send the kit fee. Please try again.'); btn.disabled = false; }
       });
     });
     wrap.querySelectorAll('.btn-sul-remove').forEach((btn) => {
@@ -3660,6 +3687,7 @@ module.exports = `<!doctype html>
     document.getElementById('paymentOneInput').value = (p.oneSessionMonthlyCents / 100).toFixed(2);
     document.getElementById('paymentTwoInput').value = (p.twoSessionMonthlyCents / 100).toFixed(2);
     document.getElementById('kitFeeInput').value = (p.kitFeeCents / 100).toFixed(2);
+    document.getElementById('sultansKitInput').value = ((p.sultansKitFeeCents != null ? p.sultansKitFeeCents : 4000) / 100).toFixed(2);
     document.getElementById('onlineCourseInput').value = (p.onlineCourseMonthlyCents / 100).toFixed(2);
   }
 
@@ -3667,13 +3695,14 @@ module.exports = `<!doctype html>
     const oneSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentOneInput').value || '0') * 100);
     const twoSessionMonthlyCents = Math.round(parseFloat(document.getElementById('paymentTwoInput').value || '0') * 100);
     const kitFeeCents = Math.round(parseFloat(document.getElementById('kitFeeInput').value || '0') * 100);
+    const sultansKitFeeCents = Math.round(parseFloat(document.getElementById('sultansKitInput').value || '0') * 100);
     const onlineCourseMonthlyCents = Math.round(parseFloat(document.getElementById('onlineCourseInput').value || '0') * 100);
     const btn = document.getElementById('savePaymentPricingBtn');
     btn.disabled = true;
     try {
       PAYMENT_PRICING = await api('/api/admin/payment-pricing', {
         method: 'POST',
-        body: JSON.stringify({ oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents }),
+        body: JSON.stringify({ oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents, sultansKitFeeCents }),
       });
       const savedMsg = document.getElementById('paymentPricingSaved');
       savedMsg.textContent = 'Saved.';
@@ -5269,7 +5298,7 @@ module.exports = `<!doctype html>
       tb = wrap.querySelector('tbody');
     }
     tb.insertAdjacentHTML('beforeend', list.map(function(g){
-      return '<tr><td>' + escapeHtml(g.name) + '</td><td>' + escapeHtml(guestLabel(g)) + '</td><td colspan="10" style="color:#999;">League only &mdash; not with us</td><td><button type="button" class="btn-delete-guest" data-gid="' + g.id + '">Delete</button></td></tr>';
+      return '<tr><td class="guest-red">' + escapeHtml(g.name) + '</td><td>' + escapeHtml(guestLabel(g)) + '</td><td colspan="10" style="color:#999;">League only &mdash; not with us</td><td><button type="button" class="btn-delete-guest" data-gid="' + g.id + '">Delete</button></td></tr>';
     }).join(''));
     const cnt = document.getElementById('srosterCount');
     cnt.textContent = cnt.textContent + ' + ' + list.length + ' league only';
@@ -5463,7 +5492,7 @@ module.exports = `<!doctype html>
           const act = p.played_up
             ? '<span class="ut-upbadge" title="A coach moved him up to this team">&uarr; plays up</span> <button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="0" title="Put him back in his own U">&larr; back</button>'
             : (p.can_up && nextName ? '<button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="1" title="Born Jan-Jul: can play up with ' + escapeHtml(nextName) + '">&uarr; ' + escapeHtml(nextName) + '</button>' : '');
-          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + '</span><span class="ut-right">' + act + '<span class="ut-lab">' + escapeHtml(p.u_label) + '</span></span></div>';
+          return '<div class="ut-row"><span' + (p.league_only ? ' class="guest-red"' : '') + '>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + '</span><span class="ut-right">' + act + '<span class="ut-lab">' + escapeHtml(p.u_label) + '</span></span></div>';
         }).join('') + '</div>';
         html += '<div class="lg-btns"><button type="button" class="lg-pdf ut-pdf" data-key="' + t.key + '">Download PDF</button></div></div>';
       });
@@ -5628,23 +5657,32 @@ module.exports = `<!doctype html>
   // Finances-only panels (proration mode, reset info, one-time payments) wait
   // until you actually open the Finances tab.
   // ---- Kit Fees ----
+  function kitCell(k){
+    if (!k) return '<span style="color:#999">—</span>';
+    return k.paid_at
+      ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(k.amount_cents) + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>'
+      : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span>' + (k.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + k.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
+  }
+  function kitOrderBox(k, label){
+    if (!k) return '';
+    return '<label style="display:flex; align-items:center; gap:6px; margin:2px 0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + k.id + '"' + (k.ordered ? ' checked' : '') + '><span style="font-size:0.82rem;">' + label + '</span>' + (k.ordered && k.ordered_at ? '<span style="color:#888; font-size:0.75rem;">' + escapeHtml(fmtDate(k.ordered_at)) + '</span>' : '') + '</label>';
+  }
   async function loadKitFees(){
     const wrap = document.getElementById('kitTableWrap');
     try {
       const rows = await api('/api/admin/kit-fees');
       if (!Array.isArray(rows)) throw new Error('bad');
-      const paid = rows.filter(function(r){ return r.paid_at; }).length;
-      const toOrder = rows.filter(function(r){ return !r.ordered; }).length;
-      document.getElementById('kitSummary').innerHTML = '<b>' + rows.length + '</b> charged &middot; <b>' + paid + '</b> paid &middot; <b>' + toOrder + '</b> kit' + (toOrder === 1 ? '' : 's') + ' not ordered yet';
+      let paid = 0, notOrdered = 0, total = 0;
+      rows.forEach(function(r){ [r.practice, r.sultans].forEach(function(k){ if (!k) return; total++; if (k.paid_at) paid++; if (!k.ordered) notOrdered++; }); });
+      document.getElementById('kitSummary').innerHTML = '<b>' + total + '</b> kit fee' + (total === 1 ? '' : 's') + ' charged &middot; <b>' + paid + '</b> paid &middot; <b>' + notOrdered + '</b> not ordered yet';
       if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
-      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Total paid</th><th>Kit fee</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
-        const paidCell = r.paid_at
-          ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(r.amount_cents) + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.paid_at)) + '</span>'
-          : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(r.amount_cents) + ')</span>' + (r.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + r.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
-        const totalCell = r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>';
-        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td><td>' + totalCell + '</td><td>' + paidCell + '</td>' +
-          '<td><label style="display:flex; align-items:center; gap:6px; margin:0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + r.id + '"' + (r.ordered ? ' checked' : '') + '>' + (r.ordered ? '<span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(r.ordered_at)) + '</span>' : '') + '</label></td>' +
-          '<td><button type="button" class="btn-delete-guest" data-kdel="' + r.id + '">Delete</button></td></tr>';
+      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Total paid</th><th>Practice Kit</th><th>Sultans Kit</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
+        const ids = [r.practice, r.sultans].filter(Boolean).map(function(k){ return k.id; }).join(',');
+        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td>' +
+          '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>') + '</td>' +
+          '<td>' + kitCell(r.practice) + '</td><td>' + kitCell(r.sultans) + '</td>' +
+          '<td>' + kitOrderBox(r.practice, 'Practice') + kitOrderBox(r.sultans, 'Sultans') + '</td>' +
+          '<td><button type="button" class="btn-delete-guest" data-kdel="' + ids + '">Delete</button></td></tr>';
       }).join('') + '</tbody></table>';
     } catch (e) { wrap.innerHTML = '<div class="empty">Could not load kit fees. Please try again.</div>'; }
   }
@@ -5656,7 +5694,7 @@ module.exports = `<!doctype html>
     if (!name) { err.textContent = "Please enter the player's name."; return; }
     if (!(amt >= 0)) { err.textContent = 'Please enter the amount.'; return; }
     try {
-      const r = await api('/api/admin/kit-fees', { method: 'POST', body: JSON.stringify({ playerName: name, amountCents: Math.round(amt * 100), paid: document.getElementById('kitPaidNow').checked }) });
+      const r = await api('/api/admin/kit-fees', { method: 'POST', body: JSON.stringify({ playerName: name, amountCents: Math.round(amt * 100), paid: document.getElementById('kitPaidNow').checked, kitType: document.getElementById('kitType').value }) });
       if (r.error) { err.textContent = r.error; return; }
       document.getElementById('kitName').value = ''; document.getElementById('kitAmount').value = ''; document.getElementById('kitPaidNow').checked = false;
       await loadKitFees();
@@ -5671,7 +5709,12 @@ module.exports = `<!doctype html>
   document.getElementById('kitTableWrap').addEventListener('click', async function(e){
     const d = e.target.closest('button[data-kdel]'), p = e.target.closest('button[data-kpaid]');
     try {
-      if (d) { if (!confirm('Delete this entry?')) return; const r = await api('/api/admin/kit-fees/' + d.getAttribute('data-kdel'), { method: 'DELETE' }); if (r.error) alert(r.error); await loadKitFees(); }
+      if (d) {
+        if (!confirm('Delete this entry?')) return;
+        const ids = d.getAttribute('data-kdel').split(',');
+        for (let q = 0; q < ids.length; q++) { const r = await api('/api/admin/kit-fees/' + ids[q], { method: 'DELETE' }); if (r && r.error) alert(r.error); }
+        await loadKitFees();
+      }
       if (p) { await api('/api/admin/kit-fees/' + p.getAttribute('data-kpaid'), { method: 'PUT', body: JSON.stringify({ paid: true }) }); await loadKitFees(); }
     } catch (x) { alert('Could not save. Please try again.'); }
   });

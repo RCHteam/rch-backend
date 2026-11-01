@@ -23,8 +23,9 @@ async function seedOnce() {
   await setSetting('kit_seed_v1', 'done');
 }
 
-async function upsertFrom(source, sourceId, name, cents, chargedAt, paidAt, totalCents) {
-  const found = await pool.query('SELECT id FROM kit_fees WHERE source = $1 AND source_id = $2', [source, sourceId]);
+async function upsertFrom(source, sourceId, name, cents, chargedAt, paidAt, totalCents, kitType) {
+  kitType = kitType === 'sultans' ? 'sultans' : 'practice';
+  const found = await pool.query('SELECT id FROM kit_fees WHERE source = $1 AND source_id = $2 AND kit_type = $3', [source, sourceId, kitType]);
   if (found.rows[0]) {
     await pool.query('UPDATE kit_fees SET player_name=$2, amount_cents=$3, charged_at=$4, paid_at=$5, total_cents=$6 WHERE id=$1',
       [found.rows[0].id, name, cents, chargedAt, paidAt, totalCents]);
@@ -32,15 +33,15 @@ async function upsertFrom(source, sourceId, name, cents, chargedAt, paidAt, tota
   }
   // A hand-added row for the same child is adopted instead of duplicated.
   const manual = await pool.query(
-    `SELECT id FROM kit_fees WHERE source = 'manual' AND source_id IS NULL AND lower(player_name) = lower($1) ORDER BY id LIMIT 1`, [name]);
+    `SELECT id FROM kit_fees WHERE source = 'manual' AND source_id IS NULL AND kit_type = $2 AND lower(player_name) = lower($1) ORDER BY id LIMIT 1`, [name, kitType]);
   if (manual.rows[0]) {
     await pool.query('UPDATE kit_fees SET source=$2, source_id=$3, amount_cents=$4, charged_at=$5, paid_at=$6, total_cents=$7 WHERE id=$1',
       [manual.rows[0].id, source, sourceId, cents, chargedAt, paidAt, totalCents]);
     return;
   }
   await pool.query(
-    'INSERT INTO kit_fees (player_name, amount_cents, charged_at, paid_at, source, source_id, total_cents) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-    [name, cents, chargedAt, paidAt, source, sourceId, totalCents]);
+    'INSERT INTO kit_fees (player_name, amount_cents, charged_at, paid_at, source, source_id, total_cents, kit_type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [name, cents, chargedAt, paidAt, source, sourceId, totalCents, kitType]);
 }
 
 // One-time clean-up of the early test links (owner said they were all tests).
@@ -56,14 +57,19 @@ async function cleanTestsOnce() {
 async function syncKitFees() {
   await seedOnce();
   const links = await pool.query(
-    `SELECT id, child_name, one_time_amount_cents, prorated_amount_cents, created_at, completed_at FROM payment_links WHERE one_time_amount_cents > 0`);
-  for (const r of links.rows) await upsertFrom('link', r.id, r.child_name, r.one_time_amount_cents, r.created_at, r.completed_at,
-    r.completed_at ? r.one_time_amount_cents + (r.prorated_amount_cents || 0) : null);
+    `SELECT id, child_name, one_time_amount_cents, sultans_kit_cents, prorated_amount_cents, created_at, completed_at FROM payment_links WHERE one_time_amount_cents > 0`);
+  for (const r of links.rows) {
+    const total = r.completed_at ? r.one_time_amount_cents + (r.prorated_amount_cents || 0) : null;
+    const sk = Math.min(r.sultans_kit_cents || 0, r.one_time_amount_cents);
+    const practice = r.one_time_amount_cents - sk;
+    if (practice > 0) await upsertFrom('link', r.id, r.child_name, practice, r.created_at, r.completed_at, total, 'practice');
+    if (sk > 0) await upsertFrom('link', r.id, r.child_name, sk, r.created_at, r.completed_at, total, 'sultans');
+  }
   const otp = await pool.query(
-    `SELECT id, COALESCE(NULLIF(recipient_name,''), '(unnamed link)') AS name, amount_cents, created_at, completed_at, status
+    `SELECT id, title, COALESCE(NULLIF(recipient_name,''), '(unnamed link)') AS name, amount_cents, created_at, completed_at, status
        FROM one_time_payments WHERE title ILIKE '%kit%'`);
   for (const r of otp.rows) {
-    await upsertFrom('one_time', r.id, r.name, r.amount_cents, r.created_at, r.status === 'completed' ? (r.completed_at || r.created_at) : null, r.status === 'completed' ? r.amount_cents : null);
+    await upsertFrom('one_time', r.id, r.name, r.amount_cents, r.created_at, r.status === 'completed' ? (r.completed_at || r.created_at) : null, r.status === 'completed' ? r.amount_cents : null, /sultans/i.test(r.title) ? 'sultans' : 'practice');
   }
   await cleanTestsOnce();
 }
@@ -72,9 +78,29 @@ router.get('/admin/kit-fees', requireAdmin, async (req, res) => {
   try {
     await syncKitFees();
     const r = await pool.query(
-      `SELECT id, player_name, amount_cents, total_cents, charged_at, paid_at, ordered, ordered_at, source
+      `SELECT id, player_name, amount_cents, total_cents, charged_at, paid_at, ordered, ordered_at, source, source_id, kit_type, created_at
          FROM kit_fees WHERE NOT hidden ORDER BY COALESCE(charged_at, created_at) DESC, id DESC`);
-    res.json(r.rows);
+    // One line per child: a Practice kit slot and a Sultans kit slot (two payments for the same child share a line).
+    const lines = [];
+    const byName = new Map();
+    for (const k of r.rows) {
+      const slot = { id: k.id, amount_cents: k.amount_cents, paid_at: k.paid_at, ordered: k.ordered, ordered_at: k.ordered_at, source: k.source };
+      const key = String(k.player_name).trim().toLowerCase();
+      let line = (byName.get(key) || []).find((l) => !l[k.kit_type]);
+      if (!line) {
+        line = { player_name: k.player_name, charged_at: k.charged_at, practice: null, sultans: null, _totals: new Map(), source: k.source };
+        lines.push(line);
+        byName.set(key, (byName.get(key) || []).concat([line]));
+      }
+      line[k.kit_type] = slot;
+      if (k.charged_at && (!line.charged_at || new Date(k.charged_at) < new Date(line.charged_at))) line.charged_at = k.charged_at;
+      if (k.total_cents != null) line._totals.set(k.source + ':' + (k.source_id == null ? 'm' + k.id : k.source_id), k.total_cents);
+    }
+    res.json(lines.map((l) => {
+      let total = null;
+      if (l._totals.size) total = [...l._totals.values()].reduce((a, b) => a + b, 0);
+      return { player_name: l.player_name, charged_at: l.charged_at, total_cents: total, practice: l.practice, sultans: l.sultans };
+    }));
   } catch (err) {
     console.error('Kit fees error:', err);
     res.status(500).json({ error: 'Could not load the kit fees.' });
@@ -89,8 +115,8 @@ router.post('/admin/kit-fees', requireAdmin, async (req, res) => {
   try {
     const paid = !!(req.body && req.body.paid);
     const r = await pool.query(
-      `INSERT INTO kit_fees (player_name, amount_cents, paid_at, total_cents, source) VALUES ($1,$2,$3,$4,'manual') RETURNING id`,
-      [name, cents, paid ? new Date() : null, paid ? cents : null]);
+      `INSERT INTO kit_fees (player_name, amount_cents, paid_at, total_cents, source, kit_type) VALUES ($1,$2,$3,$4,'manual',$5) RETURNING id`,
+      [name, cents, paid ? new Date() : null, paid ? cents : null, req.body && req.body.kitType === 'sultans' ? 'sultans' : 'practice']);
     res.status(201).json({ ok: true, id: r.rows[0].id });
   } catch (err) {
     console.error('Add kit fee error:', err);

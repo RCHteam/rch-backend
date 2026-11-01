@@ -145,6 +145,8 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
   // default — `Number(0) || 5000` would otherwise incorrectly yield 5000.
   const oneTimeAmount = req.body?.oneTimeAmount != null ? Number(req.body.oneTimeAmount) : 5000;
   const monthlyAmount = req.body?.monthlyAmount != null ? Number(req.body.monthlyAmount) : 6000;
+  // Optional second kit (Sultans FC kit) charged together with the practice kit: two separate line items.
+  const sultansKitAmount = Math.max(0, Math.round(Number(req.body?.sultansKitAmount) || 0));
 
   if (!['skills', 'join', 'player'].includes(registrationType)) {
     return res.status(400).json({ error: 'registrationType must be "skills", "join", or "player".' });
@@ -202,19 +204,19 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
       `INSERT INTO payment_links
         (token, registration_type, registration_id, child_name, parent_name, email, program_label,
          one_time_amount_cents, monthly_amount_cents, season_end_date,
-         locked_amount_cents, locked_practices_remaining, locked_practices_total, locked_anchor_date)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,to_timestamp($14)::date)
+         locked_amount_cents, locked_practices_remaining, locked_practices_total, locked_anchor_date, sultans_kit_cents)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,to_timestamp($14)::date,$15)
        RETURNING *`,
       [token, registrationType, registrationId, childName, parentName, email, programLabel,
-       oneTimeAmount, monthlyAmount, seasonEndDate,
-       lockedProration.amountCents, lockedProration.remaining, lockedProration.totalCount, lockedAnchorTs]
+       oneTimeAmount + sultansKitAmount, monthlyAmount, seasonEndDate,
+       lockedProration.amountCents, lockedProration.remaining, lockedProration.totalCount, lockedAnchorTs, sultansKitAmount]
     );
 
     const link = `${siteUrl(req)}/pay/${token}`;
 
     await sendPaymentLinkEmail({
       to: email, parentName, childName, programLabel, link,
-      oneTime: oneTimeAmount, monthly: monthlyAmount, seasonEndDate,
+      oneTime: oneTimeAmount + sultansKitAmount, monthly: monthlyAmount, seasonEndDate,
     });
 
     res.json({ ok: true, token, link, entry: insertRes.rows[0] });
@@ -229,13 +231,15 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
 // price change (e.g. a new season's rate) never needs a code deploy.
 router.get('/admin/payment-pricing', requireAdmin, async (req, res) => {
   try {
-    const [oneCents, twoCents, kitCents, onlineCents] = await Promise.all([
+    const [oneCents, twoCents, kitCents, onlineCents, sultansKitCents] = await Promise.all([
       getSetting('payment_one_session_monthly_cents', '6000'),
       getSetting('payment_two_session_monthly_cents', '10000'),
       getSetting('kit_fee_cents', '5000'),
       getSetting('payment_online_course_monthly_cents', '3120'),
+      getSetting('sultans_kit_fee_cents', '4000'),
     ]);
     res.json({
+      sultansKitFeeCents: parseInt(sultansKitCents, 10),
       oneSessionMonthlyCents: parseInt(oneCents, 10),
       twoSessionMonthlyCents: parseInt(twoCents, 10),
       kitFeeCents: parseInt(kitCents, 10),
@@ -248,7 +252,7 @@ router.get('/admin/payment-pricing', requireAdmin, async (req, res) => {
 });
 
 router.post('/admin/payment-pricing', requireAdmin, async (req, res) => {
-  const { oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents } = req.body || {};
+  const { oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents, sultansKitFeeCents } = req.body || {};
   const vals = [oneSessionMonthlyCents, twoSessionMonthlyCents, kitFeeCents, onlineCourseMonthlyCents];
   if (vals.some((v) => !Number.isFinite(Number(v)) || Number(v) < 0)) {
     return res.status(400).json({ error: 'All four amounts must be non-negative numbers.' });
@@ -258,13 +262,15 @@ router.post('/admin/payment-pricing', requireAdmin, async (req, res) => {
     const two = Math.round(Number(twoSessionMonthlyCents));
     const kit = Math.round(Number(kitFeeCents));
     const online = Math.round(Number(onlineCourseMonthlyCents));
+    const sultansKit = Number.isFinite(Number(sultansKitFeeCents)) && sultansKitFeeCents !== '' && sultansKitFeeCents != null ? Math.max(0, Math.round(Number(sultansKitFeeCents))) : parseInt(await getSetting('sultans_kit_fee_cents', '4000'), 10);
     await Promise.all([
+      setSetting('sultans_kit_fee_cents', String(sultansKit)),
       setSetting('payment_one_session_monthly_cents', String(one)),
       setSetting('payment_two_session_monthly_cents', String(two)),
       setSetting('kit_fee_cents', String(kit)),
       setSetting('payment_online_course_monthly_cents', String(online)),
     ]);
-    res.json({ oneSessionMonthlyCents: one, twoSessionMonthlyCents: two, kitFeeCents: kit, onlineCourseMonthlyCents: online });
+    res.json({ oneSessionMonthlyCents: one, twoSessionMonthlyCents: two, kitFeeCents: kit, onlineCourseMonthlyCents: online, sultansKitFeeCents: sultansKit });
   } catch (err) {
     console.error('Save payment pricing error:', err);
     res.status(500).json({ error: 'Could not save payment pricing.' });
@@ -319,12 +325,24 @@ router.post('/pay/:token/checkout', async (req, res) => {
     const anchorTs = proration.anchorTs;
 
     const lineItems = [];
-    if (entry.one_time_amount_cents > 0) {
+    const sultansKit = Math.min(entry.sultans_kit_cents || 0, entry.one_time_amount_cents || 0);
+    const practiceKit = (entry.one_time_amount_cents || 0) - sultansKit;
+    if (practiceKit > 0) {
       lineItems.push({
         price_data: {
           currency: 'usd',
-          product_data: { name: `${entry.program_label} — Registration & Kit Fee` },
-          unit_amount: entry.one_time_amount_cents,
+          product_data: { name: `${entry.program_label} — Practice Kit Fee` },
+          unit_amount: practiceKit,
+        },
+        quantity: 1,
+      });
+    }
+    if (sultansKit > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `${entry.program_label} — Sultans FC Kit Fee` },
+          unit_amount: sultansKit,
         },
         quantity: 1,
       });
@@ -623,6 +641,43 @@ async function resolveOneTimeRecipients({ scope, grade, playerId }) {
   const result = await pool.query(`SELECT * FROM players ${where} ORDER BY grade, player_name`, params);
   return result.rows;
 }
+
+// Admin: from the Sultans roster, send the parent the Sultans FC kit fee as a one-time payment.
+router.post('/admin/players/:id/sultans-kit-fee', requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad player id.' });
+  try {
+    const pr = await pool.query('SELECT * FROM players WHERE id = $1 AND archived_at IS NULL', [id]);
+    const player = pr.rows[0];
+    if (!player) return res.status(404).json({ error: 'Player not found.' });
+    if (!player.parent_email) return res.status(400).json({ error: 'This player has no parent email on file. Add one on the roster first.' });
+    const title = 'Sultans FC Kit Fee';
+    const cents = parseInt(await getSetting('sultans_kit_fee_cents', '4000'), 10) || 4000;
+    const existing = (await pool.query(
+      `SELECT * FROM one_time_payments WHERE player_id = $1 AND title = $2 ORDER BY id DESC`, [id, title])).rows;
+    if (existing.some((x) => x.status === 'completed')) {
+      return res.status(409).json({ error: 'The parent already paid the Sultans FC kit fee for this player.' });
+    }
+    let token;
+    const pending = existing.find((x) => x.status === 'pending');
+    if (pending) token = pending.token; // resend the same link
+    else {
+      token = crypto.randomBytes(24).toString('hex');
+      await pool.query(
+        `INSERT INTO one_time_payments (token, title, description, amount_cents, player_id, recipient_name, parent_name, email)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [token, title, '', cents, id, player.player_name, player.parent_name || '', player.parent_email]);
+    }
+    await sendOneTimePaymentEmail({
+      to: player.parent_email, parentName: player.parent_name, childName: player.player_name,
+      title, description: '', amountCents: cents, link: `${siteUrl(req)}/pay/one-time/${token}`,
+    });
+    res.json({ ok: true, email: player.parent_email, amountCents: cents, resent: !!pending });
+  } catch (err) {
+    console.error('Sultans kit fee send error:', err);
+    res.status(500).json({ error: 'Could not send the kit fee.' });
+  }
+});
 
 // Admin: preview who a "Send Link" audience would actually reach, before
 // anything is created or emailed.

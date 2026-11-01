@@ -597,3 +597,5 @@ CREATE TABLE IF NOT EXISTS uteam_moves (
   season_start INTEGER NOT NULL,
   PRIMARY KEY (kind, ref_id, season_start)
 );
+ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS sultans_kit_cents INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE kit_fees ADD COLUMN IF NOT EXISTS kit_type TEXT NOT NULL DEFAULT 'practice';

@@ -145,116 +145,227 @@ async function gatherMonthlyReportData(monthKey) {
   };
 }
 
-function drawSectionHeading(doc, text) {
-  if (doc.y > 680) doc.addPage();
-  doc.moveDown(0.8);
-  doc.font('Helvetica-Bold').fontSize(13).fillColor('#0c2a1c').text(text);
-  doc.moveDown(0.3);
-  doc.font('Helvetica').fontSize(10).fillColor('#000000');
+// ---- PDF design: green like the website, with the RCH logo ----
+const path = require('path');
+const LOGO_PATH = path.join(__dirname, 'assets', 'rch-logo.png');
+const C = { dark: '#0c2a1c', green: '#164a30', mid: '#17803f', light: '#e6f2ea', zebra: '#f4f9f5', ink: '#1b2a22', muted: '#6b7a70', line: '#d5e3da' };
+const PAGE_W = 612, PAGE_H = 792, MX = 40, CW = 532, BOTTOM = 56;
+
+function ensure(doc, h) {
+  if (doc.y + h > PAGE_H - BOTTOM) doc.addPage();
 }
 
-function drawRow(doc, label, value) {
-  if (doc.y > 740) doc.addPage();
-  doc.text(label + ':  ' + value);
+function drawBand(doc, data, first) {
+  if (first) {
+    doc.rect(0, 0, PAGE_W, 112).fill(C.green);
+    doc.rect(0, 112, PAGE_W, 5).fill(C.mid);
+    try { doc.image(LOGO_PATH, MX, 18, { height: 76 }); } catch (e) { /* logo is optional */ }
+    doc.fillColor('#b9e4c8').font('Helvetica-Bold').fontSize(10)
+      .text('MONTHLY REPORT', MX, 34, { width: CW, align: 'right', characterSpacing: 2, lineBreak: false });
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(26)
+      .text(data.monthLabel, MX, 50, { width: CW, align: 'right', lineBreak: false });
+    doc.y = 132;
+  } else {
+    doc.rect(0, 0, PAGE_W, 30).fill(C.green);
+    doc.rect(0, 30, PAGE_W, 3).fill(C.mid);
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
+      .text('RCH ELITE TRAINING', MX, 11, { lineBreak: false, characterSpacing: 1 });
+    doc.fillColor('#b9e4c8').font('Helvetica').fontSize(9)
+      .text('Monthly Report - ' + data.monthLabel, MX, 11, { width: CW, align: 'right', lineBreak: false });
+    doc.y = 48;
+  }
+  doc.fillColor(C.ink).font('Helvetica').fontSize(10);
+}
+
+function section(doc, title) {
+  ensure(doc, 70);
+  const y = doc.y + 8;
+  doc.roundedRect(MX, y, CW, 22, 4).fill(C.green);
+  doc.rect(MX, y, 5, 22).fill(C.mid);
+  doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(11).text(title, MX + 14, y + 6, { width: CW - 24, lineBreak: false });
+  doc.y = y + 30;
+  doc.fillColor(C.ink).font('Helvetica').fontSize(10);
+}
+
+// rows: [{ label, value, bold }]
+function kvRows(doc, rows) {
+  rows.forEach((r, i) => {
+    ensure(doc, 20);
+    const y = doc.y;
+    if (i % 2 === 0) doc.rect(MX, y, CW, 19).fill(C.zebra);
+    doc.fillColor(C.ink).font(r.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(10)
+      .text(String(r.label), MX + 8, y + 5, { width: CW * 0.62, lineBreak: false });
+    doc.text(String(r.value), MX + CW * 0.55, y + 5, { width: CW * 0.45 - 8, align: 'right', lineBreak: false });
+    doc.y = y + 19;
+  });
+  doc.font('Helvetica').fillColor(C.ink);
+}
+
+// cols: [{ label, w, align }], rows: arrays of strings
+function dataTable(doc, cols, rows, boldLast) {
+  const drawHead = () => {
+    const y = doc.y;
+    doc.rect(MX, y, CW, 20).fill(C.light);
+    let x = MX;
+    cols.forEach((c) => {
+      doc.fillColor(C.dark).font('Helvetica-Bold').fontSize(9).text(c.label, x + 6, y + 6, { width: c.w - 12, align: c.align || 'left', lineBreak: false });
+      x += c.w;
+    });
+    doc.y = y + 20;
+  };
+  ensure(doc, 44);
+  drawHead();
+  rows.forEach((r, i) => {
+    if (doc.y + 20 > PAGE_H - BOTTOM) { doc.addPage(); drawHead(); }
+    const y = doc.y;
+    const last = boldLast && i === rows.length - 1;
+    if (last) doc.rect(MX, y, CW, 20).fill(C.light); else if (i % 2 === 1) doc.rect(MX, y, CW, 20).fill(C.zebra);
+    let x = MX;
+    cols.forEach((c, k) => {
+      doc.fillColor(C.ink).font(last ? 'Helvetica-Bold' : 'Helvetica').fontSize(10).text(String(r[k]), x + 6, y + 6, { width: c.w - 12, align: c.align || 'left', lineBreak: false });
+      x += c.w;
+    });
+    doc.y = y + 20;
+  });
+  doc.font('Helvetica').fillColor(C.ink);
+}
+
+function statCards(doc, cards) {
+  ensure(doc, 80);
+  const gap = 12, w = (CW - gap * (cards.length - 1)) / cards.length, y = doc.y;
+  cards.forEach((c, i) => {
+    const x = MX + i * (w + gap);
+    doc.roundedRect(x, y, w, 62, 6).fill(c.hero ? C.green : C.light);
+    doc.fillColor(c.hero ? '#b9e4c8' : C.muted).font('Helvetica-Bold').fontSize(8)
+      .text(c.label.toUpperCase(), x + 12, y + 12, { width: w - 24, lineBreak: false, characterSpacing: 0.8 });
+    doc.fillColor(c.hero ? '#ffffff' : C.dark).font('Helvetica-Bold').fontSize(20)
+      .text(c.value, x + 12, y + 30, { width: w - 24, lineBreak: false });
+  });
+  doc.y = y + 74;
+  doc.font('Helvetica').fillColor(C.ink).fontSize(10);
 }
 
 function buildMonthlyReportPdf(data) {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 40, size: 'LETTER' });
+      const doc = new PDFDocument({ margin: 40, size: 'LETTER', bufferPages: true });
       const chunks = [];
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
+      doc.on('pageAdded', () => drawBand(doc, data, false));
 
-      doc.font('Helvetica-Bold').fontSize(20).fillColor('#0c2a1c').text('RCH Elite Training', { align: 'center' });
-      doc.font('Helvetica').fontSize(14).fillColor('#444444').text(`Monthly Report — ${data.monthLabel}`, { align: 'center' });
-      doc.moveDown(1);
-      doc.fontSize(9).fillColor('#888888')
-        .text('Potential RCH/Sultans and Coaches reflect a live snapshot at the time this report was generated, not a historical record for this specific month.', { align: 'center' });
-      doc.fillColor('#000000');
+      drawBand(doc, data, true);
+
+      const totalPlayers = GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalPlayers, 0);
+      statCards(doc, [
+        { label: 'Players', value: String(totalPlayers) },
+        { label: 'Gross revenue', value: money(data.revenueTotals.total) },
+        { label: 'Final net revenue', value: money(data.finalNetRevenueCents), hero: true },
+      ]);
+      doc.fillColor(C.muted).font('Helvetica-Oblique').fontSize(8)
+        .text('Potential RCH/Sultans and Coaches are a live snapshot from when this report was made, not a record of this exact month.', MX, doc.y, { width: CW });
+      doc.fillColor(C.ink).font('Helvetica').fontSize(10);
+      doc.moveDown(0.4);
 
       // --- Dashboard Summary ---
-      drawSectionHeading(doc, 'Dashboard Summary');
-      drawRow(doc, 'Potential RCH', data.potentialRchCount);
-      drawRow(doc, 'Potential Sultans', data.potentialSultansCount);
-      drawRow(doc, 'Skills Training (RCH players on roster)', data.skillsTrainingCount);
-      GRADES.forEach((g) => {
-        drawRow(doc, `Join FC ${GRADE_LABELS[g]}`, data.joinCountsByGrade[g]);
-      });
+      section(doc, 'Dashboard Summary');
+      const dash = [
+        { label: 'Potential RCH', value: data.potentialRchCount },
+        { label: 'Potential Sultans', value: data.potentialSultansCount },
+        { label: 'Skills Training (RCH players on roster)', value: data.skillsTrainingCount },
+      ];
+      GRADES.forEach((g) => dash.push({ label: 'Join FC ' + GRADE_LABELS[g], value: data.joinCountsByGrade[g] }));
+      kvRows(doc, dash);
 
       // --- Season Overview ---
-      drawSectionHeading(doc, 'Season Overview — All Grades');
-      GRADES.forEach((g) => {
+      section(doc, 'Season Overview - All Grades');
+      const ov = GRADES.map((g) => {
         const o = data.overviewByGrade[g];
-        drawRow(doc, GRADE_LABELS[g], `${o.totalPlayers} players (One: ${o.totalOne}, Two: ${o.totalTwo}, Online: ${o.totalOnline})`);
+        return [GRADE_LABELS[g], String(o.totalPlayers), String(o.totalOne), String(o.totalTwo), String(o.totalOnline)];
       });
-      const totalPlayers = GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalPlayers, 0);
-      doc.font('Helvetica-Bold');
-      drawRow(doc, 'TOTAL', `${totalPlayers} players`);
-      doc.font('Helvetica');
+      ov.push(['TOTAL', String(totalPlayers),
+        String(GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalOne, 0)),
+        String(GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalTwo, 0)),
+        String(GRADES.reduce((s, g) => s + data.overviewByGrade[g].totalOnline, 0))]);
+      dataTable(doc, [
+        { label: 'Grade', w: 172 }, { label: 'Players', w: 90, align: 'right' }, { label: 'One / week', w: 90, align: 'right' },
+        { label: 'Two / week', w: 90, align: 'right' }, { label: 'Online', w: 90, align: 'right' },
+      ], ov, true);
 
       // --- Final Net Revenue ---
-      drawSectionHeading(doc, 'Final Net Revenue');
+      section(doc, 'Final Net Revenue');
+      const rev = [];
       GRADES.forEach((g) => {
         const r = data.revenueByGrade.find((x) => x.grade === g);
         if (r.total === 0 && r.totalOne === 0 && r.totalTwo === 0 && r.totalOnline === 0) return;
-        drawRow(doc, r.label, `${money(r.total)} gross, -${money(r.fee)} Stripe fees, ${money(r.net)} net`);
+        rev.push([r.label, money(r.total), '-' + money(r.fee), money(r.net)]);
       });
-      doc.moveDown(0.3);
-      doc.font('Helvetica-Bold');
-      if (data.revenueTotals.prorationCents > 0) drawRow(doc, `Late-joiner proration (${data.revenueTotals.lateJoiners} players, partial first month)`, '-' + money(data.revenueTotals.prorationCents));
-      drawRow(doc, 'Total Revenue (gross)', money(data.revenueTotals.total));
-      drawRow(doc, 'Est. Stripe Fees', '-' + money(data.revenueTotals.fee));
-      drawRow(doc, 'Business Charges This Month', '-' + money(data.businessChargesCents));
-      drawRow(doc, 'FINAL NET REVENUE', money(data.finalNetRevenueCents));
-      doc.font('Helvetica');
+      if (rev.length) {
+        dataTable(doc, [
+          { label: 'Grade', w: 172 }, { label: 'Gross', w: 120, align: 'right' }, { label: 'Stripe fees', w: 120, align: 'right' }, { label: 'Net', w: 120, align: 'right' },
+        ], rev, false);
+      }
+      doc.moveDown(0.4);
+      const tot = [];
+      if (data.revenueTotals.prorationCents > 0) tot.push({ label: 'Late-joiner proration (' + data.revenueTotals.lateJoiners + ' players, partial first month)', value: '-' + money(data.revenueTotals.prorationCents) });
+      tot.push({ label: 'Total revenue (gross)', value: money(data.revenueTotals.total) });
+      tot.push({ label: 'Est. Stripe fees', value: '-' + money(data.revenueTotals.fee) });
+      tot.push({ label: 'Business charges this month', value: '-' + money(data.businessChargesCents) });
+      tot.push({ label: 'FINAL NET REVENUE', value: money(data.finalNetRevenueCents), bold: true });
+      kvRows(doc, tot);
 
       // --- One-Time Payments ---
-      drawSectionHeading(doc, `One-Time Payments Completed in ${data.monthLabel}`);
+      section(doc, 'One-Time Payments Completed in ' + data.monthLabel);
       if (!data.oneTimePayments.length) {
-        doc.text('None this month.');
+        doc.fillColor(C.muted).text('None this month.', MX + 8, doc.y, { width: CW - 16 });
+        doc.fillColor(C.ink).moveDown(0.3);
       } else {
-        data.oneTimePayments.forEach((p) => {
-          const who = p.recipient_name ? `${p.recipient_name}${p.email ? ' (' + p.email + ')' : ''}` : 'Ad hoc link';
-          drawRow(doc, p.title, `${money(p.amount_cents)} — ${who}`);
-        });
+        const rows = data.oneTimePayments.map((p) => [
+          p.title, p.recipient_name ? p.recipient_name : 'Ad hoc link', money(p.amount_cents)]);
         const oneTimeTotal = data.oneTimePayments.reduce((s, p) => s + p.amount_cents, 0);
-        doc.font('Helvetica-Bold');
-        drawRow(doc, 'Total One-Time Payments', money(oneTimeTotal));
-        doc.font('Helvetica');
+        rows.push(['Total', '', money(oneTimeTotal)]);
+        dataTable(doc, [{ label: 'Payment', w: 232 }, { label: 'From', w: 190 }, { label: 'Amount', w: 110, align: 'right' }], rows, true);
       }
 
-      // --- Business Charges (Recurring & One-Time) ---
-      drawSectionHeading(doc, 'Business Charges — Recurring & One-Time');
+      // --- Business Charges ---
+      section(doc, 'Business Charges - Recurring & One-Time');
       const recurring = data.businessCharges.filter((c) => c.kind === 'recurring');
       const oneTime = data.businessCharges.filter((c) => c.kind === 'one_time');
-      doc.font('Helvetica-Bold').text('Recurring:');
-      doc.font('Helvetica');
-      if (!recurring.length) { doc.text('None logged.'); }
-      recurring.forEach((c) => drawRow(doc, c.description, money(c.amount_cents)));
-      doc.moveDown(0.3);
-      doc.font('Helvetica-Bold').text('One-Time (this month):');
-      doc.font('Helvetica');
-      if (!oneTime.length) { doc.text('None logged for this month.'); }
-      oneTime.forEach((c) => drawRow(doc, c.description, money(c.amount_cents)));
+      doc.fillColor(C.green).font('Helvetica-Bold').text('Recurring', MX + 8, doc.y, { width: CW - 16 });
+      doc.moveDown(0.2);
+      if (!recurring.length) { doc.fillColor(C.muted).font('Helvetica').text('None logged.', MX + 8, doc.y, { width: CW - 16 }); doc.moveDown(0.3); }
+      else kvRows(doc, recurring.map((c) => ({ label: c.description, value: money(c.amount_cents) })));
+      doc.moveDown(0.4);
+      doc.fillColor(C.green).font('Helvetica-Bold').text('One-time (this month)', MX + 8, doc.y, { width: CW - 16 });
+      doc.moveDown(0.2);
+      if (!oneTime.length) { doc.fillColor(C.muted).font('Helvetica').text('None logged for this month.', MX + 8, doc.y, { width: CW - 16 }); doc.moveDown(0.3); }
+      else kvRows(doc, oneTime.map((c) => ({ label: c.description, value: money(c.amount_cents) })));
+      doc.fillColor(C.ink).font('Helvetica');
 
-      // --- Coaches --- (category + name only, per request — no contact
-      // info, qualifications, certificates, degree, etc. in the report)
-      drawSectionHeading(doc, 'Current Coaches');
+      // --- Coaches --- (category + name only, no contact info)
+      section(doc, 'Current Coaches');
       if (!data.coaches.length) {
-        doc.text('None on file.');
+        doc.fillColor(C.muted).text('None on file.', MX + 8, doc.y, { width: CW - 16 });
       } else {
+        const rows = [];
         COACH_ROLES.forEach((role) => {
           const inRole = data.coaches.filter((c) => (c.role || 'coach') === role);
-          if (!inRole.length) return;
-          doc.font('Helvetica-Bold').text(COACH_ROLE_LABELS[role] + ':');
-          doc.font('Helvetica');
-          inRole.forEach((c) => doc.text(c.name));
-          doc.moveDown(0.3);
+          inRole.forEach((c) => rows.push([COACH_ROLE_LABELS[role], c.name]));
         });
+        dataTable(doc, [{ label: 'Role', w: 200 }, { label: 'Name', w: 332 }], rows, false);
       }
 
+      // Footer on every page.
+      const range = doc.bufferedPageRange();
+      for (let i = 0; i < range.count; i++) {
+        doc.switchToPage(range.start + i);
+        doc.page.margins.bottom = 0;
+        doc.rect(0, PAGE_H - 34, PAGE_W, 34).fill(C.green);
+        doc.fillColor('#b9e4c8').font('Helvetica').fontSize(8)
+          .text('RCH Elite Training  |  Allen, TX', MX, PAGE_H - 21, { lineBreak: false });
+        doc.text('Page ' + (i + 1) + ' of ' + range.count, MX, PAGE_H - 21, { width: CW, align: 'right', lineBreak: false });
+      }
       doc.end();
     } catch (err) {
       reject(err);
