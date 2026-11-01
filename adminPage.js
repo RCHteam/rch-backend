@@ -1676,6 +1676,16 @@ module.exports = `<!doctype html>
         <select id="slIndividualSelect"></select>
       </div>
 
+      <div id="slPickWrap" class="hidden">
+        <label for="slPickSearch">Search players</label>
+        <input type="text" id="slPickSearch" placeholder="Type a player or parent name…">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 4px; font-size:0.85rem;">
+          <span id="slPickCount" style="color:#555;">0 selected</span>
+          <a href="#" id="slPickClear" style="color:var(--pitch);">Clear all</a>
+        </div>
+        <div id="slPickList" style="max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:6px 10px; font-size:0.85rem;"></div>
+      </div>
+
       <p class="modal-error" id="sendLinkStep1Error"></p>
       <div class="modal-actions">
         <button type="button" class="btn-cancel" id="sendLinkCancel1">Cancel</button>
@@ -3884,6 +3894,7 @@ module.exports = `<!doctype html>
     GRADES.forEach((g) => { html += '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; });
     html += '</optgroup>' + ageScopeOptions('age', 'A Specific Age Group (any program)') + ageScopeOptions('rch_age', 'RCH — Age Group') + ageScopeOptions('sultans_age', 'Sultans — Age Group');
     html += '<option value="individual">Individual player…</option>';
+    html += '<option value="selected">Pick several players…</option>';
     sel.innerHTML = html;
   }
 
@@ -3937,9 +3948,38 @@ module.exports = `<!doctype html>
     return { scope: value, grade: null };
   }
 
+  const slPicked = new Set();
+  function renderSlPick(){
+    const q = (document.getElementById('slPickSearch').value || '').trim().toLowerCase();
+    const list = sendLinkAllPlayers.filter((p) => !q ||
+      (p.player_name || '').toLowerCase().indexOf(q) !== -1 ||
+      (p.parent_name || '').toLowerCase().indexOf(q) !== -1);
+    document.getElementById('slPickList').innerHTML = list.length ? list.map((p) =>
+      '<label style="display:flex; gap:8px; align-items:center; padding:3px 0; margin:0; font-weight:400;">' +
+      '<input type="checkbox" class="sl-pick" value="' + p.id + '"' + (slPicked.has(String(p.id)) ? ' checked' : '') + '> ' +
+      escapeHtml(p.player_name) + ' <span style="color:#888;">— ' + (GRADE_LABELS[p.grade] || p.grade) +
+      (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</span></label>'
+    ).join('') : '<div style="color:#888;">No players match.</div>';
+    document.getElementById('slPickCount').textContent = slPicked.size + ' selected';
+  }
+  document.getElementById('slPickSearch').addEventListener('input', renderSlPick);
+  document.getElementById('slPickList').addEventListener('change', (e) => {
+    const cb = e.target.closest('.sl-pick');
+    if (!cb) return;
+    if (cb.checked) slPicked.add(cb.value); else slPicked.delete(cb.value);
+    document.getElementById('slPickCount').textContent = slPicked.size + ' selected';
+  });
+  document.getElementById('slPickClear').addEventListener('click', (e) => {
+    e.preventDefault();
+    slPicked.clear();
+    renderSlPick();
+  });
+
   document.getElementById('slScopeSelect').addEventListener('change', () => {
-    const isIndividual = document.getElementById('slScopeSelect').value === 'individual';
-    document.getElementById('slIndividualWrap').classList.toggle('hidden', !isIndividual);
+    const v = document.getElementById('slScopeSelect').value;
+    document.getElementById('slIndividualWrap').classList.toggle('hidden', v !== 'individual');
+    document.getElementById('slPickWrap').classList.toggle('hidden', v !== 'selected');
+    if (v === 'selected') renderSlPick();
   });
 
   function closeSendLinkModal(){
@@ -3953,6 +3993,9 @@ module.exports = `<!doctype html>
     populateSendLinkScopeOptions();
     document.getElementById('slScopeSelect').value = 'all';
     document.getElementById('slIndividualWrap').classList.add('hidden');
+    document.getElementById('slPickWrap').classList.add('hidden');
+    slPicked.clear();
+    document.getElementById('slPickSearch').value = '';
     document.getElementById('sendLinkStep1Error').textContent = '';
     document.getElementById('sendLinkStep2Error').textContent = '';
     document.getElementById('sendLinkStep1').classList.remove('hidden');
@@ -4006,6 +4049,8 @@ module.exports = `<!doctype html>
     if (!title) { errEl.textContent = 'Please enter a title.'; return; }
     if (!amountCents || amountCents <= 0) { errEl.textContent = 'Please enter an amount greater than $0.'; return; }
     if (scope === 'individual' && !playerId) { errEl.textContent = 'Please choose a player.'; return; }
+    const playerIds = scope === 'selected' ? Array.from(slPicked) : null;
+    if (scope === 'selected' && !playerIds.length) { errEl.textContent = 'Please tick at least one player.'; return; }
 
     const btn = document.getElementById('sendLinkPreviewBtn');
     btn.disabled = true;
@@ -4014,12 +4059,13 @@ module.exports = `<!doctype html>
       const params = new URLSearchParams({ scope });
       if (grade) params.set('grade', grade);
       if (playerId) params.set('playerId', playerId);
+      if (playerIds) params.set('playerIds', playerIds.join(','));
       const result = await api('/api/admin/one-time-payments/recipients?' + params.toString());
       if (result.error) {
         errEl.textContent = result.error;
         return;
       }
-      sendLinkCtx = { title, description, amountCents, scope, grade, playerId };
+      sendLinkCtx = { title, description, amountCents, scope, grade, playerId, playerIds };
       renderSendLinkPreview(result);
       document.getElementById('sendLinkStep1').classList.add('hidden');
       document.getElementById('sendLinkStep2').classList.remove('hidden');

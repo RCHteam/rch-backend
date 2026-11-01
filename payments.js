@@ -604,7 +604,15 @@ const AUDIENCE_GRADES = ['pre-k', 'kindergarten', '1st-grade', '2nd-grade', '3rd
 // server-side at preview time and again at send time, rather than trusting
 // a list the admin's browser already has, so a roster change in between
 // (or a stale preview) can't send to the wrong people.
-async function resolveOneTimeRecipients({ scope, grade, playerId }) {
+async function resolveOneTimeRecipients({ scope, grade, playerId, playerIds }) {
+  if (scope === 'selected') {
+    const ids = (Array.isArray(playerIds) ? playerIds : String(playerIds || '').split(','))
+      .map((x) => Number(x)).filter((x) => Number.isInteger(x) && x > 0);
+    if (!ids.length) throw new Error('Please pick at least one player.');
+    const r = await pool.query('SELECT * FROM players WHERE id = ANY($1::int[]) AND archived_at IS NULL ORDER BY player_name', [ids]);
+    if (!r.rows.length) throw new Error('None of those players were found on the active roster.');
+    return r.rows;
+  }
   if (scope === 'individual') {
     if (!playerId) throw new Error('Please choose a player.');
     const r = await pool.query('SELECT * FROM players WHERE id = $1 AND archived_at IS NULL', [playerId]);
@@ -682,9 +690,9 @@ router.post('/admin/players/:id/sultans-kit-fee', requireAdmin, async (req, res)
 // Admin: preview who a "Send Link" audience would actually reach, before
 // anything is created or emailed.
 router.get('/admin/one-time-payments/recipients', requireAdmin, async (req, res) => {
-  const { scope, grade, playerId } = req.query;
+  const { scope, grade, playerId, playerIds } = req.query;
   try {
-    const players = await resolveOneTimeRecipients({ scope, grade, playerId });
+    const players = await resolveOneTimeRecipients({ scope, grade, playerId, playerIds });
     const recipients = players.map((p) => ({
       id: p.id,
       playerName: p.player_name,
@@ -706,7 +714,7 @@ router.get('/admin/one-time-payments/recipients', requireAdmin, async (req, res)
 // parent email on file) and emails each their own link immediately. Players
 // without an email on file are skipped and reported back, not an error.
 router.post('/admin/one-time-payments/send', requireAdmin, async (req, res) => {
-  const { title, description, amountCents, scope, grade, playerId } = req.body || {};
+  const { title, description, amountCents, scope, grade, playerId, playerIds } = req.body || {};
   if (!title || !String(title).trim()) {
     return res.status(400).json({ error: 'Please enter a title.' });
   }
@@ -716,7 +724,7 @@ router.post('/admin/one-time-payments/send', requireAdmin, async (req, res) => {
 
   let players;
   try {
-    players = await resolveOneTimeRecipients({ scope, grade, playerId });
+    players = await resolveOneTimeRecipients({ scope, grade, playerId, playerIds });
   } catch (err) {
     return res.status(400).json({ error: err.message || 'Could not resolve recipients.' });
   }
