@@ -589,3 +589,11 @@ CREATE TABLE IF NOT EXISTS kit_fees (
 );
 ALTER TABLE kit_fees ADD COLUMN IF NOT EXISTS total_cents INTEGER;
 ALTER TABLE kit_fees ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT false;
+
+-- UTeams: early (Jan-Jul) children a coach chose to move up to the next U (per season).
+CREATE TABLE IF NOT EXISTS uteam_moves (
+  kind         TEXT NOT NULL,
+  ref_id       INTEGER NOT NULL,
+  season_start INTEGER NOT NULL,
+  PRIMARY KEY (kind, ref_id, season_start)
+);

@@ -270,89 +270,76 @@ router.get('/admin/league-teams/:id/pdf', requireAdmin, async (req, res) => {
 //   U4-U5 | U6-U7L | U7E - U8L | U8E - U9L | U9E - U10L | U10E - U11L | U11E - U12
 // If a team's usual late half is empty, the early kids play with the late side of their own year instead.
 const UTEAM_DEFS = [
-  { key: 'u4-u5',    name: 'U4-U5' },
-  { key: 'u6-u7l',   name: 'U6-U7L' },
-  { key: 'u7e-u8l',  name: 'U7E - U8L' },
-  { key: 'u8e-u9l',  name: 'U8E - U9L' },
-  { key: 'u9e-u10l', name: 'U9E - U10L' },
-  { key: 'u10e-u11l', name: 'U10E - U11L' },
-  { key: 'u11e-u12', name: 'U11E - U12' },
+  { key: 'u5-',  name: 'U4-U5' },
+  { key: 'u6',   name: 'U6' },
+  { key: 'u7',   name: 'U7' },
+  { key: 'u8',   name: 'U8' },
+  { key: 'u9',   name: 'U9' },
+  { key: 'u10',  name: 'U10' },
+  { key: 'u11',  name: 'U11' },
+  { key: 'u12',  name: 'U12' },
 ];
-const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function uteamRanges(S) { // S = season start year (US Youth Soccer school year, Aug 1 - Jul 31)
-  const M = (a, b) => a + ', ' + b;
-  const ranges = [
-    'Born Aug ' + (S - 5) + ' or later',
-    M('Aug ' + (S - 7) + ' - Dec ' + (S - 7), 'Aug ' + (S - 6) + ' - Jul ' + (S - 5)),
-  ];
-  for (let n = 7; n <= 10; n++) ranges.push('Aug ' + (S - n - 1) + ' - Dec ' + (S - n - 1) + ', Jan ' + (S - n + 1) + ' - Jul ' + (S - n + 1));
-  ranges.push('Jan ' + (S - 10) + ' - Jul ' + (S - 10) + ', or born Jul ' + (S - 11) + ' or earlier');
-  return ranges;
+// Each team is one US Youth Soccer school-year U (Aug 1 - Jul 31). S = season start year.
+function uteamRanges(S) {
+  const r = ['Born Aug ' + (S - 5) + ' or later'];
+  for (let n = 6; n <= 11; n++) r.push('Aug ' + (S - n) + ' - Jul ' + (S - n + 1));
+  r.push('Born Jul ' + (S - 11) + ' or earlier');
+  return r;
 }
 
-// Pure function (also used by tests): rows need { dob: 'YYYY-MM-DD' }. Returns { teams, noDob }.
-function buildUTeams(rows, now) {
+// A child's U = season start year minus the year of the Aug-1 school year he was born in.
+// Early (E) = born Jan-Jul, late (L) = born Aug-Dec. The owner/coaches may move an
+// early child UP to the next U when a team is short; moves = Set of 'p:ID' / 'g:ID'.
+function uteamIndex(n) { return n <= 5 ? 0 : Math.min(n, 12) - 5; }
+
+// Pure function (also used by tests): rows need { id, dob: 'YYYY-MM-DD' }. Returns { teams, noDob }.
+function buildUTeams(rows, now, moves) {
   const S = seasonStartYear(now);
-  const se = S + 1;
+  const mv = moves || new Set();
   const ranges = uteamRanges(S);
   const teams = UTEAM_DEFS.map((d, i) => ({ key: d.key, name: d.name, range: ranges[i], players: [] }));
   const noDob = [];
-  // Sort everyone into halves: half[n] = { E: [], L: [] } for n = 7..11; others go straight to a team.
-  const half = {};
-  for (let n = 7; n <= 11; n++) half[n] = { E: [], L: [] };
-  const young = [], six = [], old = [];
   rows.forEach((r) => {
     const p = String(r.dob || '').slice(0, 10).split('-');
     const y = Number(p[0]), m = Number(p[1]);
     if (p.length !== 3 || !y || !m) { noDob.push(r); return; }
-    const n = S - (m >= 8 ? y : y - 1); // US Youth Soccer school-year U
-    const side = m >= 8 ? 'L' : 'E';
-    const item = Object.assign({}, r, { u_label: 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? side : '') });
-    if (n <= 5) young.push(item);
-    else if (n === 6) six.push(item);
-    else if (n >= 12) old.push(item);
-    else half[n][side].push(item);
+    const n = S - (m >= 8 ? y : y - 1);
+    const early = m < 8;
+    const i = uteamIndex(n);
+    const label = n <= 5 ? 'U' + Math.max(4, n) : 'U' + Math.min(n, 12) + (n >= 6 && n <= 11 ? (early ? 'E' : 'L') : '');
+    const canUp = early && i < teams.length - 1;
+    const up = canUp && mv.has('p:' + r.id);
+    teams[up ? i + 1 : i].players.push(Object.assign({}, r, { u_label: label, can_up: canUp, played_up: up }));
   });
-  // team index: 0 U4-U5, 1 U6-U7L, 2 U7E-U8L, 3 U8E-U9L, 4 U9E-U10L, 5 U10E-U11L, 6 U11E-U12
-  young.forEach((x) => teams[0].players.push(x));
-  six.forEach((x) => teams[1].players.push(x));
-  old.forEach((x) => teams[6].players.push(x));
-  const lateTeam = (n) => (n === 7 ? 1 : n - 6);          // team that holds late(n)
-  for (let n = 7; n <= 11; n++) {
-    const early = half[n].E, late = half[n].L;
-    const partnerLate = n === 11 ? old : half[n + 1].L;    // the usual partner of early(n)
-    const own = n - 5;                                      // team U(n)E - U(n+1)L
-    late.forEach((x) => { if (n >= 8) teams[lateTeam(n)].players.push(x); else teams[1].players.push(x); });
-    const moves = early.length && !partnerLate.length && late.length;
-    early.forEach((x) => {
-      if (moves) { teams[lateTeam(n)].players.push(Object.assign(x, { moved: true })); }
-      else teams[own].players.push(x);
-    });
-  }
-  // late(n) for n>=8 lives in team lateTeam(n); (n=7 handled above)
   teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
-  return { teams, noDob, season: S + '-' + String(se).slice(2) };
+  return { teams, noDob, season: S + '-' + String(S + 1).slice(2) };
 }
 
-
-// League-only players have no birth date, only the U they were added to, so they
-// go to the team that holds that U (early side of the U for the shared teams).
-const GUEST_TEAM = { 'u5-': 0, u6: 1, u7: 2, u8: 3, u9: 4, u10: 5, u11: 6, u12: 6 };
-async function withGuests(out) {
+// League-only players have no birth date, only the U (and E/L) they were added with.
+async function withGuests(out, moves) {
+  const mv = moves || new Set();
   try {
     const g = await pool.query('SELECT id, name, age_key, half FROM league_guests ORDER BY lower(name)');
     g.rows.forEach((x) => {
-      let i = GUEST_TEAM[x.age_key];
-      const n = x.age_key.startsWith('u') && x.age_key !== 'u5-' ? Number(x.age_key.slice(1)) : null;
-      if (n >= 7 && n <= 11) i = x.half === 'L' ? (n === 7 ? 1 : n - 6) : n - 5; // late side / early side of that U
-      if (i == null || !out.teams[i]) return;
-      const lab = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase() + (n >= 7 && n <= 11 ? (x.half === 'L' ? 'L' : 'E') : '');
-      out.teams[i].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '', u_label: lab, league_only: true });
+      const i = UTEAM_DEFS.findIndex((d) => d.key === x.age_key);
+      if (i < 0) return;
+      const n = x.age_key === 'u5-' ? null : Number(x.age_key.slice(1));
+      const label = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase() + (x.half ? x.half : '');
+      const canUp = x.half === 'E' && i < out.teams.length - 1;
+      const up = canUp && mv.has('g:' + x.id);
+      out.teams[up ? i + 1 : i].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '',
+        u_label: label, league_only: true, can_up: canUp, played_up: up });
     });
     out.teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
   } catch (err) { console.error('UTeams guests error:', err); }
   return out;
+}
+
+async function loadMoves() {
+  const S = seasonStartYear();
+  const r = await pool.query('SELECT kind, ref_id FROM uteam_moves WHERE season_start = $1', [S]);
+  return new Set(r.rows.map((x) => x.kind + ':' + x.ref_id));
 }
 
 async function loadRchRoster() {
@@ -364,12 +351,13 @@ async function loadRchRoster() {
 
 router.get('/admin/uteams', requireAdmin, async (req, res) => {
   try {
-    const out = await withGuests(buildUTeams(await loadRchRoster()));
+    const mv = await loadMoves();
+    const out = await withGuests(buildUTeams(await loadRchRoster(), undefined, mv), mv);
     res.json({
       season: out.season,
       teams: out.teams.map((t) => ({ key: t.key, name: t.name, range: t.range, players: t.players.map((p) => ({
         id: p.id, player_name: p.player_name, dob: p.dob, grade: p.grade, parent_name: p.parent_name,
-        parent_phone: p.parent_phone, u_label: p.u_label, moved: !!p.moved, sultans: !!p.sultans, league_only: !!p.league_only })) })),
+        parent_phone: p.parent_phone, u_label: p.u_label, can_up: !!p.can_up, played_up: !!p.played_up, sultans: !!p.sultans, league_only: !!p.league_only })) })),
       noDob: out.noDob.map((p) => ({ id: p.id, player_name: p.player_name, grade: p.grade })),
     });
   } catch (err) {
@@ -378,15 +366,41 @@ router.get('/admin/uteams', requireAdmin, async (req, res) => {
   }
 });
 
+// Coach decision: move an early (Jan-Jul) child up to the next U, or put him back.
+router.put('/admin/uteams/move', requireAdmin, async (req, res) => {
+  const b = req.body || {};
+  const kind = b.kind === 'g' ? 'g' : 'p';
+  const refId = parseInt(b.id, 10);
+  if (!Number.isInteger(refId)) return res.status(400).json({ error: 'Player not found.' });
+  try {
+    const S = seasonStartYear();
+    if (b.up) {
+      const mv = new Set();
+      const out = await withGuests(buildUTeams(await loadRchRoster()), mv);
+      const found = out.teams.reduce((acc, t) => acc || t.players.find((p) => String(p.id) === (kind === 'g' ? 'g' + refId : String(refId)) && !!p.league_only === (kind === 'g')), null);
+      if (!found) return res.status(404).json({ error: 'Player not found.' });
+      if (!found.can_up) return res.status(400).json({ error: 'Only players born January to July can play up.' });
+      await pool.query('INSERT INTO uteam_moves (kind, ref_id, season_start) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING', [kind, refId, S]);
+    } else {
+      await pool.query('DELETE FROM uteam_moves WHERE kind = $1 AND ref_id = $2 AND season_start = $3', [kind, refId, S]);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('UTeam move error:', err);
+    res.status(500).json({ error: 'Could not save.' });
+  }
+});
+
 router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
   try {
-    const out = await withGuests(buildUTeams(await loadRchRoster()));
+    const mv = await loadMoves();
+    const out = await withGuests(buildUTeams(await loadRchRoster(), undefined, mv), mv);
     const t = out.teams.find((x) => x.key === req.params.key);
     if (!t) return res.status(404).json({ error: 'Team not found.' });
     const pdf = await buildTeamPdf({
       name: t.name + ' (UTeam)', age_label: t.range, league_type: 'recreational', description: '',
       season_start: null, season_end: null,
-      players: t.players.map((p) => ({ ...p, age_group: p.league_only ? p.u_label : ageGroupLabel(p.dob) })),
+      players: t.players.map((p) => ({ ...p, age_group: p.u_label + (p.played_up ? ' (plays up)' : '') })),
     });
     res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="UTeam_' + t.key + '.pdf"' });
     res.send(pdf);
@@ -408,7 +422,7 @@ router.post('/admin/league-guests', requireAdmin, async (req, res) => {
   if (!name) return res.status(400).json({ error: "Please enter the player's name." });
   const ageKey = String((req.body && req.body.ageKey) || '');
   if (!AGE_KEYS.includes(ageKey) || ageKey === 'nodob') return res.status(400).json({ error: 'Please choose the age group (U).' });
-  const needsHalf = ['u7', 'u8', 'u9', 'u10', 'u11'].includes(ageKey);
+  const needsHalf = ['u6', 'u7', 'u8', 'u9', 'u10', 'u11'].includes(ageKey);
   const half = String((req.body && req.body.half) || '').toUpperCase();
   if (needsHalf && half !== 'E' && half !== 'L') return res.status(400).json({ error: 'Please choose Early (E) or Late (L).' });
   try {

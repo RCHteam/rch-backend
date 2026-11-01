@@ -264,6 +264,10 @@ module.exports = `<!doctype html>
   .ut-row{ display:flex; justify-content:space-between; gap:10px; padding:3px 0; border-bottom:1px solid rgba(246,242,231,0.07); font-size:0.88rem; }
   .ut-lab{ color:var(--sg); font-family:'Space Mono',monospace; font-size:0.72rem; }
   .ut-moved{ color:#ffd24a; font-weight:700; }
+  .ut-right{ display:flex; align-items:center; gap:8px; }
+  .ut-mv{ background:transparent; border:1px solid rgba(246,242,231,0.25); color:var(--sg); border-radius:999px; padding:1px 9px; font-size:0.72rem; cursor:pointer; font-family:inherit; }
+  .ut-mv:hover{ border-color:var(--sg); background:rgba(246,242,231,0.08); }
+  .ut-upbadge{ background:#1f6f43; color:#fff; border-radius:999px; padding:1px 9px; font-size:0.72rem; font-weight:700; }
   .lg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding-bottom:14px; }
   .lg-card{ background:var(--sbg3); border:1px solid rgba(246,242,231,0.10); border-left:5px solid var(--sr); border-radius:8px; padding:16px 18px; }
   .lg-card h3{ margin:0 0 2px; font-family:'Anton',sans-serif; font-weight:400; font-size:1.35rem; letter-spacing:0.02em; color:var(--sch); }
@@ -3191,7 +3195,7 @@ module.exports = `<!doctype html>
     const p = dobToIso(dob).split('-');
     if (p.length !== 3 || !Number(p[0]) || !Number(p[1])) return '—';
     const n = ageNumber(dob);
-    return 'U' + Math.max(4, Math.min(n, 12)) + (n >= 7 && n <= 11 ? (Number(p[1]) >= 8 ? 'L' : 'E') : '');
+    return 'U' + Math.max(4, Math.min(n, 12)) + (n >= 6 && n <= 11 ? (Number(p[1]) >= 8 ? 'L' : 'E') : '');
   }
   function ageGroupKey(dob){
     const n = ageNumber(dob);
@@ -5249,7 +5253,7 @@ module.exports = `<!doctype html>
   function guestLabel(g){ return g.age_key === 'u5-' ? 'U4/U5' : String(g.age_key).toUpperCase() + (g.half || ''); }
   function guestHalfToggle(){
     const k = document.getElementById('guestAge').value;
-    document.getElementById('guestHalf').style.display = ['u7','u8','u9','u10','u11'].indexOf(k) !== -1 ? '' : 'none';
+    document.getElementById('guestHalf').style.display = ['u6','u7','u8','u9','u10','u11'].indexOf(k) !== -1 ? '' : 'none';
   }
   async function loadGuests(){ try { guestRows = await api('/api/admin/league-guests'); if (!Array.isArray(guestRows)) guestRows = []; } catch (e) { guestRows = []; } }
   // League-only players sit inside the roster table, in the U they were added to.
@@ -5449,19 +5453,34 @@ module.exports = `<!doctype html>
       let total = 0;
       r.teams.forEach(function(t){ total += t.players.length; });
       let html = '<p class="sul-muted" style="margin:0 0 12px;">Season ' + escapeHtml(r.season) + '  •  ' + total + ' players placed</p><div class="lg-grid">';
-      r.teams.forEach(function(t){
+      r.teams.forEach(function(t, ti){
+        const nextName = r.teams[ti + 1] ? r.teams[ti + 1].name : '';
         html += '<div class="lg-card"><h3>' + escapeHtml(t.name) + '</h3>' +
           '<div class="lg-meta">' + escapeHtml(t.range) + '  •  ' + t.players.length + ' players</div>';
         if (!t.players.length) html += '<div class="lg-players"><span class="sul-muted">No players.</span></div>';
         else html += '<div class="lg-players">' + t.players.map(function(p){
-          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + (p.moved ? ' <span class="ut-moved" title="Plays with the late side of his own year because the usual late side is empty">*</span>' : '') + '</span><span class="ut-lab">' + escapeHtml(p.u_label) + '</span></div>';
+          const kind = p.league_only ? 'g' : 'p', rid = String(p.id).replace(/^g/, '');
+          const act = p.played_up
+            ? '<span class="ut-upbadge" title="A coach moved him up to this team">&uarr; plays up</span> <button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="0" title="Put him back in his own U">&larr; back</button>'
+            : (p.can_up && nextName ? '<button type="button" class="ut-mv" data-kind="' + kind + '" data-id="' + rid + '" data-up="1" title="Born Jan-Jul: can play up with ' + escapeHtml(nextName) + '">&uarr; ' + escapeHtml(nextName) + '</button>' : '');
+          return '<div class="ut-row"><span>' + escapeHtml(p.player_name) + (p.league_only ? ' <span class="sul-muted" title="League only, not with us">(league only)</span>' : '') + '</span><span class="ut-right">' + act + '<span class="ut-lab">' + escapeHtml(p.u_label) + '</span></span></div>';
         }).join('') + '</div>';
         html += '<div class="lg-btns"><button type="button" class="lg-pdf ut-pdf" data-key="' + t.key + '">Download PDF</button></div></div>';
       });
       html += '</div>';
       if (r.noDob && r.noDob.length) html += '<p class="sul-muted">No birth date, not placed: ' + r.noDob.map(function(p){ return escapeHtml(p.player_name); }).join(', ') + '</p>';
-      html += '<p class="sul-muted">* plays with the late side of his own year.</p>';
+      html += '<p class="sul-muted">Each team is one U (Aug 1 cutoff). E = born Jan-Jul, L = born Aug-Dec. A child born Jan-Jul (E) can be moved up to the next U with the &uarr; button when a team is short. Press <b>&larr; back</b> to undo.</p>';
       wrap.innerHTML = html;
+      wrap.querySelectorAll('.ut-mv').forEach(function(b){
+        b.addEventListener('click', async function(){
+          b.disabled = true;
+          try {
+            const rr = await api('/api/admin/uteams/move', { method: 'PUT', body: JSON.stringify({ kind: b.getAttribute('data-kind'), id: b.getAttribute('data-id'), up: b.getAttribute('data-up') === '1' }) });
+            if (rr && rr.error) { alert(rr.error); b.disabled = false; return; }
+            await loadUTeams();
+          } catch (e) { alert('Could not save. Please try again.'); b.disabled = false; }
+        });
+      });
       wrap.querySelectorAll('.ut-pdf').forEach(function(b){
         b.addEventListener('click', function(){ window.open(API_BASE + '/api/admin/uteams/' + b.getAttribute('data-key') + '/pdf?token=' + encodeURIComponent(getToken())); });
       });
