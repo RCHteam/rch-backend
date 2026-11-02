@@ -486,6 +486,25 @@ module.exports = `<!doctype html>
   .img-slot .rm{ position:absolute; top:3px; right:3px; background:rgba(0,0,0,0.65); color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; font-size:0.8rem; line-height:1; }
   .modal.wide{ max-width:560px; }
   @media (max-width:820px){ .cal-cell{ min-height:70px; padding:4px; } .img-slots{ grid-template-columns:repeat(2,1fr); } }
+  /* ---- One button style everywhere: green = main action, grey = secondary, red = danger ---- */
+  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-mark-paid, .btn-sul-send, .btn-sul-kit,
+  .btn-edit-row, .btn-unsubscribe, .btn-pause-toggle,
+  .btn-delete-row, .btn-delete-guest, .btn-cancel-billing, .btn-cancel-link, .btn-sul-remove{
+    padding:6px 12px; border-radius:6px; font-size:0.8rem; font-weight:600; line-height:1.2; cursor:pointer; white-space:nowrap; font-family:inherit; transition:background .15s ease, color .15s ease; }
+  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-mark-paid, .btn-sul-send, .btn-sul-kit{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); }
+  .btn-payment-link:hover, .btn-move-to-roster:hover, .btn-start-billing:hover, .btn-send-agreement:hover, .btn-dl-agreement:hover, .btn-paid-other:hover, .btn-mark-paid:hover, .btn-sul-send:hover, .btn-sul-kit:hover{ background:var(--pitch); color:#fff; }
+  .btn-edit-row, .btn-unsubscribe, .btn-pause-toggle{ background:#fff; border:1px solid #8a8a8a; color:#444; }
+  .btn-edit-row:hover, .btn-unsubscribe:hover, .btn-pause-toggle:hover{ background:#444; color:#fff; }
+  .btn-delete-row, .btn-delete-guest, .btn-cancel-billing, .btn-cancel-link, .btn-sul-remove{ background:#fff; border:1px solid #d98a76; color:#b5482f; }
+  .btn-delete-row:hover, .btn-delete-guest:hover, .btn-cancel-billing:hover, .btn-cancel-link:hover, .btn-sul-remove:hover{ background:#b5482f; color:#fff; border-color:#b5482f; }
+  .btn-payment-link:disabled, .btn-start-billing:disabled, .btn-send-agreement:disabled, .btn-paid-other:disabled, .btn-mark-paid:disabled, .btn-cancel-link:disabled, .btn-cancel-billing:disabled, .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
+  .menu-sep{ height:1px; background:#e8e8e8; margin:3px 2px; }
+  .row-menu .menu-sep{ flex:none; }
+  /* ---- Quick-jump chips at the top of long sections (Finances, Data...) ---- */
+  details.panel{ scroll-margin-top:150px; }
+  .jump-bar{ position:sticky; top:78px; z-index:30; display:flex; gap:8px; flex-wrap:wrap; background:var(--chalk); padding:8px 0 10px; margin:-6px 0 14px; border-bottom:1px solid var(--line); }
+  .jump-bar button{ background:#fff; border:1px solid #cfd8cf; color:var(--pitch); border-radius:999px; padding:5px 13px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s ease, color .15s ease; }
+  .jump-bar button:hover{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
 </style>
 </head>
 <body>
@@ -2935,7 +2954,7 @@ module.exports = `<!doctype html>
         '<td>' + escapeHtml(r.parent_name || '') + '<br><span style="color:#888;font-size:0.8rem;">' + escapeHtml(r.parent_email || '') + '</span></td>' +
         '<td>' + escapeHtml(r.program_label || '') + '</td>' +
         '<td>' + escapeHtml(fmtDate(r.sent_at)) + '</td>' +
-        '<td>' + (signed ? '<span class="status-badge status-paid">Signed ' + escapeHtml(fmtDate(r.signed_at)) + '</span>' : '<span class="status-badge status-pending">Awaiting signature</span>') + '</td>' +
+        '<td>' + (signed ? '<span class="status-badge status-paid">Signed ' + escapeHtml(fmtDate(r.signed_at)) + '</span>' : '<span class="status-badge status-pending">Not signed yet</span>') + '</td>' +
         '<td>' + (signed
           ? '<a class="btn-export" href="#" data-pdf="' + r.id + '">Download PDF</a> <button type="button" class="btn-delete-row" data-del="' + r.id + '" data-signed="1">Delete</button>'
           : '<button type="button" class="btn-payment-link" data-resend-type="' + escapeHtml(r.registration_type) + '" data-resend-id="' + r.registration_id + '">Resend</button> <button type="button" class="btn-delete-row" data-del="' + r.id + '">Delete</button>') + '</td>' +
@@ -3263,7 +3282,7 @@ module.exports = `<!doctype html>
       return '<span class="status-badge status-paid">Signed ✓</span>';
     }
     const sent = !!r.agreement_sent_at;
-    return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Awaiting signature' : 'Not sent') + '</span>';
+    return '<span class="status-badge ' + (sent ? 'status-pending' : 'status-neutral') + '">' + (sent ? 'Not signed yet' : 'Not sent') + '</span>';
   }
 
   // ---- Age groups (US Youth Soccer school-year rule: Aug 1 - Jul 31, from 2026-27) ----
@@ -3356,21 +3375,27 @@ module.exports = `<!doctype html>
             (sulView ? '' :             '<button type="button" class="btn-payment-link" data-id="' + r.id + '" data-label="' + label + '" data-session="' + (r.session_type || 'one') + '" data-sibling="' + (r.sibling_discount || 0) + '">Send Payment Link</button>') +
             '<button type="button" class="btn-kebab" aria-label="More actions">⋯</button>' +
             '<div class="row-menu hidden">' +
-              (sulView
-                ? '<button type="button" class="btn-sul-kit" data-id="' + r.id + '" data-label="' + label + '">Send Kit Fee</button><button type="button" class="btn-sul-remove" data-id="' + r.id + '" data-label="' + label + '">Remove from Sultans Roster</button>'
-                : (!r.sultans && r.tryout_status !== 'tryout' ? '<button type="button" class="btn-sul-send" data-id="' + r.id + '" data-label="' + label + '">Send to Try Outs</button>' : '')) +
-              (sulView ? '' : (r.agreement_signed_at
-                ? '<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>'
-                : '<button type="button" class="btn-send-agreement" data-id="' + r.id + '" data-label="' + label + '">' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>') +
-              '<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? (r.paid_manual ? 'Undo Mark as Paid' : 'Undo Paid Otherwise') : 'Paid Otherwise') + '</button>' +
-              (r.paid_otherwise_at ? '' : '<button type="button" class="btn-mark-paid" data-id="' + r.id + '" style="color:#1f7a3d; font-weight:700;">Mark as Paid</button>') +
-              (r.payment_status === 'completed' && !r.stripe_subscription_id
-                ? '<button type="button" class="btn-start-billing" data-id="' + r.id + '" data-label="' + label + '">Start Monthly Billing</button>' : '') +
-              (r.payment_status === 'pending' ? '<button type="button" class="btn-cancel-link" data-id="' + r.id + '" data-label="' + label + '" style="color:#b5482f; font-weight:700;">Cancel Payment Link</button>' : '') +
-              '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
-              '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>') +
-              '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
-              '<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>' +
+              (function(){
+                var main = [], pay = [], team = [], edit = [], danger = [];
+                var lab = ' data-id="' + r.id + '" data-label="' + label + '"';
+                if (sulView) {
+                  main.push('<button type="button" class="btn-sul-kit"' + lab + '>Send Kit Fee</button>');
+                  danger.push('<button type="button" class="btn-sul-remove"' + lab + '>Remove from Sultans Roster</button>');
+                } else {
+                  if (r.agreement_signed_at) main.push('<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>');
+                  else main.push('<button type="button" class="btn-send-agreement"' + lab + '>' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>');
+                  pay.push('<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? (r.paid_manual ? 'Undo Mark as Paid' : 'Undo Paid Otherwise') : 'Paid Otherwise') + '</button>');
+                  if (!r.paid_otherwise_at) pay.push('<button type="button" class="btn-mark-paid" data-id="' + r.id + '">Mark as Paid</button>');
+                  if (r.payment_status === 'completed' && !r.stripe_subscription_id) pay.push('<button type="button" class="btn-start-billing"' + lab + '>Start Monthly Billing</button>');
+                  if (r.payment_status === 'pending') pay.push('<button type="button" class="btn-cancel-link"' + lab + '>Cancel Payment Link</button>');
+                  if (!r.sultans && r.tryout_status !== 'tryout') team.push('<button type="button" class="btn-sul-send"' + lab + '>Send to Try Outs</button>');
+                  danger.push('<button type="button" class="btn-cancel-billing"' + lab + '>Cancel Billing</button>');
+                  danger.push('<button type="button" class="btn-unsubscribe"' + lab + '>Unsubscribe</button>');
+                }
+                edit.push('<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>');
+                danger.push('<button type="button" class="btn-delete-row" data-id="' + r.id + '">Delete</button>');
+                return [main, pay, team, edit, danger].filter(function(g){ return g.length; }).map(function(g){ return g.join(''); }).join('<div class="menu-sep"></div>');
+              })() +
             '</div>' +
           '</div>' +
         '</td>' +
@@ -5198,8 +5223,8 @@ module.exports = `<!doctype html>
     wrap.innerHTML = '<table><thead><tr><th>Sent</th><th>Family</th><th>Grade</th>' + (kind === 'review' ? '<th>Rating</th>' : '') + '<th>' + (kind === 'review' ? 'Comment' : 'Their answer') + '</th><th></th></tr></thead><tbody>' +
       data.rows.map(function(r){
         return '<tr><td>' + escapeHtml(fmtDate(r.sent_at)) + '</td><td>' + (r.anonymous ? '<i style="color:#888">Anonymous</i>' : escapeHtml(r.child_names || '') + '<br><span style="color:#888">' + escapeHtml(r.parent_name || '') + '</span>') + '</td><td>' + (GRADE_LABELS[r.grade] || '') + '</td>' +
-          (kind === 'review' ? '<td>' + (r.rating != null ? '<span style="color:#d9a441; letter-spacing:2px;">' + stars(r.rating) + '</span>' : '<span style="color:#999">Waiting</span>') + '</td>' : '') +
-          '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? (kind === 'size' ? escapeHtml(sizeAnswer(r)) : escapeHtml(r.comment || '—')) : (kind === 'review' ? '' : '<span style="color:#999">Waiting</span>')) + '</td>' +
+          (kind === 'review' ? '<td>' + (r.rating != null ? '<span style="color:#d9a441; letter-spacing:2px;">' + stars(r.rating) + '</span>' : '<span class="status-badge status-pending">Waiting</span>') + '</td>' : '') +
+          '<td style="white-space:pre-wrap; max-width:420px;">' + (r.responded_at ? (kind === 'size' ? escapeHtml(sizeAnswer(r)) : escapeHtml(r.comment || '—')) : (kind === 'review' ? '' : '<span class="status-badge status-pending">Waiting</span>')) + '</td>' +
           '<td><button type="button" class="btn-delete-row" data-oid="' + r.id + '">Delete</button></td></tr>';
       }).join('') + '</tbody></table>';
   }
@@ -5994,8 +6019,8 @@ module.exports = `<!doctype html>
   function kitCell(k){
     if (!k) return '<span style="color:#999">—</span>';
     return k.paid_at
-      ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(k.amount_cents) + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>'
-      : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span>' + (k.source === 'manual' ? ' <button type="button" class="btn-delete-guest" data-kpaid="' + k.id + '" style="color:#2e7d32; border-color:#2e7d32;">Mark paid</button>' : '');
+      ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(k.amount_cents) + (k.paid_method ? ' (' + escapeHtml(k.paid_method === 'cash' ? 'Cash' : 'Zelle') + ')' : '') + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>' + (k.paid_method ? ' <button type="button" class="btn-edit-row" data-kunpaid="' + k.id + '">Undo</button>' : '')
+      : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span> <button type="button" class="btn-paid-other" data-kpaid="' + k.id + '" data-kmethod="' + (k.source === 'manual' ? '' : 'zelle') + '">' + (k.source === 'manual' ? 'Mark paid' : 'Mark paid (Zelle)') + '</button>';
   }
   function kitOrderBox(k, label){
     if (!k) return '';
@@ -6041,7 +6066,7 @@ module.exports = `<!doctype html>
     catch (x) { c.checked = !c.checked; alert('Could not save. Please try again.'); }
   });
   document.getElementById('kitTableWrap').addEventListener('click', async function(e){
-    const d = e.target.closest('button[data-kdel]'), p = e.target.closest('button[data-kpaid]');
+    const d = e.target.closest('button[data-kdel]'), p = e.target.closest('button[data-kpaid]'), u = e.target.closest('button[data-kunpaid]');
     try {
       if (d) {
         if (!confirm('Delete this entry?')) return;
@@ -6049,7 +6074,8 @@ module.exports = `<!doctype html>
         for (let q = 0; q < ids.length; q++) { const r = await api('/api/admin/kit-fees/' + ids[q], { method: 'DELETE' }); if (r && r.error) alert(r.error); }
         await loadKitFees();
       }
-      if (p) { await api('/api/admin/kit-fees/' + p.getAttribute('data-kpaid'), { method: 'PUT', body: JSON.stringify({ paid: true }) }); await loadKitFees(); }
+      if (p) { await api('/api/admin/kit-fees/' + p.getAttribute('data-kpaid'), { method: 'PUT', body: JSON.stringify({ paid: true, method: p.getAttribute('data-kmethod') || undefined }) }); await loadKitFees(); }
+      if (u) { if (!confirm('Mark this kit as NOT paid?')) return; const r = await api('/api/admin/kit-fees/' + u.getAttribute('data-kunpaid'), { method: 'PUT', body: JSON.stringify({ paid: false }) }); if (r && r.error) alert(r.error); await loadKitFees(); }
     } catch (x) { alert('Could not save. Please try again.'); }
   });
 
@@ -6068,6 +6094,24 @@ module.exports = `<!doctype html>
     ]);
     await loadOverviewAndRevenue();
   }
+
+  // ---- Quick-jump chips: click a name to open that panel and scroll to it ----
+  document.querySelectorAll('[id^="section-"]').forEach((sec) => {
+    const panels = Array.from(sec.querySelectorAll('details.panel'));
+    if (panels.length < 3) return;
+    const bar = document.createElement('div');
+    bar.className = 'jump-bar';
+    panels.forEach((d) => {
+      const t = d.querySelector('.panel-title');
+      if (!t) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = t.textContent.trim();
+      b.addEventListener('click', () => { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      bar.appendChild(b);
+    });
+    sec.insertBefore(bar, sec.firstChild);
+  });
 
   // ---- Expand / collapse all panels (Finances + Data) ----
   document.querySelectorAll('.panel-tool').forEach((btn) => {

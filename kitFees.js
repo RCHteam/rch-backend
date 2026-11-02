@@ -27,7 +27,10 @@ async function upsertFrom(source, sourceId, name, cents, chargedAt, paidAt, tota
   kitType = kitType === 'sultans' ? 'sultans' : 'practice';
   const found = await pool.query('SELECT id FROM kit_fees WHERE source = $1 AND source_id = $2 AND kit_type = $3', [source, sourceId, kitType]);
   if (found.rows[0]) {
-    await pool.query('UPDATE kit_fees SET player_name=$2, amount_cents=$3, charged_at=$4, paid_at=$5, total_cents=$6 WHERE id=$1',
+    // A kit marked paid by hand (Zelle, cash) keeps its paid date; the sync never wipes it.
+    await pool.query(`UPDATE kit_fees SET player_name=$2, amount_cents=$3, charged_at=$4,
+        paid_at = CASE WHEN paid_method IS NOT NULL THEN paid_at ELSE $5 END,
+        total_cents = CASE WHEN paid_method IS NOT NULL THEN total_cents ELSE $6 END WHERE id=$1`,
       [found.rows[0].id, name, cents, chargedAt, paidAt, totalCents]);
     return;
   }
@@ -78,13 +81,13 @@ router.get('/admin/kit-fees', requireAdmin, async (req, res) => {
   try {
     await syncKitFees();
     const r = await pool.query(
-      `SELECT id, player_name, amount_cents, total_cents, charged_at, paid_at, ordered, ordered_at, source, source_id, kit_type, created_at
+      `SELECT id, player_name, amount_cents, total_cents, charged_at, paid_at, ordered, ordered_at, source, source_id, kit_type, created_at, paid_method
          FROM kit_fees WHERE NOT hidden ORDER BY COALESCE(charged_at, created_at) DESC, id DESC`);
     // One line per child: a Practice kit slot and a Sultans kit slot (two payments for the same child share a line).
     const lines = [];
     const byName = new Map();
     for (const k of r.rows) {
-      const slot = { id: k.id, amount_cents: k.amount_cents, paid_at: k.paid_at, ordered: k.ordered, ordered_at: k.ordered_at, source: k.source };
+      const slot = { id: k.id, amount_cents: k.amount_cents, paid_at: k.paid_at, ordered: k.ordered, ordered_at: k.ordered_at, source: k.source, paid_method: k.paid_method };
       const key = String(k.player_name).trim().toLowerCase();
       let line = (byName.get(key) || []).find((l) => !l[k.kit_type]);
       if (!line) {
@@ -133,8 +136,11 @@ router.put('/admin/kit-fees/:id', requireAdmin, async (req, res) => {
       await pool.query('UPDATE kit_fees SET ordered = $2, ordered_at = $3 WHERE id = $1', [row.id, b.ordered, b.ordered ? new Date() : null]);
     }
     if (typeof b.paid === 'boolean') {
-      if (row.source !== 'manual') return res.status(400).json({ error: 'This one is tracked from Stripe automatically.' });
-      await pool.query('UPDATE kit_fees SET paid_at = $2, total_cents = $3 WHERE id = $1', [row.id, b.paid ? new Date() : null, b.paid ? row.amount_cents : null]);
+      // Paid by hand (Zelle / cash): keeps the paid mark even when the payment link later syncs.
+      const method = b.paid ? (row.source === 'manual' ? null : (b.method === 'cash' ? 'cash' : 'zelle')) : null;
+      if (!b.paid && row.source !== 'manual' && !row.paid_method) return res.status(400).json({ error: 'This one was paid through Stripe, so it cannot be undone here.' });
+      await pool.query('UPDATE kit_fees SET paid_at = $2, total_cents = $3, paid_method = $4 WHERE id = $1',
+        [row.id, b.paid ? new Date() : null, b.paid ? row.amount_cents : null, method]);
     }
     res.json({ ok: true });
   } catch (err) {
