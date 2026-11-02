@@ -18,7 +18,15 @@ function siteUrl(req) {
 // Same audiences as "Send Link" on one-time payments: one player, everyone,
 // RCH only, Sultans only, a whole grade (optionally just its RCH/Sultans
 // players). Always recomputed here, never trusted from the browser.
-async function resolvePlayers({ scope, grade, playerId }) {
+async function resolvePlayers({ scope, grade, playerId, playerIds }) {
+  if (scope === 'selected') {
+    const ids = (Array.isArray(playerIds) ? playerIds : String(playerIds || '').split(','))
+      .map((x) => Number(x)).filter((x) => Number.isInteger(x) && x > 0);
+    if (!ids.length) throw new Error('Please pick at least one player.');
+    const r = await pool.query('SELECT * FROM players WHERE id = ANY($1::int[]) AND archived_at IS NULL ORDER BY player_name', [ids]);
+    if (!r.rows.length) throw new Error('None of those players were found on the active roster.');
+    return r.rows;
+  }
   if (scope === 'individual') {
     if (!playerId) throw new Error('Please choose a player.');
     const r = await pool.query('SELECT * FROM players WHERE id = $1 AND archived_at IS NULL', [playerId]);
@@ -296,4 +304,5 @@ router.post('/outreach/:token', async (req, res) => {
   }
 });
 
+router.resolvePlayers = resolvePlayers;
 module.exports = router;

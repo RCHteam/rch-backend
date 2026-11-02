@@ -1168,7 +1168,7 @@ module.exports = `<!doctype html>
       <summary><span class="panel-title">Signed Agreements</span><span class="panel-hint">E-signed PDFs on file</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Use <b>Send Agreement</b> on a registration or roster row to email the family an e-sign link. Once they fill in the form and sign, the signed PDF is stored here and a copy is emailed to them and to you.</p>
-      <div class="panel-actions"><button type="button" class="btn-add" id="resendAgreementsBtn">Send to those who did not sign</button></div>
+      <div class="panel-actions"><button type="button" class="btn-add" id="openAgSendBtn">Send Agreement to Players…</button> <button type="button" class="btn-add" id="resendAgreementsBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send to those who did not sign</button></div>
       <div id="agreementsTableWrap"></div>
 
       </div>
@@ -1660,6 +1660,53 @@ module.exports = `<!doctype html>
     <div class="modal-actions">
       <button type="button" class="btn-cancel" id="pauseModalCancel">Cancel</button>
       <button type="button" class="btn-send" id="pauseModalSend">Pause</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="agSendModal">
+  <div class="modal" style="max-width:520px;">
+    <h3>Send Agreement</h3>
+    <div id="agStep1">
+      <label for="agScopeSelect">Send to</label>
+      <select id="agScopeSelect"></select>
+
+      <div id="agIndWrap" class="hidden">
+        <label for="agIndSearch">Search player</label>
+        <input type="text" id="agIndSearch" placeholder="Type a player or parent name…">
+        <label for="agIndSelect">Player</label>
+        <select id="agIndSelect"></select>
+      </div>
+
+      <div id="agPickWrap" class="hidden">
+        <label for="agPickSearch">Search players</label>
+        <input type="text" id="agPickSearch" placeholder="Type a player or parent name…">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 4px; font-size:0.85rem;">
+          <span id="agPickCount" style="color:#555;">0 selected</span>
+          <a href="#" id="agPickClear" style="color:var(--pitch);">Clear all</a>
+        </div>
+        <div id="agPickList" style="max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:6px 10px; font-size:0.85rem;"></div>
+      </div>
+
+      <label style="display:flex; gap:8px; align-items:center; margin-top:12px; font-weight:400;">
+        <input type="checkbox" id="agIncludeSigned"> Also send to families who already signed (for a new version)
+      </label>
+
+      <p class="modal-error" id="agErr1"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="agCancel1">Cancel</button>
+        <button type="button" class="btn-send" id="agPreviewBtn">Preview Recipients</button>
+      </div>
+    </div>
+
+    <div id="agStep2" class="hidden">
+      <p class="modal-sub" id="agSummary"></p>
+      <div id="agList" style="max-height:240px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:10px 12px; margin-bottom:6px; font-size:0.85rem;"></div>
+      <p class="modal-error" id="agErr2"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="agBackBtn">Back</button>
+        <button type="button" class="btn-send" id="agConfirmBtn">Send</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4137,6 +4184,142 @@ module.exports = `<!doctype html>
       btn.disabled = false;
       btn.textContent = 'Send';
     }
+  });
+
+
+  // ---- Send Agreement to a chosen audience (everyone, a U group, several players, one player) ----
+  let agPlayers = [];
+  const agPicked = new Set();
+  let agCtx = null;
+  function agScopeHtml(){
+    let html = '<option value="all">All Players</option><option value="all_rch">All RCH Elite Training</option><option value="all_sultans">All Sultans FC</option>';
+    html += '<optgroup label="A Specific Grade (any program)">' + GRADES.map(function(g){ return '<option value="grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += '<optgroup label="RCH — Specific Grade">' + GRADES.map(function(g){ return '<option value="rch_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += '<optgroup label="Sultans — Specific Grade">' + GRADES.map(function(g){ return '<option value="sultans_grade:' + g + '">' + GRADE_LABELS[g] + '</option>'; }).join('') + '</optgroup>';
+    html += ageScopeOptions('age', 'A Specific Age Group (any program)') + ageScopeOptions('rch_age', 'RCH — Age Group') + ageScopeOptions('sultans_age', 'Sultans — Age Group');
+    html += '<option value="selected">Pick several players…</option><option value="individual">One player…</option>';
+    return html;
+  }
+  function agMatches(q){
+    const t = (q || '').trim().toLowerCase();
+    return !t ? agPlayers : agPlayers.filter(function(p){ return (p.player_name || '').toLowerCase().indexOf(t) !== -1 || (p.parent_name || '').toLowerCase().indexOf(t) !== -1; });
+  }
+  function agRenderInd(){
+    const list = agMatches(document.getElementById('agIndSearch').value);
+    document.getElementById('agIndSelect').innerHTML = list.length ? list.map(function(p){ return '<option value="' + p.id + '">' + escapeHtml(p.player_name) + ' — ' + (GRADE_LABELS[p.grade] || p.grade) + (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</option>'; }).join('') : '<option value="">No players match</option>';
+  }
+  function agRenderPick(){
+    const list = agMatches(document.getElementById('agPickSearch').value);
+    document.getElementById('agPickList').innerHTML = list.length ? list.map(function(p){
+      return '<label style="display:flex; gap:8px; align-items:center; padding:3px 0; margin:0; font-weight:400;"><input type="checkbox" class="ag-pick" value="' + p.id + '"' + (agPicked.has(String(p.id)) ? ' checked' : '') + '> ' +
+        escapeHtml(p.player_name) + ' <span style="color:#888;">— ' + (GRADE_LABELS[p.grade] || p.grade) + (p.parent_name ? ' (' + escapeHtml(p.parent_name) + ')' : '') + '</span></label>';
+    }).join('') : '<div style="color:#888;">No players match.</div>';
+    document.getElementById('agPickCount').textContent = agPicked.size + ' selected';
+  }
+  function agScopeChanged(){
+    const v = document.getElementById('agScopeSelect').value;
+    document.getElementById('agIndWrap').classList.toggle('hidden', v !== 'individual');
+    document.getElementById('agPickWrap').classList.toggle('hidden', v !== 'selected');
+    if (v === 'selected') agRenderPick();
+  }
+  document.getElementById('agScopeSelect').addEventListener('change', agScopeChanged);
+  document.getElementById('agIndSearch').addEventListener('input', agRenderInd);
+  document.getElementById('agPickSearch').addEventListener('input', agRenderPick);
+  document.getElementById('agPickList').addEventListener('change', function(e){
+    const cb = e.target.closest('.ag-pick'); if (!cb) return;
+    if (cb.checked) agPicked.add(cb.value); else agPicked.delete(cb.value);
+    document.getElementById('agPickCount').textContent = agPicked.size + ' selected';
+  });
+  document.getElementById('agPickClear').addEventListener('click', function(e){ e.preventDefault(); agPicked.clear(); agRenderPick(); });
+  document.getElementById('agCancel1').addEventListener('click', function(){ document.getElementById('agSendModal').classList.add('hidden'); });
+  document.getElementById('agBackBtn').addEventListener('click', function(){
+    document.getElementById('agStep2').classList.add('hidden');
+    document.getElementById('agStep1').classList.remove('hidden');
+  });
+  document.getElementById('openAgSendBtn').addEventListener('click', async function(){
+    document.getElementById('agScopeSelect').innerHTML = agScopeHtml();
+    document.getElementById('agScopeSelect').value = 'all';
+    agPicked.clear();
+    document.getElementById('agPickSearch').value = '';
+    document.getElementById('agIndSearch').value = '';
+    document.getElementById('agIncludeSigned').checked = false;
+    document.getElementById('agErr1').textContent = '';
+    document.getElementById('agErr2').textContent = '';
+    document.getElementById('agStep1').classList.remove('hidden');
+    document.getElementById('agStep2').classList.add('hidden');
+    document.getElementById('agConfirmBtn').disabled = false;
+    document.getElementById('agConfirmBtn').textContent = 'Send';
+    agScopeChanged();
+    document.getElementById('agSendModal').classList.remove('hidden');
+    try { agPlayers = await api('/api/admin/players'); } catch (e) { agPlayers = []; }
+    agRenderInd(); agRenderPick();
+  });
+  function agCollect(){
+    const v = document.getElementById('agScopeSelect').value;
+    const i = v.indexOf(':');
+    const scope = i === -1 ? v : v.slice(0, i);
+    const grade = i === -1 ? null : v.slice(i + 1);
+    return {
+      scope: scope, grade: grade,
+      playerId: scope === 'individual' ? document.getElementById('agIndSelect').value : null,
+      playerIds: scope === 'selected' ? Array.from(agPicked) : null,
+      includeSigned: document.getElementById('agIncludeSigned').checked,
+    };
+  }
+  document.getElementById('agPreviewBtn').addEventListener('click', async function(){
+    const errEl = document.getElementById('agErr1');
+    errEl.textContent = '';
+    const c = agCollect();
+    if (c.scope === 'individual' && !c.playerId) { errEl.textContent = 'Please choose a player.'; return; }
+    if (c.scope === 'selected' && !c.playerIds.length) { errEl.textContent = 'Please tick at least one player.'; return; }
+    const btn = document.getElementById('agPreviewBtn');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    try {
+      const params = new URLSearchParams({ scope: c.scope });
+      if (c.grade) params.set('grade', c.grade);
+      if (c.playerId) params.set('playerId', c.playerId);
+      if (c.playerIds) params.set('playerIds', c.playerIds.join(','));
+      if (c.includeSigned) params.set('includeSigned', '1');
+      const r = await api('/api/admin/agreements/recipients?' + params.toString());
+      if (r.error) { errEl.textContent = r.error; return; }
+      agCtx = c;
+      document.getElementById('agSummary').textContent = r.sendableCount
+        ? 'This will email ' + r.sendableCount + (r.sendableCount === 1 ? ' agreement' : ' agreements') +
+          (r.alreadySigned.length ? ' — ' + r.alreadySigned.length + ' skipped (already signed)' : '') +
+          (r.noEmail.length ? ' — ' + r.noEmail.length + ' skipped (no email)' : '') + '.'
+        : 'Nobody to send to (already signed, or no email on file).';
+      document.getElementById('agList').innerHTML = r.recipients.map(function(x){
+        let tag = '', col = '#888';
+        if (!x.email) { tag = 'no email, will be skipped'; col = '#b5482f'; }
+        else if (x.signed && !c.includeSigned) { tag = 'already signed, will be skipped'; col = '#b07a10'; }
+        else if (x.signed) { tag = 'already signed, will get it again'; }
+        else if (x.awaiting) { tag = 'sent before, not signed yet'; }
+        return '<div style="padding:4px 0; border-bottom:1px solid #f2f2f2;">' + escapeHtml(x.playerName) + ' — ' + (GRADE_LABELS[x.grade] || x.grade) +
+          (x.email ? ' <span style="color:#888;">(' + escapeHtml(x.email) + ')</span>' : '') + (tag ? ' <span style="color:' + col + ';">' + tag + '</span>' : '') + '</div>';
+      }).join('') || '<div style="color:#888;">Nothing to show.</div>';
+      document.getElementById('agConfirmBtn').disabled = !r.sendableCount;
+      document.getElementById('agStep1').classList.add('hidden');
+      document.getElementById('agStep2').classList.remove('hidden');
+    } catch (e) { errEl.textContent = 'Could not load recipients. Please try again.'; }
+    finally { btn.disabled = false; btn.textContent = 'Preview Recipients'; }
+  });
+  document.getElementById('agConfirmBtn').addEventListener('click', async function(){
+    if (!agCtx) return;
+    const errEl = document.getElementById('agErr2');
+    errEl.textContent = '';
+    const btn = document.getElementById('agConfirmBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const r = await api('/api/admin/agreements/send-bulk', { method: 'POST', body: JSON.stringify(agCtx) });
+      if (r.error) { errEl.textContent = r.error; btn.disabled = false; btn.textContent = 'Send'; return; }
+      document.getElementById('agSendModal').classList.add('hidden');
+      let msg = 'Sent ' + r.sentCount + (r.sentCount === 1 ? ' agreement.' : ' agreements.');
+      if (r.alreadySigned && r.alreadySigned.length) msg += '\\n\\nSkipped (already signed): ' + r.alreadySigned.join(', ');
+      if (r.noEmail && r.noEmail.length) msg += '\\n\\nSkipped (no email on file): ' + r.noEmail.join(', ');
+      if (r.failed && r.failed.length) msg += '\\n\\nFailed (please retry): ' + r.failed.join(', ');
+      alert(msg);
+      await loadAgreements();
+    } catch (e) { errEl.textContent = 'Could not send. Please try again.'; btn.disabled = false; btn.textContent = 'Send'; }
   });
 
   document.getElementById('addPlayerBtn').addEventListener('click', () => {

@@ -8,6 +8,7 @@ const PDFDocument = require('pdfkit');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { sendAgreementEmail, sendSignedAgreementEmails } = require('./email');
+const outreachRouter = require('./outreach');
 
 const router = express.Router();
 const fs = require('fs');
@@ -107,36 +108,101 @@ async function lookupRegistration(type, id) {
 const isoDate = (d) => (d ? (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10)) : '');
 
 // ---- Admin: send an agreement link -----------------------------------------
+// Creates (or re-uses the unsigned) agreement link for one registration and emails it.
+async function createAndSendAgreement(registrationType, registrationId, req) {
+  const info = await lookupRegistration(registrationType, registrationId);
+  if (!info) return { status: 404, error: 'Registration not found.' };
+  if (!info.email) return { status: 400, error: 'This family has no email on file — add one first.' };
+
+  // Re-use an unsigned link for the same registration (this is a "resend").
+  let row = (await pool.query(
+    `SELECT * FROM agreements WHERE registration_type=$1 AND registration_id=$2 AND signed_at IS NULL ORDER BY id DESC LIMIT 1`,
+    [registrationType, registrationId])).rows[0];
+  if (row) {
+    await pool.query('UPDATE agreements SET sent_at=now(), parent_email=$2, program_label=$3 WHERE id=$1', [row.id, info.email, info.programLabel]);
+  } else {
+    const token = crypto.randomBytes(24).toString('hex');
+    row = (await pool.query(
+      `INSERT INTO agreements (token, registration_type, registration_id, player_name, parent_name, parent_email, program_label)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [token, registrationType, registrationId, info.playerName, info.parentName, info.email, info.programLabel])).rows[0];
+  }
+  const link = `${siteUrl(req)}/sign/${row.token}`;
+  await sendAgreementEmail({ to: info.email, parentName: info.parentName, childName: info.playerName, link });
+  return { ok: true, link };
+}
+
 router.post('/admin/agreements/send', requireAdmin, async (req, res) => {
   const { registrationType, registrationId } = req.body || {};
   if (!['skills', 'join', 'player'].includes(registrationType) || !registrationId) {
     return res.status(400).json({ error: 'registrationType and registrationId are required.' });
   }
   try {
-    const info = await lookupRegistration(registrationType, registrationId);
-    if (!info) return res.status(404).json({ error: 'Registration not found.' });
-    if (!info.email) return res.status(400).json({ error: 'This family has no email on file — add one first.' });
-
-    // Re-use an unsigned link for the same registration (this is a "resend").
-    let row = (await pool.query(
-      `SELECT * FROM agreements WHERE registration_type=$1 AND registration_id=$2 AND signed_at IS NULL ORDER BY id DESC LIMIT 1`,
-      [registrationType, registrationId])).rows[0];
-    if (row) {
-      await pool.query('UPDATE agreements SET sent_at=now(), parent_email=$2, program_label=$3 WHERE id=$1', [row.id, info.email, info.programLabel]);
-    } else {
-      const token = crypto.randomBytes(24).toString('hex');
-      row = (await pool.query(
-        `INSERT INTO agreements (token, registration_type, registration_id, player_name, parent_name, parent_email, program_label)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [token, registrationType, registrationId, info.playerName, info.parentName, info.email, info.programLabel])).rows[0];
-    }
-    const link = `${siteUrl(req)}/sign/${row.token}`;
-    await sendAgreementEmail({ to: info.email, parentName: info.parentName, childName: info.playerName, link });
-    res.json({ ok: true, link });
+    const r = await createAndSendAgreement(registrationType, registrationId, req);
+    if (r.error) return res.status(r.status).json({ error: r.error });
+    res.json({ ok: true, link: r.link });
   } catch (err) {
     console.error('Send agreement error:', err);
     res.status(500).json({ error: 'Could not send the agreement.' });
   }
+});
+
+// ---- Bulk: send the agreement to a chosen audience (everyone, a U group, several
+// players you pick, or one player). One agreement + one email per child.
+async function agreementAudience(src) {
+  const players = await outreachRouter.resolvePlayers({
+    scope: src.scope, grade: src.grade, playerId: src.playerId, playerIds: src.playerIds });
+  const signed = (await pool.query(
+    `SELECT registration_type, registration_id, lower(player_name) AS n, lower(COALESCE(parent_email,'')) AS e
+       FROM agreements WHERE signed_at IS NOT NULL`)).rows;
+  const sentRows = (await pool.query(
+    `SELECT registration_id FROM agreements WHERE registration_type='player' AND signed_at IS NULL`)).rows;
+  const awaiting = new Set(sentRows.map((x) => x.registration_id));
+  return players.map((p) => {
+    const isSigned = signed.some((x) => (x.registration_type === 'player' && x.registration_id === p.id) ||
+      (x.n === String(p.player_name).toLowerCase() && x.e === String(p.parent_email || '').toLowerCase()));
+    return { id: p.id, playerName: p.player_name, grade: p.grade, parentName: p.parent_name, email: p.parent_email || null,
+      signed: isSigned, awaiting: !isSigned && awaiting.has(p.id) };
+  });
+}
+
+router.get('/admin/agreements/recipients', requireAdmin, async (req, res) => {
+  try {
+    const includeSigned = req.query.includeSigned === '1';
+    const list = await agreementAudience(req.query);
+    const sendable = list.filter((r) => r.email && (includeSigned || !r.signed));
+    res.json({
+      recipients: list,
+      sendableCount: sendable.length,
+      noEmail: list.filter((r) => !r.email).map((r) => r.playerName),
+      alreadySigned: list.filter((r) => r.signed && !includeSigned).map((r) => r.playerName),
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Could not resolve recipients.' });
+  }
+});
+
+router.post('/admin/agreements/send-bulk', requireAdmin, async (req, res) => {
+  const b = req.body || {};
+  let list;
+  try { list = await agreementAudience(b); }
+  catch (err) { return res.status(400).json({ error: err.message || 'Could not resolve recipients.' }); }
+  const noEmail = list.filter((r) => !r.email).map((r) => r.playerName);
+  const alreadySigned = b.includeSigned ? [] : list.filter((r) => r.email && r.signed).map((r) => r.playerName);
+  const todo = list.filter((r) => r.email && (b.includeSigned || !r.signed));
+  if (!todo.length) return res.status(400).json({ error: 'Nobody to send to (no email on file, or they already signed).', noEmail, alreadySigned });
+  const sent = [], failed = [];
+  for (const r of todo) {
+    try {
+      const out = await createAndSendAgreement('player', r.id, req);
+      if (out.error) throw new Error(out.error);
+      sent.push(r.playerName);
+    } catch (err) {
+      console.error('Bulk agreement send failed for', r.id, err);
+      failed.push(r.playerName);
+    }
+  }
+  res.json({ ok: true, sentCount: sent.length, noEmail, alreadySigned, failed });
 });
 
 // Re-send the agreement to every family that has not signed yet (same link).
