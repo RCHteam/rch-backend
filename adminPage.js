@@ -803,22 +803,6 @@ module.exports = `<!doctype html>
       </div>
     </details>
 
-    <details class="panel" open>
-      <summary><span class="panel-title">Kit Fees</span><span class="panel-hint">Who was charged, who paid, kit ordered</span><span class="panel-chev" aria-hidden="true"></span></summary>
-      <div class="panel-body">
-      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). The <b>Practice Kit</b> and <b>Sultans Kit</b> columns show separately whether each kit was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
-      <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
-        <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
-        <select id="kitType" style="padding:10px 12px; font:inherit;"><option value="practice">Practice Kit</option><option value="sultans">Sultans Kit</option></select>
-        <input type="number" id="kitAmount" min="0" step="0.01" placeholder="Amount ($)" style="width:130px; padding:10px 12px; font:inherit;">
-        <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600;"><input type="checkbox" id="kitPaidNow" style="width:auto; margin:0;"> Already paid</label>
-        <button type="button" class="btn-add" id="kitAddBtn">+ Add</button>
-        <span id="kitErr" style="color:#b5482f; font-size:0.85rem;"></span>
-      </div>
-      <div id="kitTableWrap"></div>
-      </div>
-    </details>
 
     <details class="panel">
       <summary><span class="panel-title">Reset Payment Status</span><span class="panel-hint">Start a fresh billing month</span><span class="panel-chev" aria-hidden="true"></span></summary>
@@ -1190,6 +1174,32 @@ module.exports = `<!doctype html>
       <div class="panel-actions"><button type="button" class="btn-add" id="openAgSendBtn">Send Agreement to Players…</button> <button type="button" class="btn-add" id="resendAgreementsBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send to those who did not sign</button></div>
       <div id="agreementsTableWrap"></div>
 
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Family Checklist</span><span class="panel-hint">Billing, agreement, child info, kit</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">One line per child: is the family on monthly billing in Stripe, did they sign the agreement, did they send the child info update, and did they pay the kit. The PDF is built fresh from the live data every time you download it.</p>
+      <div id="checklistSummary" style="margin:0 0 12px; font-size:0.9rem;"></div>
+      <div class="panel-actions"><button type="button" class="btn-add" id="checklistPdfBtn">Download Checklist PDF</button></div>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Kit Fees</span><span class="panel-hint">Who was charged, who paid, kit ordered</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). The <b>Practice Kit</b> and <b>Sultans Kit</b> columns show separately whether each kit was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
+      <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
+        <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
+        <select id="kitType" style="padding:10px 12px; font:inherit;"><option value="practice">Practice Kit</option><option value="sultans">Sultans Kit</option></select>
+        <input type="number" id="kitAmount" min="0" step="0.01" placeholder="Amount ($)" style="width:130px; padding:10px 12px; font:inherit;">
+        <label style="display:flex; align-items:center; gap:6px; margin:0; font-weight:600;"><input type="checkbox" id="kitPaidNow" style="width:auto; margin:0;"> Already paid</label>
+        <button type="button" class="btn-add" id="kitAddBtn">+ Add</button>
+        <span id="kitErr" style="color:#b5482f; font-size:0.85rem;"></span>
+      </div>
+      <div id="kitTableWrap"></div>
       </div>
     </details>
 
@@ -5898,7 +5908,7 @@ module.exports = `<!doctype html>
     if (name === 'coaches' && !coachesLoaded) { coachesLoaded = true; await loadCoaches(); }
     if (name === 'shop') await loadShopAdmin();
     if (name === 'camp') await loadCampAdmin();
-    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements(), loadOutreach('review'), loadOutreach('feedback'), loadOutreach('size')]); }
+    if (name === 'data') { await Promise.all([loadSnapshots(), loadArchivedPlayers(), loadAgreements(), loadKitFees(), loadChecklistSummary(), loadOutreach('review'), loadOutreach('feedback'), loadOutreach('size')]); }
   });
   let chargesLoaded = false;
   let coachesLoaded = false;
@@ -6079,11 +6089,23 @@ module.exports = `<!doctype html>
     } catch (x) { alert('Could not save. Please try again.'); }
   });
 
+  async function loadChecklistSummary(){
+    const el = document.getElementById('checklistSummary');
+    try {
+      const c = await api('/api/admin/family-checklist');
+      if (!c || c.total == null) throw new Error('bad');
+      el.innerHTML = '<b>' + c.total + '</b> children &middot; In Stripe: <b>' + c.stripe + '</b> &middot; Agreement signed: <b>' + c.signed + '</b> &middot; Child info filed: <b>' + c.filed + '</b> &middot; Kit paid: <b>' + c.kitPaid + '</b>';
+    } catch (e) { el.textContent = 'Could not load the numbers.'; }
+  }
+  document.getElementById('checklistPdfBtn').addEventListener('click', function(){
+    window.open(API_BASE + '/api/admin/family-checklist/pdf?token=' + encodeURIComponent(getToken()));
+  });
+
   let financesLoaded = false;
   async function loadFinancesExtras(){
     if (financesLoaded) return;
     financesLoaded = true;
-    await Promise.all([loadProrationMode(), loadResetInfo(), loadOneTimePayments(), loadKitFees()]);
+    await Promise.all([loadProrationMode(), loadResetInfo(), loadOneTimePayments()]);
   }
 
   async function loadAll(){
