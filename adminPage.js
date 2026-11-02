@@ -505,6 +505,30 @@ module.exports = `<!doctype html>
   .jump-bar{ position:sticky; top:78px; z-index:30; display:flex; gap:8px; flex-wrap:wrap; background:var(--chalk); padding:8px 0 10px; margin:-6px 0 14px; border-bottom:1px solid var(--line); }
   .jump-bar button{ background:#fff; border:1px solid #cfd8cf; color:var(--pitch); border-radius:999px; padding:5px 13px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s ease, color .15s ease; }
   .jump-bar button:hover{ background:var(--pitch); color:#fff; border-color:var(--pitch); }
+  /* ---- Finances / Data: grouped, compact, professional panel lists ---- */
+  .pgroup{ margin:0 0 26px; }
+  .pgroup-title{ margin:0 0 8px 4px; font-family:'Space Mono',monospace; font-size:0.7rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#7a8277; }
+  .pgroup-card{ background:#fff; border-radius:10px; border:1px solid #e6e0cd; box-shadow:0 1px 2px rgba(11,23,16,0.04); overflow:hidden; }
+  .pgroup-card > details.panel{ margin:0; border-radius:0; box-shadow:none; border-left:0; border-top:1px solid #efe9d8; background:#fff; }
+  .pgroup-card > details.panel:first-child{ border-top:0; }
+  .pgroup-card > details.panel > summary{ padding:13px 18px; gap:12px; border-radius:0; }
+  .pgroup-card > details.panel > summary:hover{ background:#faf8f1; border-radius:0; }
+  .pgroup-card > details.panel[open] > summary{ box-shadow:inset 3px 0 0 var(--pitch); background:#fbfaf5; }
+  .pgroup-card .panel-title{ font-family:inherit; font-weight:700; font-size:1rem; letter-spacing:0; color:var(--ink); }
+  .pgroup-card .panel-hint{ color:#8a9186; font-size:0.82rem; }
+  .pgroup-card .panel-body{ padding:6px 20px 22px 62px; border-top:1px solid #f3eedf; }
+  .panel-icon{ flex:none; width:32px; height:32px; border-radius:8px; background:#e6f2ea; color:var(--pitch); display:inline-flex; align-items:center; justify-content:center; }
+  .panel-icon svg{ width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .panel-badge{ flex:none; font-size:0.74rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .panel-badge.neutral{ background:#eeece4; color:#6b7268; }
+  .panel-badge.ok{ background:#e3f3e9; color:#1f7a44; }
+  .panel-badge.warn{ background:#fdf3dd; color:#9a6b12; }
+  .panel-badge.bad{ background:#fbe6e1; color:#b5482f; }
+  .pgroup.danger .pgroup-title{ color:#b5482f; }
+  .pgroup.danger .pgroup-card{ border-color:#ecc9c0; }
+  .pgroup.danger .panel-icon{ background:#fbe6e1; color:#b5482f; }
+  .pgroup.danger > .pgroup-card > details.panel[open] > summary{ box-shadow:inset 3px 0 0 #b5482f; }
+  @media (max-width:640px){ .pgroup-card .panel-body{ padding-left:18px; } .pgroup-card .panel-hint{ display:none; } }
 </style>
 </head>
 <body>
@@ -2895,6 +2919,7 @@ module.exports = `<!doctype html>
 
   async function loadSnapshots(){
     const rows = await api('/api/admin/monthly-snapshots');
+    panelBadge('Monthly Snapshots', Array.isArray(rows) && rows.length ? rows.length + ' saved' : '', 'neutral');
     const wrap = document.getElementById('snapshotsTableWrap');
     wrap.innerHTML = renderSnapshotsTable(rows);
     wrap.querySelectorAll('a[data-month]').forEach((a) => {
@@ -2955,6 +2980,7 @@ module.exports = `<!doctype html>
   async function loadAgreements(){
     const wrap = document.getElementById('agreementsTableWrap');
     const rows = await api('/api/admin/agreements');
+    if (Array.isArray(rows)) { const unsigned = rows.filter(function(x){ return !x.signed_at; }).length; panelBadge('Signed Agreements', unsigned ? unsigned + ' not signed' : (rows.length ? 'All signed' : ''), unsigned ? 'warn' : 'ok'); }
     if (!Array.isArray(rows) || !rows.length) { wrap.innerHTML = '<div class="empty">No agreements sent yet.</div>'; return; }
     let html = '<table><thead><tr><th>Player</th><th>Parent</th><th>Program</th><th>Sent</th><th>Status</th><th></th></tr></thead><tbody>';
     rows.forEach((r) => {
@@ -3018,6 +3044,7 @@ module.exports = `<!doctype html>
 
   async function loadArchivedPlayers(){
     const rows = await api('/api/admin/players?archived=true');
+    panelBadge('Unsubscribed Players', Array.isArray(rows) && rows.length ? rows.length + (rows.length === 1 ? ' player' : ' players') : '', 'neutral');
     const wrap = document.getElementById('archivedTableWrap');
     wrap.innerHTML = renderArchivedTable(rows);
     wrap.querySelectorAll('.btn-payment-link').forEach((btn) => {
@@ -3863,6 +3890,7 @@ module.exports = `<!doctype html>
   async function loadResetInfo(){
     try {
       const { lastResetAt } = await api('/api/admin/reset-payment-status');
+      panelBadge('Reset Payment Status', lastResetAt ? 'Last: ' + new Date(lastResetAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never reset', 'neutral');
       document.getElementById('resetPaymentInfo').textContent = lastResetAt
         ? 'Last reset: ' + new Date(lastResetAt).toLocaleString()
         : 'Never reset yet.';
@@ -3944,6 +3972,7 @@ module.exports = `<!doctype html>
 
   async function loadOneTimePayments(){
     const rows = await api('/api/admin/one-time-payments');
+    if (Array.isArray(rows)) { const unpaid = rows.filter(function(x){ return x.status === 'pending'; }).length; panelBadge('One-Time Payments', unpaid ? unpaid + ' unpaid' : (rows.length ? 'All paid' : ''), unpaid ? 'warn' : 'ok'); }
     const wrap = document.getElementById('oneTimePaymentsTableWrap');
     wrap.innerHTML = renderOneTimePaymentsTable(rows);
     wrap.querySelectorAll('.btn-copy-link').forEach((btn) => {
@@ -5226,6 +5255,12 @@ module.exports = `<!doctype html>
     const prefix = kind === 'review' ? 'reviews' : (kind === 'size' ? 'sizes' : 'feedback');
     const data = await api('/api/admin/outreach?kind=' + kind);
     const sm = data.summary;
+    (function(){
+      const title = kind === 'review' ? 'Reviews' : (kind === 'size' ? 'Update Child Information' : 'What Can We Change?');
+      const waiting = sm.sent - sm.responded;
+      if (kind === 'review') panelBadge(title, sm.sent ? sm.responded + ' of ' + sm.sent + ' answered' : '', 'neutral');
+      else panelBadge(title, waiting > 0 ? waiting + ' waiting' : (sm.sent ? 'All answered' : ''), waiting > 0 ? 'warn' : 'ok');
+    })();
     document.getElementById(prefix + 'Summary').innerHTML = '<b>' + sm.sent + '</b> sent &middot; <b>' + sm.responded + '</b> answered' +
       (kind === 'review' && sm.averageRating != null ? ' &middot; average <b>' + sm.averageRating + ' / 5</b> ' + stars(Math.round(sm.averageRating)) : '');
     const wrap = document.getElementById(prefix + 'TableWrap');
@@ -6043,6 +6078,7 @@ module.exports = `<!doctype html>
       if (!Array.isArray(rows)) throw new Error('bad');
       let paid = 0, notOrdered = 0, total = 0;
       rows.forEach(function(r){ [r.practice, r.sultans].forEach(function(k){ if (!k) return; total++; if (k.paid_at) paid++; if (!k.ordered) notOrdered++; }); });
+      panelBadge('Kit Fees', (total - paid) ? (total - paid) + ' unpaid' : (total ? 'All paid' : ''), (total - paid) ? 'warn' : 'ok');
       document.getElementById('kitSummary').innerHTML = '<b>' + total + '</b> kit fee' + (total === 1 ? '' : 's') + ' charged &middot; <b>' + paid + '</b> paid &middot; <b>' + notOrdered + '</b> not ordered yet';
       if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
       wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Total paid</th><th>Practice Kit</th><th>Sultans Kit</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
@@ -6094,6 +6130,7 @@ module.exports = `<!doctype html>
     try {
       const c = await api('/api/admin/family-checklist');
       if (!c || c.total == null) throw new Error('bad');
+      panelBadge('Family Checklist', c.signed + ' of ' + c.total + ' signed', c.signed < c.total ? 'warn' : 'ok');
       el.innerHTML = '<b>' + c.total + '</b> children &middot; In Stripe: <b>' + c.stripe + '</b> &middot; Agreement signed: <b>' + c.signed + '</b> &middot; Child info filed: <b>' + c.filed + '</b> &middot; Kit paid: <b>' + c.kitPaid + '</b>';
     } catch (e) { el.textContent = 'Could not load the numbers.'; }
   }
@@ -6117,10 +6154,90 @@ module.exports = `<!doctype html>
     await loadOverviewAndRevenue();
   }
 
+  // ---- Finances / Data: group the panels under headings, add icons and live badges ----
+  function panelBadge(title, text, kind){
+    const t = Array.from(document.querySelectorAll('details.panel > summary .panel-title')).find(function(e){ return e.textContent.trim() === title; });
+    if (!t) return;
+    const sum = t.parentNode;
+    let b = sum.querySelector('.panel-badge');
+    if (!text) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('span'); sum.insertBefore(b, sum.querySelector('.panel-chev')); }
+    b.className = 'panel-badge ' + (kind || 'neutral');
+    b.textContent = text;
+  }
+  const PANEL_ICONS = {
+    'Pricing & Revenue': '<path d="M18 20V10M12 20V4M6 20v-6"/>',
+    'Payment Link Amounts': '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    'Proration Mode': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    'One-Time Payments': '<rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>',
+    'Reset Payment Status': '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>',
+    'Monthly Report': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+    'Monthly Snapshots': '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>',
+    'Family Checklist': '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    'Signed Agreements': '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    'Kit Fees': '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+    'Reviews': '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+    'What Can We Change?': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+    'Update Child Information': '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    'Unsubscribed Players': '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M23 11h-6"/>',
+    'Exports': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'
+  };
+  const PANEL_LAYOUT = {
+    finances: [['Prices', ['Pricing & Revenue', 'Payment Link Amounts', 'Proration Mode']], ['Payments', ['One-Time Payments']], ['Start of a new month', ['Reset Payment Status'], true]],
+    data: [['Reports', ['Monthly Report', 'Monthly Snapshots', 'Family Checklist']], ['Families', ['Signed Agreements', 'Kit Fees', 'Update Child Information', 'Reviews', 'What Can We Change?']], ['Records', ['Unsubscribed Players', 'Exports']]]
+  };
+  function organizePanels(){
+    Object.keys(PANEL_LAYOUT).forEach(function(secName){
+      const sec = document.getElementById('section-' + secName);
+      if (!sec) return;
+      const byTitle = {};
+      Array.from(sec.querySelectorAll('details.panel')).forEach(function(d){
+        const t = d.querySelector('.panel-title');
+        if (t) byTitle[t.textContent.trim()] = d;
+      });
+      const anchor = sec.querySelector('.panel-tools');
+      let after = anchor;
+      const place = function(el){ if (after) { after.insertAdjacentElement('afterend', el); } else { sec.insertBefore(el, sec.firstChild); } after = el; };
+      const used = {};
+      const makeGroup = function(name, titles, danger){
+        const group = document.createElement('div');
+        group.className = 'pgroup' + (danger ? ' danger' : '');
+        const h = document.createElement('div');
+        h.className = 'pgroup-title';
+        h.textContent = name;
+        const card = document.createElement('div');
+        card.className = 'pgroup-card';
+        titles.forEach(function(title){
+          const d = byTitle[title];
+          if (!d) return;
+          used[title] = true;
+          const sum = d.querySelector('summary');
+          if (sum && !sum.querySelector('.panel-icon')) {
+            const ic = document.createElement('span');
+            ic.className = 'panel-icon';
+            ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (PANEL_ICONS[title] || '<circle cx="12" cy="12" r="3"/>') + '</svg>';
+            sum.insertBefore(ic, sum.firstChild);
+          }
+          d.open = false;
+          card.appendChild(d);
+        });
+        if (!card.children.length) return;
+        group.appendChild(h);
+        group.appendChild(card);
+        place(group);
+      };
+      PANEL_LAYOUT[secName].forEach(function(g){ makeGroup(g[0], g[1], g[2]); });
+      // Any panel not listed above still shows up, in a last group.
+      const rest = Object.keys(byTitle).filter(function(t){ return !used[t]; });
+      if (rest.length) makeGroup('More', rest, false);
+    });
+  }
+  organizePanels();
+
   // ---- Quick-jump chips: click a name to open that panel and scroll to it ----
   document.querySelectorAll('[id^="section-"]').forEach((sec) => {
     const panels = Array.from(sec.querySelectorAll('details.panel'));
-    if (panels.length < 3) return;
+    if (panels.length < 3 || sec.querySelector('.pgroup')) return;
     const bar = document.createElement('div');
     bar.className = 'jump-bar';
     panels.forEach((d) => {
