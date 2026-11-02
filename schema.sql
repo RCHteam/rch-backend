@@ -597,6 +597,11 @@ CREATE TABLE IF NOT EXISTS uteam_moves (
   season_start INTEGER NOT NULL,
   PRIMARY KEY (kind, ref_id, season_start)
 );
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id          TEXT PRIMARY KEY,
+  type        TEXT,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 ALTER TABLE uteam_moves ADD COLUMN IF NOT EXISTS steps INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE uteam_moves ADD COLUMN IF NOT EXISTS special BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE players ADD COLUMN IF NOT EXISTS paid_manual BOOLEAN NOT NULL DEFAULT false;

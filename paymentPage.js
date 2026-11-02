@@ -87,6 +87,7 @@ module.exports = `<!doctype html>
       if (res.status === 404) { show('invalid-view'); return; }
       const data = await res.json();
       if (data.status === 'completed') { show('used-view'); return; }
+      if (data.status === 'canceled') { show('invalid-view'); return; }
 
       const prettyDate = new Date(data.seasonEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 

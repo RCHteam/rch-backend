@@ -442,6 +442,35 @@ async function startFollowOnSubscription(stripe, entry, customerId, paymentInten
   return subscription;
 }
 
+// Admin: cancel a payment link that was sent by mistake and is not paid yet.
+// The family's old link stops working right away.
+router.post('/admin/payment-links/cancel-pending', requireAdmin, async (req, res) => {
+  const { registrationType, registrationId } = req.body || {};
+  if (!['skills', 'join', 'player'].includes(registrationType) || !registrationId) {
+    return res.status(400).json({ error: 'registrationType and registrationId are required.' });
+  }
+  try {
+    const r = await pool.query(
+      `UPDATE payment_links SET status = 'canceled'
+        WHERE registration_type = $1 AND registration_id = $2 AND status = 'pending'
+        RETURNING id, stripe_checkout_session_id`, [registrationType, registrationId]);
+    if (!r.rowCount) return res.status(404).json({ error: 'There is no unpaid payment link to cancel.' });
+    // If the parent already opened the Stripe checkout page, close it too.
+    const stripe = getStripe();
+    if (stripe) {
+      for (const row of r.rows) {
+        if (row.stripe_checkout_session_id) {
+          try { await stripe.checkout.sessions.expire(row.stripe_checkout_session_id); } catch (e) { /* already closed */ }
+        }
+      }
+    }
+    res.json({ ok: true, canceled: r.rowCount });
+  } catch (err) {
+    console.error('Cancel pending link error:', err);
+    res.status(500).json({ error: 'Could not cancel the link. Please try again.' });
+  }
+});
+
 // Admin: start (or restart) monthly billing for a family that already paid
 // but has no subscription attached — the repair for the bug above.
 router.post('/admin/payment-links/start-billing', requireAdmin, async (req, res) => {
@@ -905,6 +934,21 @@ async function handleStripeWebhook(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // Stripe sometimes delivers the same event twice. Remember each event id and
+  // ignore repeats, so nobody gets two subscriptions or a double "paid" mark.
+  try {
+    const claim = await pool.query(
+      'INSERT INTO stripe_events (id, type) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING RETURNING id',
+      [event.id, event.type]);
+    if (!claim.rowCount) {
+      console.log('Stripe webhook: ignoring repeated event', event.id, event.type);
+      return res.json({ received: true, duplicate: true });
+    }
+  } catch (err) {
+    console.error('Stripe event claim failed:', err);
+    return res.status(500).send('Webhook handler error.');
+  }
+
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -933,7 +977,9 @@ async function handleStripeWebhook(req, res) {
         // The checkout the family just completed was a one-off charge (kit
         // fee + this month's prorated amount) — now start the real ongoing
         // subscription at the full monthly rate (see startFollowOnSubscription).
-        if (entry && session.customer) {
+        // Second safety net: never start a subscription if this link already has one.
+        const fresh = entry ? (await pool.query('SELECT stripe_subscription_id FROM payment_links WHERE id = $1', [entry.id])).rows[0] : null;
+        if (entry && session.customer && !(fresh && fresh.stripe_subscription_id)) {
           try {
             await startFollowOnSubscription(stripe, entry, session.customer, session.payment_intent);
           } catch (subErr) {
@@ -977,6 +1023,8 @@ async function handleStripeWebhook(req, res) {
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook handling error:', err);
+    // Let Stripe's automatic retry process this event again.
+    try { await pool.query('DELETE FROM stripe_events WHERE id = $1', [event.id]); } catch (e) { /* ignore */ }
     res.status(500).send('Webhook handler error.');
   }
 }

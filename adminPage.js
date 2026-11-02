@@ -2505,6 +2505,24 @@ module.exports = `<!doctype html>
   // has been charged yet) or already active — either way it just stops.
   function wireCancelButtons(wrapId, registrationType, onSent){
     const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.btn-cancel-link').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const label = btn.getAttribute('data-label') || 'this family';
+        if (!confirm('Cancel the unpaid payment link for ' + label + '? The link in their email stops working right away. You can then send a new, correct one.')) return;
+        btn.disabled = true;
+        try {
+          const result = await api('/api/admin/payment-links/cancel-pending', {
+            method: 'POST',
+            body: JSON.stringify({ registrationType, registrationId: btn.getAttribute('data-id') }),
+          });
+          if (result && result.error) { alert(result.error); btn.disabled = false; }
+          else { await onSent(); }
+        } catch (e) {
+          alert('Could not cancel the link. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    });
     wrap.querySelectorAll('.btn-cancel-billing').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
@@ -3348,6 +3366,7 @@ module.exports = `<!doctype html>
               (r.paid_otherwise_at ? '' : '<button type="button" class="btn-mark-paid" data-id="' + r.id + '" style="color:#1f7a3d; font-weight:700;">Mark as Paid</button>') +
               (r.payment_status === 'completed' && !r.stripe_subscription_id
                 ? '<button type="button" class="btn-start-billing" data-id="' + r.id + '" data-label="' + label + '">Start Monthly Billing</button>' : '') +
+              (r.payment_status === 'pending' ? '<button type="button" class="btn-cancel-link" data-id="' + r.id + '" data-label="' + label + '" style="color:#b5482f; font-weight:700;">Cancel Payment Link</button>' : '') +
               '<button type="button" class="btn-cancel-billing" data-id="' + r.id + '" data-label="' + label + '">Cancel Billing</button>' +
               '<button type="button" class="btn-unsubscribe" data-id="' + r.id + '" data-label="' + label + '">Unsubscribe</button>') +
               '<button type="button" class="btn-edit-row" data-id="' + r.id + '">Edit</button>' +
