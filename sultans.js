@@ -308,12 +308,27 @@ function uteamRanges(S) {
 // A child's U = season start year minus the year of the Aug-1 school year he was born in.
 // Early (E) = born Jan-Jul, late (L) = born Aug-Dec. The owner/coaches may move an
 // early child UP to the next U when a team is short; moves = Set of 'p:ID' / 'g:ID'.
+// moves: Map of 'p:ID' / 'g:ID' -> { steps, special }. (A plain Set still works: one step, not special.)
+function moveOf(mv, key) {
+  if (!mv) return null;
+  if (typeof mv.get === 'function') { const m = mv.get(key); if (m) return m; }
+  return mv.has && mv.has(key) && typeof mv.get !== 'function' ? { steps: 1, special: false } : null;
+}
+// How many Us up this child plays. Early (Jan-Jul) kids: one, if a coach moved them.
+// SP (special talent) kids: one or two, any birth month. Never down, never past the top team.
+function stepsFor(m, canUp, i, last) {
+  if (!m) return { steps: 0, special: false };
+  const special = !!m.special;
+  let steps = special ? Math.min(Math.max(Number(m.steps) || 1, 1), 2) : (canUp ? 1 : 0);
+  steps = Math.min(steps, last - i);
+  return { steps, special: special && steps > 0 };
+}
 function uteamIndex(n) { return n <= 5 ? 0 : Math.min(n, 12) - 5; }
 
 // Pure function (also used by tests): rows need { id, dob: 'YYYY-MM-DD' }. Returns { teams, noDob }.
 function buildUTeams(rows, now, moves) {
   const S = seasonStartYear(now);
-  const mv = moves || new Set();
+  const mv = moves || new Map();
   const ranges = uteamRanges(S);
   const teams = UTEAM_DEFS.map((d, i) => ({ key: d.key, name: d.name, range: ranges[i], players: [] }));
   const noDob = [];
@@ -326,8 +341,8 @@ function buildUTeams(rows, now, moves) {
     const i = uteamIndex(n);
     const label = n <= 5 ? 'U' + Math.max(4, n) : 'U' + Math.min(n, 12) + (n >= 6 && n <= 11 ? (early ? 'E' : 'L') : '');
     const canUp = early && i < teams.length - 1;
-    const up = canUp && mv.has('p:' + r.id);
-    teams[up ? i + 1 : i].players.push(Object.assign({}, r, { u_label: label, can_up: canUp, played_up: up }));
+    const st = stepsFor(moveOf(mv, 'p:' + r.id), canUp, i, teams.length - 1);
+    teams[i + st.steps].players.push(Object.assign({}, r, { u_label: label, can_up: canUp, played_up: st.steps > 0, steps: st.steps, special: st.special, home: i }));
   });
   teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
   return { teams, noDob, season: S + '-' + String(S + 1).slice(2) };
@@ -335,7 +350,7 @@ function buildUTeams(rows, now, moves) {
 
 // League-only players have no birth date, only the U (and E/L) they were added with.
 async function withGuests(out, moves) {
-  const mv = moves || new Set();
+  const mv = moves || new Map();
   try {
     const g = await pool.query('SELECT id, name, age_key, half FROM league_guests ORDER BY lower(name)');
     g.rows.forEach((x) => {
@@ -344,9 +359,9 @@ async function withGuests(out, moves) {
       const n = x.age_key === 'u5-' ? null : Number(x.age_key.slice(1));
       const label = x.age_key === 'u5-' ? 'U4/U5' : x.age_key.toUpperCase() + (x.half ? x.half : '');
       const canUp = x.half === 'E' && i < out.teams.length - 1;
-      const up = canUp && mv.has('g:' + x.id);
-      out.teams[up ? i + 1 : i].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '',
-        u_label: label, league_only: true, can_up: canUp, played_up: up });
+      const st = stepsFor(moveOf(mv, 'g:' + x.id), canUp, i, out.teams.length - 1);
+      out.teams[i + st.steps].players.push({ id: 'g' + x.id, player_name: x.name, dob: '', grade: '', parent_name: '', parent_phone: '',
+        u_label: label, league_only: true, can_up: canUp, played_up: st.steps > 0, steps: st.steps, special: st.special, home: i });
     });
     out.teams.forEach((t) => t.players.sort((a, b) => String(a.player_name).localeCompare(String(b.player_name))));
   } catch (err) { console.error('UTeams guests error:', err); }
@@ -355,8 +370,8 @@ async function withGuests(out, moves) {
 
 async function loadMoves() {
   const S = seasonStartYear();
-  const r = await pool.query('SELECT kind, ref_id FROM uteam_moves WHERE season_start = $1', [S]);
-  return new Set(r.rows.map((x) => x.kind + ':' + x.ref_id));
+  const r = await pool.query('SELECT kind, ref_id, steps, special FROM uteam_moves WHERE season_start = $1', [S]);
+  return new Map(r.rows.map((x) => [x.kind + ':' + x.ref_id, { steps: x.steps, special: x.special }]));
 }
 
 async function loadRchRoster() {
@@ -374,7 +389,7 @@ router.get('/admin/uteams', requireAdmin, async (req, res) => {
       season: out.season,
       teams: out.teams.map((t) => ({ key: t.key, name: t.name, range: t.range, players: t.players.map((p) => ({
         id: p.id, player_name: p.player_name, dob: p.dob, grade: p.grade, parent_name: p.parent_name,
-        parent_phone: p.parent_phone, u_label: p.u_label, can_up: !!p.can_up, played_up: !!p.played_up, sultans: !!p.sultans, league_only: !!p.league_only })) })),
+        parent_phone: p.parent_phone, u_label: p.u_label, can_up: !!p.can_up, played_up: !!p.played_up, steps: p.steps || 0, special: !!p.special, home: p.home, sultans: !!p.sultans, league_only: !!p.league_only })) })),
       noDob: out.noDob.map((p) => ({ id: p.id, player_name: p.player_name, grade: p.grade })),
     });
   } catch (err) {
@@ -383,21 +398,32 @@ router.get('/admin/uteams', requireAdmin, async (req, res) => {
   }
 });
 
-// Coach decision: move an early (Jan-Jul) child up to the next U, or put him back.
+// Coach decision. Two kinds of moves:
+//  - early child (born Jan-Jul) up ONE U when a team is short (steps 1, special false)
+//  - SP (special talent): any child up ONE or TWO Us, any birth month (special true)
+// steps 0 puts him back in his own U. Never down.
 router.put('/admin/uteams/move', requireAdmin, async (req, res) => {
   const b = req.body || {};
   const kind = b.kind === 'g' ? 'g' : 'p';
   const refId = parseInt(b.id, 10);
   if (!Number.isInteger(refId)) return res.status(400).json({ error: 'Player not found.' });
+  let steps = b.steps != null ? parseInt(b.steps, 10) : (b.up ? 1 : 0);
+  if (!Number.isInteger(steps) || steps < 0) return res.status(400).json({ error: 'A player can only move up, never down.' });
+  const special = !!b.special;
   try {
     const S = seasonStartYear();
-    if (b.up) {
-      const mv = new Set();
-      const out = await withGuests(buildUTeams(await loadRchRoster()), mv);
-      const found = out.teams.reduce((acc, t) => acc || t.players.find((p) => String(p.id) === (kind === 'g' ? 'g' + refId : String(refId)) && !!p.league_only === (kind === 'g')), null);
+    if (steps > 0) {
+      if (steps > 2 || (!special && steps > 1)) return res.status(400).json({ error: special ? 'An SP player can move up one or two Us only.' : 'Only one U up is allowed here.' });
+      const out = await withGuests(buildUTeams(await loadRchRoster()), new Map());
+      let found = null, ti = -1;
+      out.teams.forEach((t, idx) => { if (!found) { const f = t.players.find((p) => String(p.id) === (kind === 'g' ? 'g' + refId : String(refId)) && !!p.league_only === (kind === 'g')); if (f) { found = f; ti = idx; } } });
       if (!found) return res.status(404).json({ error: 'Player not found.' });
-      if (!found.can_up) return res.status(400).json({ error: 'Only players born January to July can play up.' });
-      await pool.query('INSERT INTO uteam_moves (kind, ref_id, season_start) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING', [kind, refId, S]);
+      if (!special && !found.can_up) return res.status(400).json({ error: 'Only players born January to July can play up.' });
+      if (ti + steps > out.teams.length - 1) return res.status(400).json({ error: 'There is no team that far up.' });
+      await pool.query(
+        `INSERT INTO uteam_moves (kind, ref_id, season_start, steps, special) VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (kind, ref_id, season_start) DO UPDATE SET steps = EXCLUDED.steps, special = EXCLUDED.special`,
+        [kind, refId, S, steps, special]);
     } else {
       await pool.query('DELETE FROM uteam_moves WHERE kind = $1 AND ref_id = $2 AND season_start = $3', [kind, refId, S]);
     }
@@ -417,7 +443,7 @@ router.get('/admin/uteams/:key/pdf', requireAdmin, async (req, res) => {
     const pdf = await buildTeamPdf({
       name: t.name + ' (UTeam)', age_label: t.range, league_type: 'recreational', description: '',
       season_start: null, season_end: null,
-      players: t.players.map((p) => ({ ...p, age_group: p.u_label + (p.played_up ? ' (plays up)' : '') })),
+      players: t.players.map((p) => ({ ...p, age_group: p.u_label + (p.special && p.played_up ? ' (SP, plays up ' + p.steps + ')' : (p.played_up ? ' (plays up)' : '')) })),
     });
     res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="UTeam_' + t.key + '.pdf"' });
     res.send(pdf);

@@ -207,10 +207,12 @@ router.put('/admin/players/:id/archive', requireAdmin, async (req, res) => {
 // (cash, Zelle, check...). Pass { paid: false } to undo it.
 router.put('/admin/players/:id/paid-otherwise', requireAdmin, async (req, res) => {
   const paid = !(req.body && req.body.paid === false);
+  // asPaid: the button "Mark as Paid" (shows plain green "Paid") instead of "Paid otherwise".
+  const asPaid = paid && !!(req.body && req.body.asPaid);
   try {
     const result = await pool.query(
-      `UPDATE players SET paid_otherwise_at = ${paid ? 'now()' : 'NULL'} WHERE id = $1 RETURNING *`,
-      [req.params.id]
+      `UPDATE players SET paid_otherwise_at = ${paid ? 'now()' : 'NULL'}, paid_manual = $2 WHERE id = $1 RETURNING *`,
+      [req.params.id, asPaid]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'Player not found.' });
     res.json({ ok: true, entry: result.rows[0] });
@@ -248,7 +250,7 @@ router.post('/admin/reset-payment-status', requireAdmin, async (req, res) => {
       return res.status(409).json({ error: 'Payment status was already reset this month (' + new Date(last).toLocaleString('en-US', { timeZone: 'America/Chicago' }) + ').' });
     }
     const cancelled = await pool.query(`UPDATE payment_links SET status = 'canceled' WHERE status = 'pending'`);
-    const cleared = await pool.query(`UPDATE players SET paid_otherwise_at = NULL WHERE paid_otherwise_at IS NOT NULL`);
+    const cleared = await pool.query(`UPDATE players SET paid_otherwise_at = NULL, paid_manual = false WHERE paid_otherwise_at IS NOT NULL`);
     const now = new Date().toISOString();
     await setSetting('payment_status_reset_at', now);
     res.json({ ok: true, resetAt: now, cancelledLinks: cancelled.rowCount, clearedPaidOtherwise: cleared.rowCount });
