@@ -1,13 +1,22 @@
 const { getSetting } = require('./settings');
 
-// The monthly rates families are actually charged (the "Payment Link Amounts"
-// box on the Finances tab).
+// Revenue prices: used ONLY for the Pricing & Revenue table, the monthly report
+// and the monthly snapshots. They are separate from the Payment Link Amounts
+// (what families are charged). Until the owner sets them, they simply follow the
+// Payment Link Amounts, so nothing changes by itself.
+const REVENUE_RATE_KEYS = {
+  one: ['revenue_one_session_cents', 'payment_one_session_monthly_cents', '6000'],
+  two: ['revenue_two_session_cents', 'payment_two_session_monthly_cents', '10000'],
+  online: ['revenue_online_cents', 'payment_online_course_monthly_cents', '3120'],
+};
+async function getRevenueRateRaw(kind) {
+  const [key, fallbackKey, def] = REVENUE_RATE_KEYS[kind];
+  const v = await getSetting(key, null);
+  if (v != null && v !== '') return v;
+  return getSetting(fallbackKey, def);
+}
 async function getMonthlyRates() {
-  const [one, two, online] = await Promise.all([
-    getSetting('payment_one_session_monthly_cents', '6000'),
-    getSetting('payment_two_session_monthly_cents', '10000'),
-    getSetting('payment_online_course_monthly_cents', '3120'),
-  ]);
+  const [one, two, online] = await Promise.all([getRevenueRateRaw('one'), getRevenueRateRaw('two'), getRevenueRateRaw('online')]);
   return { one: parseInt(one, 10) || 0, two: parseInt(two, 10) || 0, online: parseInt(online, 10) || 0 };
 }
 
@@ -33,4 +42,4 @@ function effectiveDiscountSql(rates, alias = '') {
       * COALESCE(${a}sibling_discount, 0) / 100.0)::int END)`;
 }
 
-module.exports = { getMonthlyRates, effectiveDiscountCents, effectiveDiscountSql };
+module.exports = { getMonthlyRates, getRevenueRateRaw, effectiveDiscountCents, effectiveDiscountSql };

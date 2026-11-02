@@ -748,9 +748,23 @@ module.exports = `<!doctype html>
     <details class="panel" open>
       <summary><span class="panel-title">Pricing &amp; Revenue</span><span class="panel-hint">Estimated monthly revenue by grade</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
-    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Revenue below is calculated from the <strong>Payment Link Amounts</strong> further down this page (the prices families actually pay), minus each player's discount. Change prices there only.</p>
+    <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Revenue below is calculated from the <strong>Revenue Prices</strong> panel, minus each player's discount. It does not change when you edit the Payment Link Amounts. Change prices there only.</p>
     <div id="revenueTableWrap"></div>
 
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary><span class="panel-title">Revenue Prices</span><span class="panel-hint">Prices used for the revenue table and reports</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">These prices only drive the <b>Pricing &amp; Revenue</b> table, the monthly report and the snapshots. They do <b>not</b> change what families are charged. That is set in <b>Payment Link Amounts</b>.</p>
+      <div class="pricing-box">
+        <div><label for="revOneInput">Monthly — One Session/Week</label><input type="number" id="revOneInput" min="0" step="0.01"></div>
+        <div><label for="revTwoInput">Monthly — Two Sessions/Week</label><input type="number" id="revTwoInput" min="0" step="0.01"></div>
+        <div><label for="revOnlineInput">Monthly — Online Course</label><input type="number" id="revOnlineInput" min="0" step="0.01"></div>
+        <button type="button" class="btn-add" id="saveRevenuePricingBtn">Save Revenue Prices</button>
+        <span class="pricing-saved" id="revenuePricingSaved"></span>
+      </div>
       </div>
     </details>
 
@@ -3845,7 +3859,33 @@ module.exports = `<!doctype html>
   async function loadPricing(){
     const p = await api('/api/admin/pricing');
     currentPricing = p;
+    document.getElementById('revOneInput').value = ((p.priceOneCents || 0) / 100).toFixed(2);
+    document.getElementById('revTwoInput').value = ((p.priceTwoCents || 0) / 100).toFixed(2);
+    document.getElementById('revOnlineInput').value = ((p.priceOnlineCents || 0) / 100).toFixed(2);
   }
+
+  document.getElementById('saveRevenuePricingBtn').addEventListener('click', async () => {
+    const body = {
+      priceOneCents: Math.round(parseFloat(document.getElementById('revOneInput').value || '0') * 100),
+      priceTwoCents: Math.round(parseFloat(document.getElementById('revTwoInput').value || '0') * 100),
+      priceOnlineCents: Math.round(parseFloat(document.getElementById('revOnlineInput').value || '0') * 100),
+    };
+    const btn = document.getElementById('saveRevenuePricingBtn');
+    btn.disabled = true;
+    try {
+      const r = await api('/api/admin/pricing', { method: 'POST', body: JSON.stringify(body) });
+      if (r && r.error) { alert(r.error); return; }
+      const msg = document.getElementById('revenuePricingSaved');
+      msg.textContent = 'Saved.';
+      setTimeout(() => { msg.textContent = ''; }, 2000);
+      await loadPricing();
+      await loadOverviewAndRevenue();
+    } catch (e) {
+      alert('Could not save the revenue prices. Please try again.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   // ---- Payment Link Amounts (what "Send Payment Link" actually charges) ----
 
@@ -3875,8 +3915,6 @@ module.exports = `<!doctype html>
       const savedMsg = document.getElementById('paymentPricingSaved');
       savedMsg.textContent = 'Saved.';
       setTimeout(() => { savedMsg.textContent = ''; }, 2000);
-      await loadPricing();
-      await loadOverviewAndRevenue();
       await loadRoster();
     } catch (e) {
       alert('Could not save payment amounts. Please try again.');
@@ -6167,6 +6205,7 @@ module.exports = `<!doctype html>
   }
   const PANEL_ICONS = {
     'Pricing & Revenue': '<path d="M18 20V10M12 20V4M6 20v-6"/>',
+    'Revenue Prices': '<path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/>',
     'Payment Link Amounts': '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
     'Proration Mode': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
     'One-Time Payments': '<rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>',
@@ -6183,7 +6222,7 @@ module.exports = `<!doctype html>
     'Exports': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'
   };
   const PANEL_LAYOUT = {
-    finances: [['Prices', ['Pricing & Revenue', 'Payment Link Amounts', 'Proration Mode']], ['Payments', ['One-Time Payments']], ['Start of a new month', ['Reset Payment Status'], true]],
+    finances: [['Prices', ['Pricing & Revenue', 'Revenue Prices', 'Payment Link Amounts', 'Proration Mode']], ['Payments', ['One-Time Payments']], ['Start of a new month', ['Reset Payment Status'], true]],
     data: [['Reports', ['Monthly Report', 'Monthly Snapshots', 'Family Checklist']], ['Families', ['Signed Agreements', 'Kit Fees', 'Update Child Information', 'Reviews', 'What Can We Change?']], ['Records', ['Unsubscribed Players', 'Exports']]]
   };
   function organizePanels(){

@@ -3,7 +3,7 @@ const { ageGroupLabel } = require('./ageGroups');
 const pool = require('./pool');
 const { requireAdmin } = require('./auth');
 const { getSetting, setSetting } = require('./settings');
-const { effectiveDiscountCents, getMonthlyRates } = require('./discounts');
+const { effectiveDiscountCents, getMonthlyRates, getRevenueRateRaw } = require('./discounts');
 const { getProrationAdjustments } = require('./proration');
 const { gatherMonthlyReportData, buildMonthlyReportPdf, monthKeyFromDate, monthLabelFromKey } = require('./monthlyReport');
 const { sendMonthlyReportEmail } = require('./email');
@@ -41,9 +41,9 @@ async function generateSnapshot(monthDate) {
   const month = monthKey(monthDate);
 
   const [oneCents, twoCents, onlineCents] = await Promise.all([
-    getSetting('payment_one_session_monthly_cents', '6000'),
-    getSetting('payment_two_session_monthly_cents', '10000'),
-    getSetting('payment_online_course_monthly_cents', '3120'),
+    getRevenueRateRaw('one'),
+    getRevenueRateRaw('two'),
+    getRevenueRateRaw('online'),
   ]);
   const rates = { one: parseInt(oneCents, 10), two: parseInt(twoCents, 10), online: parseInt(onlineCents, 10) };
 

@@ -1,6 +1,6 @@
 const pool = require('./pool');
 const { getSetting } = require('./settings');
-const { getMonthlyRates, effectiveDiscountSql } = require('./discounts');
+const { getMonthlyRates, getRevenueRateRaw, effectiveDiscountSql } = require('./discounts');
 const { getProrationAdjustments } = require('./proration');
 const PDFDocument = require('pdfkit');
 
@@ -71,9 +71,9 @@ async function gatherMonthlyReportData(monthKey) {
         COALESCE(SUM(${effectiveDiscountSql(discountRates)}), 0)::int AS total_discount_cents
       FROM players WHERE archived_at IS NULL GROUP BY grade
     `),
-    getSetting('payment_one_session_monthly_cents', '6000'),
-    getSetting('payment_two_session_monthly_cents', '10000'),
-    getSetting('payment_online_course_monthly_cents', '3120'),
+    getRevenueRateRaw('one'),
+    getRevenueRateRaw('two'),
+    getRevenueRateRaw('online'),
     pool.query(`SELECT * FROM charges WHERE kind = 'recurring' OR charge_month = $1::date ORDER BY kind, description`, [monthKey]),
     pool.query(
       `SELECT * FROM one_time_payments

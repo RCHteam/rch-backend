@@ -408,7 +408,7 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
 // Admin: read/update the per-session prices used for the Revenue table.
 router.get('/admin/pricing', requireAdmin, async (req, res) => {
   try {
-    // One source of truth: the Payment Link Amounts (what families are charged).
+    // Revenue prices (separate from the Payment Link Amounts until the owner sets them).
     const rates = await getMonthlyRates();
     res.json({ priceOneCents: rates.one, priceTwoCents: rates.two, priceOnlineCents: rates.online });
   } catch (err) {
@@ -418,16 +418,17 @@ router.get('/admin/pricing', requireAdmin, async (req, res) => {
 });
 
 router.post('/admin/pricing', requireAdmin, async (req, res) => {
-  const { priceOneCents, priceTwoCents } = req.body || {};
-  if (!Number.isFinite(Number(priceOneCents)) || !Number.isFinite(Number(priceTwoCents))) {
-    return res.status(400).json({ error: 'Both prices must be numbers.' });
+  const { priceOneCents, priceTwoCents, priceOnlineCents } = req.body || {};
+  const vals = [priceOneCents, priceTwoCents, priceOnlineCents].map(Number);
+  if (vals.some((v) => !Number.isFinite(v) || v < 0)) {
+    return res.status(400).json({ error: 'All three prices must be numbers (0 or more).' });
   }
   try {
-    const one = Math.round(Number(priceOneCents));
-    const two = Math.round(Number(priceTwoCents));
-    await setSetting('price_one_session_cents', String(one));
-    await setSetting('price_two_session_cents', String(two));
-    res.json({ priceOneCents: one, priceTwoCents: two });
+    const [one, two, online] = vals.map((v) => Math.round(v));
+    await setSetting('revenue_one_session_cents', String(one));
+    await setSetting('revenue_two_session_cents', String(two));
+    await setSetting('revenue_online_cents', String(online));
+    res.json({ priceOneCents: one, priceTwoCents: two, priceOnlineCents: online });
   } catch (err) {
     console.error('Save pricing error:', err);
     res.status(500).json({ error: 'Could not save pricing.' });
