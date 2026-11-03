@@ -141,6 +141,28 @@ module.exports = `<!doctype html>
   .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
   .btn-zelle{ background:#fff; border:1px solid #6d28d9; color:#6d28d9; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-zelle:hover{ background:#6d28d9; color:#fff; }
+  .kit-wrap{ overflow-x:auto; border:1px solid #e3e8e4; border-radius:10px; background:#fff; }
+  table.kit-table{ width:100%; border-collapse:collapse; border:0; margin:0; font-size:0.85rem; }
+  table.kit-table th{ padding:10px 12px; font-size:0.68rem; white-space:nowrap; position:sticky; top:0; }
+  table.kit-table td{ padding:7px 12px; vertical-align:middle; border-bottom:1px solid #eef1ee; white-space:nowrap; }
+  table.kit-table tbody tr:last-child td{ border-bottom:0; }
+  table.kit-table tbody tr:hover td{ background:#f7faf7; }
+  table.kit-table .kn{ font-weight:600; }
+  .kpill{ display:inline-block; font-size:0.74rem; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .kpill.paid{ background:#e3f3e8; color:#1f7a3d; }
+  .kpill.zelle{ background:#efe7fb; color:#6d28d9; }
+  .kpill.unpaid{ background:#fdecea; color:#b5482f; }
+  .ksize{ display:inline-block; min-width:34px; text-align:center; font-weight:700; font-size:0.78rem; padding:3px 8px; border-radius:6px; background:#eef3ef; color:#164a30; }
+  .kdim{ color:#8a948d; font-size:0.78rem; }
+  table.kit-table .kb{ font:inherit; font-size:0.74rem; padding:3px 10px; border-radius:6px; cursor:pointer; background:#fff; border:1px solid #1f7a44; color:#1f7a44; margin-left:4px; }
+  table.kit-table .kb:hover{ background:#1f7a44; color:#fff; }
+  table.kit-table .kb.z{ border-color:#6d28d9; color:#6d28d9; }
+  table.kit-table .kb.z:hover{ background:#6d28d9; color:#fff; }
+  table.kit-table .kb.u{ border-color:#cfd8d2; color:#6b7a70; }
+  table.kit-table .kb.u:hover{ background:#6b7a70; color:#fff; }
+  table.kit-table .kx{ background:none; border:0; color:#b0b8b2; font-size:1rem; cursor:pointer; padding:2px 6px; border-radius:6px; }
+  table.kit-table .kx:hover{ background:#fdecea; color:#b5482f; }
+  table.kit-table label.ko{ display:inline-flex; align-items:center; gap:5px; margin:0 10px 0 0; cursor:pointer; font-size:0.78rem; }
   .kit-filter{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
   .kit-filter button{ background:#fff; border:1px solid #cfd8d2; color:#1b2a22; padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size:0.82rem; }
   .kit-filter button b{ margin-left:4px; }
@@ -6151,20 +6173,21 @@ module.exports = `<!doctype html>
   });
 
   // ---- Kit Fees ----
+  function kitDay(d){ try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Chicago' }); } catch (e) { return ''; } }
   function kitCell(k){
-    if (!k) return '<span style="color:#999">—</span>';
+    if (!k) return '<span class="kdim">—</span>';
     if (k.paid_at) {
       const z = k.paid_method === 'zelle';
-      const label = 'Paid ' + money(k.amount_cents) + (z ? ' (Zelle)' : (k.paid_method === 'cash' ? ' (Cash)' : ''));
-      return '<span style="color:' + (z ? '#6d28d9' : '#2e7d32') + '; font-weight:700;">' + label + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>' + (k.paid_method || k.source === 'manual' ? ' <button type="button" class="btn-edit-row" data-kunpaid="' + k.id + '">Undo</button>' : '');
+      return '<span class="kpill ' + (z ? 'zelle' : 'paid') + '">' + (z ? 'Paid · Zelle' : 'Paid') + '</span> <span class="kdim">' + money(k.amount_cents) + ' · ' + escapeHtml(kitDay(k.paid_at)) + '</span>' +
+        (k.paid_method || k.source === 'manual' ? ' <button type="button" class="kb u" data-kunpaid="' + k.id + '">Undo</button>' : '');
     }
-    return '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span><br>' +
-      '<button type="button" class="btn-paid-other" data-kpaid="' + k.id + '" data-kmethod="other">Paid</button> ' +
-      '<button type="button" class="btn-zelle" data-kpaid="' + k.id + '" data-kmethod="zelle">Paid by Zelle</button>';
+    return '<span class="kpill unpaid">Not paid</span> <span class="kdim">' + money(k.amount_cents) + '</span>' +
+      ' <button type="button" class="kb" data-kpaid="' + k.id + '" data-kmethod="other">Paid</button>' +
+      '<button type="button" class="kb z" data-kpaid="' + k.id + '" data-kmethod="zelle">Zelle</button>';
   }
   function kitOrderBox(k, label){
     if (!k) return '';
-    return '<label style="display:flex; align-items:center; gap:6px; margin:2px 0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + k.id + '"' + (k.ordered ? ' checked' : '') + '><span style="font-size:0.82rem;">' + label + '</span>' + (k.ordered && k.ordered_at ? '<span style="color:#888; font-size:0.75rem;">' + escapeHtml(fmtDate(k.ordered_at)) + '</span>' : '') + '</label>';
+    return '<label class="ko"><input type="checkbox" style="width:16px; height:16px; margin:0;" data-kord="' + k.id + '"' + (k.ordered ? ' checked' : '') + '>' + label + '</label>';
   }
   let kitRows = [], kitFilter = 'all';
   function kitLineState(r){
@@ -6190,17 +6213,19 @@ module.exports = `<!doctype html>
     });
     if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
     if (!show.length) { wrap.innerHTML = '<div class="empty">Nobody in this filter.</div>'; return; }
-    wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Size (roster)</th><th>Charged</th><th>Total paid</th><th>Practice Kit</th><th>Sultans Kit</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + show.map(function(r){
+    const anySultans = rows.some(function(r){ return !!r.sultans; });
+    wrap.innerHTML = '<div class="kit-wrap"><table class="kit-table"><thead><tr><th>Player</th><th>Size</th><th>Charged</th><th>Total paid</th><th>Practice kit</th>' + (anySultans ? '<th>Sultans kit</th>' : '') + '<th>Ordered</th><th></th></tr></thead><tbody>' + show.map(function(r){
       const ids = [r.practice, r.sultans].filter(Boolean).map(function(k){ return k.id; }).join(',');
       const tags = (r.duplicate ? '<span class="kit-tag" style="background:#fdecea; color:#b5482f;">Duplicate</span>' : '') + (r.on_roster ? '' : '<span class="kit-tag" style="background:#fff4d6; color:#8a5a00;">Not on roster</span>');
-      return '<tr><td>' + escapeHtml(r.player_name) + tags + '</td>' +
-        '<td>' + (r.size ? '<b>' + escapeHtml(r.size) + '</b>' : '<span style="color:#999">' + (r.on_roster ? 'No size yet' : '—') + '</span>') + '</td>' +
-        '<td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td>' +
-        '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>') + '</td>' +
-        '<td>' + kitCell(r.practice) + '</td><td>' + kitCell(r.sultans) + '</td>' +
-        '<td>' + kitOrderBox(r.practice, 'Practice') + kitOrderBox(r.sultans, 'Sultans') + '</td>' +
-        '<td><button type="button" class="btn-delete-guest" data-kdel="' + ids + '">Delete</button></td></tr>';
-    }).join('') + '</tbody></table>';
+      const both = r.practice && r.sultans;
+      return '<tr><td><span class="kn">' + escapeHtml(r.player_name) + '</span>' + tags + '</td>' +
+        '<td>' + (r.size ? '<span class="ksize">' + escapeHtml(r.size) + '</span>' : '<span class="kdim">' + (r.on_roster ? 'No size' : '—') + '</span>') + '</td>' +
+        '<td>' + (r.charged_at ? escapeHtml(kitDay(r.charged_at)) : '<span class="kdim">—</span>') + '</td>' +
+        '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span class="kdim">—</span>') + '</td>' +
+        '<td>' + kitCell(r.practice) + '</td>' + (anySultans ? '<td>' + kitCell(r.sultans) + '</td>' : '') +
+        '<td>' + kitOrderBox(r.practice, both ? 'Practice' : '') + kitOrderBox(r.sultans, both ? 'Sultans' : 'Sultans') + '</td>' +
+        '<td style="text-align:right;"><button type="button" class="kx" title="Delete" data-kdel="' + ids + '">&#10005;</button></td></tr>';
+    }).join('') + '</tbody></table></div>';
   }
   async function loadKitFees(){
     const wrap = document.getElementById('kitTableWrap');
