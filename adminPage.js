@@ -1209,7 +1209,7 @@ module.exports = `<!doctype html>
       <summary><span class="panel-title">Signed Agreements</span><span class="panel-hint">E-signed PDFs on file</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Use <b>Send Agreement</b> on a registration or roster row to email the family an e-sign link. Once they fill in the form and sign, the signed PDF is stored here and a copy is emailed to them and to you.</p>
-      <div class="panel-actions"><button type="button" class="btn-add" id="openAgSendBtn">Send Agreement to Players…</button> <button type="button" class="btn-add" id="resendAgreementsBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send to those who did not sign</button></div>
+      <div class="panel-actions"><button type="button" class="btn-add" id="openAgSendBtn">Send Agreement to Players…</button> <button type="button" class="btn-add" id="resendAgreementsBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Send to those who did not sign</button> <button type="button" class="btn-add" id="downloadAgreementsBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Download current folder</button></div>
       <div id="agreementsTableWrap"></div>
 
       </div>
@@ -6172,6 +6172,9 @@ module.exports = `<!doctype html>
       el.innerHTML = '<b>' + c.total + '</b> children &middot; In Stripe: <b>' + c.stripe + '</b> &middot; Agreement signed: <b>' + c.signed + '</b> &middot; Child info filed: <b>' + c.filed + '</b> &middot; Kit paid: <b>' + c.kitPaid + '</b>';
     } catch (e) { el.textContent = 'Could not load the numbers.'; }
   }
+  document.getElementById('downloadAgreementsBtn').addEventListener('click', function(){
+    window.open(API_BASE + '/api/admin/agreements/download-all?token=' + encodeURIComponent(getToken()));
+  });
   document.getElementById('checklistPdfBtn').addEventListener('click', function(){
     window.open(API_BASE + '/api/admin/family-checklist/pdf?token=' + encodeURIComponent(getToken()));
   });

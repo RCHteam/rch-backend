@@ -249,6 +249,76 @@ router.get('/admin/agreements', requireAdmin, async (req, res) => {
   }
 });
 
+// ---- Download every currently signed agreement as one zip folder ----
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+// Tiny zip writer (no compression: PDFs are already compressed).
+function buildZip(files, when) {
+  const d = when || new Date();
+  const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const parts = [], central = [];
+  let offset = 0;
+  files.forEach((f) => {
+    const name = Buffer.from(f.name, 'utf8'), crc = crc32(f.data), size = f.data.length;
+    const lh = Buffer.alloc(30);
+    lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(0x0800, 6); lh.writeUInt16LE(0, 8);
+    lh.writeUInt16LE(dosTime, 10); lh.writeUInt16LE(dosDate, 12); lh.writeUInt32LE(crc, 14);
+    lh.writeUInt32LE(size, 18); lh.writeUInt32LE(size, 22); lh.writeUInt16LE(name.length, 26); lh.writeUInt16LE(0, 28);
+    parts.push(lh, name, f.data);
+    const ch = Buffer.alloc(46);
+    ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0x0800, 8); ch.writeUInt16LE(0, 10);
+    ch.writeUInt16LE(dosTime, 12); ch.writeUInt16LE(dosDate, 14); ch.writeUInt32LE(crc, 16);
+    ch.writeUInt32LE(size, 20); ch.writeUInt32LE(size, 24); ch.writeUInt16LE(name.length, 28);
+    ch.writeUInt32LE(offset, 42);
+    central.push(ch, name);
+    offset += 30 + name.length + size;
+  });
+  const cd = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat(parts.concat([cd, end]));
+}
+
+router.get('/admin/agreements/download-all', requireAdmin, async (req, res) => {
+  try {
+    // Newest signed copy per child + parent email (so a re-signed one does not appear twice).
+    const r = await pool.query(
+      `SELECT DISTINCT ON (lower(player_name), lower(COALESCE(parent_email,'')))
+              player_name, signed_at, pdf_data
+         FROM agreements
+        WHERE signed_at IS NOT NULL AND pdf_data IS NOT NULL
+        ORDER BY lower(player_name), lower(COALESCE(parent_email,'')), signed_at DESC`);
+    if (!r.rows.length) return res.status(404).json({ error: 'No signed agreements yet.' });
+    const stamp = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+    const folder = 'RCH-Signed-Agreements-' + stamp + '/';
+    const used = new Set();
+    const files = r.rows.map((row) => {
+      const base = 'Agreement_' + String(row.player_name || 'player').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+      let name = base, n = 2;
+      while (used.has(name.toLowerCase())) name = base + '_' + (n++);
+      used.add(name.toLowerCase());
+      return { name: folder + name + '.pdf', data: row.pdf_data };
+    });
+    const zip = buildZip(files);
+    res.set({ 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="RCH-Signed-Agreements-' + stamp + '.zip"' });
+    res.send(zip);
+  } catch (err) {
+    console.error('Agreements zip error:', err);
+    res.status(500).json({ error: 'Could not build the agreements folder.' });
+  }
+});
+
+
 router.get('/admin/agreements/:id/pdf', requireAdmin, async (req, res) => {
   try {
     const r = await pool.query('SELECT player_name, pdf_data FROM agreements WHERE id=$1', [req.params.id]);
@@ -462,4 +532,4 @@ function buildPdf({ f, sigBuf, signedAt, ip, docId }) {
   });
 }
 
-module.exports = { router, buildPdf, SECTIONS, assetPath };
+module.exports = { router, buildPdf, SECTIONS, assetPath, buildZip };
