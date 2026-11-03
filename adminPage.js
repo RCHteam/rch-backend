@@ -139,6 +139,14 @@ module.exports = `<!doctype html>
   .btn-pause-toggle{ background:#fff; border:1px solid var(--gold); color:#8a6a1f; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-pause-toggle:hover{ background:var(--gold); color:#1c2a20; }
   .btn-pause-toggle:disabled{ opacity:0.6; cursor:default; }
+  .btn-zelle{ background:#fff; border:1px solid #6d28d9; color:#6d28d9; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
+  .btn-zelle:hover{ background:#6d28d9; color:#fff; }
+  .kit-filter{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+  .kit-filter button{ background:#fff; border:1px solid #cfd8d2; color:#1b2a22; padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size:0.82rem; }
+  .kit-filter button b{ margin-left:4px; }
+  .kit-filter button.on{ background:var(--pitch); border-color:var(--pitch); color:#fff; }
+  .kit-filter button.zel.on{ background:#6d28d9; border-color:#6d28d9; }
+  .kit-tag{ display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 7px; border-radius:999px; margin-left:6px; }
   .btn-paid-other{ background:#fff; border:1px solid #1f7a44; color:#1f7a44; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
   .btn-paid-other:hover{ background:#1f7a44; color:#fff; }
   .btn-send-agreement{ background:#fff; border:1px solid #164a30; color:#164a30; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; white-space:nowrap; }
@@ -1216,6 +1224,15 @@ module.exports = `<!doctype html>
     </details>
 
     <details class="panel">
+      <summary><span class="panel-title">Photo Consent</span><span class="panel-hint">Who said yes or no to photos and videos</span><span class="panel-chev" aria-hidden="true"></span></summary>
+      <div class="panel-body">
+      <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Taken from the photo and video question in each signed agreement. It updates by itself every time a parent signs, so there is nothing to type in.</p>
+      <div class="kit-filter" id="photoFilter"></div>
+      <div id="photoTableWrap"></div>
+      </div>
+    </details>
+
+    <details class="panel">
       <summary><span class="panel-title">Family Checklist</span><span class="panel-hint">Billing, agreement, child info, kit</span><span class="panel-chev" aria-hidden="true"></span></summary>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">One line per child: is the family on monthly billing in Stripe, did they sign the agreement, did they send the child info update, and did they pay the kit. The PDF is built fresh from the live data every time you download it.</p>
@@ -1229,6 +1246,7 @@ module.exports = `<!doctype html>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). The <b>Practice Kit</b> and <b>Sultans Kit</b> columns show separately whether each kit was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
       <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
+      <div class="kit-filter" id="kitFilter"></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
         <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
         <select id="kitType" style="padding:10px 12px; font:inherit;"><option value="practice">Practice Kit</option><option value="sultans">Sultans Kit</option></select>
@@ -2992,6 +3010,7 @@ module.exports = `<!doctype html>
   }
 
   async function loadAgreements(){
+    loadPhotoConsent();
     const wrap = document.getElementById('agreementsTableWrap');
     const rows = await api('/api/admin/agreements');
     if (Array.isArray(rows)) { const unsigned = rows.filter(function(x){ return !x.signed_at; }).length; panelBadge('Signed Agreements', unsigned ? unsigned + ' not signed' : (rows.length ? 'All signed' : ''), unsigned ? 'warn' : 'ok'); }
@@ -6098,37 +6117,110 @@ module.exports = `<!doctype html>
   // the revenue table can draw, so that single dependency runs second. The
   // Finances-only panels (proration mode, reset info, one-time payments) wait
   // until you actually open the Finances tab.
+  // ---- Photo consent (live from the signed agreements) ----
+  let photoRows = [], photoFilter = 'all';
+  function drawPhoto(){
+    const wrap = document.getElementById('photoTableWrap');
+    const cnt = { all: photoRows.length, yes: 0, no: 0, waiting: 0 };
+    photoRows.forEach(function(r){ cnt[r.status]++; });
+    const defs = [['all', 'Everyone'], ['yes', 'Said yes'], ['no', 'Said no'], ['waiting', 'Not signed yet']];
+    document.getElementById('photoFilter').innerHTML = defs.map(function(d){
+      return '<button type="button" class="' + (photoFilter === d[0] ? 'on' : '') + '" data-pfilter="' + d[0] + '">' + d[1] + '<b>' + cnt[d[0]] + '</b></button>';
+    }).join('');
+    panelBadge('Photo Consent', cnt.no ? cnt.no + ' said no' : (cnt.yes ? 'All yes' : ''), cnt.no ? 'warn' : 'ok');
+    const show = photoRows.filter(function(r){ return photoFilter === 'all' || r.status === photoFilter; });
+    if (!photoRows.length) { wrap.innerHTML = '<div class="empty">No agreements yet.</div>'; return; }
+    if (!show.length) { wrap.innerHTML = '<div class="empty">Nobody in this list.</div>'; return; }
+    const label = { yes: '<span style="color:#2e7d32; font-weight:700;">Yes</span>', no: '<span style="color:#b5482f; font-weight:700;">No</span>', waiting: '<span style="color:#999;">Not signed yet</span>' };
+    wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Parent</th><th>Email</th><th>Photo consent</th><th>Signed</th></tr></thead><tbody>' + show.map(function(r){
+      return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + escapeHtml(r.parent_name || '') + '</td><td>' + escapeHtml(r.parent_email || '') + '</td><td>' + label[r.status] + '</td><td>' + (r.signed_at ? escapeHtml(fmtDate(r.signed_at)) : '<span style="color:#999">—</span>') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  }
+  async function loadPhotoConsent(){
+    try {
+      const rows = await api('/api/admin/agreements/photo-consent');
+      if (!Array.isArray(rows)) throw new Error('bad');
+      photoRows = rows; drawPhoto();
+    } catch (e) { document.getElementById('photoTableWrap').innerHTML = '<div class="empty">Could not load. Please try again.</div>'; }
+  }
+  document.getElementById('photoFilter').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-pfilter]');
+    if (!b) return;
+    photoFilter = b.getAttribute('data-pfilter');
+    drawPhoto();
+  });
+
   // ---- Kit Fees ----
   function kitCell(k){
     if (!k) return '<span style="color:#999">—</span>';
-    return k.paid_at
-      ? '<span style="color:#2e7d32; font-weight:700;">Paid ' + money(k.amount_cents) + (k.paid_method ? ' (' + escapeHtml(k.paid_method === 'cash' ? 'Cash' : 'Zelle') + ')' : '') + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>' + (k.paid_method ? ' <button type="button" class="btn-edit-row" data-kunpaid="' + k.id + '">Undo</button>' : '')
-      : '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span> <button type="button" class="btn-paid-other" data-kpaid="' + k.id + '" data-kmethod="' + (k.source === 'manual' ? '' : 'zelle') + '">' + (k.source === 'manual' ? 'Mark paid' : 'Mark paid (Zelle)') + '</button>';
+    if (k.paid_at) {
+      const z = k.paid_method === 'zelle';
+      const label = 'Paid ' + money(k.amount_cents) + (z ? ' (Zelle)' : (k.paid_method === 'cash' ? ' (Cash)' : ''));
+      return '<span style="color:' + (z ? '#6d28d9' : '#2e7d32') + '; font-weight:700;">' + label + '</span><br><span style="color:#888; font-size:0.8rem;">' + escapeHtml(fmtDate(k.paid_at)) + '</span>' + (k.paid_method || k.source === 'manual' ? ' <button type="button" class="btn-edit-row" data-kunpaid="' + k.id + '">Undo</button>' : '');
+    }
+    return '<span style="color:#b5482f; font-weight:700;">Not paid</span> <span style="color:#888;">(' + money(k.amount_cents) + ')</span><br>' +
+      '<button type="button" class="btn-paid-other" data-kpaid="' + k.id + '" data-kmethod="other">Paid</button> ' +
+      '<button type="button" class="btn-zelle" data-kpaid="' + k.id + '" data-kmethod="zelle">Paid by Zelle</button>';
   }
   function kitOrderBox(k, label){
     if (!k) return '';
     return '<label style="display:flex; align-items:center; gap:6px; margin:2px 0; cursor:pointer;"><input type="checkbox" style="width:18px; height:18px; margin:0;" data-kord="' + k.id + '"' + (k.ordered ? ' checked' : '') + '><span style="font-size:0.82rem;">' + label + '</span>' + (k.ordered && k.ordered_at ? '<span style="color:#888; font-size:0.75rem;">' + escapeHtml(fmtDate(k.ordered_at)) + '</span>' : '') + '</label>';
+  }
+  let kitRows = [], kitFilter = 'all';
+  function kitLineState(r){
+    const ks = [r.practice, r.sultans].filter(Boolean);
+    return { unpaid: ks.some(function(k){ return !k.paid_at; }), paid: ks.length > 0 && ks.every(function(k){ return !!k.paid_at; }), zelle: ks.some(function(k){ return k.paid_at && k.paid_method === 'zelle'; }) };
+  }
+  function drawKitTable(){
+    const wrap = document.getElementById('kitTableWrap');
+    const rows = kitRows;
+    const st = rows.map(kitLineState);
+    const cnt = { all: rows.length, unpaid: 0, paid: 0, zelle: 0, dup: 0 };
+    rows.forEach(function(r, n){ if (st[n].unpaid) cnt.unpaid++; if (st[n].paid) cnt.paid++; if (st[n].zelle) cnt.zelle++; if (r.duplicate) cnt.dup++; });
+    const defs = [['all', 'All players', ''], ['unpaid', 'Not paid', ''], ['paid', 'Paid', ''], ['zelle', 'Paid by Zelle', 'zel'], ['dup', 'Duplicate names', '']];
+    document.getElementById('kitFilter').innerHTML = defs.map(function(d){
+      return '<button type="button" class="' + d[2] + (kitFilter === d[0] ? ' on' : '') + '" data-kfilter="' + d[0] + '">' + d[1] + '<b>' + cnt[d[0]] + '</b></button>';
+    }).join('');
+    const show = rows.filter(function(r, n){
+      if (kitFilter === 'unpaid') return st[n].unpaid;
+      if (kitFilter === 'paid') return st[n].paid;
+      if (kitFilter === 'zelle') return st[n].zelle;
+      if (kitFilter === 'dup') return r.duplicate;
+      return true;
+    });
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
+    if (!show.length) { wrap.innerHTML = '<div class="empty">Nobody in this filter.</div>'; return; }
+    wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Size (roster)</th><th>Charged</th><th>Total paid</th><th>Practice Kit</th><th>Sultans Kit</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + show.map(function(r){
+      const ids = [r.practice, r.sultans].filter(Boolean).map(function(k){ return k.id; }).join(',');
+      const tags = (r.duplicate ? '<span class="kit-tag" style="background:#fdecea; color:#b5482f;">Duplicate</span>' : '') + (r.on_roster ? '' : '<span class="kit-tag" style="background:#fff4d6; color:#8a5a00;">Not on roster</span>');
+      return '<tr><td>' + escapeHtml(r.player_name) + tags + '</td>' +
+        '<td>' + (r.size ? '<b>' + escapeHtml(r.size) + '</b>' : '<span style="color:#999">' + (r.on_roster ? 'No size yet' : '—') + '</span>') + '</td>' +
+        '<td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td>' +
+        '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>') + '</td>' +
+        '<td>' + kitCell(r.practice) + '</td><td>' + kitCell(r.sultans) + '</td>' +
+        '<td>' + kitOrderBox(r.practice, 'Practice') + kitOrderBox(r.sultans, 'Sultans') + '</td>' +
+        '<td><button type="button" class="btn-delete-guest" data-kdel="' + ids + '">Delete</button></td></tr>';
+    }).join('') + '</tbody></table>';
   }
   async function loadKitFees(){
     const wrap = document.getElementById('kitTableWrap');
     try {
       const rows = await api('/api/admin/kit-fees');
       if (!Array.isArray(rows)) throw new Error('bad');
+      kitRows = rows;
       let paid = 0, notOrdered = 0, total = 0;
       rows.forEach(function(r){ [r.practice, r.sultans].forEach(function(k){ if (!k) return; total++; if (k.paid_at) paid++; if (!k.ordered) notOrdered++; }); });
       panelBadge('Kit Fees', (total - paid) ? (total - paid) + ' unpaid' : (total ? 'All paid' : ''), (total - paid) ? 'warn' : 'ok');
       document.getElementById('kitSummary').innerHTML = '<b>' + total + '</b> kit fee' + (total === 1 ? '' : 's') + ' charged &middot; <b>' + paid + '</b> paid &middot; <b>' + notOrdered + '</b> not ordered yet';
-      if (!rows.length) { wrap.innerHTML = '<div class="empty">No kit fees yet.</div>'; return; }
-      wrap.innerHTML = '<table><thead><tr><th>Player</th><th>Charged</th><th>Total paid</th><th>Practice Kit</th><th>Sultans Kit</th><th>Kit ordered</th><th></th></tr></thead><tbody>' + rows.map(function(r){
-        const ids = [r.practice, r.sultans].filter(Boolean).map(function(k){ return k.id; }).join(',');
-        return '<tr><td>' + escapeHtml(r.player_name) + '</td><td>' + (r.charged_at ? escapeHtml(fmtDate(r.charged_at)) : '<span style="color:#999">—</span>') + '</td>' +
-          '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span style="color:#999">—</span>') + '</td>' +
-          '<td>' + kitCell(r.practice) + '</td><td>' + kitCell(r.sultans) + '</td>' +
-          '<td>' + kitOrderBox(r.practice, 'Practice') + kitOrderBox(r.sultans, 'Sultans') + '</td>' +
-          '<td><button type="button" class="btn-delete-guest" data-kdel="' + ids + '">Delete</button></td></tr>';
-      }).join('') + '</tbody></table>';
+      drawKitTable();
     } catch (e) { wrap.innerHTML = '<div class="empty">Could not load kit fees. Please try again.</div>'; }
   }
+  document.getElementById('kitFilter').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-kfilter]');
+    if (!b) return;
+    kitFilter = b.getAttribute('data-kfilter');
+    drawKitTable();
+  });
   document.getElementById('kitAddBtn').addEventListener('click', async function(){
     const err = document.getElementById('kitErr');
     err.textContent = '';
@@ -6216,6 +6308,7 @@ module.exports = `<!doctype html>
     'Monthly Report': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
     'Monthly Snapshots': '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>',
     'Family Checklist': '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    'Photo Consent': '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
     'Signed Agreements': '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     'Kit Fees': '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
     'Reviews': '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
@@ -6226,7 +6319,7 @@ module.exports = `<!doctype html>
   };
   const PANEL_LAYOUT = {
     finances: [['Prices', ['Pricing & Revenue', 'Revenue Prices', 'Payment Link Amounts', 'Proration Mode']], ['Payments', ['One-Time Payments']], ['Start of a new month', ['Reset Payment Status'], true]],
-    data: [['Reports', ['Monthly Report', 'Monthly Snapshots', 'Family Checklist']], ['Families', ['Signed Agreements', 'Kit Fees', 'Update Child Information', 'Reviews', 'What Can We Change?']], ['Records', ['Unsubscribed Players', 'Exports']]]
+    data: [['Reports', ['Monthly Report', 'Monthly Snapshots', 'Family Checklist']], ['Families', ['Signed Agreements', 'Photo Consent', 'Kit Fees', 'Update Child Information', 'Reviews', 'What Can We Change?']], ['Records', ['Unsubscribed Players', 'Exports']]]
   };
   function organizePanels(){
     Object.keys(PANEL_LAYOUT).forEach(function(secName){

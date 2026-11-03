@@ -99,10 +99,19 @@ router.get('/admin/kit-fees', requireAdmin, async (req, res) => {
       if (k.charged_at && (!line.charged_at || new Date(k.charged_at) < new Date(line.charged_at))) line.charged_at = k.charged_at;
       if (k.total_cents != null) line._totals.set(k.source + ':' + (k.source_id == null ? 'm' + k.id : k.source_id), k.total_cents);
     }
+    // Sizes come from the main roster (matched by name); count repeated names.
+    const roster = (await pool.query(`SELECT lower(trim(player_name)) AS n, shirt_size FROM players WHERE archived_at IS NULL ORDER BY id`)).rows;
+    const sizeBy = new Map();
+    roster.forEach((p) => { if (!sizeBy.has(p.n) || (!sizeBy.get(p.n) && p.shirt_size)) sizeBy.set(p.n, p.shirt_size || ''); });
+    const count = new Map();
+    lines.forEach((l) => { const k = String(l.player_name).trim().toLowerCase().replace(/\s+/g, ' '); count.set(k, (count.get(k) || 0) + 1); });
     res.json(lines.map((l) => {
       let total = null;
       if (l._totals.size) total = [...l._totals.values()].reduce((a, b) => a + b, 0);
-      return { player_name: l.player_name, charged_at: l.charged_at, total_cents: total, practice: l.practice, sultans: l.sultans };
+      const key = String(l.player_name).trim().toLowerCase();
+      const norm = key.replace(/\s+/g, ' ');
+      return { player_name: l.player_name, charged_at: l.charged_at, total_cents: total, practice: l.practice, sultans: l.sultans,
+        duplicate: count.get(norm) > 1, on_roster: sizeBy.has(key), size: sizeBy.get(key) || '' };
     }));
   } catch (err) {
     console.error('Kit fees error:', err);
@@ -137,7 +146,7 @@ router.put('/admin/kit-fees/:id', requireAdmin, async (req, res) => {
     }
     if (typeof b.paid === 'boolean') {
       // Paid by hand (Zelle / cash): keeps the paid mark even when the payment link later syncs.
-      const method = b.paid ? (row.source === 'manual' ? null : (b.method === 'cash' ? 'cash' : 'zelle')) : null;
+      const method = b.paid ? (b.method === 'zelle' ? 'zelle' : (row.source === 'manual' ? null : 'other')) : null;
       if (!b.paid && row.source !== 'manual' && !row.paid_method) return res.status(400).json({ error: 'This one was paid through Stripe, so it cannot be undone here.' });
       await pool.query('UPDATE kit_fees SET paid_at = $2, total_cents = $3, paid_method = $4 WHERE id = $1',
         [row.id, b.paid ? new Date() : null, b.paid ? row.amount_cents : null, method]);

@@ -136,6 +136,13 @@ router.post('/admin/proration-mode', requireAdmin, async (req, res) => {
   }
 });
 
+// The payment is for RCH training. "+ Sultans FC" is only shown when the link also charges the Sultans kit.
+function labelOf(entry) {
+  const label = String(entry.program_label || '');
+  if ((entry.sultans_kit_cents || 0) > 0) return label;
+  return label.replace('RCH Elite Training + Sultans FC', 'RCH Elite Training');
+}
+
 // Admin: after you've approved a family, generate their unique payment link
 // and email it to them immediately.
 router.post('/admin/payment-links', requireAdmin, async (req, res) => {
@@ -185,8 +192,8 @@ router.post('/admin/payment-links', requireAdmin, async (req, res) => {
       childName = player.player_name;
       parentName = player.parent_name || player.player_name;
       email = player.parent_email;
-      const programs = [player.rch && 'RCH Elite Training', player.sultans && 'Sultans FC'].filter(Boolean);
-      programLabel = `${programs.length ? programs.join(' + ') : 'RCH Elite Training'} — ${player.grade}`;
+      const programs = ['RCH Elite Training', sultansKitAmount > 0 && 'Sultans FC'].filter(Boolean);
+      programLabel = `${programs.join(' + ')} — ${player.grade}`;
     }
 
     if (tierLabel) programLabel = `${programLabel} (${tierLabel})`;
@@ -287,7 +294,7 @@ router.get('/pay/:token', async (req, res) => {
     res.json({
       childName: entry.child_name,
       parentName: entry.parent_name,
-      programLabel: entry.program_label,
+      programLabel: labelOf(entry),
       oneTimeAmount: entry.one_time_amount_cents,
       monthlyAmount: entry.monthly_amount_cents,
       proratedAmount: proration.amountCents,
@@ -331,7 +338,7 @@ router.post('/pay/:token/checkout', async (req, res) => {
       lineItems.push({
         price_data: {
           currency: 'usd',
-          product_data: { name: `${entry.program_label} — Practice Kit Fee` },
+          product_data: { name: `${labelOf(entry)} — Practice Kit Fee` },
           unit_amount: practiceKit,
         },
         quantity: 1,
@@ -341,7 +348,7 @@ router.post('/pay/:token/checkout', async (req, res) => {
       lineItems.push({
         price_data: {
           currency: 'usd',
-          product_data: { name: `${entry.program_label} — Sultans FC Kit Fee` },
+          product_data: { name: `${labelOf(entry)} — Sultans FC Kit Fee` },
           unit_amount: sultansKit,
         },
         quantity: 1,
@@ -351,7 +358,7 @@ router.post('/pay/:token/checkout', async (req, res) => {
       price_data: {
         currency: 'usd',
         product_data: {
-          name: `${entry.program_label} — This month (${proration.remaining} of ${proration.totalCount} practices remaining)`,
+          name: `${labelOf(entry)} — This month (${proration.remaining} of ${proration.totalCount} practices remaining)`,
         },
         unit_amount: Math.max(proration.amountCents, 0),
       },
@@ -422,7 +429,7 @@ async function startFollowOnSubscription(stripe, entry, customerId, paymentInten
   if (anchorTs <= Math.floor(Date.now() / 1000) + 3600) anchorTs = nextAnchorTimestamp();
   const cancelAt = Math.floor(new Date(entry.season_end_date).getTime() / 1000 + 23 * 3600 + 59 * 60 + 59);
 
-  const product = await stripe.products.create({ name: `${entry.program_label} — Monthly Season Fee` });
+  const product = await stripe.products.create({ name: `${labelOf(entry)} — Monthly Season Fee` });
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
     items: [{

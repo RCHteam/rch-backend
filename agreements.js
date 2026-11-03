@@ -319,6 +319,28 @@ router.get('/admin/agreements/download-all', requireAdmin, async (req, res) => {
 });
 
 
+// Live photo & video consent record: read straight from the signed agreements every time,
+// so it updates by itself the moment a parent signs.
+router.get('/admin/agreements/photo-consent', requireAdmin, async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT DISTINCT ON (lower(player_name), lower(COALESCE(parent_email,'')))
+              id, player_name, parent_name, parent_email, sent_at, signed_at,
+              form_data->>'photoConsent' AS consent
+         FROM agreements
+        ORDER BY lower(player_name), lower(COALESCE(parent_email,'')), (signed_at IS NULL), COALESCE(signed_at, sent_at) DESC`);
+    const rows = r.rows.map((x) => ({
+      id: x.id, player_name: x.player_name, parent_name: x.parent_name, parent_email: x.parent_email, signed_at: x.signed_at,
+      status: !x.signed_at ? 'waiting' : (x.consent === 'yes' ? 'yes' : (x.consent === 'no' ? 'no' : 'waiting')),
+    }));
+    rows.sort((a, b) => a.player_name.localeCompare(b.player_name));
+    res.json(rows);
+  } catch (err) {
+    console.error('Photo consent error:', err);
+    res.status(500).json({ error: 'Could not load the photo consent record.' });
+  }
+});
+
 router.get('/admin/agreements/:id/pdf', requireAdmin, async (req, res) => {
   try {
     const r = await pool.query('SELECT player_name, pdf_data FROM agreements WHERE id=$1', [req.params.id]);
