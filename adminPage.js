@@ -2218,12 +2218,24 @@ module.exports = `<!doctype html>
   const SIZE_GROUPS = [
     ['Toddler', [['2T','2T (age 1-2)'],['3T','3T (age 2-3)'],['4T','4T (age 3-4)']]],
     ['Youth', [['YXS','Youth XS (6/7)'],['YS','Youth S (7/8)'],['YM','Youth M (10/12)'],['YL','Youth L (14/16)'],['YXL','Youth XL (18/20)']]],
-    ['Adult', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
+    ['Adult / Men', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
+    ['Women', [['WXS','Women XS'],['WS','Women S'],['WM','Women M'],['WL','Women L'],['WXL','Women XL'],['W2XL','Women 2XL'],['W3XL','Women 3XL']]],
+    ['Goalie - Men', [['GS','Goalie S'],['GM','Goalie M'],['GL','Goalie L'],['GXL','Goalie XL'],['G2XL','Goalie 2XL'],['G3XL','Goalie 3XL'],['G4XL','Goalie 4XL']]],
+    ['Goalie - Women', [['GWXS','Goalie Women XS'],['GWS','Goalie Women S'],['GWM','Goalie Women M'],['GWL','Goalie Women L'],['GWXL','Goalie Women XL'],['GW2XL','Goalie Women 2XL'],['GW3XL','Goalie Women 3XL']]],
+    ['Goalie - Youth', [['GYXS','Goalie Youth XS'],['GYS','Goalie Youth S'],['GYM','Goalie Youth M'],['GYL','Goalie Youth L'],['GYXL','Goalie Youth XL']]],
   ];
   const SIZE_OPTIONS_HTML = '<option value="">— not set —</option>' + SIZE_GROUPS.map(function(g){
     return '<optgroup label="' + g[0] + '">' + g[1].map(function(s){ return '<option value="' + s[0] + '">' + s[1] + '</option>'; }).join('') + '</optgroup>';
   }).join('');
   document.querySelectorAll('select[data-size]').forEach(function(sel){ sel.innerHTML = SIZE_OPTIONS_HTML; });
+  // Never blank out someone's saved size: if it is not in the list, keep it as its own option.
+  function setSizeValue(id, val){
+    const sel = document.getElementById(id);
+    if (val && !Array.prototype.some.call(sel.options, function(o){ return o.value === val; })) {
+      const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o);
+    }
+    sel.value = val || '';
+  }
 
   // The Tuesday/Thursday choice only applies to one-session players.
   function wireDayToggle(sessId, wrapId){
@@ -2254,7 +2266,7 @@ module.exports = `<!doctype html>
     document.getElementById('moveGrade').value = row.grade || row.school_grade || row.age_group || 'pre-k';
     document.getElementById('moveSessionType').value = row.session_type || 'one';
     document.getElementById('moveSibling').value = String(row.sibling_discount || 0);
-    document.getElementById('moveSize').value = row.shirt_size || '';
+    setSizeValue('moveSize', row.shirt_size);
     document.getElementById('moveDay').value = row.session_day || 'tuesday';
     syncMoveDay();
     // Training signups go on the roster as RCH only. Sultans FC signups use the
@@ -3525,7 +3537,7 @@ module.exports = `<!doctype html>
     document.getElementById('epSultans').checked = !!player.sultans;
     document.getElementById('epDiscount').value = (player.discount_cents / 100).toFixed(2);
     document.getElementById('epSibling').value = String(player.sibling_discount || 0);
-    document.getElementById('epSize').value = player.shirt_size || '';
+    setSizeValue('epSize', player.shirt_size);
     document.getElementById('epDay').value = player.session_day || 'tuesday';
     syncEpDay();
     document.getElementById('editPlayerError').textContent = '';
