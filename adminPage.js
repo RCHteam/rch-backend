@@ -1277,6 +1277,7 @@ module.exports = `<!doctype html>
       <div class="panel-body">
       <p style="color:#666; font-size:0.85rem; margin:-6px 0 14px;">Kit fees charged through payment links show up here by themselves, with the payment date once the parent pays. <b>Total paid</b> is everything the parent paid at checkout (kit plus first month). The <b>Practice Kit</b> and <b>Sultans Kit</b> columns show separately whether each kit was paid. Tick <b>Kit ordered</b> when you have ordered it. Add anyone else by hand below.</p>
       <div id="kitSummary" style="margin:0 0 10px; font-size:0.9rem;"></div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 10px;"><button type="button" class="btn-add" id="kitVerifyBtn" style="background:#fff; border:1px solid var(--pitch); color:var(--pitch);">Check with Stripe</button><span id="kitVerifyMsg" style="font-size:0.85rem;"></span></div>
       <div class="kit-filter" id="kitFilter"></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px;">
         <input type="text" id="kitName" placeholder="Player name" maxlength="120" style="flex:1; min-width:180px; max-width:280px; padding:10px 12px; font:inherit;" autocomplete="off">
@@ -6191,11 +6192,17 @@ module.exports = `<!doctype html>
 
   // ---- Kit Fees ----
   function kitDay(d){ try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Chicago' }); } catch (e) { return ''; } }
+  let kitVerify = {};
   function kitCell(k){
     if (!k) return '<span class="kdim">—</span>';
     if (k.paid_at) {
       const z = k.paid_method === 'zelle';
-      return '<span class="kpill ' + (z ? 'zelle' : 'paid') + '">' + (z ? 'Paid · Zelle' : 'Paid') + '</span> <span class="kdim">' + money(k.amount_cents) + ' · ' + escapeHtml(kitDay(k.paid_at)) + '</span>' +
+      const v = kitVerify[k.id];
+      let src;
+      if (v && (v.result === 'unpaid' || v.result === 'missing')) src = ' <span class="kpill unpaid" title="' + escapeHtml(v.detail || '') + '">Not in Stripe</span>';
+      else if (v && v.result === 'ok') src = ' <span class="kdim" style="color:#1f7a3d;">&#10003; Stripe</span>';
+      else src = k.via === 'hand' ? ' <span class="kdim">by hand</span>' : ' <span class="kdim">Stripe</span>';
+      return '<span class="kpill ' + (z ? 'zelle' : 'paid') + '">' + (z ? 'Paid · Zelle' : 'Paid') + '</span> <span class="kdim">' + money(k.amount_cents) + ' · ' + escapeHtml(kitDay(k.paid_at)) + '</span>' + src +
         (k.paid_method || k.source === 'manual' ? ' <button type="button" class="kb u" data-kunpaid="' + k.id + '">Undo</button>' : '') + (z ? '' : ' <button type="button" class="kb z" data-kretag="' + k.id + '" data-kstripe="' + ((k.source !== 'manual' && !k.paid_method) ? '1' : '') + '">To Zelle</button>');
     }
     return '<span class="kpill unpaid">Not paid</span> <span class="kdim">' + money(k.amount_cents) + '</span>' +
@@ -6331,6 +6338,19 @@ module.exports = `<!doctype html>
   });
   window.addEventListener('scroll', closeKitPop, true);
 
+  document.getElementById('kitVerifyBtn').addEventListener('click', async function(){
+    const btn = this, msg = document.getElementById('kitVerifyMsg');
+    btn.disabled = true; msg.style.color = '#666'; msg.textContent = 'Checking every paid kit with Stripe...';
+    try {
+      const r = await api('/api/admin/kit-fees/verify');
+      if (r.error) { msg.style.color = '#b5482f'; msg.textContent = r.error; btn.disabled = false; return; }
+      kitVerify = r.results || {};
+      drawKitTable();
+      msg.style.color = r.problems ? '#b5482f' : '#1f7a3d';
+      msg.textContent = r.problems ? r.problems + ' kit' + (r.problems === 1 ? '' : 's') + ' marked paid but NOT found as paid in Stripe (red "Not in Stripe" tag).' : 'All ' + r.checked + ' Stripe-paid kits are confirmed in Stripe.';
+    } catch (e) { msg.style.color = '#b5482f'; msg.textContent = 'Could not check. Please try again.'; }
+    btn.disabled = false;
+  });
   document.getElementById('kitAddBtn').addEventListener('click', async function(){
     const err = document.getElementById('kitErr');
     err.textContent = '';

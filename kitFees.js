@@ -87,7 +87,8 @@ router.get('/admin/kit-fees', requireAdmin, async (req, res) => {
     const lines = [];
     const byName = new Map();
     for (const k of r.rows) {
-      const slot = { id: k.id, amount_cents: k.amount_cents, paid_at: k.paid_at, ordered: k.ordered, ordered_at: k.ordered_at, source: k.source, paid_method: k.paid_method };
+      const slot = { id: k.id, amount_cents: k.amount_cents, paid_at: k.paid_at, ordered: k.ordered, ordered_at: k.ordered_at, source: k.source, paid_method: k.paid_method,
+        via: !k.paid_at ? null : ((k.source === 'manual' || k.paid_method) ? 'hand' : 'stripe') };
       const key = String(k.player_name).trim().toLowerCase();
       let line = (byName.get(key) || []).find((l) => !l[k.kit_type]);
       if (!line) {
@@ -133,6 +134,56 @@ router.post('/admin/kit-fees', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Add kit fee error:', err);
     res.status(500).json({ error: 'Could not add this.' });
+  }
+});
+
+// Check every kit that says "paid through Stripe" against Stripe itself.
+// Kits marked by hand (Paid / Zelle buttons) are listed as "by hand" and never counted as Stripe money.
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  const Stripe = require('stripe');
+  return new Stripe(key, { apiVersion: '2026-08-26.dahlia' });
+}
+router.get('/admin/kit-fees/verify', requireAdmin, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).json({ error: 'Stripe is not connected on the backend.' });
+  try {
+    const r = await pool.query(
+      `SELECT k.id, k.player_name, k.source, k.source_id, k.paid_at, k.paid_method,
+              CASE WHEN k.source = 'link' THEN pl.stripe_checkout_session_id
+                   WHEN k.source = 'one_time' THEN ot.stripe_checkout_session_id END AS session_id
+         FROM kit_fees k
+         LEFT JOIN payment_links pl ON k.source = 'link' AND pl.id = k.source_id
+         LEFT JOIN one_time_payments ot ON k.source = 'one_time' AND ot.id = k.source_id
+        WHERE NOT k.hidden AND k.paid_at IS NOT NULL`);
+    const out = {};
+    const todo = [];
+    r.rows.forEach((k) => {
+      if (k.source === 'manual' || k.paid_method) { out[k.id] = { result: 'hand' }; return; }
+      if (!k.session_id) { out[k.id] = { result: 'missing', detail: 'No Stripe checkout is on record for this payment.' }; return; }
+      todo.push(k);
+    });
+    let i = 0;
+    async function worker() {
+      while (i < todo.length) {
+        const k = todo[i++];
+        try {
+          const s = await stripe.checkout.sessions.retrieve(k.session_id);
+          out[k.id] = s.payment_status === 'paid'
+            ? { result: 'ok' }
+            : { result: 'unpaid', detail: 'Stripe says this checkout is "' + s.payment_status + '", not paid.' };
+        } catch (e) {
+          out[k.id] = { result: 'missing', detail: 'Stripe could not find this payment (' + (e && e.code ? e.code : 'error') + ').' };
+        }
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    const bad = Object.keys(out).filter((id) => out[id].result === 'unpaid' || out[id].result === 'missing');
+    res.json({ checked: todo.length, problems: bad.length, results: out });
+  } catch (err) {
+    console.error('Kit fee verify error:', err);
+    res.status(500).json({ error: 'Could not check with Stripe.' });
   }
 });
 
