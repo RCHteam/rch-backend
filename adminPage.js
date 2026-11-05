@@ -163,6 +163,15 @@ module.exports = `<!doctype html>
   table.kit-table .kx{ background:none; border:0; color:#b0b8b2; font-size:1rem; cursor:pointer; padding:2px 6px; border-radius:6px; }
   table.kit-table .kx:hover{ background:#fdecea; color:#b5482f; }
   table.kit-table label.ko{ display:inline-flex; align-items:center; gap:5px; margin:0 10px 0 0; cursor:pointer; font-size:0.78rem; }
+  .kdots{ background:none; border:1px solid transparent; color:#6b7a70; font-size:1.1rem; line-height:1; cursor:pointer; padding:0 7px 4px; margin-left:6px; border-radius:6px; font-weight:700; }
+  .kdots:hover{ background:#eef3ef; border-color:#cfd8d2; color:#164a30; }
+  #kitPop{ position:fixed; z-index:99999; background:#fff; border:1px solid #cfd8d2; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.18); padding:6px; min-width:230px; }
+  #kitPop .kp-h{ font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; color:#8a948d; padding:6px 10px 2px; font-weight:700; }
+  #kitPop button{ display:block; width:100%; text-align:left; background:none; border:0; padding:8px 10px; border-radius:6px; font:inherit; font-size:0.85rem; cursor:pointer; color:#1b2a22; }
+  #kitPop button:hover{ background:#eef3ef; }
+  #kitPop button.z{ color:#6d28d9; } #kitPop button.z:hover{ background:#efe7fb; }
+  #kitPop button.d{ color:#b5482f; } #kitPop button.d:hover{ background:#fdecea; }
+  #kitPop .kp-n{ padding:8px 10px; font-size:0.8rem; color:#8a948d; }
   .kit-filter{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
   .kit-filter button{ background:#fff; border:1px solid #cfd8d2; color:#1b2a22; padding:7px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size:0.82rem; }
   .kit-filter button b{ margin-left:4px; }
@@ -6200,21 +6209,24 @@ module.exports = `<!doctype html>
   let kitRows = [], kitFilter = 'all';
   function kitLineState(r){
     const ks = [r.practice, r.sultans].filter(Boolean);
-    return { unpaid: ks.some(function(k){ return !k.paid_at; }), paid: ks.length > 0 && ks.every(function(k){ return !!k.paid_at; }), zelle: ks.some(function(k){ return k.paid_at && k.paid_method === 'zelle'; }) };
+    const paid = ks.length > 0 && ks.every(function(k){ return !!k.paid_at; });
+    const zelle = ks.some(function(k){ return k.paid_at && k.paid_method === 'zelle'; });
+    return { unpaid: ks.some(function(k){ return !k.paid_at; }), paid: paid, zelle: zelle, paidother: paid && !zelle };
   }
   function drawKitTable(){
     const wrap = document.getElementById('kitTableWrap');
     const rows = kitRows;
     const st = rows.map(kitLineState);
-    const cnt = { all: rows.length, unpaid: 0, paid: 0, zelle: 0, dup: 0 };
-    rows.forEach(function(r, n){ if (st[n].unpaid) cnt.unpaid++; if (st[n].paid) cnt.paid++; if (st[n].zelle) cnt.zelle++; if (r.duplicate) cnt.dup++; });
-    const defs = [['all', 'All players', ''], ['unpaid', 'Not paid', ''], ['paid', 'Paid', ''], ['zelle', 'Paid by Zelle', 'zel'], ['dup', 'Duplicate names', '']];
+    const cnt = { all: rows.length, unpaid: 0, paid: 0, paidother: 0, zelle: 0, dup: 0 };
+    rows.forEach(function(r, n){ if (st[n].unpaid) cnt.unpaid++; if (st[n].paid) cnt.paid++; if (st[n].paidother) cnt.paidother++; if (st[n].zelle) cnt.zelle++; if (r.duplicate) cnt.dup++; });
+    const defs = [['all', 'All players', ''], ['unpaid', 'Not paid', ''], ['paid', 'Paid', ''], ['paidother', 'Paid, not Zelle', ''], ['zelle', 'Paid by Zelle', 'zel'], ['dup', 'Duplicate names', '']];
     document.getElementById('kitFilter').innerHTML = defs.map(function(d){
       return '<button type="button" class="' + d[2] + (kitFilter === d[0] ? ' on' : '') + '" data-kfilter="' + d[0] + '">' + d[1] + '<b>' + cnt[d[0]] + '</b></button>';
     }).join('');
     const show = rows.filter(function(r, n){
       if (kitFilter === 'unpaid') return st[n].unpaid;
       if (kitFilter === 'paid') return st[n].paid;
+      if (kitFilter === 'paidother') return st[n].paidother;
       if (kitFilter === 'zelle') return st[n].zelle;
       if (kitFilter === 'dup') return r.duplicate;
       return true;
@@ -6226,7 +6238,7 @@ module.exports = `<!doctype html>
       const ids = [r.practice, r.sultans].filter(Boolean).map(function(k){ return k.id; }).join(',');
       const tags = (r.duplicate ? '<span class="kit-tag" style="background:#fdecea; color:#b5482f;">Duplicate</span>' : '') + (r.on_roster ? '' : '<span class="kit-tag" style="background:#fff4d6; color:#8a5a00;">Not on roster</span>');
       const both = r.practice && r.sultans;
-      return '<tr><td><span class="kn">' + escapeHtml(r.player_name) + '</span>' + tags + '</td>' +
+      return '<tr><td><span class="kn">' + escapeHtml(r.player_name) + '</span><button type="button" class="kdots" title="More" data-kmenu="' + kitRows.indexOf(r) + '">&#8943;</button>' + tags + '</td>' +
         '<td>' + (r.size ? '<span class="ksize">' + escapeHtml(r.size) + '</span>' : '<span class="kdim">' + (r.on_roster ? 'No size' : '—') + '</span>') + '</td>' +
         '<td>' + (r.charged_at ? escapeHtml(kitDay(r.charged_at)) : '<span class="kdim">—</span>') + '</td>' +
         '<td>' + (r.total_cents != null ? '<b>' + money(r.total_cents) + '</b>' : '<span class="kdim">—</span>') + '</td>' +
@@ -6267,6 +6279,57 @@ module.exports = `<!doctype html>
     kitFilter = b.getAttribute('data-kfilter');
     drawKitTable();
   });
+  // "..." menu next to each name: change Paid / Paid by Zelle / Not paid.
+  function closeKitPop(){ const p = document.getElementById('kitPop'); if (p) p.remove(); }
+  function kitMenuItems(k, label){
+    if (!k) return '';
+    const h = label ? '<div class="kp-h">' + label + '</div>' : '';
+    if (!k.paid_at) return h + '<button type="button" data-kact="paid" data-kid="' + k.id + '">Mark paid</button><button type="button" class="z" data-kact="zelle-new" data-kid="' + k.id + '">Mark paid by Zelle</button>';
+    if (k.source !== 'manual' && !k.paid_method) return h + '<div class="kp-n">Paid by card through Stripe, nothing to change.</div>';
+    return h + (k.paid_method === 'zelle'
+      ? '<button type="button" data-kact="retag-other" data-kid="' + k.id + '">Change to Paid (not Zelle)</button>'
+      : '<button type="button" class="z" data-kact="retag-zelle" data-kid="' + k.id + '">Change to Paid by Zelle</button>') +
+      '<button type="button" class="d" data-kact="unpaid" data-kid="' + k.id + '">Mark not paid</button>';
+  }
+  document.getElementById('kitTableWrap').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-kmenu]');
+    if (!b) return;
+    e.stopPropagation();
+    const had = document.getElementById('kitPop'); closeKitPop();
+    if (had && had.getAttribute('data-for') === b.getAttribute('data-kmenu')) return;
+    const r = kitRows[parseInt(b.getAttribute('data-kmenu'), 10)];
+    if (!r) return;
+    const both = r.practice && r.sultans;
+    const pop = document.createElement('div'); pop.id = 'kitPop'; pop.setAttribute('data-for', b.getAttribute('data-kmenu'));
+    pop.innerHTML = kitMenuItems(r.practice, both ? 'Practice kit' : '') + kitMenuItems(r.sultans, both ? 'Sultans kit' : '');
+    document.body.appendChild(pop);
+    const rc = b.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(rc.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    pop.style.top = Math.min(rc.bottom + 4, innerHeight - pop.offsetHeight - 8) + 'px';
+  });
+  document.addEventListener('click', function(e){
+    const pop = document.getElementById('kitPop');
+    if (!pop) return;
+    const a = e.target.closest('#kitPop button[data-kact]');
+    if (!a) { if (!e.target.closest('#kitPop')) closeKitPop(); return; }
+    const id = a.getAttribute('data-kid'), act = a.getAttribute('data-kact');
+    closeKitPop();
+    (async function(){
+      try {
+        let body;
+        if (act === 'paid') body = { paid: true, method: 'other' };
+        else if (act === 'zelle-new') body = { paid: true, method: 'zelle' };
+        else if (act === 'retag-zelle') body = { method: 'zelle' };
+        else if (act === 'retag-other') body = { method: 'other' };
+        else if (act === 'unpaid') { if (!confirm('Mark this kit as NOT paid?')) return; body = { paid: false }; }
+        const r = await api('/api/admin/kit-fees/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        if (r && r.error) alert(r.error);
+        await loadKitFees();
+      } catch (x) { alert('Could not save. Please try again.'); }
+    })();
+  });
+  window.addEventListener('scroll', closeKitPop, true);
+
   document.getElementById('kitAddBtn').addEventListener('click', async function(){
     const err = document.getElementById('kitErr');
     err.textContent = '';
