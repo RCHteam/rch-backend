@@ -2218,10 +2218,6 @@ module.exports = `<!doctype html>
   const SIZE_GROUPS = [
     ['Toddler', [['2T','2T (age 1-2)'],['3T','3T (age 2-3)'],['4T','4T (age 3-4)']]],
     ['Youth', [['YXS','Youth XS (6/7)'],['YS','Youth S (7/8)'],['YM','Youth M (10/12)'],['YL','Youth L (14/16)'],['YXL','Youth XL (18/20)']]],
-    ['Adult / Men', [['S','S'],['M','M'],['L','L'],['XL','XL'],['2XL','2XL'],['3XL','3XL'],['4XL','4XL']]],
-    ['Women', [['WXS','Women XS'],['WS','Women S'],['WM','Women M'],['WL','Women L'],['WXL','Women XL'],['W2XL','Women 2XL'],['W3XL','Women 3XL']]],
-    ['Goalie - Men', [['GS','Goalie S'],['GM','Goalie M'],['GL','Goalie L'],['GXL','Goalie XL'],['G2XL','Goalie 2XL'],['G3XL','Goalie 3XL'],['G4XL','Goalie 4XL']]],
-    ['Goalie - Women', [['GWXS','Goalie Women XS'],['GWS','Goalie Women S'],['GWM','Goalie Women M'],['GWL','Goalie Women L'],['GWXL','Goalie Women XL'],['GW2XL','Goalie Women 2XL'],['GW3XL','Goalie Women 3XL']]],
     ['Goalie - Youth', [['GYXS','Goalie Youth XS'],['GYS','Goalie Youth S'],['GYM','Goalie Youth M'],['GYL','Goalie Youth L'],['GYXL','Goalie Youth XL']]],
   ];
   const SIZE_OPTIONS_HTML = '<option value="">— not set —</option>' + SIZE_GROUPS.map(function(g){
@@ -6237,7 +6233,20 @@ module.exports = `<!doctype html>
         '<td>' + kitCell(r.practice) + '</td>' + (anySultans ? '<td>' + kitCell(r.sultans) + '</td>' : '') +
         '<td>' + kitOrderBox(r.practice, both ? 'Practice' : '') + kitOrderBox(r.sultans, both ? 'Sultans' : 'Sultans') + '</td>' +
         '<td style="text-align:right;"><button type="button" class="kx" title="Delete" data-kdel="' + ids + '">&#10005;</button></td></tr>';
-    }).join('') + '</tbody></table></div>';
+    }).join('') + '</tbody></table></div>' + kitSizeTotals(show);
+  }
+  // Totals at the end of the table: how many of each size (follows the filter you picked).
+  function kitSizeTotals(list){
+    const ORDER = ['2T','3T','4T','YXS','YS','YM','YL','YXL','GYXS','GYS','GYM','GYL','GYXL','S','M','L','XL','2XL','3XL','4XL'];
+    const counts = {}; let none = 0;
+    list.forEach(function(r){ if (r.size) counts[r.size] = (counts[r.size] || 0) + 1; else none++; });
+    const keys = Object.keys(counts).sort(function(a, b){
+      const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b);
+    });
+    const chip = function(label, n, dim){ return '<span style="display:inline-flex; align-items:center; gap:6px; background:' + (dim ? '#f3f4f2' : '#eef3ef') + '; color:' + (dim ? '#6b7a70' : '#164a30') + '; border-radius:8px; padding:6px 12px; font-size:0.85rem; font-weight:700;">' + label + ' <span style="font-weight:500;">&times;</span> ' + n + '</span>'; };
+    return '<div style="margin:14px 0 0;"><div style="font-size:0.78rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#6b7a70; margin:0 0 8px;">Total by size &middot; ' + list.length + ' players</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+      keys.map(function(k){ return chip(escapeHtml(k), counts[k], false); }).join('') + (none ? chip('No size', none, true) : '') + '</div></div>';
   }
   async function loadKitFees(){
     const wrap = document.getElementById('kitTableWrap');
