@@ -147,7 +147,6 @@ router.put('/admin/kit-fees/:id', requireAdmin, async (req, res) => {
     if (typeof b.method === 'string' && typeof b.paid !== 'boolean') {
       // Re-tag an already paid kit (Paid <-> Paid by Zelle) without touching its paid date.
       if (!row.paid_at) return res.status(400).json({ error: 'Mark it paid first.' });
-      if (row.source !== 'manual' && !row.paid_method) return res.status(400).json({ error: 'This one was paid by card through Stripe, so it stays as it is.' });
       const m = b.method === 'zelle' ? 'zelle' : (row.source === 'manual' ? null : 'other');
       await pool.query('UPDATE kit_fees SET paid_method = $2 WHERE id = $1', [row.id, m]);
     }

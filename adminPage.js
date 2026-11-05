@@ -6196,7 +6196,7 @@ module.exports = `<!doctype html>
     if (k.paid_at) {
       const z = k.paid_method === 'zelle';
       return '<span class="kpill ' + (z ? 'zelle' : 'paid') + '">' + (z ? 'Paid · Zelle' : 'Paid') + '</span> <span class="kdim">' + money(k.amount_cents) + ' · ' + escapeHtml(kitDay(k.paid_at)) + '</span>' +
-        (k.paid_method || k.source === 'manual' ? ' <button type="button" class="kb u" data-kunpaid="' + k.id + '">Undo</button>' : '');
+        (k.paid_method || k.source === 'manual' ? ' <button type="button" class="kb u" data-kunpaid="' + k.id + '">Undo</button>' : '') + (z ? '' : ' <button type="button" class="kb z" data-kretag="' + k.id + '" data-kstripe="' + ((k.source !== 'manual' && !k.paid_method) ? '1' : '') + '">To Zelle</button>');
     }
     return '<span class="kpill unpaid">Not paid</span> <span class="kdim">' + money(k.amount_cents) + '</span>' +
       ' <button type="button" class="kb" data-kpaid="' + k.id + '" data-kmethod="other">Paid</button>' +
@@ -6285,7 +6285,7 @@ module.exports = `<!doctype html>
     if (!k) return '';
     const h = label ? '<div class="kp-h">' + label + '</div>' : '';
     if (!k.paid_at) return h + '<button type="button" data-kact="paid" data-kid="' + k.id + '">Mark paid</button><button type="button" class="z" data-kact="zelle-new" data-kid="' + k.id + '">Mark paid by Zelle</button>';
-    if (k.source !== 'manual' && !k.paid_method) return h + '<div class="kp-n">Paid by card through Stripe, nothing to change.</div>';
+    if (k.source !== 'manual' && !k.paid_method) return h + '<button type="button" class="z" data-kact="retag-zelle-stripe" data-kid="' + k.id + '">Change to Paid by Zelle</button><div class="kp-n">Now showing as paid by card (Stripe).</div>';
     return h + (k.paid_method === 'zelle'
       ? '<button type="button" data-kact="retag-other" data-kid="' + k.id + '">Change to Paid (not Zelle)</button>'
       : '<button type="button" class="z" data-kact="retag-zelle" data-kid="' + k.id + '">Change to Paid by Zelle</button>') +
@@ -6320,6 +6320,7 @@ module.exports = `<!doctype html>
         if (act === 'paid') body = { paid: true, method: 'other' };
         else if (act === 'zelle-new') body = { paid: true, method: 'zelle' };
         else if (act === 'retag-zelle') body = { method: 'zelle' };
+        else if (act === 'retag-zelle-stripe') { if (!confirm('This kit shows as paid through Stripe. Only change it if the parent really paid by Zelle. Change it?')) return; body = { method: 'zelle' }; }
         else if (act === 'retag-other') body = { method: 'other' };
         else if (act === 'unpaid') { if (!confirm('Mark this kit as NOT paid?')) return; body = { paid: false }; }
         const r = await api('/api/admin/kit-fees/' + id, { method: 'PUT', body: JSON.stringify(body) });
@@ -6349,6 +6350,13 @@ module.exports = `<!doctype html>
     if (!c) return;
     try { await api('/api/admin/kit-fees/' + c.getAttribute('data-kord'), { method: 'PUT', body: JSON.stringify({ ordered: c.checked }) }); await loadKitFees(); }
     catch (x) { c.checked = !c.checked; alert('Could not save. Please try again.'); }
+  });
+  document.getElementById('kitTableWrap').addEventListener('click', async function(e){
+    const t = e.target.closest('button[data-kretag]');
+    if (!t) return;
+    if (t.getAttribute('data-kstripe') && !confirm('This kit shows as paid through Stripe. Only change it if the parent really paid by Zelle. Change it?')) return;
+    try { const r = await api('/api/admin/kit-fees/' + t.getAttribute('data-kretag'), { method: 'PUT', body: JSON.stringify({ method: 'zelle' }) }); if (r && r.error) alert(r.error); await loadKitFees(); }
+    catch (x) { alert('Could not save. Please try again.'); }
   });
   document.getElementById('kitTableWrap').addEventListener('click', async function(e){
     const d = e.target.closest('button[data-kdel]'), p = e.target.closest('button[data-kpaid]'), u = e.target.closest('button[data-kunpaid]');
