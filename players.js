@@ -189,6 +189,84 @@ router.delete('/admin/players/:id', requireAdmin, async (req, res) => {
 // subscription first (if they have one), then archive them here as a second,
 // explicit step, so a player is never silently dropped from billing records
 // without you having made the call to actually end their enrollment.
+// ---- Pause / Resume a player ----
+// Pause: the player is labeled Paused. If they have a monthly subscription in Stripe, its charges are
+// paused too (nothing is billed until Resume). If they have no subscription, only the label is set.
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  const Stripe = require('stripe');
+  return new Stripe(key, { apiVersion: '2026-08-26.dahlia' });
+}
+async function playerSubscriptions(playerId) {
+  const r = await pool.query(
+    `SELECT id, stripe_subscription_id FROM payment_links
+      WHERE registration_type = 'player' AND registration_id = $1 AND status = 'completed' AND stripe_subscription_id IS NOT NULL`,
+    [playerId]);
+  return r.rows;
+}
+router.put('/admin/players/:id/pause', requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad player id.' });
+  try {
+    const pr = await pool.query('SELECT id FROM players WHERE id = $1', [id]);
+    if (!pr.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    const subs = await playerSubscriptions(id);
+    let stripePaused = 0;
+    if (subs.length) {
+      const stripe = getStripe();
+      if (!stripe) return res.status(500).json({ error: 'This player has a Stripe subscription but Stripe is not connected, so nothing was paused.' });
+      for (const sub of subs) {
+        try {
+          const cur = await stripe.subscriptions.retrieve(sub.stripe_subscription_id);
+          if (cur.status === 'canceled') continue;
+          await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: { behavior: 'void' } });
+          stripePaused++;
+        } catch (e) {
+          console.error('Pause subscription error:', e.message);
+          return res.status(502).json({ error: 'Stripe would not pause the subscription (' + e.message + '). Nothing was changed on the roster, please try again.' });
+        }
+      }
+    }
+    await pool.query('UPDATE players SET paused_at = now() WHERE id = $1', [id]);
+    res.json({ ok: true, stripePaused });
+  } catch (err) {
+    console.error('Pause player error:', err);
+    res.status(500).json({ error: 'Could not pause this player.' });
+  }
+});
+router.put('/admin/players/:id/resume', requireAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad player id.' });
+  try {
+    const pr = await pool.query('SELECT id FROM players WHERE id = $1', [id]);
+    if (!pr.rows[0]) return res.status(404).json({ error: 'Player not found.' });
+    const subs = await playerSubscriptions(id);
+    let stripeResumed = 0;
+    if (subs.length) {
+      const stripe = getStripe();
+      if (!stripe) return res.status(500).json({ error: 'This player has a Stripe subscription but Stripe is not connected, so nothing was resumed.' });
+      for (const sub of subs) {
+        try {
+          const cur = await stripe.subscriptions.retrieve(sub.stripe_subscription_id);
+          if (cur.status === 'canceled') continue;
+          await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: '' });
+          await pool.query('UPDATE payment_links SET paused_until = NULL WHERE id = $1', [sub.id]);
+          stripeResumed++;
+        } catch (e) {
+          console.error('Resume subscription error:', e.message);
+          return res.status(502).json({ error: 'Stripe would not resume the subscription (' + e.message + '). The player is still marked Paused, please try again.' });
+        }
+      }
+    }
+    await pool.query('UPDATE players SET paused_at = NULL WHERE id = $1', [id]);
+    res.json({ ok: true, stripeResumed });
+  } catch (err) {
+    console.error('Resume player error:', err);
+    res.status(500).json({ error: 'Could not resume this player.' });
+  }
+});
+
 router.put('/admin/players/:id/archive', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
@@ -374,7 +452,7 @@ router.get('/admin/players-overview', requireAdmin, async (req, res) => {
         COUNT(*) FILTER (WHERE session_type = 'online')::int AS total_online,
         COALESCE(SUM(${effectiveDiscountSql(rates)}), 0)::int AS total_discount_cents
       FROM players
-      WHERE archived_at IS NULL
+      WHERE archived_at IS NULL AND paused_at IS NULL
       GROUP BY grade
     `);
     const byGrade = {};

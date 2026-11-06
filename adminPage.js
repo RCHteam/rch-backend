@@ -537,6 +537,9 @@ module.exports = `<!doctype html>
   .btn-delete-row, .btn-delete-guest, .btn-cancel-billing, .btn-cancel-link, .btn-sul-remove{ background:#fff; border:1px solid #d98a76; color:#b5482f; }
   .btn-delete-row:hover, .btn-delete-guest:hover, .btn-cancel-billing:hover, .btn-cancel-link:hover, .btn-sul-remove:hover{ background:#b5482f; color:#fff; border-color:#b5482f; }
   .btn-payment-link:disabled, .btn-start-billing:disabled, .btn-send-agreement:disabled, .btn-paid-other:disabled, .btn-mark-paid:disabled, .btn-cancel-link:disabled, .btn-cancel-billing:disabled, .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
+  tr.paused-row td{ background:#eceeed !important; color:#8a908c !important; }
+  tr.paused-row td .status-badge{ opacity:.7; }
+  .paused-tag{ display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:#d5d9d6; color:#5b625d; margin-left:8px; }
   .menu-sep{ height:1px; background:#e8e8e8; margin:3px 2px; }
   .row-menu .menu-sep{ flex:none; }
   /* ---- Quick-jump chips at the top of long sections (Finances, Data...) ---- */
@@ -676,6 +679,7 @@ module.exports = `<!doctype html>
           <option value="u11">U11</option>
           <option value="u12">U12</option>
           <option value="nodob">No birth date</option>
+          <option value="paused">Paused</option>
         </select>
         <button type="button" class="btn-add" id="addPlayerBtn">+ Add Player</button>
       </div>
@@ -3461,8 +3465,8 @@ module.exports = `<!doctype html>
     rows.forEach((r) => {
       const label = escapeHtml(r.player_name);
       const calledNames = sulView ? (calledByPlayer[r.id] || []) : [];
-      html += '<tr data-rid="' + (sulView ? 'splayer-' : 'player-') + r.id + '">' +
-        '<td>' + escapeHtml(r.player_name) + '</td>' +
+      html += '<tr' + (r.paused_at ? ' class="paused-row"' : '') + ' data-rid="' + (sulView ? 'splayer-' : 'player-') + r.id + '">' +
+        '<td>' + escapeHtml(r.player_name) + (r.paused_at ? '<span class="paused-tag">Paused</span>' : '') + '</td>' +
         '<td>' + escapeHtml(sulView ? uHalfLabel(r.dob) : ageGroupLabel(r.dob)) + (ageGradeMismatch(r) ? ' <span title="The school grade and age group are far apart for this player. Check the date of birth and grade." style="color:#b5482f; cursor:help;">⚠</span>' : '') + '</td>' +
         '<td>' + escapeHtml(GRADE_LABELS[r.grade] || r.grade || '') + '</td>' +
         '<td>' + escapeHtml(fmtDay(r.dob)) + '</td>' +
@@ -3494,6 +3498,7 @@ module.exports = `<!doctype html>
                 } else {
                   if (r.agreement_signed_at) main.push('<button type="button" class="btn-dl-agreement" data-agreement="' + r.agreement_id + '">Download Signed Agreement</button>');
                   else main.push('<button type="button" class="btn-send-agreement"' + lab + '>' + (r.agreement_sent_at ? 'Resend Agreement' : 'Send Agreement') + '</button>');
+                  pay.push('<button type="button" class="btn-pause-player" data-id="' + r.id + '" data-label="' + label + '" data-paused="' + (r.paused_at ? '1' : '0') + '">' + (r.paused_at ? 'Resume' : 'Pause') + '</button>');
                   pay.push('<button type="button" class="btn-paid-other" data-id="' + r.id + '" data-paid="' + (r.paid_otherwise_at ? '1' : '0') + '">' + (r.paid_otherwise_at ? (r.paid_manual ? 'Undo Mark as Paid' : 'Undo Paid Otherwise') : 'Paid Otherwise') + '</button>');
                   if (!r.paid_otherwise_at) pay.push('<button type="button" class="btn-mark-paid" data-id="' + r.id + '">Mark as Paid</button>');
                   if (r.payment_status === 'completed' && !r.stripe_subscription_id) pay.push('<button type="button" class="btn-start-billing"' + lab + '>Start Monthly Billing</button>');
@@ -3604,7 +3609,10 @@ module.exports = `<!doctype html>
     if (P === 'sroster') rows = rows.filter(function(r){ return r.sultans; });
     const everyone = rows;
     // The roster is divided by age group (from date of birth); school grade is still kept on every player.
-    if (!filtering) rows = rows.filter(function(r){ return (P === 'sroster' ? sulGroupKey(r.dob) : ageGroupKey(r.dob)) === grade; });
+    if (!filtering) {
+      if (P === 'roster' && grade === 'paused') rows = rows.filter(function(r){ return !!r.paused_at; });
+      else rows = rows.filter(function(r){ return (P === 'sroster' || !r.paused_at) && (P === 'sroster' ? sulGroupKey(r.dob) : ageGroupKey(r.dob)) === grade; });
+    }
     if (filtering) {
       rows = rows.filter(function(r){
         if (q) {
@@ -3643,6 +3651,22 @@ module.exports = `<!doctype html>
       btn.addEventListener('click', () => {
         const player = rows.find((r) => String(r.id) === btn.getAttribute('data-id'));
         if (player) openEditPlayerModal(player);
+      });
+    });
+    wrap.querySelectorAll('.btn-pause-player').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const resuming = btn.getAttribute('data-paused') === '1';
+        const who = btn.getAttribute('data-label') || 'this player';
+        const q = resuming
+          ? 'Resume ' + who + '? If they have a monthly subscription in Stripe, charging starts again.'
+          : 'Pause ' + who + '? If they have a monthly subscription in Stripe, it is paused and nothing is charged until you resume. If they have no subscription, they are only labeled Paused.';
+        if (!confirm(q)) return;
+        btn.disabled = true;
+        try {
+          const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + (resuming ? '/resume' : '/pause'), { method: 'PUT' });
+          if (r && r.error) { alert(r.error); btn.disabled = false; return; }
+          await Promise.all([loadRoster(), loadOverviewAndRevenue()]);
+        } catch (e) { alert('Could not update this player. Please try again.'); btn.disabled = false; }
       });
     });
     wrap.querySelectorAll('.btn-mark-paid').forEach((btn) => {

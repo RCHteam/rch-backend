@@ -608,3 +608,6 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS paid_manual BOOLEAN NOT NULL DEFAUL
 ALTER TABLE payment_links ADD COLUMN IF NOT EXISTS sultans_kit_cents INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE kit_fees ADD COLUMN IF NOT EXISTS paid_method TEXT;
 ALTER TABLE kit_fees ADD COLUMN IF NOT EXISTS kit_type TEXT NOT NULL DEFAULT 'practice';
+
+-- Roster "Pause": a paused player is labeled Paused (grey) and, if they have a Stripe subscription, its charges are paused.
+ALTER TABLE players ADD COLUMN IF NOT EXISTS paused_at TIMESTAMPTZ;
