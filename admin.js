@@ -293,12 +293,12 @@ router.get('/admin/summary', requireAdmin, async (req, res) => {
   const [potentialRch, potentialSultans, rosterRch, rosterSultansByGrade, sultansDobs] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`),
     pool.query(`SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`),
-    pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL AND paused_at IS NULL`),
     pool.query(
       `SELECT grade AS age_group, COUNT(*)::int AS n FROM players
-       WHERE sultans AND archived_at IS NULL GROUP BY grade`
+       WHERE sultans AND archived_at IS NULL AND paused_at IS NULL GROUP BY grade`
     ),
-    pool.query(`SELECT dob FROM players WHERE sultans AND archived_at IS NULL`),
+    pool.query(`SELECT dob FROM players WHERE sultans AND archived_at IS NULL AND paused_at IS NULL`),
   ]);
   // Sultans players per age group (U-age from date of birth).
   const sultansByAgeGroup = {};

@@ -377,7 +377,7 @@ async function loadMoves() {
 async function loadRchRoster() {
   const r = await pool.query(
     `SELECT id, player_name, to_char(dob, 'YYYY-MM-DD') AS dob, grade, parent_name, parent_phone, parent_email, shirt_size, rch, sultans
-     FROM players WHERE archived_at IS NULL ORDER BY player_name`);
+     FROM players WHERE archived_at IS NULL AND paused_at IS NULL ORDER BY player_name`);
   return r.rows;
 }
 

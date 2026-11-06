@@ -33,7 +33,7 @@ async function resolvePlayers({ scope, grade, playerId, playerIds }) {
     if (!r.rows[0]) throw new Error('That player was not found on the active roster.');
     return r.rows;
   }
-  const conditions = ['archived_at IS NULL'];
+  const conditions = ['archived_at IS NULL', 'paused_at IS NULL'];
   const params = [];
   if (scope === 'all') {
     // no extra filter

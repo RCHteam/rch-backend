@@ -220,7 +220,8 @@ router.put('/admin/players/:id/pause', requireAdmin, async (req, res) => {
         try {
           const cur = await stripe.subscriptions.retrieve(sub.stripe_subscription_id);
           if (cur.status === 'canceled') continue;
-          await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: { behavior: 'void' } });
+          const upd = await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: { behavior: 'void' } });
+          if (!upd || !upd.pause_collection) throw new Error('Stripe did not confirm the pause');
           stripePaused++;
         } catch (e) {
           console.error('Pause subscription error:', e.message);
@@ -250,7 +251,8 @@ router.put('/admin/players/:id/resume', requireAdmin, async (req, res) => {
         try {
           const cur = await stripe.subscriptions.retrieve(sub.stripe_subscription_id);
           if (cur.status === 'canceled') continue;
-          await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: '' });
+          const upd = await stripe.subscriptions.update(sub.stripe_subscription_id, { pause_collection: '' });
+          if (upd && upd.pause_collection) throw new Error('Stripe did not confirm the resume');
           await pool.query('UPDATE payment_links SET paused_until = NULL WHERE id = $1', [sub.id]);
           stripeResumed++;
         } catch (e) {

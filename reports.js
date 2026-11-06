@@ -47,7 +47,7 @@ async function generateSnapshot(monthDate) {
   ]);
   const rates = { one: parseInt(oneCents, 10), two: parseInt(twoCents, 10), online: parseInt(onlineCents, 10) };
 
-  const playersRes = await pool.query('SELECT * FROM players WHERE archived_at IS NULL ORDER BY grade, player_name');
+  const playersRes = await pool.query('SELECT * FROM players WHERE archived_at IS NULL AND paused_at IS NULL ORDER BY grade, player_name');
   // Age group is stored with the snapshot, using the season that month belongs to.
   const [snapY, snapM] = String(month).slice(0, 7).split('-').map(Number);
   const snapDate = new Date(snapY, snapM - 1, 15);

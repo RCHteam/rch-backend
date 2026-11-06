@@ -656,7 +656,7 @@ async function resolveOneTimeRecipients({ scope, grade, playerId, playerIds }) {
     return r.rows;
   }
 
-  const conditions = ['archived_at IS NULL'];
+  const conditions = ['archived_at IS NULL', 'paused_at IS NULL'];
   const params = [];
   if (scope === 'all') {
     // no extra filter

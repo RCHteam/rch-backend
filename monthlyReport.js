@@ -60,8 +60,8 @@ async function gatherMonthlyReportData(monthKey) {
   ] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS n FROM skills_registrations WHERE moved_at IS NULL`),
     pool.query(`SELECT COUNT(*)::int AS n FROM join_registrations WHERE moved_at IS NULL`),
-    pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL`),
-    pool.query(`SELECT grade AS age_group, COUNT(*)::int AS n FROM players WHERE sultans AND archived_at IS NULL GROUP BY grade`),
+    pool.query(`SELECT COUNT(*)::int AS n FROM players WHERE rch AND archived_at IS NULL AND paused_at IS NULL`),
+    pool.query(`SELECT grade AS age_group, COUNT(*)::int AS n FROM players WHERE sultans AND archived_at IS NULL AND paused_at IS NULL GROUP BY grade`),
     pool.query(`
       SELECT grade,
         COUNT(*)::int AS total_players,
@@ -69,7 +69,7 @@ async function gatherMonthlyReportData(monthKey) {
         COUNT(*) FILTER (WHERE session_type = 'two')::int AS total_two,
         COUNT(*) FILTER (WHERE session_type = 'online')::int AS total_online,
         COALESCE(SUM(${effectiveDiscountSql(discountRates)}), 0)::int AS total_discount_cents
-      FROM players WHERE archived_at IS NULL GROUP BY grade
+      FROM players WHERE archived_at IS NULL AND paused_at IS NULL GROUP BY grade
     `),
     getRevenueRateRaw('one'),
     getRevenueRateRaw('two'),

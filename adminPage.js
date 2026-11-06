@@ -3606,12 +3606,12 @@ module.exports = `<!doctype html>
     const filtering = !!(q || onlyUnpaid || onlyNoAg);
     // While searching or filtering, look across every grade instead of just the selected one.
     let rows = await api('/api/admin/players');
-    if (P === 'sroster') rows = rows.filter(function(r){ return r.sultans; });
+    if (P === 'sroster') rows = rows.filter(function(r){ return r.sultans && !r.paused_at; });
     const everyone = rows;
     // The roster is divided by age group (from date of birth); school grade is still kept on every player.
     if (!filtering) {
       if (P === 'roster' && grade === 'paused') rows = rows.filter(function(r){ return !!r.paused_at; });
-      else rows = rows.filter(function(r){ return (P === 'sroster' || !r.paused_at) && (P === 'sroster' ? sulGroupKey(r.dob) : ageGroupKey(r.dob)) === grade; });
+      else rows = rows.filter(function(r){ return !r.paused_at && (P === 'sroster' ? sulGroupKey(r.dob) : ageGroupKey(r.dob)) === grade; });
     }
     if (filtering) {
       rows = rows.filter(function(r){
@@ -3665,6 +3665,10 @@ module.exports = `<!doctype html>
         try {
           const r = await api('/api/admin/players/' + btn.getAttribute('data-id') + (resuming ? '/resume' : '/pause'), { method: 'PUT' });
           if (r && r.error) { alert(r.error); btn.disabled = false; return; }
+          const n = resuming ? r.stripeResumed : r.stripePaused;
+          alert(resuming
+            ? (n ? 'Resumed. Stripe confirmed ' + n + ' subscription' + (n === 1 ? '' : 's') + ' is charging again.' : 'Resumed. They had no active Stripe subscription, so only the label was removed.')
+            : (n ? 'Paused. Stripe confirmed ' + n + ' subscription' + (n === 1 ? '' : 's') + ' is paused, nothing will be charged.' : 'Paused. They have no active Stripe subscription, so they are only labeled Paused.'));
           await Promise.all([loadRoster(), loadOverviewAndRevenue()]);
         } catch (e) { alert('Could not update this player. Please try again.'); btn.disabled = false; }
       });
