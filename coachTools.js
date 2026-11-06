@@ -455,6 +455,26 @@ function attendsOn(player, weekday) {
 const ATT_STATUS = new Set(['present', 'absent']);
 const pad2 = (n) => String(n).padStart(2, '0');
 
+// A child who comes on a day that is not theirs uses up their next scheduled day: that day turns grey
+// (not expected). If they come on that grey day too, it uses up the next scheduled day after it, and so on.
+// Nothing is stored for this: it is worked out from the saved marks every time, so unticking a visit gives the day back.
+// sessions: [{ date: 'YYYY-MM-DD', weekday }] in date order; marks: { date: 'present'|'absent' }.
+function attendanceStates(player, sessions, marks, startPending) {
+  let pending = startPending || 0;
+  const grey = new Set(), extra = new Set();
+  sessions.forEach((s) => {
+    let isGrey = !attendsOn(player, s.weekday);
+    if (!isGrey && pending > 0) { isGrey = true; pending -= 1; }
+    if (isGrey) grey.add(s.date);
+    if (isGrey && marks[s.date] === 'present') { pending += 1; extra.add(s.date); }
+  });
+  return { grey, extra, pending };
+}
+function monthSessions(year, month) {
+  return practiceDates(year, month).map((d) => ({ date: `${year}-${pad2(month)}-${pad2(d.day)}`, weekday: d.weekday }));
+}
+function prevYm(ym) { return ym.month === 1 ? { year: ym.year - 1, month: 12 } : { year: ym.year, month: ym.month - 1 }; }
+
 function pct(num, den) { return den > 0 ? Math.round((num / den) * 1000) / 10 : null; }
 function tally(present, absent) {
   const taken = present + absent;
@@ -497,15 +517,18 @@ router.get('/admin/attendance', requireStaff, async (req, res) => {
       if (x.d >= first && x.d <= last) { const m = (mon[x.player_id] = mon[x.player_id] || { present: 0, absent: 0 }); m[x.status] += 1; }
     });
     let gp = 0, ga = 0, mp = 0, ma = 0;
+    const prevSessions = monthSessions(prevYm(ym).year, prevYm(ym).month);
     const players = pr.rows.map((p) => {
       const t = tot[p.id] || { present: 0, absent: 0 }, m = mon[p.id] || { present: 0, absent: 0 };
       gp += t.present; ga += t.absent; mp += m.present; ma += m.absent;
       const mk = marks[p.id] || {};
       const monthMarks = {};
       days.forEach((d) => { if (mk[d.date]) monthMarks[d.date] = mk[d.date]; });
+      const carry = attendanceStates(p, prevSessions, mk, 0).pending;
       return {
         id: p.id, name: p.player_name, grade: p.grade, age_group: ageGroupLabel(p.dob),
         session_type: p.session_type, session_day: p.session_day,
+        carry,
         expected: days.filter((d) => attendsOn(p, d.weekday)).map((d) => d.date),
         marks: monthMarks, month: tally(m.present, m.absent), total: tally(t.present, t.absent),
       };
@@ -553,7 +576,15 @@ router.put('/admin/attendance/day', requireStaff, async (req, res) => {
     const weekday = new Date(date + 'T12:00:00Z').getUTCDay();
     const pr = await pool.query(
       'SELECT id, session_type, session_day FROM players WHERE archived_at IS NULL AND grade = ANY($1)', [grades]);
-    const ids = pr.rows.filter((p) => attendsOn(p, weekday)).map((p) => p.id);
+    // Skip a child whose day was already used up by an earlier visit on a day that was not theirs.
+    const ymD = { year: Number(date.slice(0, 4)), month: Number(date.slice(5, 7)) };
+    const sess = monthSessions(prevYm(ymD).year, prevYm(ymD).month).concat(monthSessions(ymD.year, ymD.month)).filter((x) => x.date <= date);
+    const recs = pr.rows.length
+      ? (await pool.query(`SELECT player_id, to_char(att_date, 'YYYY-MM-DD') AS d, status FROM attendance_records WHERE player_id = ANY($1) AND att_date <= $2`, [pr.rows.map((p) => p.id), date])).rows
+      : [];
+    const mkBy = {};
+    recs.forEach((x) => { (mkBy[x.player_id] = mkBy[x.player_id] || {})[x.d] = x.status; });
+    const ids = pr.rows.filter((p) => attendsOn(p, weekday) && !attendanceStates(p, sess, mkBy[p.id] || {}, 0).grey.has(date)).map((p) => p.id);
     if (ids.length) {
       await pool.query(
         `INSERT INTO attendance_records (player_id, att_date, status, marked_by, updated_at)

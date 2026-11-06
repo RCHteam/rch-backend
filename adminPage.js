@@ -299,6 +299,11 @@ module.exports = `<!doctype html>
   .att-btn.att-p{ background:#1f9d4b; border-color:#1f9d4b; color:#fff; }
   .att-btn.att-a{ background:#d6403a; border-color:#d6403a; color:#fff; }
   .att-btn.att-na{ background:#ece9de; border-color:#e0dcce; color:#b5b0a0; cursor:default; }
+  .att-btn.att-grey{ cursor:pointer; }
+  .att-btn.att-grey:hover{ border-color:#b9b19a; background:#f3f0e6; }
+  .att-btn.att-x{ background:#e8a93a; border-color:#e8a93a; color:#fff; }
+  .att-extra{ display:inline-block; background:#fff4d6; color:#8a5a00; font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:999px; margin-left:6px; white-space:nowrap; }
+  .att-legend{ font-size:0.82rem; color:#6b7a70; margin:0 0 10px; }
   .att-num{ text-align:center; font-weight:700; }
   .ut-row{ display:flex; justify-content:space-between; gap:10px; padding:3px 0; border-bottom:1px solid rgba(246,242,231,0.07); font-size:0.88rem; }
   .ut-lab{ color:var(--sg); font-family:'Space Mono',monospace; font-size:0.72rem; }
@@ -5060,18 +5065,35 @@ module.exports = `<!doctype html>
         '<div><b>All months so far</b><span>' + tp + ' present, <b class="att-bad">' + ta + ' missed</b></span><span>Missed: <b class="att-bad">' + attPct(pt) + '</b> of ' + tt + ' marks</span></div>' +
       '</div>';
   }
+  // Same rule as the server: a visit on a day that is not theirs uses up the child's next scheduled day (it turns grey).
+  function attStates(p){
+    let pending = p.carry || 0;
+    const grey = {}; let extra = 0;
+    attData.days.forEach(function(d){
+      let g = p.expected.indexOf(d.date) === -1;
+      if (!g && pending > 0) { g = true; pending -= 1; }
+      if (g) grey[d.date] = true;
+      if (g && p.marks[d.date] === 'present') { pending += 1; extra += 1; }
+    });
+    return { grey: grey, extra: extra };
+  }
   function attRender(){
     const wrap = document.getElementById('attTableWrap');
     if (!attData.players.length) { wrap.innerHTML = '<div class="empty">No players in this grade.</div>'; attSummaryBox(); return; }
     const showGrade = document.getElementById('attGrade').value === 'all';
-    let html = '<table class="att-table"><thead><tr><th>Player</th>' + (showGrade ? '<th>Grade</th>' : '') + '<th>Sessions</th>' +
+    let html = '<div class="att-legend">Grey days are not expected. If a child comes on a grey day, click it: the visit is saved and their next scheduled day turns grey.</div><table class="att-table"><thead><tr><th>Player</th>' + (showGrade ? '<th>Grade</th>' : '') + '<th>Sessions</th>' +
       attData.days.map(function(d){ return '<th class="att-day">' + escapeHtml(d.label) + '<br><button type="button" class="att-allhere" data-date="' + d.date + '">All here</button></th>'; }).join('') +
       '<th>Missed (month)</th><th>% missed</th><th>Missed (total)</th><th>% missed</th></tr></thead><tbody>';
     attData.players.forEach(function(p){
       const sess = p.session_type === 'two' ? '2 / week' : (p.session_type === 'online' ? 'Online' : (p.session_day === 'tuesday' ? '1 (Tue)' : p.session_day === 'thursday' ? '1 (Thu)' : '1 / week'));
-      html += '<tr data-pid="' + p.id + '"><td>' + escapeHtml(p.name) + '</td>' + (showGrade ? '<td>' + escapeHtml(GRADE_LABELS[p.grade] || p.grade) + '</td>' : '') + '<td>' + sess + '</td>';
+      const states = attStates(p);
+      html += '<tr data-pid="' + p.id + '"><td>' + escapeHtml(p.name) + '</td>' + (showGrade ? '<td>' + escapeHtml(GRADE_LABELS[p.grade] || p.grade) + '</td>' : '') + '<td>' + sess + (states.extra ? '<span class="att-extra" title="Came on days that were not theirs this month">+' + states.extra + ' extra</span>' : '') + '</td>';
       attData.days.forEach(function(d){
-        if (p.expected.indexOf(d.date) === -1) { html += '<td><span class="att-btn att-na">–</span></td>'; return; }
+        if (states.grey[d.date]) {
+          const gm = p.marks[d.date];
+          html += '<td><button type="button" class="att-btn ' + (gm === 'present' ? 'att-x' : gm === 'absent' ? 'att-a' : 'att-na att-grey') + '" data-pid="' + p.id + '" data-date="' + d.date + '" data-grey="1" title="Not their day. Click if they came.">' + (gm === 'present' ? '✓' : gm === 'absent' ? '✗' : '–') + '</button></td>';
+          return;
+        }
         const st = p.marks[d.date];
         html += '<td><button type="button" class="att-btn' + (st === 'present' ? ' att-p' : st === 'absent' ? ' att-a' : '') + '" data-pid="' + p.id + '" data-date="' + d.date + '">' + (st === 'present' ? '✓' : st === 'absent' ? '✗' : '') + '</button></td>';
       });
@@ -5107,7 +5129,8 @@ module.exports = `<!doctype html>
     const date = b.getAttribute('data-date');
     if (!p) return;
     const cur = p.marks[date] || null;
-    const next = cur === null ? 'present' : cur === 'present' ? 'absent' : null;
+    const isGrey = b.getAttribute('data-grey') === '1';
+    const next = isGrey ? (cur === 'present' ? null : (cur ? null : 'present')) : (cur === null ? 'present' : cur === 'present' ? 'absent' : null);
     if (cur) { p.total[cur] -= 1; }
     if (next) { p.marks[date] = next; p.total[next] += 1; } else { delete p.marks[date]; }
     attRecalc(p); attRender();
