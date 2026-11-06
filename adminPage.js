@@ -6292,7 +6292,12 @@ module.exports = `<!doctype html>
       return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b);
     });
     const chip = function(label, n, dim){ return '<span style="display:inline-flex; align-items:center; gap:6px; background:' + (dim ? '#f3f4f2' : '#eef3ef') + '; color:' + (dim ? '#6b7a70' : '#164a30') + '; border-radius:8px; padding:6px 12px; font-size:0.85rem; font-weight:700;">' + label + ' <span style="font-weight:500;">&times;</span> ' + n + '</span>'; };
-    return '<div style="margin:14px 0 0;"><div style="font-size:0.78rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#6b7a70; margin:0 0 8px;">Total by size &middot; ' + list.length + ' players</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+    let raised = 0, owed = 0;
+    list.forEach(function(r){ [r.practice, r.sultans].forEach(function(k){ if (!k) return; if (k.paid_at) raised += k.amount_cents || 0; else owed += k.amount_cents || 0; }); });
+    const money2 = '<div style="display:flex; gap:10px; flex-wrap:wrap; margin:0 0 14px;">' +
+      '<span style="background:#e3f3e8; color:#1f7a3d; border-radius:8px; padding:8px 14px; font-weight:700;">Total raised ' + money(raised) + '</span>' +
+      '<span style="background:#fdecea; color:#b5482f; border-radius:8px; padding:8px 14px; font-weight:700;">Still owed ' + money(owed) + '</span></div>';
+    return '<div style="margin:14px 0 0;">' + money2 + '<div style="font-size:0.78rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#6b7a70; margin:0 0 8px;">Total by size &middot; ' + list.length + ' players</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
       keys.map(function(k){ return chip(escapeHtml(k), counts[k], false); }).join('') + (none ? chip('No size', none, true) : '') + '</div></div>';
   }
   async function loadKitFees(){
