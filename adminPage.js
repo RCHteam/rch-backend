@@ -526,17 +526,17 @@ module.exports = `<!doctype html>
   .modal.wide{ max-width:560px; }
   @media (max-width:820px){ .cal-cell{ min-height:70px; padding:4px; } .img-slots{ grid-template-columns:repeat(2,1fr); } }
   /* ---- One button style everywhere: green = main action, grey = secondary, red = danger ---- */
-  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-mark-paid, .btn-sul-send, .btn-sul-kit,
+  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-pause-player, .btn-mark-paid, .btn-sul-send, .btn-sul-kit,
   .btn-edit-row, .btn-unsubscribe, .btn-pause-toggle,
   .btn-delete-row, .btn-delete-guest, .btn-cancel-billing, .btn-cancel-link, .btn-sul-remove{
     padding:6px 12px; border-radius:6px; font-size:0.8rem; font-weight:600; line-height:1.2; cursor:pointer; white-space:nowrap; font-family:inherit; transition:background .15s ease, color .15s ease; }
-  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-mark-paid, .btn-sul-send, .btn-sul-kit{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); }
-  .btn-payment-link:hover, .btn-move-to-roster:hover, .btn-start-billing:hover, .btn-send-agreement:hover, .btn-dl-agreement:hover, .btn-paid-other:hover, .btn-mark-paid:hover, .btn-sul-send:hover, .btn-sul-kit:hover{ background:var(--pitch); color:#fff; }
+  .btn-payment-link, .btn-move-to-roster, .btn-start-billing, .btn-send-agreement, .btn-dl-agreement, .btn-paid-other, .btn-pause-player, .btn-mark-paid, .btn-sul-send, .btn-sul-kit{ background:#fff; border:1px solid var(--pitch); color:var(--pitch); }
+  .btn-payment-link:hover, .btn-move-to-roster:hover, .btn-start-billing:hover, .btn-send-agreement:hover, .btn-dl-agreement:hover, .btn-paid-other:hover, .btn-pause-player:hover, .btn-mark-paid:hover, .btn-sul-send:hover, .btn-sul-kit:hover{ background:var(--pitch); color:#fff; }
   .btn-edit-row, .btn-unsubscribe, .btn-pause-toggle{ background:#fff; border:1px solid #8a8a8a; color:#444; }
   .btn-edit-row:hover, .btn-unsubscribe:hover, .btn-pause-toggle:hover{ background:#444; color:#fff; }
   .btn-delete-row, .btn-delete-guest, .btn-cancel-billing, .btn-cancel-link, .btn-sul-remove{ background:#fff; border:1px solid #d98a76; color:#b5482f; }
   .btn-delete-row:hover, .btn-delete-guest:hover, .btn-cancel-billing:hover, .btn-cancel-link:hover, .btn-sul-remove:hover{ background:#b5482f; color:#fff; border-color:#b5482f; }
-  .btn-payment-link:disabled, .btn-start-billing:disabled, .btn-send-agreement:disabled, .btn-paid-other:disabled, .btn-mark-paid:disabled, .btn-cancel-link:disabled, .btn-cancel-billing:disabled, .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
+  .btn-payment-link:disabled, .btn-start-billing:disabled, .btn-send-agreement:disabled, .btn-paid-other:disabled, .btn-pause-player:disabled, .btn-mark-paid:disabled, .btn-cancel-link:disabled, .btn-cancel-billing:disabled, .btn-unsubscribe:disabled{ opacity:0.6; cursor:default; }
   tr.paused-row td{ background:#eceeed !important; color:#8a908c !important; }
   tr.paused-row td .status-badge{ opacity:.7; }
   .paused-tag{ display:inline-block; font-size:0.68rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:#d5d9d6; color:#5b625d; margin-left:8px; }
